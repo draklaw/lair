@@ -20,6 +20,7 @@
 
 set(lair_utils_SOURCES
 	input.cpp
+	image.cpp
 )
 
 set(lair_utils_LIBRARIES

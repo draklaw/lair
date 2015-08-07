@@ -20,3 +20,5 @@
 add_subdirectory(core)
 add_subdirectory(utils)
 add_subdirectory(sys_sdl2)
+add_subdirectory(render_gl2)
+add_subdirectory(ec)

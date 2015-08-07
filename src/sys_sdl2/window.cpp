@@ -150,8 +150,11 @@ void Window::setUtf8Title(const char* utf8Title) {
 SDL_Window* Window::_create(const char* utf8Title, int width, int height) {
 	lairAssert(!isValid());
 
+//	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+//	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+//	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	unsigned windowFlags = 0
-//	        | SDL_WINDOW_OPENGL
+	        | SDL_WINDOW_OPENGL
 //	        | SDL_WINDOW_FULLSCREEN_DESKTOP
 	        ;
 	_window = SDL_CreateWindow(
@@ -164,46 +167,46 @@ SDL_Window* Window::_create(const char* utf8Title, int width, int height) {
 		return 0;
 	}
 
-//	_glContext = SDL_GL_CreateContext(_window);
-//	if(!_glContext) {
-//		log().error("failed to create OpenGL context: ", SDL_GetError());
-//		SDL_DestroyWindow(_window);
-//		return 0;
-//	}
+	_glContext = SDL_GL_CreateContext(_window);
+	if(!_glContext) {
+		log().error("failed to create OpenGL context: ", SDL_GetError());
+		SDL_DestroyWindow(_window);
+		return 0;
+	}
 
-//	typedef std::pair<const char*, SDL_GLattr> GLAttr;
-//	GLAttr glAttrs[] =
-//	{
-//	    std::make_pair("SDL_GL_RED_SIZE = ", SDL_GL_RED_SIZE),
-//	    std::make_pair("SDL_GL_GREEN_SIZE = ", SDL_GL_GREEN_SIZE),
-//	    std::make_pair("SDL_GL_BLUE_SIZE = ", SDL_GL_BLUE_SIZE),
-//	    std::make_pair("SDL_GL_ALPHA_SIZE = ", SDL_GL_ALPHA_SIZE),
-//	    std::make_pair("SDL_GL_BUFFER_SIZE = ", SDL_GL_BUFFER_SIZE),
-//	    std::make_pair("SDL_GL_DOUBLEBUFFER = ", SDL_GL_DOUBLEBUFFER),
-//	    std::make_pair("SDL_GL_DEPTH_SIZE = ", SDL_GL_DEPTH_SIZE),
-//	    std::make_pair("SDL_GL_STENCIL_SIZE = ", SDL_GL_STENCIL_SIZE),
-//	    std::make_pair("SDL_GL_ACCUM_RED_SIZE = ", SDL_GL_ACCUM_RED_SIZE),
-//	    std::make_pair("SDL_GL_ACCUM_GREEN_SIZE = ", SDL_GL_ACCUM_GREEN_SIZE),
-//	    std::make_pair("SDL_GL_ACCUM_BLUE_SIZE = ", SDL_GL_ACCUM_BLUE_SIZE),
-//	    std::make_pair("SDL_GL_ACCUM_ALPHA_SIZE = ", SDL_GL_ACCUM_ALPHA_SIZE),
-//	    std::make_pair("SDL_GL_STEREO = ", SDL_GL_STEREO),
-//	    std::make_pair("SDL_GL_MULTISAMPLEBUFFERS = ", SDL_GL_MULTISAMPLEBUFFERS),
-//	    std::make_pair("SDL_GL_MULTISAMPLESAMPLES = ", SDL_GL_MULTISAMPLESAMPLES),
-//	    std::make_pair("SDL_GL_ACCELERATED_VISUAL = ", SDL_GL_ACCELERATED_VISUAL),
-//	    //        std::make_pair("SDL_GL_RETAINED_BACKING = ", SDL_GL_RETAINED_BACKING),
-//	    std::make_pair("SDL_GL_CONTEXT_MAJOR_VERSION = ", SDL_GL_CONTEXT_MAJOR_VERSION),
-//	    std::make_pair("SDL_GL_CONTEXT_MINOR_VERSION = ", SDL_GL_CONTEXT_MINOR_VERSION),
-//	    //        std::make_pair("SDL_GL_CONTEXT_EGL = ", SDL_GL_CONTEXT_EGL),
-//	    std::make_pair("SDL_GL_CONTEXT_FLAGS = ", SDL_GL_CONTEXT_FLAGS),
-//	    std::make_pair("SDL_GL_CONTEXT_PROFILE_MASK = ", SDL_GL_CONTEXT_PROFILE_MASK),
-//	    std::make_pair("SDL_GL_SHARE_WITH_CURRENT_CONTEXT = ", SDL_GL_SHARE_WITH_CURRENT_CONTEXT),
-//	    //        std::make_pair("SDL_GL_FRAMEBUFFER_SRGB_CAPABLE = ", SDL_GL_FRAMEBUFFER_SRGB_CAPABLE),
-//	};
-//	for(unsigned i = 0; i < (sizeof(glAttrs) / sizeof(GLAttr)); ++i) {
-//		int attr;
-//		SDL_GL_GetAttribute(glAttrs[i].second, &attr);
-//		log().info(glAttrs[i].first, attr);
-//	}
+	typedef std::pair<const char*, SDL_GLattr> GLAttr;
+	GLAttr glAttrs[] =
+	{
+	    std::make_pair("SDL_GL_RED_SIZE = ", SDL_GL_RED_SIZE),
+	    std::make_pair("SDL_GL_GREEN_SIZE = ", SDL_GL_GREEN_SIZE),
+	    std::make_pair("SDL_GL_BLUE_SIZE = ", SDL_GL_BLUE_SIZE),
+	    std::make_pair("SDL_GL_ALPHA_SIZE = ", SDL_GL_ALPHA_SIZE),
+	    std::make_pair("SDL_GL_BUFFER_SIZE = ", SDL_GL_BUFFER_SIZE),
+	    std::make_pair("SDL_GL_DOUBLEBUFFER = ", SDL_GL_DOUBLEBUFFER),
+	    std::make_pair("SDL_GL_DEPTH_SIZE = ", SDL_GL_DEPTH_SIZE),
+	    std::make_pair("SDL_GL_STENCIL_SIZE = ", SDL_GL_STENCIL_SIZE),
+	    std::make_pair("SDL_GL_ACCUM_RED_SIZE = ", SDL_GL_ACCUM_RED_SIZE),
+	    std::make_pair("SDL_GL_ACCUM_GREEN_SIZE = ", SDL_GL_ACCUM_GREEN_SIZE),
+	    std::make_pair("SDL_GL_ACCUM_BLUE_SIZE = ", SDL_GL_ACCUM_BLUE_SIZE),
+	    std::make_pair("SDL_GL_ACCUM_ALPHA_SIZE = ", SDL_GL_ACCUM_ALPHA_SIZE),
+	    std::make_pair("SDL_GL_STEREO = ", SDL_GL_STEREO),
+	    std::make_pair("SDL_GL_MULTISAMPLEBUFFERS = ", SDL_GL_MULTISAMPLEBUFFERS),
+	    std::make_pair("SDL_GL_MULTISAMPLESAMPLES = ", SDL_GL_MULTISAMPLESAMPLES),
+	    std::make_pair("SDL_GL_ACCELERATED_VISUAL = ", SDL_GL_ACCELERATED_VISUAL),
+	    //        std::make_pair("SDL_GL_RETAINED_BACKING = ", SDL_GL_RETAINED_BACKING),
+	    std::make_pair("SDL_GL_CONTEXT_MAJOR_VERSION = ", SDL_GL_CONTEXT_MAJOR_VERSION),
+	    std::make_pair("SDL_GL_CONTEXT_MINOR_VERSION = ", SDL_GL_CONTEXT_MINOR_VERSION),
+	    //        std::make_pair("SDL_GL_CONTEXT_EGL = ", SDL_GL_CONTEXT_EGL),
+	    std::make_pair("SDL_GL_CONTEXT_FLAGS = ", SDL_GL_CONTEXT_FLAGS),
+	    std::make_pair("SDL_GL_CONTEXT_PROFILE_MASK = ", SDL_GL_CONTEXT_PROFILE_MASK),
+	    std::make_pair("SDL_GL_SHARE_WITH_CURRENT_CONTEXT = ", SDL_GL_SHARE_WITH_CURRENT_CONTEXT),
+	    //        std::make_pair("SDL_GL_FRAMEBUFFER_SRGB_CAPABLE = ", SDL_GL_FRAMEBUFFER_SRGB_CAPABLE),
+	};
+	for(unsigned i = 0; i < (sizeof(glAttrs) / sizeof(GLAttr)); ++i) {
+		int attr;
+		SDL_GL_GetAttribute(glAttrs[i].second, &attr);
+		log().info(glAttrs[i].first, attr);
+	}
 
 	return _window;
 }

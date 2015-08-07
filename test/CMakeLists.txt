@@ -17,29 +17,17 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-find_package(Eigen3 REQUIRED)
-find_package(SDL2 REQUIRED)
+
+add_custom_target(test)
+
+find_package(GTest REQUIRED)
 
 include_directories(
-	"${EIGEN3_INCLUDE_DIR}"
-	"${SDL2_INCLUDE_DIR}"
+	"${PROJECT_SOURCE_DIR}/include"
+	${GTEST_INCLUDE_DIRS}
 )
 
-add_executable(simple_window
-	simple_window.cpp
+include_directories(
 )
 
-add_definitions(-D "'SIMPLE_WINDOW_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"'")
-
-target_link_libraries(simple_window
-	lair_ec
-	lair_render_gl2
-	lair_sys_sdl2
-	lair_utils
-	lair_core
-#	GLEW
-	GL
-#	/usr/lib/x86_64-linux-gnu/libGLESv2.so.2
-	${SDL2_LIBRARY}
-)
-add_dependencies(demo simple_window)
+add_subdirectory(ec)

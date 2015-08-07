@@ -27,8 +27,11 @@
 #include <stdexcept>
 #include <sstream>
 
+#include <Eigen/Geometry>
+
 
 namespace lair {
+
 
 class AssertionFailedError : public std::logic_error {
 public:
@@ -55,16 +58,43 @@ inline void lairAssert(bool result, const char* testCode, const char* file, int 
 #define lairAssert(_test) lair::lairAssert(_test, #_test, __FILE__, __LINE__)
 
 
-typedef std::uint8_t  uint8;
-typedef std:: int8_t   int8;
-typedef std::uint16_t uint16;
-typedef std:: int16_t  int16;
-typedef std::uint32_t uint32;
-typedef std:: int32_t  int32;
-typedef std::uint64_t uint64;
-typedef std:: int64_t  int64;
+typedef std::size_t    size_t;
+typedef std::ptrdiff_t ptrdiff_t;
+
+typedef std::uint8_t   Byte;
+typedef std::uint8_t   uint8;
+typedef std:: int8_t    int8;
+typedef std::uint16_t  uint16;
+typedef std:: int16_t   int16;
+typedef std::uint32_t  uint32;
+typedef std:: int32_t   int32;
+typedef std::uint64_t  uint64;
+typedef std:: int64_t   int64;
+typedef std::uintptr_t uintptr;
+
+typedef float                            Scalar;
+
+typedef Eigen::Matrix<Scalar, 2, 1>      Vector2;
+typedef Eigen::Matrix<Scalar, 3, 1>      Vector3;
+typedef Eigen::Matrix<Scalar, 4, 1>      Vector4;
+
+typedef Eigen::Matrix<Scalar, 2, 2>      Matrix2;
+typedef Eigen::Matrix<Scalar, 3, 3>      Matrix3;
+typedef Eigen::Matrix<Scalar, 4, 4>      Matrix4;
+
+typedef Eigen::Transform<Scalar, 3,
+                         Eigen::Affine>  Transform;
+typedef Eigen::Quaternion<Scalar>        Quaternion;
+typedef Eigen::AngleAxis<Scalar>         AngleAxis;
+typedef Eigen::Translation<Scalar, 3>    Translation;
 
 typedef unsigned ScanCode;
+
+// TODO: update this
+typedef unsigned JsonNode;
+
+
+#define LAIR_FIELD_OFFSET(_struct, _field) (&reinterpret_cast<_struct*>(0)->_field)
 
 
 }

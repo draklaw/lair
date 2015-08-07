@@ -17,29 +17,19 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-find_package(Eigen3 REQUIRED)
-find_package(SDL2 REQUIRED)
-
-include_directories(
-	"${EIGEN3_INCLUDE_DIR}"
-	"${SDL2_INCLUDE_DIR}"
+set(lair_ec_SOURCES
+	entity.cpp
+	entity_manager.cpp
+	sprite_component.cpp
 )
 
-add_executable(simple_window
-	simple_window.cpp
+set(lair_ec_LIBRARIES
 )
 
-add_definitions(-D "'SIMPLE_WINDOW_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"'")
+add_library(lair_ec ${lair_ec_SOURCES})
 
-target_link_libraries(simple_window
-	lair_ec
-	lair_render_gl2
-	lair_sys_sdl2
-	lair_utils
-	lair_core
-#	GLEW
-	GL
-#	/usr/lib/x86_64-linux-gnu/libGLESv2.so.2
-	${SDL2_LIBRARY}
+target_include_directories(lair_ec
+	PUBLIC "${PROJECT_SOURCE_DIR}/include"
 )
-add_dependencies(demo simple_window)
+
+target_link_libraries(lair_ec ${lair_ec_LIBRARIES})

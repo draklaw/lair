@@ -17,6 +17,9 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+
+add_custom_target(demo)
+
 include_directories(
 	"${PROJECT_SOURCE_DIR}/include"
 )
