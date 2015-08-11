@@ -30,7 +30,6 @@
 
 
 extern "C" {
-typedef struct Window    Window;
 typedef union  SDL_Event SDL_Event;
 }
 
