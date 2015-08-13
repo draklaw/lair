@@ -30,6 +30,11 @@
 
 #include <iostream>
 
+#include <Python.h>
+
+#include <lair/core/lair.h>
+
+
 namespace lair {
 
 namespace internal {
@@ -61,8 +66,12 @@ enum class LogLevel {
  */
 class LoggerBackend {
 public:
+	virtual ~LoggerBackend();
+
 	virtual void write(LogLevel level, const char* moduleName,
 	                   std::stringbuf* msgBuf) = 0;
+	virtual void write(LogLevel level, const char* moduleName,
+	                   const char* msg) = 0;
 };
 
 
@@ -72,13 +81,35 @@ public:
 class OStreamLogger : public LoggerBackend {
 public:
 	OStreamLogger(std::ostream& out, bool termColor = false);
+	virtual ~OStreamLogger();
 
 	virtual void write(LogLevel level, const char* moduleName,
 	                   std::stringbuf* msgBuf);
+	virtual void write(LogLevel level, const char* moduleName,
+	                   const char* msg);
 
 private:
 	std::ostream& _out;
 	bool          _terminalColor;
+};
+
+
+/**
+ * \brief Allow to log stuff to a Python stream.
+ */
+class PythonLogger : public LoggerBackend {
+public:
+	PythonLogger(PyObject* out);
+	virtual ~PythonLogger();
+
+	virtual void write(LogLevel level, const char* moduleName,
+	                   std::stringbuf* msgBuf);
+	virtual void write(LogLevel level, const char* moduleName,
+	                   const char* msg);
+
+private:
+	PyObject* _out;
+	bool      _terminalColor;
 };
 
 
@@ -115,6 +146,7 @@ public:
 	 * \param msgBuf
 	 */
 	void write(LogLevel level, const char* moduleName, std::stringbuf* msgBuf);
+	void write(LogLevel level, const char* moduleName, const char* msg);
 
 private:
 	typedef std::vector<LoggerBackend*> BackendList;
@@ -152,7 +184,7 @@ public:
 	LogLevel level() const;
 	void setLevel(LogLevel level);
 
-	void setFrom(Logger &other);
+	void setFrom(Logger& other);
 
 	template < typename... Args >
 	inline void write(LogLevel level, Args... args) {
@@ -262,6 +294,8 @@ void Logger::writeM(LogLevel level,
  * object and it is not thead-safe.
  */
 extern Logger noopLogger;
+
+extern Logger dbgLogger;
 
 
 }

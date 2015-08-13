@@ -183,7 +183,7 @@ void SysModule::dispatchPendingSystemEvents() {
 uint8 SysModule::getKeyState(unsigned scancode) {
 	int size = 0;
 	const uint8* states = SDL_GetKeyboardState(&size);
-	return (scancode < size)? states[scancode]: 0;
+	return (scancode < unsigned(size))? states[scancode]: 0;
 }
 
 

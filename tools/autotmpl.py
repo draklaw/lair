@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+from io import StringIO
 import re
 
 
@@ -21,7 +22,8 @@ def _str(ctx, obj, args):
 class TmplExpr:
 	_expr_re = re.compile(r'\s*([.,()[\]]|(?:"[^"]*")|(?:\'[^\']*\'))\s*')
 
-	def __init__(self, expr = None, *, _expr = None):
+	def __init__(self, line_nb, expr = None, *, _expr = None):
+		self._line_nb = line_nb
 		self._expr = _expr
 		if expr is not None:
 			self._expr, tok = self._parse_expr(iter(self._expr_re.split(expr.strip())))
@@ -111,19 +113,23 @@ def is_indent(s):
 	return True
 
 class _TmplRepl:
-	def __init__(self, expr):
-		self._expr = TmplExpr(expr)
+	def __init__(self, line_nb, expr):
+		self._expr = TmplExpr(line_nb, expr)
 
 	def __call__(self, out, ctx, indent):
-		out.write(self._expr(ctx))
+		repl = self._expr(ctx)
+		if not isinstance(repl, str):
+			raise RuntimeError("{}: {} must return a string, {} found"
+			                   .format(self._expr._line_nb, self._expr, type(repl).__name__))
+		out.write(repl)
 
 	def __repr__(self):
 		return "_TmplRepl({})".format(repr(self._expr))
 
 
 class _TmplWrite:
-	def __init__(self, expr, indent):
-		self._expr   = TmplExpr(expr)
+	def __init__(self, line_nb, expr, indent):
+		self._expr   = TmplExpr(line_nb, expr)
 		self._indent = indent
 
 	def __call__(self, out, ctx, indent):
@@ -144,7 +150,9 @@ class Template:
 	def __init__(self, code):
 		self._tmpl_list = []
 
+		line_nb = 0
 		for line in code.splitlines(True):
+			line_nb += 1
 			if self._ws.match(line):
 				self._tmpl_list.append('\n')
 				continue
@@ -167,7 +175,7 @@ class Template:
 				elif tok2 == '}}':
 					state = self._STRING
 				elif state == self._REPL:
-					self._tmpl_list.append(_TmplRepl(tok2))
+					self._tmpl_list.append(_TmplRepl(line_nb, tok2))
 				elif state == self._CALL:
 					indent = ''
 					if self._tmpl_list and (is_indent(self._tmpl_list[-1]) or
@@ -176,7 +184,7 @@ class Template:
 						if indent == _tmpl_indent:
 							indent = ''
 						skip_lf = True
-					self._tmpl_list.append(_TmplWrite(tok2, indent))
+					self._tmpl_list.append(_TmplWrite(line_nb, tok2, indent))
 
 	def render(self, out, ctx, indent = ''):
 		for part in self._tmpl_list:

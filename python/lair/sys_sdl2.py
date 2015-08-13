@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ##
 ##  Copyright (C) 2015 Simon Boyé
 ##
@@ -17,20 +19,7 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-find_package(SDL2 REQUIRED)
+import _lair
 
-list(APPEND lair_SOURCES
-	sys_module.cpp
-	window.cpp
-)
-
-list(APPEND lair_INCLUDE_DIRS)
-	"${SDL2_INCLUDE_DIR}"
-)
-
-list(APPEND lair_LIBRARIES
-	"${SDL2_LIBRARY}"
-)
-
-#add_library(lair_sys_sdl2 SHARED ${lair_sys_sdl2_SOURCES})
-#target_link_libraries(lair_sys_sdl2 ${lair_sys_sdl2_LIBRARIES})
+SysModule = _lair.sys_sdl2.SysModule
+Window    = _lair.sys_sdl2.Window

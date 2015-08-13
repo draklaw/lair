@@ -2,7 +2,7 @@
 
 - ~~Object binding~~
 - lair binding
-- Copyright notice
+- ~~Copyright notice~~
 - ec meta-code (python ?)
 - Re-implement test-window
 - ~Investigate packaging

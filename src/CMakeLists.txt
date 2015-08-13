@@ -51,11 +51,16 @@ set(lair_LIBRARIES
 	"${SDL2_LIBRARY}"
 )
 
+add_autopy(core/core_py core/core.py)
 add_autopy(sys_sdl2/sys_sdl2_py sys_sdl2/sys_sdl2.py)
-add_autopy(lair_py lair.py sys_sdl2)
+add_autopy(lair_py lair.py
+	core
+	sys_sdl2
+)
 
 set(lair_SOURCES
 	core/log.cpp
+	core/core_py.cpp
 
 	utils/input.cpp
 	utils/image.cpp
@@ -84,5 +89,6 @@ target_link_libraries(lair
 )
 set_target_properties(lair PROPERTIES
 	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+	OUTPUT_NAME "_lair"
 	PREFIX ""
 )
