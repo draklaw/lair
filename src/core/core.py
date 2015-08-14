@@ -26,7 +26,12 @@ path.append(getcwd())
 from autopy import *
 
 
-log_level_type = AutoType('int', 'LogLevel', 'i', 'PyLong_FromLong', 'PyLong_AsLong', 'int')
+vector2_class = AutoClass('Vector2', [ OPTIONAL_PARAM,
+									   (auto_double, 'x', '0'),
+									   (auto_double, 'y', '0')])
+
+
+log_level_type = AutoType('LogLevel', 'int', 'i', 'PyLong_FromLong', 'PyLong_AsLong', 'int')
 
 #logger_backend_class = AutoClass('LoggerBackend', None)
 logger_backend_class = AutoClass('PythonLogger', [ (auto_object, 'file') ])
@@ -56,6 +61,7 @@ logger_class = AutoClass('Logger',
 core_module = (
 	AutoModule('core')
 		.add_include("iostream")
+		.add_include("lair/core/lair.h")
 		.add_include("lair/core/log.h")
 		.add_use_namespace("lair")
 		.add_class(logger_backend_class)

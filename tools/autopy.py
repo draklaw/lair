@@ -68,11 +68,11 @@ if({{ out }} == NULL) {
 	return {{ err_return }};
 }
 """)
-	def __init__(self, py_id, c_id, parse_fmt, py_from_c_fn, c_from_py_fn,
+	def __init__(self, c_id, py_id, parse_fmt, py_from_c_fn, c_from_py_fn,
 	             py_from_c_cast = None, py_from_c_tmpl = None, c_from_py_tmpl = None,
 	             class_ = None):
-		self._py_id          = py_id
 		self._c_id           = c_id
+		self._py_id          = py_id
 		self._parse_fmt      = parse_fmt
 		self._py_from_c_fn   = py_from_c_fn
 		self._c_from_py_fn   = c_from_py_fn
@@ -88,7 +88,7 @@ if({{ out }} == NULL) {
 	def const(self):
 		if self._const is None:
 			self._const = AutoType(
-				self._py_id, 'const '+self._c_id, self._parse_fmt,
+				'const '+self._c_id, self._py_id, self._parse_fmt,
 				self._py_from_c_fn, self._c_from_py_fn, self._py_from_c_cast,
 				self._py_from_c_tmpl, self._c_from_py_tmpl)
 		return self._const
@@ -109,6 +109,9 @@ if({{ out }} == NULL) {
 
 	def to_param(self, var):
 		return var
+
+	def not_ptr(self):
+		return self._c_id[:-1]
 
 	def c_from_py_fn(self):
 		return self._c_from_py_fn
@@ -144,11 +147,14 @@ class _AutoTypeValue:
 		return '*' + var
 
 
-auto_bool   = AutoType('bool', 'int',      'p', 'PyBool_FromLong',      'PyBool_Check')
-auto_int    = AutoType('int', 'long',      'i', 'PyLong_FromLong',      'PyLong_AsLong')
-auto_int64  = AutoType('int', 'long long', 'i', 'PyLong_FromLongLong',  'PyLong_AsLongLong')
-auto_string = AutoType('str', 'char*',     's', 'PyUnicode_FromString', 'PyUnicode_AsUTF8')
-auto_object = AutoType('object', 'PyObject*', 'O', None, None)
+auto_bool   = AutoType('int',       'bool',   'p', 'PyBool_FromLong',      'PyBool_Check')
+auto_int    = AutoType('long',      'int',    'i', 'PyLong_FromLong',      'PyLong_AsLong')
+auto_int64  = AutoType('long long', 'int',    'i', 'PyLong_FromLongLong',  'PyLong_AsLongLong')
+auto_size_t = auto_int64
+auto_float  = AutoType('float',     'float',  'f', 'PyFloat_FromDouble',   'PyFloat_AsDouble')
+auto_double = AutoType('double',    'float',  'd', 'PyFloat_FromDouble',   'PyFloat_AsDouble')
+auto_string = AutoType('char*',     'str',    's', 'PyUnicode_FromString', 'PyUnicode_AsUTF8')
+auto_object = AutoType('PyObject*', 'object', 'O', None, None)
 
 
 class AutoParam:
@@ -279,12 +285,6 @@ class AutoFunction:
 	}
 }
 """)
-	_self_check_tmpl = Template(
-"""if(!self->obj) {
-	PyErr_SetString(PyExc_ValueError, "self is not initialized");
-	return NULL;
-}
-""")
 	_body_noret_tmpl = Template(
 """{{ self.object_prefix() }}{{ self.c_id() }}({{< self.params().write_params }});
 Py_RETURN_NONE;
@@ -294,25 +294,35 @@ Py_RETURN_NONE;
 {{< self.write_ret_conv }}
 return ret;
 """)
+	_body_ret_value_tmpl = Template(
+"""{{ self.return_type().not_ptr() }} tmp = {{ self.object_prefix() }}{{ self.c_id() }}({{< self.params().write_params }});
+{{< self.write_ret_conv }}
+return ret;
+""")
 	_def_tmpl = Template(
 """{ "{{ self.py_id() }}", (PyCFunction){{ self.wrapper_id() }}, METH_VARARGS | METH_KEYWORDS,
   "{{ self.doc() }}" },
 """)
 
 	def __init__(self, c_id, return_type = None, params = AutoParamList(),
-		         py_id = None, body_tmpl = None, doc = ''):
-		self._c_id        = c_id
-		self._py_id       = py_id if py_id is not None else underscore_from_camel(c_id)
-		self._return_type = return_type
-		self._params      = params if isinstance(params, AutoParamList) else AutoParamList(*params)
-		self._self_type   = 'PyObject'
-		self._is_method   = False
-		self._body_tmpl   = body_tmpl
-		self._doc         = doc
+		         py_id = None, body_tmpl = None, return_value = False, parent = None, doc = ''):
+		self._c_id         = c_id
+		self._py_id        = py_id if py_id is not None else underscore_from_camel(c_id)
+		self._return_type  = return_type
+		self._params       = params if isinstance(params, AutoParamList) else AutoParamList(*params)
+		self._self_type    = 'PyObject'
+		self._body_tmpl    = body_tmpl
+		self._return_value = return_value
+		self._parent       = parent
+		self._doc          = doc
 
 		if self._body_tmpl is None:
-			self._body_tmpl = self._body_noret_tmpl if self.return_type() is None \
-			                                        else self._body_ret_tmpl
+			if self.return_type() is None:
+				self._body_tmpl = self._body_noret_tmpl
+			elif self._return_value:
+				self._body_tmpl = self._body_ret_value_tmpl
+			else:
+				self._body_tmpl = self._body_ret_tmpl
 
 	def c_id(self):
 		return self._c_id
@@ -326,26 +336,33 @@ return ret;
 	def params(self):
 		return self._params
 
-	def self_type(self):
-		return self._self_type
+	def parent(self):
+		return self._parent
 
 	def doc(self):
 		return self._doc
 
 	def wrapper_id(self):
-		if self._self_type is not None:
-			return self._self_type + '_' + self.c_id() + '_wrapper'
-		return self.c_id() + '_wrapper'
+		return self.parent().decl_prefix() + '_' + self.c_id() + '_wrapper'
 
 	def object_prefix(self):
-		return 'self->obj->' if self._is_method else ''
+		if isinstance(self._parent, AutoClass):
+			if self._parent._is_value:
+				return 'self->obj.'
+			else:
+				return 'self->obj->'
+		return ''
+
+	def self_type(self):
+		if isinstance(self.parent(), AutoClass):
+			return self.parent().object_type()
+		return 'PyObject*'
 
 	def write_param_parser(self, out, indent = ''):
 		self.params().write_parser(out, self.py_id(), indent = indent)
 
 	def write_self_check(self, out, indent = ''):
-		if self._is_method:
-			self._self_check_tmpl.render(out, { 'self': self }, indent = indent)
+		self.parent().write_self_check(out, indent)
 
 	def write_body(self, out, indent = ''):
 		self._body_tmpl.render(out, { 'self': self }, indent = indent)
@@ -464,24 +481,14 @@ class AutoGetSet:
 class AutoClass(AutoType):
 	_decl_tmpl = Template(
 """extern PyTypeObject {{ self.type_object() }};
-PyObject* {{ self.py_from_c() }}({{ self.c_class() }}* cObj);
-{{ self.c_class() }}* {{ self.c_from_py() }}(PyObject* pyObj);
+PyObject* {{ self.py_from_c() }}({{ self.decl() }} cObj);
+{{ self.decl() }} {{ self.c_from_py() }}(PyObject* pyObj);
 int {{ self.converter_fn() }}(PyObject* obj, void* addr);
 """)
 	_binding_tmpl = Template(
-"""struct {{ self.object_type() }} {
-	PyObject_HEAD
-	{{ self.c_class() }}* obj;
-	bool _owned;
-};
+"""{{< self.write_type_object }}
 
-static void
-{{ self.dealloc_func() }}({{ self.object_type() }}* self) {
-	if(self->_owned) {
-		delete self->obj;
-	}
-	Py_TYPE(self)->tp_free((PyObject*)self);
-}
+{{< self.write_dealloc }}
 
 {{< self.write_new }}
 
@@ -546,47 +553,64 @@ PyTypeObject {{ self.type_object() }} = {
 };
 #pragma GCC diagnostic pop
 
-PyObject* {{ self.py_from_c() }}({{ self.c_class() }}* cObj) {
-	if(cObj == NULL) {
-		Py_RETURN_NONE;
-	}
-	PyObject* pyObj = {{ self.new_func() }}(&{{ self.type_object() }}, NULL, NULL);
-	if(pyObj != NULL) {
-		(({{ self.object_type() }}*)pyObj)->obj = cObj;
-	}
-	return pyObj;
-}
-
-{{ self.c_class() }}* {{ self.c_from_py() }}(PyObject* pyObj) {
-	if(PyObject_IsInstance(pyObj, (PyObject*)&{{ self.type_object() }})) {
-		return (({{ self.object_type() }}*)pyObj)->obj;
-	}
-	if(pyObj == Py_None) {
-		return NULL;
-	}
-	PyErr_SetString(PyExc_TypeError, "expected object of type {{ self.full_id() }}");
-	return NULL;
-}
+{{< self.write_converters }}
 
 int {{ self.converter_fn() }}(PyObject* obj, void* addr) {
-	{{ self.c_class() }}* tmp = {{ self.c_from_py() }}(obj);
+	{{ self.decl() }} tmp = {{ self.c_from_py() }}(obj);
 	if(PyErr_Occurred()) {
 		return 0;
 	}
-	*({{ self.c_class() }}**)addr = tmp;
+	*({{ self.decl() }}*)addr = tmp;
 	return 1;
 }
 """)
-	_new_tmpl = Template(
+	_object_type_ref_tmpl = Template(
+"""struct {{ self.object_type() }} {
+	PyObject_HEAD
+	{{ self.decl() }} obj;
+	bool _owned;
+};
+""")
+	_object_type_value_tmpl = Template(
+"""struct {{ self.object_type() }} {
+	PyObject_HEAD
+	{{ self.decl() }} obj;
+};
+""")
+	_dealloc_ref_tmpl = Template(
+"""static void
+{{ self.dealloc_func() }}({{ self.object_type() }}* self) {
+	if(self->_owned) {
+		delete self->obj;
+	}
+
+	Py_TYPE(self)->tp_free((PyObject*)self);
+}
+""")
+	_dealloc_value_tmpl = Template(
+"""static void
+{{ self.dealloc_func() }}({{ self.object_type() }}* self) {
+	Py_TYPE(self)->tp_free((PyObject*)self);
+}
+""")
+	_new_ref_tmpl = Template(
 """static PyObject*
 {{ self.new_func() }}(PyTypeObject* type, PyObject* /*args*/, PyObject* /*kwargs*/) {
 	{{ self.object_type() }}* self = ({{ self.object_type() }}*)type->tp_alloc(type, 0);
-	self->obj = NULL;
+	self->obj = {{ self.default_value() }};
 	self->_owned = false;
 	return (PyObject*)self;
 }
 """)
-	_init_tmpl = Template(
+	_new_value_tmpl = Template(
+"""static PyObject*
+{{ self.new_func() }}(PyTypeObject* type, PyObject* /*args*/, PyObject* /*kwargs*/) {
+	{{ self.object_type() }}* self = ({{ self.object_type() }}*)type->tp_alloc(type, 0);
+	self->obj = {{ self.default_value() }};
+	return (PyObject*)self;
+}
+""")
+	_init_ref_tmpl = Template(
 """static int
 {{ self.init_func() }}({{ self.object_type() }}* self, PyObject* args, PyObject* kwargs) {
 	{{< self.write_init_parser }}
@@ -605,21 +629,86 @@ int {{ self.converter_fn() }}(PyObject* obj, void* addr) {
 	return 0;
 }
 """)
+	_init_value_tmpl = Template(
+"""static int
+{{ self.init_func() }}({{ self.object_type() }}* self, PyObject* args, PyObject* kwargs) {
+	{{< self.write_init_parser }}
+
+	try {
+		new (&self->obj) {{ self.c_class() }}({{< self.init_params().write_params }});
+	} catch(std::exception& e) {
+		PyErr_SetString(PyExc_RuntimeError, e.what());
+		return -1;
+	}
+
+	return 0;
+}
+""")
+	_converters_ref_tmpl = Template(
+"""PyObject* {{ self.py_from_c() }}({{ self.decl() }} cObj) {
+	if(cObj == NULL) {
+		Py_RETURN_NONE;
+	}
+	PyObject* pyObj = {{ self.new_func() }}(&{{ self.type_object() }}, NULL, NULL);
+	if(pyObj != NULL) {
+		(({{ self.object_type() }}*)pyObj)->obj = cObj;
+	}
+	return pyObj;
+}
+
+{{ self.decl() }} {{ self.c_from_py() }}(PyObject* pyObj) {
+	if(PyObject_IsInstance(pyObj, (PyObject*)&{{ self.type_object() }})) {
+		return (({{ self.object_type() }}*)pyObj)->obj;
+	}
+	if(pyObj == Py_None) {
+		return {{ self.default_value() }};
+	}
+	PyErr_SetString(PyExc_TypeError, "expected object of type {{ self.full_id() }}");
+	return {{ self.default_value() }};
+}
+""")
+	_converters_value_tmpl = Template(
+"""PyObject* {{ self.py_from_c() }}({{ self.decl() }} cObj) {
+	PyObject* pyObj = {{ self.new_func() }}(&{{ self.type_object() }}, NULL, NULL);
+	if(pyObj != NULL) {
+		(({{ self.object_type() }}*)pyObj)->obj = cObj;
+	}
+	return pyObj;
+}
+
+{{ self.decl() }} {{ self.c_from_py() }}(PyObject* pyObj) {
+	if(PyObject_IsInstance(pyObj, (PyObject*)&{{ self.type_object() }})) {
+		return (({{ self.object_type() }}*)pyObj)->obj;
+	}
+	if(pyObj == Py_None) {
+		return {{ self.default_value() }};
+	}
+	PyErr_SetString(PyExc_TypeError, "expected object of type {{ self.full_id() }}");
+	return {{ self.default_value() }};
+}
+""")
+	_self_check_tmpl = Template(
+"""if(!self->obj) {
+	PyErr_SetString(PyExc_ValueError, "self is not initialized");
+	return NULL;
+}
+""")
 
 	def __init__(self, class_id, init_params = AutoParamList(), c_struct = None,
-			     abstract = False, doc = ''):
+			     is_value = False, doc = ''):
 		self._class_id    = class_id
 		self._c_struct    = c_struct if c_struct is not None else class_id
 		self._init_params = init_params if init_params is None \
 										or isinstance(init_params, AutoParamList) \
 										else AutoParamList(*init_params)
+		self._is_value    = is_value
 		self._methods     = []
 		self._getseters   = []
 		self._doc         = doc
-		self._module      = None
+		self._parent      = None
 
-		AutoType.__init__(self, self._class_id, self._c_struct+'*',
-						  'O&', self.py_from_c(), self.c_from_py(),
+		AutoType.__init__(self, self._c_struct+('' if self._is_value else '*'),
+						  self._class_id, 'O&', self.py_from_c(), self.c_from_py(),
 						  class_ = self)
 
 	def class_id(self):
@@ -637,11 +726,11 @@ int {{ self.converter_fn() }}(PyObject* obj, void* addr) {
 	def doc(self):
 		return self._doc
 
-	def module(self):
-		return self._module
+	def parent(self):
+		return self._parent
 
 	def full_id(self):
-		return "{}.{}".format(self.module().module_id(), self.class_id())
+		return "{}.{}".format(self.parent().full_id(), self.class_id())
 
 	def add_method(self, *args, **kwargs):
 		if len(args) == 1 and not kwargs and isinstance(args[0], AutoFunction):
@@ -649,8 +738,7 @@ int {{ self.converter_fn() }}(PyObject* obj, void* addr) {
 		else:
 			method = AutoFunction(*args, **kwargs)
 		self._methods.append(method)
-		method._self_type = self.object_type()
-		method._is_method = True
+		method._parent = self
 		return self
 
 	def add_getset(self, *args, **kwargs):
@@ -692,15 +780,41 @@ int {{ self.converter_fn() }}(PyObject* obj, void* addr) {
 	def converter_fn(self):
 		return self.class_id() + "_converter"
 
+	def default_value(self):
+		if self._is_value: return self.c_class() + '()'
+		else:              return 'NULL'
+
+	def decl_prefix(self):
+		return '{}_{}'.format(self.parent().decl_prefix(), self.c_class())
+
+	def write_type_object(self, out, indent = ''):
+		if self._is_value: tmpl = self._object_type_value_tmpl
+		else:              tmpl = self._object_type_ref_tmpl
+		tmpl.render(out, { 'self': self }, indent = indent)
+
+	def write_dealloc(self, out, indent = ''):
+		if self._is_value: tmpl = self._dealloc_value_tmpl
+		else:              tmpl = self._dealloc_ref_tmpl
+		tmpl.render(out, { 'self': self }, indent = indent)
+
 	def write_new(self, out, indent = ''):
-		self._new_tmpl.render(out, { 'self': self }, indent = indent)
+		if self._is_value: tmpl = self._new_value_tmpl
+		else:              tmpl = self._new_ref_tmpl
+		tmpl.render(out, { 'self': self }, indent = indent)
+
+	def write_converters(self, out, indent = ''):
+		if self._is_value: tmpl = self._converters_value_tmpl
+		else:              tmpl = self._converters_ref_tmpl
+		tmpl.render(out, { 'self': self }, indent = indent)
 
 	def write_init_parser(self, out, indent = ''):
 		self.init_params().write_parser(out, self.full_id() + '.__init__', err_return = '-1', indent = indent)
 
 	def write_init(self, out, indent = ''):
 		if self.init_params() is not None:
-			self._init_tmpl.render(out, { 'self': self }, indent = indent)
+			if self._is_value: tmpl = self._init_value_tmpl
+			else:              tmpl = self._init_ref_tmpl
+			tmpl.render(out, { 'self': self }, indent = indent)
 
 	def write_methods(self, out, indent = ''):
 		for i, method in enumerate(self.methods()):
@@ -725,6 +839,10 @@ int {{ self.converter_fn() }}(PyObject* obj, void* addr) {
 
 	def write_binding(self, out, indent = ''):
 		self._binding_tmpl.render(out, { 'self': self }, indent = indent)
+
+	def write_self_check(self, out, indent = ''):
+		if not self._is_value:
+			self._self_check_tmpl.render(out, indent)
 
 
 class AutoModule:
@@ -821,6 +939,12 @@ PyModule_AddObject(module, \"{{ self.class_id() }}\", (PyObject*)&{{ self.type_o
 	def module_id(self):
 		return self._module_id
 
+	def full_id(self):
+		return self.module_id()
+
+	def decl_prefix(self):
+		return self.module_id()
+
 	def doc(self):
 		return self._doc
 
@@ -845,6 +969,7 @@ PyModule_AddObject(module, \"{{ self.class_id() }}\", (PyObject*)&{{ self.type_o
 		else:
 			method = AutoFunction(*args, **kwargs)
 		self._methods.append(method)
+		method._parent = self
 		return self
 
 	def add_class(self, *args, **kwargs):
@@ -853,7 +978,7 @@ PyModule_AddObject(module, \"{{ self.class_id() }}\", (PyObject*)&{{ self.type_o
 		else:
 			class_ = AutoClass(*args, **kwargs)
 		self._classes.append(class_)
-		class_._module = self
+		class_._parent = self
 		return self
 
 	def add_submodule(self, submodule):
@@ -937,6 +1062,9 @@ PyModule_AddObject(module, \"{{ self.class_id() }}\", (PyObject*)&{{ self.type_o
 			self._header_tmpl.render(out, { 'self': self })
 		with open(self.source_file(), 'w') as out:
 			self._module_file_tmpl.render(out, { 'self': self })
+
+	def write_self_check(self, out, indent = ''):
+		pass
 
 
 if __name__ == '__main__':

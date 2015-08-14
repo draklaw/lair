@@ -14,3 +14,6 @@
 - Config file(s)
 - Audio module (OpenAL ?)
 - Collision module (Based on Box2D ? Bullet ?)
+- Tilemap
+- Text
+- Geometric shapes ?

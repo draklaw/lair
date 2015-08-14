@@ -49,13 +49,16 @@ set(lair_INCLUDE_DIRS
 
 set(lair_LIBRARIES
 	"${SDL2_LIBRARY}"
+	GL
 )
 
 add_autopy(core/core_py core/core.py)
 add_autopy(sys_sdl2/sys_sdl2_py sys_sdl2/sys_sdl2.py)
+add_autopy(ec/ec_py ec/ec.py)
 add_autopy(lair_py lair.py
 	core
 	sys_sdl2
+	ec
 )
 
 set(lair_SOURCES
@@ -68,6 +71,17 @@ set(lair_SOURCES
 	sys_sdl2/sys_module.cpp
 	sys_sdl2/window.cpp
 	sys_sdl2/sys_sdl2_py.cpp
+
+	render_gl2/gl.cpp
+	render_gl2/glsl_source.cpp
+	render_gl2/shader_object.cpp
+	render_gl2/program_object.cpp
+	render_gl2/texture.cpp
+
+	ec/entity.cpp
+	ec/entity_manager.cpp
+	ec/sprite_component.cpp
+	ec/ec_py.cpp
 
 	lair_py.cpp
 )
