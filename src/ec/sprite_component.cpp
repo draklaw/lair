@@ -135,9 +135,9 @@ void SpriteComponentManager::render() {
 	glEnableVertexAttribArray(TexCoordIndex);
 
 	glVertexAttribPointer(PositionIndex, 4, GL_FLOAT, false, sizeof(Vertex),
-	                      LAIR_FIELD_OFFSET(Vertex, position));
+	                      (void*)offsetof(Vertex, position));
 	glVertexAttribPointer(TexCoordIndex, 2, GL_FLOAT, false, sizeof(Vertex),
-	                      LAIR_FIELD_OFFSET(Vertex, texCoord));
+	                      (void*)offsetof(Vertex, texCoord));
 
 	glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
 

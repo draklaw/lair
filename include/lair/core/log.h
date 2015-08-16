@@ -30,8 +30,6 @@
 
 #include <iostream>
 
-#include <Python.h>
-
 #include <lair/core/lair.h>
 
 
@@ -91,25 +89,6 @@ public:
 private:
 	std::ostream& _out;
 	bool          _terminalColor;
-};
-
-
-/**
- * \brief Allow to log stuff to a Python stream.
- */
-class PythonLogger : public LoggerBackend {
-public:
-	PythonLogger(PyObject* out);
-	virtual ~PythonLogger();
-
-	virtual void write(LogLevel level, const char* moduleName,
-	                   std::stringbuf* msgBuf);
-	virtual void write(LogLevel level, const char* moduleName,
-	                   const char* msg);
-
-private:
-	PyObject* _out;
-	bool      _terminalColor;
 };
 
 

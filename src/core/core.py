@@ -62,6 +62,7 @@ core_module = (
 	AutoModule('core')
 		.add_include("iostream")
 		.add_include("lair/core/lair.h")
+		.add_include("lair/core/python_logger.h")
 		.add_include("lair/core/log.h")
 		.add_use_namespace("lair")
 		.add_class(logger_backend_class)

@@ -43,7 +43,6 @@ find_package(SDL2 REQUIRED)
 
 set(lair_INCLUDE_DIRS
 	PRIVATE "${PROJECT_SOURCE_DIR}/include"
-	PRIVATE "${PYTHON_INCLUDE_DIRS}"
 	PRIVATE "${SDL2_INCLUDE_DIR}"
 )
 
@@ -63,14 +62,14 @@ add_autopy(lair_py lair.py
 
 set(lair_SOURCES
 	core/log.cpp
-	core/core_py.cpp
+#	core/core_py.cpp
 
 	utils/input.cpp
 	utils/image.cpp
 
 	sys_sdl2/sys_module.cpp
 	sys_sdl2/window.cpp
-	sys_sdl2/sys_sdl2_py.cpp
+#	sys_sdl2/sys_sdl2_py.cpp
 
 	render_gl2/gl.cpp
 	render_gl2/glsl_source.cpp
@@ -81,16 +80,20 @@ set(lair_SOURCES
 	ec/entity.cpp
 	ec/entity_manager.cpp
 	ec/sprite_component.cpp
-	ec/ec_py.cpp
+#	ec/ec_py.cpp
 
+#	lair_py.cpp
+)
+
+set(lair_py_SOURCES
+	core/python_logger.cpp
+	core/core_py.cpp
+	sys_sdl2/sys_sdl2_py.cpp
+	ec/ec_py.cpp
 	lair_py.cpp
 )
 
-#add_subdirectory(core)
-#add_subdirectory(utils)
-#add_subdirectory(sys_sdl2)
-#add_subdirectory(render_gl2)
-#add_subdirectory(ec)
+###
 
 add_library(lair SHARED
 	${lair_SOURCES}
@@ -102,6 +105,25 @@ target_link_libraries(lair
 	${lair_LIBRARIES}
 )
 set_target_properties(lair PROPERTIES
+	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+#	OUTPUT_NAME "_lair"
+#	PREFIX ""
+)
+
+###
+
+add_library(lair_py SHARED
+	${lair_py_SOURCES}
+)
+target_include_directories(lair_py
+	${lair_INCLUDE_DIRS}
+	PRIVATE "${PYTHON_INCLUDE_DIRS}"
+)
+target_link_libraries(lair_py
+	lair
+	${lair_LIBRARIES}
+)
+set_target_properties(lair_py PROPERTIES
 	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 	OUTPUT_NAME "_lair"
 	PREFIX ""

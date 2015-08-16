@@ -23,6 +23,7 @@
 #define _LAIR_UTILS_ASSERT_H
 
 
+#include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 #include <sstream>
@@ -92,9 +93,6 @@ typedef unsigned ScanCode;
 
 // TODO: update this
 typedef unsigned JsonNode;
-
-
-#define LAIR_FIELD_OFFSET(_struct, _field) (&reinterpret_cast<_struct*>(0)->_field)
 
 
 }

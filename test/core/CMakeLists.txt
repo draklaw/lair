@@ -18,13 +18,13 @@
 ##
 
 
-add_executable(test_ec
-	test_entity_manager.cpp
+add_executable(test_core
+	test_signal.cpp
 )
 
-target_link_libraries(test_ec
+target_link_libraries(test_core
 	${GTEST_BOTH_LIBRARIES}
 	pthread # Seems required by GTest
 	lair
 )
-add_dependencies(test test_ec)
+add_dependencies(test test_core)

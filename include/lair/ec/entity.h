@@ -64,7 +64,7 @@ public:
 		delete name;
 		// Erase everything from the field flag
 		std::memset(&flags, 0,
-		            sizeof(_Entity) - ptrdiff_t(LAIR_FIELD_OFFSET(_Entity, flags)));
+		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
 	}
 
 public:
