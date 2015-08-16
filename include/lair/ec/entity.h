@@ -48,6 +48,9 @@ public:
 	inline _Entity() {}
 	_Entity(const _Entity&) = delete;
 	_Entity(_Entity&&)      = delete;
+	~_Entity() {
+		delete[] name;
+	}
 
 	_Entity& operator=(const _Entity&) = delete;
 	_Entity& operator==(_Entity&&)     = delete;
@@ -61,7 +64,7 @@ public:
 	}
 
 	inline void reset() {
-		delete name;
+		delete[] name;
 		// Erase everything from the field flag
 		std::memset(&flags, 0,
 		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
