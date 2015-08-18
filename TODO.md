@@ -2,11 +2,6 @@
 
 - ~~Object binding~~
 - ~~Copyright notice~~
-- ~~Loader~~
-  - ImageLoader
-  - Auto-remove cached objects when max size is exceded
-  - Move to utils ?
-  - Track files for auto-reload
 - File system abstraction ?
 - Renderer module
   - Tilemap
@@ -20,7 +15,12 @@
     - ~~Signal/slot~~ + python
   - Re-implement test-window
   - ~Investigate packaging
-- Move Image in core
+- ~~Loader~~
+  - ~~ImageLoader~~
+  - Auto-remove cached objects when max size is exceded
+  - ~~Move to utils ?~~
+  - Track files for auto-reload
+- ~~Move Image in core~~
 - Make Input part of sys (with support for events) ?
 - Collision module (Based on Box2D ? Bullet ?)
 - Geometric shapes ?

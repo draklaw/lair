@@ -39,6 +39,11 @@ function(add_autopy TARGET MODULE_FILE)
 endfunction()
 
 
+find_package(Boost REQUIRED COMPONENTS
+	system
+	filesystem
+)
+
 find_package(SDL2 REQUIRED)
 # TODO: FindSDL2_image.cmake
 #find_package(SDL2_image REQUIRED)
@@ -46,11 +51,13 @@ find_package(SDL2 REQUIRED)
 set(lair_INCLUDE_DIRS
 	PRIVATE "${PROJECT_SOURCE_DIR}/include"
 	PRIVATE "${SDL2_INCLUDE_DIR}"
+	PRIVATE "${Boost_INCLUDE_DIRS}"
 )
 
 set(lair_LIBRARIES
 	SDL2_image
 	"${SDL2_LIBRARY}"
+	"${Boost_LIBRARIES}"
 	GL
 )
 
@@ -67,6 +74,7 @@ set(lair_SOURCES
 	core/log.cpp
 	core/image.cpp
 
+	utils/path.cpp
 	utils/input.cpp
 	utils/loader.cpp
 

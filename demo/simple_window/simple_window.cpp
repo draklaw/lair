@@ -32,6 +32,7 @@
 #include <lair/core/log.h>
 #include <lair/core/image.h>
 
+#include <lair/utils/path.h>
 #include <lair/utils/input.h>
 
 #include <lair/sys_sdl2/sys_module.h>
@@ -65,7 +66,7 @@ bool quit() {
 }
 
 
-int main(int /*argc*/, char** /*argv*/) {
+int main(int /*argc*/, char** argv) {
 	bool ok = true;
 
 	lair::MasterLogger logger;
@@ -75,14 +76,15 @@ int main(int /*argc*/, char** /*argv*/) {
 
 	glog.setLevel(lair::LogLevel::Debug);
 	glog.setMaster(&logger);
-//	glog.fatal  ("Fatal");
-//	glog.error  ("Error");
-//	glog.warning("Warning");
-//	glog.log    ("Log");
-//	glog.info   ("Info");
-//	glog.debug  ("Debug");
 
 	// ////////////////////////////////////////////////////////////////////////
+
+#ifdef SIMPLE_WINDOW_DATA_DIR
+	lair::Path dataPath = boost::filesystem::canonical(SIMPLE_WINDOW_DATA_DIR);
+#else
+	lair::Path dataPath = lair::exePath(argv[0]);
+#endif
+	glog.log("Data directory: ", dataPath.native());
 
 //	dataDir = SIMPLE_WINDOW_DATA_DIR;
 //	glog.log("Data directory: \"", dataDir, "\"");
@@ -107,7 +109,7 @@ int main(int /*argc*/, char** /*argv*/) {
 	glog.info("VSync: ", sys.isVSyncEnabled());
 
 	lair::LoaderManager loader(0, 1, &logger, lair::LogLevel::Debug);
-	auto imgLoader = loader.load<lair::ImageLoader>(SIMPLE_WINDOW_DATA_DIR "/lair.png");
+	auto imgLoader = loader.load<lair::ImageLoader>((dataPath / "/lair.png").c_str());
 
 	lair::InputManager inputs(&sys, &glog);
 	lair::Input* space = inputs.addInput("space");
