@@ -23,12 +23,15 @@
 #define _LAIR_UTILS_LOG_H
 
 
+#include <utility>
 #include <vector>
 #include <string>
 #include <ostream>
 #include <sstream>
 
 #include <iostream>
+
+#include <mutex>
 
 #include <lair/core/lair.h>
 
@@ -39,9 +42,9 @@ namespace internal {
 inline void printArgsHelper(std::stringstream&) {}
 
 template < typename T, typename... Args >
-inline void printArgsHelper(std::stringstream& out, T first, Args... args) {
+inline void printArgsHelper(std::stringstream& out, T&& first, Args&&... args) {
 	out << first;
-	printArgsHelper(out, args...);
+	printArgsHelper(out, std::forward<Args>(args)...);
 }
 }
 
@@ -130,6 +133,7 @@ public:
 private:
 	typedef std::vector<LoggerBackend*> BackendList;
 
+	std::mutex  _lock;
 	BackendList _backends;
 };
 
@@ -166,71 +170,71 @@ public:
 	void setFrom(Logger& other);
 
 	template < typename... Args >
-	inline void write(LogLevel level, Args... args) {
-		writeM(level, _defaultModuleName, args...);
+	inline void write(LogLevel level, Args&&... args) {
+		writeM(level, _defaultModuleName, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	void writeM(LogLevel level, const char* moduleName, Args... args);
+	void writeM(LogLevel level, const char* moduleName, Args&&... args);
 
 	template < typename... Args >
-	inline void fatal(Args... args) {
-		write(LogLevel::Fatal, args...);
+	inline void fatal(Args&&... args) {
+		write(LogLevel::Fatal, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void fatalM(const char* moduleName, Args... args) {
-		writeM(LogLevel::Fatal, moduleName, args...);
+	inline void fatalM(const char* moduleName, Args&&... args) {
+		writeM(LogLevel::Fatal, moduleName, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void error(Args... args) {
-		write(LogLevel::Error, args...);
+	inline void error(Args&&... args) {
+		write(LogLevel::Error, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void errorM(const char* moduleName, Args... args) {
-		writeM(LogLevel::Error, moduleName, args...);
+	inline void errorM(const char* moduleName, Args&&... args) {
+		writeM(LogLevel::Error, moduleName, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void warning(Args... args) {
-		write(LogLevel::Warning, args...);
+	inline void warning(Args&&... args) {
+		write(LogLevel::Warning, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void warningM(const char* moduleName, Args... args) {
-		writeM(LogLevel::Warning, moduleName, args...);
+	inline void warningM(const char* moduleName, Args&&... args) {
+		writeM(LogLevel::Warning, moduleName, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void log(Args... args) {
-		write(LogLevel::Log, args...);
+	inline void log(Args&&... args) {
+		write(LogLevel::Log, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void logM(const char* moduleName, Args... args) {
-		writeM(LogLevel::Log, moduleName, args...);
+	inline void logM(const char* moduleName, Args&&... args) {
+		writeM(LogLevel::Log, moduleName, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void info(Args... args) {
-		write(LogLevel::Info, args...);
+	inline void info(Args&&... args) {
+		write(LogLevel::Info, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void infoM(const char* moduleName, Args... args) {
-		writeM(LogLevel::Info, moduleName, args...);
+	inline void infoM(const char* moduleName, Args&&... args) {
+		writeM(LogLevel::Info, moduleName, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void debug(Args... args) {
-		write(LogLevel::Debug, args...);
+	inline void debug(Args&&... args) {
+		write(LogLevel::Debug, std::forward<Args>(args)...);
 	}
 
 	template < typename... Args >
-	inline void debugM(const char* moduleName, Args... args) {
-		writeM(LogLevel::Debug, moduleName, args...);
+	inline void debugM(const char* moduleName, Args&&... args) {
+		writeM(LogLevel::Debug, moduleName, std::forward<Args>(args)...);
 	}
 
 
@@ -250,12 +254,12 @@ private:
 
 template < typename... Args >
 void Logger::writeM(LogLevel level,
-                  const char* moduleName, Args... args) {
+                  const char* moduleName, Args&&... args) {
 	if(!_master || level > _level)
 		return;
 
 	_formatter.str(std::string());
-	internal::printArgsHelper(_formatter, args...);
+	internal::printArgsHelper(_formatter, std::forward<Args>(args)...);
 	_master->write(level, moduleName, _formatter.rdbuf());
 }
 

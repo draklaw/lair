@@ -62,14 +62,13 @@ add_autopy(lair_py lair.py
 
 set(lair_SOURCES
 	core/log.cpp
-#	core/core_py.cpp
+	core/loader.cpp
 
 	utils/input.cpp
 	utils/image.cpp
 
 	sys_sdl2/sys_module.cpp
 	sys_sdl2/window.cpp
-#	sys_sdl2/sys_sdl2_py.cpp
 
 	render_gl2/gl.cpp
 	render_gl2/glsl_source.cpp
@@ -80,9 +79,6 @@ set(lair_SOURCES
 	ec/entity.cpp
 	ec/entity_manager.cpp
 	ec/sprite_component.cpp
-#	ec/ec_py.cpp
-
-#	lair_py.cpp
 )
 
 set(lair_py_SOURCES

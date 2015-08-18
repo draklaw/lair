@@ -104,7 +104,7 @@ void MasterLogger::removeBackend(LoggerBackend* backend) {
 
 void MasterLogger::write(LogLevel level, const char* moduleName,
                          std::stringbuf* msgBuf) {
-	// TODO: make this thread safe.
+	std::unique_lock<std::mutex> lk(_lock);
 	for(LoggerBackend* backend: _backends) {
 		msgBuf->pubseekpos(std::ios_base::beg, std::ios_base::in);
 		backend->write(level, moduleName, msgBuf);
@@ -114,7 +114,7 @@ void MasterLogger::write(LogLevel level, const char* moduleName,
 
 void MasterLogger::write(LogLevel level, const char* moduleName,
                          const char* msg) {
-	// TODO: make this thread safe.
+	std::unique_lock<std::mutex> lk(_lock);
 	for(LoggerBackend* backend: _backends) {
 		backend->write(level, moduleName, msg);
 	}

@@ -26,6 +26,7 @@
 #include <Python.h>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
 
 
 namespace lair

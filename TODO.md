@@ -1,19 +1,23 @@
 # Todo-list
 
 - ~~Object binding~~
-- lair binding
 - ~~Copyright notice~~
-- ec meta-code (python ?)
-- Re-implement test-window
-- ~Investigate packaging
-- Move Image in core
-- Loader (image, ...)
-- Make Input part of sys ?
-- ~~Signal/slot~~ + python
+- ~~Loader~~
+  - ImageLoader
+- File system abstraction ?
 - Renderer module
   - Tilemap
   - Text
-- Config file(s)
+- Config file(s) JsonCpp
+- Game loop
 - Audio module (OpenAL ?)
+- ec meta-code (python ?)
+- Python
+  - lair binding
+    - ~~Signal/slot~~ + python
+  - Re-implement test-window
+  - ~Investigate packaging
+- Move Image in core
+- Make Input part of sys (with support for events) ?
 - Collision module (Based on Box2D ? Bullet ?)
 - Geometric shapes ?
