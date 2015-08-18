@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_CORE_LOADER_H
-#define _LAIR_CORE_LOADER_H
+#ifndef _LAIR_UTILS_LOADER_H
+#define _LAIR_UTILS_LOADER_H
 
 
 #include <memory>
@@ -65,7 +65,7 @@ public:
 	size_t             size();
 	const std::string& path() const { return _path; }
 
-	void   wait();
+	void wait();
 
 	virtual void loadSync(Logger& log);
 

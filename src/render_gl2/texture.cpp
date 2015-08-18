@@ -21,8 +21,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-
-#include <lair/utils/image.h>
+#include <lair/core/image.h>
 
 #include "lair/render_gl2/texture.h"
 

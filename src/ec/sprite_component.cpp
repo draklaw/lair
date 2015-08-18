@@ -103,10 +103,10 @@ void SpriteComponentManager::render() {
 			Scalar h = sc.texture()->height();
 			Transform& wt = sc._entity()->worldTransform;
 			_vertices.insert(_vertices.end(), {
-			    Vertex{ wt * Vector4(0, 0, 0, 1), Vector2(0, 0) },
-			    Vertex{ wt * Vector4(w, 0, 0, 1), Vector2(1, 0) },
-			    Vertex{ wt * Vector4(0, h, 0, 1), Vector2(0, 1) },
-			    Vertex{ wt * Vector4(w, h, 0, 1), Vector2(1, 1) }
+			    Vertex{ wt * Vector4(0, 0, 0, 1), Vector2(0, 1) },
+			    Vertex{ wt * Vector4(w, 0, 0, 1), Vector2(1, 1) },
+			    Vertex{ wt * Vector4(0, h, 0, 1), Vector2(0, 0) },
+			    Vertex{ wt * Vector4(w, h, 0, 1), Vector2(1, 0) }
 			});
 			_indices.insert(_indices.end(), {
 			    index + 0, index + 1, index + 2,

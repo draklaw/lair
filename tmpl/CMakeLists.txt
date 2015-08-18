@@ -17,19 +17,17 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-
-add_custom_target(test)
-
-find_package(GTest REQUIRED)
-
-include_directories(
-	"${PROJECT_SOURCE_DIR}/include"
-	${GTEST_INCLUDE_DIRS}
+set(lair_{{ module }}_SOURCES
+	{{ class_underscore }}.cpp
 )
 
-include_directories(
+set(lair_{{ module }}_LIBRARIES
 )
 
-add_subdirectory(core)
-add_subdirectory(utils)
-add_subdirectory(ec)
+add_library(lair_{{ module }} ${lair_{{ module }}_SOURCES})
+
+target_include_directories(lair_{{ module }}
+	PUBLIC "${PROJECT_SOURCE_DIR}/include"
+)
+
+target_link_libraries(lair_{{ module }} ${lair_{{ module }}_LIBRARIES})

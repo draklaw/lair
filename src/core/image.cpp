@@ -19,7 +19,7 @@
  */
 
 
-#include "lair/utils/image.h"
+#include "lair/core/image.h"
 
 
 namespace lair {
@@ -47,8 +47,8 @@ Image::Image(unsigned width, unsigned height, Format format,
     : _width(width),
       _height(height),
       _format(format),
-      _data(reinterpret_cast<std::uint8_t*>(data),
-            reinterpret_cast<std::uint8_t*>(data) + (width * height * formatByteSize(format))) {
+      _data(reinterpret_cast<Byte*>(data),
+            reinterpret_cast<Byte*>(data) + (width * height * formatByteSize(format))) {
 }
 
 
@@ -74,6 +74,11 @@ Image::Format Image::format() const {
 
 const void* Image::data() const {
 	return _data.data();
+}
+
+
+size_t Image::sizeInBytes() const {
+	return sizeof(Image) + _data.size();
 }
 
 

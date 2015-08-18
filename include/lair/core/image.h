@@ -19,51 +19,57 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_SHADER_OBJECT_H
-#define _LAIR_RENDER_GL2_SHADER_OBJECT_H
+#ifndef _LAIR_CORE_IMAGE_H
+#define _LAIR_CORE_IMAGE_H
 
 
-#include <string>
-#include <istream>
-#include <ostream>
+#include <cstdint>
+#include <vector>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/core/lair.h>
 
 
 namespace lair {
 
 
-class GlslSource;
-
-class ShaderObject {
+class Image {
 public:
-	ShaderObject(GLenum type=0);
-	ShaderObject(const ShaderObject&) = delete;
-	~ShaderObject();
+	enum Format {
+		FormatInvalid,
+		FormatRGBA8,
+	};
 
-	ShaderObject& operator=(const ShaderObject&) = delete;
+public:
+	static unsigned formatByteSize(Format format);
 
-	bool isGenerated() const;
-	bool isCompiled() const;
+public:
+	Image();
+	Image(unsigned width, unsigned height, Format format, void* data = nullptr);
+	Image(const Image&) = delete;
+	Image(Image&&)      = default;
 
-	GLuint id() const;
+	Image& operator=(const Image& rhs) = delete;
+	Image& operator=(Image&& rhs)      = default;
 
-	void generateObject(GLenum type=0);
-	void deleteObject();
-
-	bool compile(const GlslSource& source);
-	bool compileFromFile(const std::string& filename);
-	bool compileFromStream(std::istream& in);
-
-	void dumpLog(std::ostream& out) const;
+	bool isValid() const;
+	unsigned width() const;
+	unsigned height() const;
+	Format format() const;
+	const void* data() const;
+	size_t sizeInBytes() const;
 
 private:
-	GLenum _type;
-	GLuint _id;
-	GLint _compile_status;
+	typedef std::vector<Byte> Data;
+
+private:
+	unsigned _width;
+	unsigned _height;
+	Format _format;
+	Data _data;
 };
 
 
 }
+
 
 #endif

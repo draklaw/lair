@@ -40,6 +40,8 @@ endfunction()
 
 
 find_package(SDL2 REQUIRED)
+# TODO: FindSDL2_image.cmake
+#find_package(SDL2_image REQUIRED)
 
 set(lair_INCLUDE_DIRS
 	PRIVATE "${PROJECT_SOURCE_DIR}/include"
@@ -47,6 +49,7 @@ set(lair_INCLUDE_DIRS
 )
 
 set(lair_LIBRARIES
+	SDL2_image
 	"${SDL2_LIBRARY}"
 	GL
 )
@@ -62,13 +65,14 @@ add_autopy(lair_py lair.py
 
 set(lair_SOURCES
 	core/log.cpp
-	core/loader.cpp
+	core/image.cpp
 
 	utils/input.cpp
-	utils/image.cpp
+	utils/loader.cpp
 
 	sys_sdl2/sys_module.cpp
 	sys_sdl2/window.cpp
+	sys_sdl2/image_loader.cpp
 
 	render_gl2/gl.cpp
 	render_gl2/glsl_source.cpp

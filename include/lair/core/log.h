@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_UTILS_LOG_H
-#define _LAIR_UTILS_LOG_H
+#ifndef _LAIR_CORE_LOG_H
+#define _LAIR_CORE_LOG_H
 
 
 #include <utility>

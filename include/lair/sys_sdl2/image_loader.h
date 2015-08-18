@@ -19,45 +19,36 @@
  */
 
 
-#ifndef _LAIR_UTILS_IMAGE_H
-#define _LAIR_UTILS_IMAGE_H
+#ifndef _LAIR_SYS_SDL2_IMAGE_LOADER_H
+#define _LAIR_SYS_SDL2_IMAGE_LOADER_H
 
 
-#include <cstdint>
-#include <vector>
+#include <lair/core/lair.h>
+#include <lair/core/image.h>
+
+#include <lair/utils/loader.h>
 
 
-namespace lair {
+namespace lair
+{
 
 
-class Image {
+class ImageLoader : public Loader {
 public:
-	enum Format {
-		FormatInvalid,
-		FormatRGBA8,
-	};
+	ImageLoader(LoaderManager* manager, const std::string& path);
+	ImageLoader(const ImageLoader&) = delete;
+	ImageLoader(ImageLoader&&)      = delete;
+	~ImageLoader();
 
-public:
-	static unsigned formatByteSize(Format format);
+	ImageLoader& operator=(const ImageLoader&) = delete;
+	ImageLoader& operator=(ImageLoader&&)      = delete;
 
-public:
-	Image();
-	Image(unsigned width, unsigned height, Format format, void* data = nullptr);
+	const Image& getImage() const { return _image; }
 
-	bool isValid() const;
-	unsigned width() const;
-	unsigned height() const;
-	Format format() const;
-	const void* data() const;
+	virtual void loadSync(Logger& log);
 
-private:
-	typedef std::vector<std::uint8_t> Data;
-
-private:
-	unsigned _width;
-	unsigned _height;
-	Format _format;
-	Data _data;
+protected:
+	Image _image;
 };
 
 

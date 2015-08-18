@@ -19,12 +19,13 @@
  */
 
 
-#ifndef _LAIR_UTILS_ASSERT_H
-#define _LAIR_UTILS_ASSERT_H
+#ifndef _LAIR_CORE_LAIR_H
+#define _LAIR_CORE_LAIR_H
 
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <sstream>
 
@@ -94,6 +95,13 @@ typedef unsigned ScanCode;
 // TODO: update this
 typedef unsigned JsonNode;
 
+
+// Make a unique_ptr that will be destroyed with the deleter D.
+// Useful when using C APIs that provide "destructor" functions.
+template<typename T, typename D>
+inline std::unique_ptr<T, D> make_unique(T* ptr, D deleter) {
+	return std::unique_ptr<T, D>(ptr, deleter);
+}
 
 }
 

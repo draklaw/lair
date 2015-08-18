@@ -25,7 +25,7 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/core/loader.h>
+#include <lair/utils/loader.h>
 
 
 #define TEST_LOAD_COUNT 16
@@ -57,6 +57,7 @@ TEST(LoaderTest, Startup) {
 	ASSERT_EQ(0, lm.cacheSize());
 	ASSERT_EQ(0, lm.nToLoad());
 }
+
 
 TEST(LoaderTest, TestLoad) {
 	std::srand(std::time(NULL));

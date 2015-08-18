@@ -24,7 +24,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/core/loader.h"
+#include "lair/utils/loader.h"
 
 
 namespace lair
@@ -65,11 +65,11 @@ void Loader::wait() {
 }
 
 
-void Loader::loadSync(Logger& log) {
+void Loader::loadSync(Logger& /*log*/) {
 }
 
 
-void Loader::_done(Logger& log, size_t size) {
+void Loader::_done(Logger& /*log*/, size_t size) {
 	{
 		std::unique_lock<std::mutex> lk(_mutex);
 		lairAssert(!_isLoaded);

@@ -4,6 +4,9 @@
 - ~~Copyright notice~~
 - ~~Loader~~
   - ImageLoader
+  - Auto-remove cached objects when max size is exceded
+  - Move to utils ?
+  - Track files for auto-reload
 - File system abstraction ?
 - Renderer module
   - Tilemap

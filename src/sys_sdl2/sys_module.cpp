@@ -20,6 +20,7 @@
 
 
 #include <SDL.h>
+#include <SDL_image.h>
 
 #include <lair/core/lair.h>
 
@@ -80,6 +81,13 @@ bool SysModule::initialize() {
 		log().error("SDL initialization failed: ", SDL_GetError());
 		return false;
 	}
+
+	int imgErr = IMG_Init(IMG_INIT_PNG);
+	if(imgErr < 0) {
+		log().error("SDL image initialization failed: ", IMG_GetError());
+		return false;
+	}
+
 
 	_initialized = true;
 

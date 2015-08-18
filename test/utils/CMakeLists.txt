@@ -18,18 +18,13 @@
 ##
 
 
-add_custom_target(test)
-
-find_package(GTest REQUIRED)
-
-include_directories(
-	"${PROJECT_SOURCE_DIR}/include"
-	${GTEST_INCLUDE_DIRS}
+add_executable(test_utils
+	test_loader.cpp
 )
 
-include_directories(
+target_link_libraries(test_utils
+	${GTEST_BOTH_LIBRARIES}
+	pthread # Seems required by GTest
+	lair
 )
-
-add_subdirectory(core)
-add_subdirectory(utils)
-add_subdirectory(ec)
+add_dependencies(test test_utils)
