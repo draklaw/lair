@@ -67,7 +67,8 @@ public:
 
 	Logger& log();
 
-	ShaderObject _compileShader(const char* name, const GlslSource& source);
+	ShaderObject _compileShader(const char* name, GLenum type,
+	                            const GlslSource& source);
 	ProgramObject _compileProgram(const char* name,
 	                              const ShaderObject* vert,
 	                              const ShaderObject* frag);

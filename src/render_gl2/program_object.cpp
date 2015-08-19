@@ -51,6 +51,12 @@ ProgramObject::~ProgramObject() {
 }
 
 
+ProgramObject& ProgramObject::operator=(ProgramObject other) {
+	swap(*this, other);
+	return *this;
+}
+
+
 bool ProgramObject::isGenerated() const {
 	return _id != 0;
 }
@@ -176,7 +182,7 @@ GLint ProgramObject::getUniformLocation(const GLchar* name) const {
 }
 
 
-void ProgramObject::dumpLog(std::ostream& out) const {
+void ProgramObject::getLog(std::string& out) const {
 	GLint log_size;
 	glGetProgramiv(_id, GL_INFO_LOG_LENGTH, &log_size);
 	LAIR_THROW_IF_OPENGL_ERROR();
@@ -185,7 +191,7 @@ void ProgramObject::dumpLog(std::ostream& out) const {
 	glGetProgramInfoLog(_id, log_size, NULL, buffer.get());
 	LAIR_THROW_IF_OPENGL_ERROR();
 
-	out << buffer.get();
+	out.assign(buffer.get());
 }
 
 void ProgramObject::dumpInfo(std::ostream& out) const {

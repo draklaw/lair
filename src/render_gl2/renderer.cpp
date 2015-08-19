@@ -38,6 +38,39 @@ namespace lair
 {
 
 
+const char* defaultVertGlsl =
+        "#define lowp\n"
+		"#define mediump\n"
+		"#define highp\n"
+
+		"uniform highp mat4 viewMatrix;\n"
+
+		"attribute highp vec4 vx_position;\n"
+		"attribute mediump vec2 vx_texCoord;\n"
+
+		"varying mediump vec2 texCoord;\n"
+
+		"void main() {\n"
+		"	gl_Position = viewMatrix * vx_position;\n"
+		"	texCoord    = vx_texCoord;\n"
+		"}\n";
+
+
+const char* defaultFragGlsl =
+	"#define lowp\n"
+	"#define mediump\n"
+	"#define highp\n"
+
+	"uniform sampler2D texture;\n"
+
+	"varying mediump vec2 texCoord;\n"
+
+	"void main() {\n"
+	"	gl_FragColor = texture2D(texture, texCoord);\n"
+	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
+	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
+	"}\n";
+
 Renderer::Renderer(RenderModule* module)
     : _module(module),
       _defaultTexture(),
@@ -46,6 +79,15 @@ Renderer::Renderer(RenderModule* module)
 	lairAssert(_module);
 
 	_createDefaultTexture();
+
+	ShaderObject vert = _compileShader("default", GL_VERTEX_SHADER,
+	                                   GlslSource(defaultVertGlsl));
+	ShaderObject frag = _compileShader("default", GL_FRAGMENT_SHADER,
+	                                   GlslSource(defaultFragGlsl));
+	if(vert.isCompiled() && frag.isCompiled()) {
+		_defaultShader = _compileProgram("default", &vert, &frag);
+	}
+	lairAssert(_defaultShader.isLinked());
 }
 
 
@@ -121,5 +163,36 @@ void Renderer::_createDefaultTexture() {
 	_defaultTexture._upload(img);
 	_defaultTexture._setFlags(Texture::BILINEAR | Texture::REPEAT);
 }
+
+
+ShaderObject Renderer::_compileShader(const char* name, GLenum type,
+                                      const GlslSource& source) {
+	ShaderObject shader(type);
+	shader.generateObject();
+	if(!shader.compile(source)) {
+		std::string sLog;
+		shader.getLog(sLog);
+		log().error("Failed to compile ",
+		            (type == GL_VERTEX_SHADER)? "vertex": "fragment",
+		            " shader object \"", name, "\":\n", sLog);
+	}
+	return shader;
+}
+
+ProgramObject Renderer::_compileProgram(const char* name,
+		const ShaderObject* vert, const ShaderObject* frag) {
+	ProgramObject prog;
+	prog.generateObject();
+	prog.attachShader(*vert);
+	prog.attachShader(*frag);
+	if(!prog.link()) {
+		std::string sLog;
+		prog.getLog(sLog);
+		log().error("Failed to link shader \"", name, "\":\n", sLog);
+	}
+	prog.detachAllShaders();
+	return prog;
+}
+
 
 }

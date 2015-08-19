@@ -116,7 +116,7 @@ bool ShaderObject::compileFromStream(std::istream& in) {
 }
 
 
-void ShaderObject::dumpLog(std::ostream& out) const {
+void ShaderObject::getLog(std::string& out) const {
 	lairAssert(_id != 0);
 	GLint log_size;
 	glGetShaderiv(_id, GL_INFO_LOG_LENGTH, &log_size);
@@ -126,7 +126,7 @@ void ShaderObject::dumpLog(std::ostream& out) const {
 	glGetShaderInfoLog(_id, log_size, NULL, buffer.get());
 	LAIR_THROW_IF_OPENGL_ERROR();
 
-	out << buffer.get();
+	out.assign(buffer.get());
 }
 
 

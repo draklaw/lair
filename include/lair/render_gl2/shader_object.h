@@ -25,7 +25,6 @@
 
 #include <string>
 #include <istream>
-#include <ostream>
 
 #include <lair/render_gl2/gl.h>
 
@@ -56,7 +55,7 @@ public:
 	bool compileFromFile(const std::string& filename);
 	bool compileFromStream(std::istream& in);
 
-	void dumpLog(std::ostream& out) const;
+	void getLog(std::string& out) const;
 
 	friend void swap(ShaderObject& s0, ShaderObject& s1);
 

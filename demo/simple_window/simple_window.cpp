@@ -131,32 +131,6 @@ int main(int /*argc*/, char** argv) {
 
 	lair::Texture* texture = renderer->loadTexture("lair.png");
 
-	lair::ShaderObject vertShader;
-	vertShader.generateObject(GL_VERTEX_SHADER);
-	if(!vertShader.compileFromFile(SIMPLE_WINDOW_DATA_DIR "/vertex.glsl")) {
-		std::cerr << "Vertex shader compilation failed:\n";
-		vertShader.dumpLog(std::cerr);
-		return false;
-	}
-
-	lair::ShaderObject fragShader;
-	fragShader.generateObject(GL_FRAGMENT_SHADER);
-	if(!fragShader.compileFromFile(SIMPLE_WINDOW_DATA_DIR "/fragment.glsl")) {
-		std::cerr << "Fragment shader compilation failed:\n";
-		fragShader.dumpLog(std::cerr);
-		return false;
-	}
-
-	lair::ProgramObject shader;
-	shader.generateObject();
-	shader.attachShader(vertShader);
-	shader.attachShader(fragShader);
-	if(!shader.link()) {
-		std::cerr << "Shader link failed:\n";
-		shader.dumpLog(std::cerr);
-		return false;
-	}
-
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
 
@@ -192,10 +166,10 @@ int main(int /*argc*/, char** argv) {
 	        lair::Translation(-lair::Vector3(texture->width(),
 	                                         texture->height(), 0) / 2)));
 
-	shader.use();
-	glUniformMatrix4fv(glGetUniformLocation(shader.id(), "viewMatrix"),
+	renderer->defaultShader()->use();
+	glUniformMatrix4fv(glGetUniformLocation(renderer->defaultShader()->id(), "viewMatrix"),
 	                   1, false, viewMatrix.data());
-	glUniform1i(glGetUniformLocation(shader.id(), "texture"), 0);
+	glUniform1i(glGetUniformLocation(renderer->defaultShader()->id(), "texture"), 0);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture->_glId());

@@ -40,7 +40,7 @@ public:
 	ProgramObject(ProgramObject&& other);
 	~ProgramObject();
 
-	ProgramObject& operator=(ProgramObject);
+	ProgramObject& operator=(ProgramObject other);
 
 	bool isGenerated() const;
 	bool isLinked() const;
@@ -67,7 +67,7 @@ public:
 	GLint getAttributeLocation(const GLchar* name) const;
 	GLint getUniformLocation(const GLchar* name) const;
 
-	void dumpLog(std::ostream& out) const;
+	void getLog(std::string& out) const;
 	void dumpInfo(std::ostream& out) const;
 
 	friend void swap(ProgramObject& p0, ProgramObject& p1);
