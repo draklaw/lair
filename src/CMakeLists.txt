@@ -18,8 +18,8 @@
 ##
 
 
-find_package(PythonInterp 3.3 REQUIRED)
-find_package(PythonLibs 3.3 REQUIRED)
+find_package(PythonInterp 3.3)
+find_package(PythonLibs 3.3)
 
 set(AUTOPY_DIR "${PROJECT_SOURCE_DIR}/tools")
 
@@ -127,19 +127,21 @@ set_target_properties(lair PROPERTIES
 
 ###
 
-add_library(lair_py SHARED
-	${lair_py_SOURCES}
-)
-target_include_directories(lair_py
-	${lair_INCLUDE_DIRS}
-	PRIVATE "${PYTHON_INCLUDE_DIRS}"
-)
-target_link_libraries(lair_py
-	lair
-	${lair_LIBRARIES}
-)
-set_target_properties(lair_py PROPERTIES
-	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
-	OUTPUT_NAME "_lair"
-	PREFIX ""
-)
+if(PYTHONLIBS_FOUND)
+	add_library(lair_py SHARED
+		${lair_py_SOURCES}
+	)
+	target_include_directories(lair_py
+		${lair_INCLUDE_DIRS}
+		PRIVATE "${PYTHON_INCLUDE_DIRS}"
+	)
+	target_link_libraries(lair_py
+		lair
+		${lair_LIBRARIES}
+	)
+	set_target_properties(lair_py PROPERTIES
+		LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+		OUTPUT_NAME "_lair"
+		PREFIX ""
+	)
+endif()

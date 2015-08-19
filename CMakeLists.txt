@@ -17,7 +17,7 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.12.1)
 
 project(lair)
 
