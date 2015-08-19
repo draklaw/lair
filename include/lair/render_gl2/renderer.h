@@ -29,6 +29,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/render_gl2/vertex_format.h>
 #include <lair/render_gl2/glsl_source.h>
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
@@ -44,7 +45,21 @@ class Image;
 class RenderModule;
 
 
+struct SpriteVertex {
+	Vector4 position;
+	Vector4 color;
+	Vector2 texCoord;
+};
+
+
 class Renderer {
+public:
+	enum {
+		VxPosition,
+		VxColor,
+		VxTexCoord
+	};
+
 public:
 	Renderer(RenderModule* module);
 	Renderer(const Renderer&) = delete;
@@ -53,6 +68,8 @@ public:
 
 	Renderer& operator=(const Renderer&) = delete;
 	Renderer& operator=(Renderer&&)      = delete;
+
+	const VertexFormat* spriteFormat() const { return &_spriteFormat; }
 
 	Texture* loadTexture(const std::string& file,
 	                     uint32 flags = Texture::BILINEAR | Texture::REPEAT);
@@ -70,6 +87,7 @@ public:
 	ShaderObject _compileShader(const char* name, GLenum type,
 	                            const GlslSource& source);
 	ProgramObject _compileProgram(const char* name,
+	                              const VertexFormat* format,
 	                              const ShaderObject* vert,
 	                              const ShaderObject* frag);
 
@@ -99,6 +117,8 @@ protected:
 
 protected:
 	RenderModule* _module;
+
+	VertexFormat  _spriteFormat;
 
 	Texture       _defaultTexture;
 	TextureMap    _textures;

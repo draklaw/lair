@@ -38,6 +38,8 @@ namespace lair
 {
 
 
+class Renderer;
+
 class Component;
 
 class SpriteComponentManager;
@@ -45,7 +47,7 @@ class SpriteComponentManager;
 
 class EntityManager {
 public:
-	EntityManager(size_t entityBlockSize = 1024);
+	EntityManager(lair::Renderer* renderer, size_t entityBlockSize = 1024);
 	EntityManager(const EntityManager&) = delete;
 	EntityManager(EntityManager&&)      = delete;
 	~EntityManager();
@@ -67,6 +69,7 @@ public:
 
 	void moveEntity(EntityRef& entity, EntityRef& newParent);
 
+	inline Renderer* renderer() { return _renderer; }
 	void addSpriteComponent(EntityRef& entity);
 	void removeSpriteComponent(EntityRef& entity);
 
@@ -85,13 +88,14 @@ protected:
 	void _updateWorldTransformHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:
-	_Entity*         _root;
-	_Entity*         _firstFree;
+	_Entity*        _root;
+	_Entity*        _firstFree;
 	size_t          _entityBlockSize;
 	size_t          _nEntities;
 	size_t          _nZombieEntities;
 	EntityBlockList _entities;
 
+	Renderer*       _renderer;
 	std::unique_ptr<SpriteComponentManager> _spriteManager;
 };
 

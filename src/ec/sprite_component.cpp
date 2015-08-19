@@ -22,8 +22,10 @@
 #include <lair/core/log.h>
 
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/renderer.h>
 
 #include "lair/ec/entity.h"
+#include "lair/ec/entity_manager.h"
 
 #include "lair/ec/sprite_component.h"
 
@@ -40,10 +42,13 @@ SpriteComponent::~SpriteComponent() {
 }
 
 
+//---------------------------------------------------------------------------//
 
 
-SpriteComponentManager::SpriteComponentManager()
-    : _componentBlockSize(128),
+SpriteComponentManager::SpriteComponentManager(EntityManager* manager)
+    : _manager(manager),
+      _renderer(_manager->renderer()),
+      _componentBlockSize(128),
       _nComponent(0),
       _components(),
       _firstFree(nullptr),
@@ -105,10 +110,10 @@ void SpriteComponentManager::render() {
 			Scalar h = sc.texture()->height();
 			Transform& wt = sc._entity()->worldTransform;
 			_vertices.insert(_vertices.end(), {
-			    Vertex{ wt * Vector4(0, 0, 0, 1), Vector2(0, 1) },
-			    Vertex{ wt * Vector4(w, 0, 0, 1), Vector2(1, 1) },
-			    Vertex{ wt * Vector4(0, h, 0, 1), Vector2(0, 0) },
-			    Vertex{ wt * Vector4(w, h, 0, 1), Vector2(1, 0) }
+			    SpriteVertex{ wt * Vector4(0, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 1) },
+			    SpriteVertex{ wt * Vector4(w, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 1) },
+			    SpriteVertex{ wt * Vector4(0, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 0) },
+			    SpriteVertex{ wt * Vector4(w, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 0) }
 			});
 			_indices.insert(_indices.end(), {
 			    index + 0, index + 1, index + 2,
@@ -128,25 +133,18 @@ void SpriteComponentManager::render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SpriteVertex) * _vertices.size(),
 	             _vertices.data(), GL_STREAM_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Vertex) * _indices.size(),
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * _indices.size(),
 	             _indices.data(), GL_STREAM_DRAW);
 
-	glEnableVertexAttribArray(PositionIndex);
-	glEnableVertexAttribArray(TexCoordIndex);
-
-	glVertexAttribPointer(PositionIndex, 4, GL_FLOAT, false, sizeof(Vertex),
-	                      (void*)offsetof(Vertex, position));
-	glVertexAttribPointer(TexCoordIndex, 2, GL_FLOAT, false, sizeof(Vertex),
-	                      (void*)offsetof(Vertex, texCoord));
+	_renderer->spriteFormat()->setup();
 
 	glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
 
-	glDisableVertexAttribArray(PositionIndex);
-	glDisableVertexAttribArray(TexCoordIndex);
+	_renderer->spriteFormat()->clear();
 }
 
 

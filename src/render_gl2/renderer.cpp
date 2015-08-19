@@ -38,22 +38,38 @@ namespace lair
 {
 
 
+static const VertexAttrib _spriteVertexFormat[] = {
+    { "vx_position", Renderer::VxPosition, 4, GL_FLOAT, false,
+      offsetof(SpriteVertex, position) },
+    { "vx_color",    Renderer::VxColor, 4, GL_FLOAT, false,
+      offsetof(SpriteVertex, color) },
+    { "vx_texCoord", Renderer::VxTexCoord, 2, GL_FLOAT, false,
+      offsetof(SpriteVertex, texCoord) },
+    { nullptr, 0, 0, 0, false, 0 }
+};
+
+
 const char* defaultVertGlsl =
-        "#define lowp\n"
-		"#define mediump\n"
-		"#define highp\n"
+	"#define lowp\n"
+	"#define mediump\n"
+	"#define highp\n"
 
-		"uniform highp mat4 viewMatrix;\n"
+	"uniform highp mat4 viewMatrix;\n"
 
-		"attribute highp vec4 vx_position;\n"
-		"attribute mediump vec2 vx_texCoord;\n"
+	"attribute highp   vec4 vx_position;\n"
+	"attribute lowp    vec4 vx_color;\n"
+	"attribute mediump vec2 vx_texCoord;\n"
 
-		"varying mediump vec2 texCoord;\n"
+	"varying highp   vec4 position;\n"
+	"varying lowp    vec4 color;\n"
+	"varying mediump vec2 texCoord;\n"
 
-		"void main() {\n"
-		"	gl_Position = viewMatrix * vx_position;\n"
-		"	texCoord    = vx_texCoord;\n"
-		"}\n";
+	"void main() {\n"
+	"	gl_Position = viewMatrix * vx_position;\n"
+	"	position    = gl_Position;\n"
+	"	color       = vx_color;\n"
+	"	texCoord    = vx_texCoord;\n"
+	"}\n";
 
 
 const char* defaultFragGlsl =
@@ -71,8 +87,13 @@ const char* defaultFragGlsl =
 	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
 	"}\n";
 
+
+//---------------------------------------------------------------------------//
+
+
 Renderer::Renderer(RenderModule* module)
     : _module(module),
+      _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
       _defaultTexture(),
       _textures(),
       _defaultShader() {
@@ -85,7 +106,8 @@ Renderer::Renderer(RenderModule* module)
 	ShaderObject frag = _compileShader("default", GL_FRAGMENT_SHADER,
 	                                   GlslSource(defaultFragGlsl));
 	if(vert.isCompiled() && frag.isCompiled()) {
-		_defaultShader = _compileProgram("default", &vert, &frag);
+		_defaultShader = _compileProgram("default",
+		        &_spriteFormat, &vert, &frag);
 	}
 	lairAssert(_defaultShader.isLinked());
 }
@@ -180,11 +202,18 @@ ShaderObject Renderer::_compileShader(const char* name, GLenum type,
 }
 
 ProgramObject Renderer::_compileProgram(const char* name,
+		const VertexFormat* format,
 		const ShaderObject* vert, const ShaderObject* frag) {
 	ProgramObject prog;
 	prog.generateObject();
 	prog.attachShader(*vert);
 	prog.attachShader(*frag);
+
+	for(const VertexAttrib& attrib: *format) {
+		prog.bindAttributeLocation(attrib.name, attrib.index);
+		++format;
+	}
+
 	if(!prog.link()) {
 		std::string sLog;
 		prog.getLog(sLog);

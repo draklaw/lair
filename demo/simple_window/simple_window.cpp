@@ -151,7 +151,7 @@ int main(int /*argc*/, char** argv) {
 	std::cout << viewMatrix << "\n";
 
 
-	lair::EntityManager entityManager;
+	lair::EntityManager entityManager(renderer);
 
 	// Need to know the size to create entity.
 	if(!texture->_uploadNow()) {

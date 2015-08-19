@@ -34,14 +34,15 @@ namespace lair
 {
 
 
-EntityManager::EntityManager(size_t entityBlockSize)
+EntityManager::EntityManager(Renderer* renderer, size_t entityBlockSize)
     : _root           (nullptr),
       _firstFree      (nullptr),
       _entityBlockSize(entityBlockSize),
       _nEntities      (0),
       _nZombieEntities(0),
       _entities       (),
-      _spriteManager  (new SpriteComponentManager()){
+      _renderer       (renderer),
+      _spriteManager  (new SpriteComponentManager(this)){
 	_root = _createDetachedEntity("__root__");
 }
 

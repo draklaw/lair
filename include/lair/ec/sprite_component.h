@@ -30,14 +30,18 @@
 #include <lair/core/lair.h>
 
 #include <lair/render_gl2/gl.h>
+#include <lair/render_gl2/renderer.h>
 
 
 namespace lair
 {
 
 
-class _Entity;
 class Texture;
+
+class _Entity;
+class EntityManager;
+
 
 class SpriteComponent {
 public:
@@ -62,14 +66,14 @@ public:
 	}
 
 protected:
-	_Entity* _entityPtr;
-	Texture* _texture;
+	_Entity*  _entityPtr;
+	Texture*  _texture;
 };
 
 
 class SpriteComponentManager {
 public:
-	SpriteComponentManager();
+	SpriteComponentManager(EntityManager* manager);
 	SpriteComponentManager(const SpriteComponentManager&) = delete;
 	SpriteComponentManager(SpriteComponentManager&&)      = delete;
 	~SpriteComponentManager();
@@ -94,17 +98,16 @@ public:
 		TexCoordIndex
 	};
 private:
-	struct Vertex {
-		Vector4 position;
-		Vector2 texCoord;
-	};
-	typedef std::vector<Vertex> VertexVector;
+	typedef std::vector<SpriteVertex> VertexVector;
 	typedef std::vector<GLuint> IndexVector;
 
 protected:
 	void _addComponentBlock();
 
 protected:
+	EntityManager*   _manager;
+	Renderer*        _renderer;
+
 	size_t           _componentBlockSize;
 	size_t           _nComponent;
 	ComponentList    _components;
