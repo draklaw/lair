@@ -31,11 +31,11 @@ namespace lair
 {
 
 
-Loader::Loader(LoaderManager* manager, const std::string& path)
+Loader::Loader(LoaderManager* manager, const std::string& file)
     : _manager(manager),
       _isLoaded(false),
       _size(0),
-      _path(path),
+      _file(file),
       _mutex(),
       _cv() {
 }
@@ -54,6 +54,11 @@ bool Loader::isLoaded() {
 size_t Loader::size() {
 	std::unique_lock<std::mutex> lk(_mutex);
 	return _size;
+}
+
+
+Path Loader::path() const {
+	return _manager->basePath() / _file;
 }
 
 
@@ -141,9 +146,9 @@ void _LoaderThread::_run() {
 		std::shared_ptr<Loader> loader = _manager->_popLoader();
 		// Loader can be null to signal the thread it may be stopped
 		if(loader) {
-			_logger.log("Loading ", loader->path(), " from thread ", _thread.get_id(), "...");
+			_logger.log("Loading ", loader->file(), " from thread ", _thread.get_id(), "...");
 			loader->loadSync(_logger);
-			_logger.info("Done loading ", loader->path(), " from thread ", _thread.get_id(), ".");
+			_logger.info("Done loading ", loader->file(), " from thread ", _thread.get_id(), ".");
 		}
 	}
 	_logger.info("Stop loader thread ", _thread.get_id(), ".");

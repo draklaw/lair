@@ -97,8 +97,7 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
-	lair::SysModule sys(&logger);
-	sys.log().setLevel(lair::LogLevel::Info);
+	lair::SysModule sys(&logger, lair::LogLevel::Info);
 	ok = sys.initialize();
 	if(!ok) abort();
 	sys.onQuit = quit;
@@ -125,8 +124,7 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
-	lair::RenderModule renderModule(&sys, &logger);
-	renderModule.log().setLevel(lair::LogLevel::Info);
+	lair::RenderModule renderModule(&sys, &logger, lair::LogLevel::Info);
 	renderModule.initialize();
 
 	lair::Renderer* renderer = renderModule.createRenderer();

@@ -33,9 +33,9 @@ namespace lair
 {
 
 
-SysModule::SysModule(MasterLogger* logger)
+SysModule::SysModule(MasterLogger* logger, LogLevel level)
     : onQuit(nullptr),
-      _log("sys_sdl2", logger),
+      _log("sys_sdl2", logger, level),
       _initialized(false),
       _windowMap(),
       _loader(0, 1, _log) {

@@ -47,7 +47,7 @@ void ImageLoader::loadSync(Logger& log) {
 
 	Image img;
 
-	auto surf = make_unique(IMG_Load(_path.c_str()), SDL_FreeSurface);
+	auto surf = make_unique(IMG_Load(path().c_str()), SDL_FreeSurface);
 	if(surf) {
 		Image::Format format;
 		switch(surf->format->format) {
@@ -55,7 +55,7 @@ void ImageLoader::loadSync(Logger& log) {
 			format = Image::Format::FormatRGBA8;
 			break;
 		default:
-			log.error("Unable to load image \"", _path, "\": unsupported format ",
+			log.error("Unable to load image \"", _file, "\": unsupported format ",
 			          SDL_GetPixelFormatName(surf->format->format));
 			format = Image::Format::FormatInvalid;
 		}
@@ -64,7 +64,7 @@ void ImageLoader::loadSync(Logger& log) {
 			_image = Image(surf->w, surf->h, format, surf->pixels);
 		}
 	} else {
-		log.error("Unable to load image \"", _path, "\": ", IMG_GetError());
+		log.error("Unable to load image \"", _file, "\": ", IMG_GetError());
 	}
 
 	_done(log, _image.sizeInBytes());

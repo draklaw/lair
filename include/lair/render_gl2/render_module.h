@@ -41,7 +41,8 @@ class Renderer;
 
 class RenderModule {
 public:
-	RenderModule(SysModule* sys, MasterLogger* logger = nullptr);
+	RenderModule(SysModule* sys, MasterLogger* logger = nullptr,
+	             LogLevel level = LogLevel::Log);
 	RenderModule(const RenderModule&) = delete;
 	RenderModule(RenderModule&&)      = delete;
 	~RenderModule();

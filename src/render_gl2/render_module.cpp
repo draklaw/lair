@@ -33,8 +33,8 @@ namespace lair
 {
 
 
-RenderModule::RenderModule(SysModule* sys, MasterLogger* logger)
-    : _log("render_gl2", logger),
+RenderModule::RenderModule(SysModule* sys, MasterLogger* logger, LogLevel level)
+    : _log("render_gl2", logger, level),
       _initialized(false),
       _sys(sys),
       _renderers() {

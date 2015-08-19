@@ -56,7 +56,7 @@ public:
 	/// \{
 	/// \name Constructor, destructor, initialization and shutdown.
 
-	SysModule(MasterLogger* logger = nullptr);
+	SysModule(MasterLogger* logger = nullptr, LogLevel level = LogLevel::Log);
 	SysModule(const SysModule&) = delete;
 	SysModule(SysModule&&) = delete;
 	~SysModule();

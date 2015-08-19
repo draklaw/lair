@@ -55,7 +55,7 @@ class LoaderManager;
 
 class Loader {
 public:
-	Loader(LoaderManager* manager, const std::string& path);
+	Loader(LoaderManager* manager, const std::string& file);
 	Loader(const Loader&) = delete;
 	Loader(Loader&&)      = delete;
 	virtual ~Loader();
@@ -65,7 +65,8 @@ public:
 
 	bool               isLoaded();
 	size_t             size();
-	const std::string& path() const { return _path; }
+	const std::string& file() const { return _file; }
+	Path               path() const;
 
 	void wait();
 
@@ -77,7 +78,7 @@ protected:
 	LoaderManager*          _manager;
 	bool                    _isLoaded;
 	size_t                  _size;
-	std::string             _path;
+	std::string             _file;
 	std::mutex              _mutex;
 	std::condition_variable _cv;
 };
@@ -137,7 +138,7 @@ public:
 
 		log().info("Request ", file, " loading...");
 		// TODO: use a FileSystem to access file
-		auto loader = std::make_shared<L>(this, (_basePath / file).c_str(),
+		auto loader = std::make_shared<L>(this, file,
 		                                  std::forward<Args>(args)...);
 		_enqueueLoader(loader);
 		_cache.emplace(file, loader);
