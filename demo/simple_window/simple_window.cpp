@@ -182,7 +182,9 @@ int main(int /*argc*/, char** argv) {
 	lair::EntityManager entityManager;
 
 	// Need to know the size to create entity.
-	texture->_uploadNow();
+	if(!texture->_uploadNow()) {
+		texture = renderer->defaultTexture();
+	}
 
 	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
 	entityManager.addSpriteComponent(testSprite);

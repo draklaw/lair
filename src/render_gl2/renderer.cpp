@@ -19,6 +19,8 @@
  */
 
 
+#include <vector>
+
 #include <boost/functional/hash.hpp>
 
 #include <lair/core/lair.h>
@@ -37,8 +39,13 @@ namespace lair
 
 
 Renderer::Renderer(RenderModule* module)
-    : _module(module) {
+    : _module(module),
+      _defaultTexture(),
+      _textures(),
+      _defaultShader() {
 	lairAssert(_module);
+
+	_createDefaultTexture();
 }
 
 
@@ -72,5 +79,47 @@ size_t Renderer::HashTexId::operator()(const TexId& texId) const {
 	return h;
 }
 
+
+void Renderer::_createDefaultTexture() {
+	unsigned size = 32;
+	uint32 fillColor = 0xffffffff;
+	uint32 bordColor = 0xffff00ff;
+	uint32 lineColor = 0xff0000ff;
+
+	std::vector<Byte> buffer(size * size * 4);
+	uint32* pixels = reinterpret_cast<uint32*>(buffer.data());
+	for(unsigned y = 0; y < size; ++y) {
+		for(unsigned x = 0; x < size; ++x) {
+			pixels[y * size + x] = fillColor;
+		}
+	}
+	for(unsigned x = 0; x < size; ++x) {
+		if(x > 0) {
+			pixels[x * size + x - 1]    = lineColor;
+			pixels[x * size + size - x] = lineColor;
+		}
+		pixels[x * size + x]            = lineColor;
+		pixels[x * size + size - x - 1] = lineColor;
+		if(x < size - 1) {
+			pixels[x * size + x + 1]        = lineColor;
+			pixels[x * size + size - x - 2] = lineColor;
+		}
+	}
+
+	for(unsigned x = 0; x < size; ++x) {
+		pixels[x * size + 0] = bordColor;
+		pixels[x * size + 1] = bordColor;
+		pixels[x * size + size - 1] = bordColor;
+		pixels[x * size + size - 2] = bordColor;
+		pixels[(0) * size + x] = bordColor;
+		pixels[(1) * size + x] = bordColor;
+		pixels[(size - 1) * size + x] = bordColor;
+		pixels[(size - 2) * size + x] = bordColor;
+	}
+
+	Image img(size, size, Image::Format::FormatRGBA8, buffer.data());
+	_defaultTexture._upload(img);
+	_defaultTexture._setFlags(Texture::BILINEAR | Texture::REPEAT);
+}
 
 }

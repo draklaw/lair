@@ -100,6 +100,7 @@ void SpriteComponentManager::render() {
 			if(!sc._entity()) {
 				continue;
 			}
+			bool texOk = sc.texture()->_uploadNow();
 			Scalar w = sc.texture()->width();
 			Scalar h = sc.texture()->height();
 			Transform& wt = sc._entity()->worldTransform;
@@ -123,6 +124,8 @@ void SpriteComponentManager::render() {
 	if(!_indexBuffer) {
 		glGenBuffers(1, &_indexBuffer);
 	}
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),

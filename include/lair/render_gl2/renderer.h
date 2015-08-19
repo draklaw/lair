@@ -57,6 +57,10 @@ public:
 	Texture* loadTexture(const std::string& file,
 	                     uint32 flags = Texture::BILINEAR | Texture::REPEAT);
 
+	Texture* defaultTexture() {
+		return &_defaultTexture;
+	}
+
 	const ProgramObject* defaultShader() const {
 		return &_defaultShader;
 	}
@@ -88,6 +92,9 @@ protected:
 	};
 
 	typedef std::unordered_map<TexId, Texture, HashTexId> TextureMap;
+
+protected:
+	void _createDefaultTexture();
 
 protected:
 	RenderModule* _module;

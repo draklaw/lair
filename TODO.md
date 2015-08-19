@@ -2,7 +2,7 @@
 
 - ~~Object binding~~
 - ~~Copyright notice~~
-- File system abstraction ?
+- ~File system abstraction ?
 - Renderer module
   - Tilemap
   - Text
