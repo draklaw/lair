@@ -210,6 +210,11 @@ void LoaderManager::setNThread(unsigned count) {
 }
 
 
+void LoaderManager::setBasePath(const Path& path) {
+	_basePath = path;
+}
+
+
 void LoaderManager::clearCache() {
 	_cache.clear();
 }

@@ -102,6 +102,7 @@ int main(int /*argc*/, char** argv) {
 	ok = sys.initialize();
 	if(!ok) abort();
 	sys.onQuit = quit;
+	sys.loader().setBasePath(dataPath);
 
 	lair::Window* w = sys.createWindow("simple_window", 800, 600);
 //	w->setFullscreen(true);
@@ -130,7 +131,7 @@ int main(int /*argc*/, char** argv) {
 
 	lair::Renderer* renderer = renderModule.createRenderer();
 
-	lair::Texture* texture = renderer->loadTexture((dataPath / "lair.png").c_str());
+	lair::Texture* texture = renderer->loadTexture("lair.png");
 
 	lair::ShaderObject vertShader;
 	vertShader.generateObject(GL_VERTEX_SHADER);

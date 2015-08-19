@@ -38,6 +38,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/utils/path.h>
+
 
 namespace lair
 {
@@ -117,11 +119,13 @@ public:
 	LoaderManager& operator=(const LoaderManager&) = delete;
 	LoaderManager& operator=(LoaderManager&&)      = delete;
 
-	unsigned nThread() const { return _nThread; }
-	size_t   cacheSize();
-	unsigned nToLoad();
+	unsigned    nThread() const { return _nThread; }
+	size_t      cacheSize();
+	unsigned    nToLoad();
+	const Path& basePath() const { return _basePath; }
 
 	void setNThread(unsigned count);
+	void setBasePath(const Path& path);
 
 	template < typename L, typename... Args >
 	std::shared_ptr<L> load(const std::string& file, Args&&... args) {
@@ -133,7 +137,7 @@ public:
 
 		log().info("Request ", file, " loading...");
 		// TODO: use a FileSystem to access file
-		auto loader = std::make_shared<L>(this, file /*_fs.absPath(file)*/,
+		auto loader = std::make_shared<L>(this, (_basePath / file).c_str(),
 		                                  std::forward<Args>(args)...);
 		_enqueueLoader(loader);
 		_cache.emplace(file, loader);
@@ -167,6 +171,8 @@ private:
 
 	unsigned      _nThread;
 	_LoaderThread _threadPool[MAX_LOADER_THREADS];
+
+	Path          _basePath;
 };
 
 
