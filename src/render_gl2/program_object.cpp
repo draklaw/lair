@@ -31,30 +31,46 @@
 namespace lair {
 
 
-ProgramObject::ProgramObject() :
-	_id(0), _link_status(GL_FALSE) {}
+ProgramObject::ProgramObject()
+    : _id(0),
+      _link_status(GL_FALSE) {
+}
+
+
+ProgramObject::ProgramObject(ProgramObject&& other)
+    : _id(other._id),
+      _link_status(other._link_status) {
+	other._id = 0;
+	other._link_status = GL_FALSE;
+}
+
 
 ProgramObject::~ProgramObject() {
 	if(isGenerated())
 		deleteObject();
 }
 
+
 bool ProgramObject::isGenerated() const {
 	return _id != 0;
 }
+
 
 bool ProgramObject::isLinked() const {
 	return _link_status == GL_TRUE;
 }
 
+
 GLuint ProgramObject::id() const {
 	return _id;
 }
+
 
 void ProgramObject::generateObject() {
 	assert(!isGenerated());
 	_id = glCreateProgram(); LAIR_THROW_IF_OPENGL_ERROR();
 }
+
 
 void ProgramObject::deleteObject() {
 	assert(isGenerated());
@@ -62,15 +78,18 @@ void ProgramObject::deleteObject() {
 	_id = 0;
 }
 
+
 void ProgramObject::attachShader(const ShaderObject& shader) {
 	assert(isGenerated() && shader.isGenerated());
 	glAttachShader(_id, shader.id()); LAIR_THROW_IF_OPENGL_ERROR();
 }
 
+
 void ProgramObject::detachShader(const ShaderObject& shader) {
 	assert(isGenerated() && shader.isGenerated());
 	glDetachShader(_id, shader.id()); LAIR_THROW_IF_OPENGL_ERROR();
 }
+
 
 void ProgramObject::detachAllShaders() {
 	assert(isGenerated());
@@ -87,11 +106,13 @@ void ProgramObject::detachAllShaders() {
 		glDetachShader(_id, shader_id[i]); LAIR_THROW_IF_OPENGL_ERROR();
 }
 
+
 void ProgramObject::bindAttributeLocation(const GLchar* name, GLuint index) {
 	assert(isGenerated());
 	glBindAttribLocation(_id, index, name);
 	LAIR_THROW_IF_OPENGL_ERROR();
 }
+
 
 bool ProgramObject::link() {
 	assert(isGenerated());
@@ -101,6 +122,7 @@ bool ProgramObject::link() {
 	LAIR_THROW_IF_OPENGL_ERROR();
 	return _link_status == GL_TRUE;
 }
+
 
 bool ProgramObject::validate() {
 	assert(isLinked());
@@ -115,10 +137,12 @@ bool ProgramObject::validate() {
 	return validate_status == GL_TRUE;
 }
 
+
 void ProgramObject::use() const {
 	assert(isLinked());
 	glUseProgram(_id); LAIR_THROW_IF_OPENGL_ERROR();
 }
+
 
 GLint ProgramObject::nbActiveAttributes() const {
 	assert(isLinked());
@@ -128,6 +152,7 @@ GLint ProgramObject::nbActiveAttributes() const {
 	return nb_active_attributes;
 }
 
+
 GLint ProgramObject::nbActiveUniforms() const {
 	assert(isLinked());
 	GLint nb_active_uniforms;
@@ -136,17 +161,20 @@ GLint ProgramObject::nbActiveUniforms() const {
 	return nb_active_uniforms;
 }
 
+
 GLint ProgramObject::getAttributeLocation(const GLchar* name) const {
 	assert(isLinked());
 	GLint res = glGetAttribLocation(_id, name); LAIR_THROW_IF_OPENGL_ERROR();
 	return res;
 }
 
+
 GLint ProgramObject::getUniformLocation(const GLchar* name) const {
 	assert(isLinked());
 	GLint res = glGetUniformLocation(_id, name); LAIR_THROW_IF_OPENGL_ERROR();
 	return res;
 }
+
 
 void ProgramObject::dumpLog(std::ostream& out) const {
 	GLint log_size;
@@ -199,6 +227,12 @@ void ProgramObject::dumpInfo(std::ostream& out) const {
 		out << getUniformLocation(buffer.get()) << ": " << buffer.get() << " - "
 			<< /*typeString(type)*/type << "[" << size << "]\n";
 	}
+}
+
+
+void swap(ProgramObject& p0, ProgramObject& p1) {
+	std::swap(p0._id,          p1._id);
+	std::swap(p0._link_status, p1._link_status);
 }
 
 

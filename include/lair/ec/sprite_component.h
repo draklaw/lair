@@ -49,8 +49,8 @@ public:
 	SpriteComponent& operator=(const SpriteComponent&) = delete;
 	SpriteComponent& operator=(SpriteComponent&&)      = delete;
 
-	inline Texture* texture() const { return _texture; }
-	inline void setTexture(Texture* texture) {
+	inline const Texture* texture() const { return _texture; }
+	inline void setTexture(const Texture* texture) {
 		_texture = texture;
 	}
 
@@ -63,7 +63,7 @@ public:
 
 protected:
 	_Entity* _entityPtr;
-	Texture* _texture;
+	const Texture* _texture;
 };
 
 

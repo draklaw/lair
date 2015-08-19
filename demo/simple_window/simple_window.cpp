@@ -37,11 +37,13 @@
 
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
-#include <lair/sys_sdl2/image_loader.h>
+#include <lair/sys_sdl2/sys_loader.h>
 
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/renderer.h>
+#include <lair/render_gl2/render_module.h>
 
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/sprite_component.h>
@@ -108,9 +110,6 @@ int main(int /*argc*/, char** argv) {
 	sys.setVSyncEnabled(true);
 	glog.info("VSync: ", sys.isVSyncEnabled());
 
-	lair::LoaderManager loader(0, 1, &logger, lair::LogLevel::Debug);
-	auto imgLoader = loader.load<lair::ImageLoader>((dataPath / "/lair.png").c_str());
-
 	lair::InputManager inputs(&sys, &glog);
 	lair::Input* space = inputs.addInput("space");
 	inputs.mapScanCode(space, SDL_SCANCODE_SPACE);
@@ -123,6 +122,15 @@ int main(int /*argc*/, char** argv) {
 	lair::Input* down = inputs.addInput("down");
 	inputs.mapScanCode(down, SDL_SCANCODE_DOWN);
 
+	// ////////////////////////////////////////////////////////////////////////
+
+	lair::RenderModule renderModule(&sys, &logger);
+	renderModule.log().setLevel(lair::LogLevel::Info);
+	renderModule.initialize();
+
+	lair::Renderer* renderer = renderModule.createRenderer();
+
+	lair::Texture* texture = renderer->loadTexture((dataPath / "lair.png").c_str());
 
 	lair::ShaderObject vertShader;
 	vertShader.generateObject(GL_VERTEX_SHADER);
@@ -150,29 +158,6 @@ int main(int /*argc*/, char** argv) {
 		return false;
 	}
 
-//	size_t imgSize = 128;
-//	Eigen::Vector2f center = Eigen::Vector2f(imgSize, imgSize) / 2;
-//	std::vector<lair::uint8> imgData;
-//	imgData.reserve(imgSize * imgSize * 4);
-//	for(size_t y = 0; y < imgSize; ++y) {
-//		for(size_t x = 0; x < imgSize; ++x) {
-//			Eigen::Vector2f pos = Eigen::Vector2f(x, y) + Eigen::Vector2f(.5, .5);
-//			float v = 1. - 2. * (center - pos).norm() / imgSize;
-//			lair::uint8 vi = std::min(std::max(v * 256, 0.f), 255.f);
-//			imgData.insert(imgData.end(), { vi, vi, vi, 255 });
-//		}
-//	}
-//	lair::Image img(imgSize, imgSize, lair::Image::FormatRGBA8, imgData.data());
-//	lair::Texture texture;
-//	texture.upload(img);
-
-	if(!imgLoader->isLoaded()) {
-		glog.log("Waiting for image...");
-		imgLoader->wait();
-	}
-	lair::Texture texture;
-	texture.upload(imgLoader->getImage());
-
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
 
@@ -195,14 +180,16 @@ int main(int /*argc*/, char** argv) {
 
 	lair::EntityManager entityManager;
 
+	// Need to know the size to create entity.
+	texture->_uploadNow();
+
 	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
 	entityManager.addSpriteComponent(testSprite);
-	testSprite.sprite()->setTexture(&texture);
+	testSprite.sprite()->setTexture(texture);
 	testSprite.setTransform(lair::Transform(
 //	        lair::Translation(-lair::Vector3(imgSize, imgSize, 0) / 2)));
-	        lair::Translation(-lair::Vector3(imgLoader->getImage().width(),
-	                                         imgLoader->getImage().height(), 0) / 2)));
-
+	        lair::Translation(-lair::Vector3(texture->width(),
+	                                         texture->height(), 0) / 2)));
 
 	shader.use();
 	glUniformMatrix4fv(glGetUniformLocation(shader.id(), "viewMatrix"),
@@ -210,7 +197,8 @@ int main(int /*argc*/, char** argv) {
 	glUniform1i(glGetUniformLocation(shader.id(), "texture"), 0);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture._glId());
+	glBindTexture(GL_TEXTURE_2D, texture->_glId());
+
 
 	while(running) {
 //		sys.waitAndDispatchSystemEvents();
@@ -236,6 +224,7 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
+	renderModule.shutdown();
 	sys.shutdown();
 	return EXIT_SUCCESS;
 }

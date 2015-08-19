@@ -101,7 +101,7 @@ _LoaderThread::~_LoaderThread() {
 void _LoaderThread::setManager(LoaderManager* manager) {
 	lairAssert(manager);
 	_manager = manager;
-	_logger.setFrom(_manager->logger());
+	_logger.setFrom(_manager->log());
 }
 
 
@@ -110,7 +110,7 @@ void _LoaderThread::start() {
 	if(_thread.joinable()) {
 		wait();
 	}
-	_manager->logger().debug("Starting loader thread...");
+	_manager->log().debug("Starting loader thread...");
 	_running = true;
 	_thread = std::thread(&_LoaderThread::_run, std::ref(*this));
 }
@@ -118,7 +118,7 @@ void _LoaderThread::start() {
 
 void _LoaderThread::stop() {
 	lairAssert(_running && _thread.joinable());
-	_manager->logger().debug("Stopping loader thread ", _thread.get_id(), "...");
+	_manager->log().debug("Stopping loader thread ", _thread.get_id(), "...");
 	_running = false;
 }
 
@@ -129,9 +129,9 @@ void _LoaderThread::wait() {
 		stop();
 	}
 	auto id = _thread.get_id();
-	_manager->logger().debug("Joinning loader thread ", id, "...");
+	_manager->log().debug("Joinning loader thread ", id, "...");
 	_thread.join();
-	_manager->logger().debug("Joined loader thread ", id, ".");
+	_manager->log().debug("Joined loader thread ", id, ".");
 }
 
 
@@ -154,8 +154,8 @@ void _LoaderThread::_run() {
 
 
 LoaderManager::LoaderManager(size_t maxCacheSize, unsigned nThread,
-                             MasterLogger* logger, LogLevel logLevel)
-    : _logger("loader", logger, logLevel),
+                             Logger& logger)
+    : _logger(&logger),
       _queueLock(),
       _queueCv(),
       _queue(),

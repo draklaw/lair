@@ -30,25 +30,48 @@
 namespace lair {
 
 
-ShaderObject::ShaderObject(GLenum type) :
-	_type(type), _id(0), _compile_status(GL_FALSE) {}
+ShaderObject::ShaderObject(GLenum type)
+    : _type(type),
+      _id(0),
+      _compile_status(GL_FALSE) {
+}
+
+
+ShaderObject::ShaderObject(ShaderObject&& other)
+    : _type(other._type),
+      _id(other._id),
+      _compile_status(other._compile_status) {
+	other._id = 0;
+	other._compile_status = GL_FALSE;
+}
+
 
 ShaderObject::~ShaderObject() {
 	if(_id != 0)
 		deleteObject();
 }
 
+
+ShaderObject& ShaderObject::operator=(ShaderObject other) {
+	swap(*this, other);
+	return *this;
+}
+
+
 bool ShaderObject::isGenerated() const {
 	return _id != 0;
 }
+
 
 bool ShaderObject::isCompiled() const {
 	return _compile_status == GL_TRUE;
 }
 
+
 GLuint ShaderObject::id() const {
 	return _id;
 }
+
 
 void ShaderObject::generateObject(GLenum type) {
 	lairAssert(_id == 0);
@@ -59,11 +82,13 @@ void ShaderObject::generateObject(GLenum type) {
 	_id = glCreateShader(_type); LAIR_THROW_IF_OPENGL_ERROR();
 }
 
+
 void ShaderObject::deleteObject() {
 	lairAssert(_id != 0);
 	glDeleteShader(_id); LAIR_THROW_IF_OPENGL_ERROR();
 	_id = 0;
 }
+
 
 bool ShaderObject::compile(const GlslSource& source) {
 	lairAssert(_id != 0);
@@ -76,17 +101,20 @@ bool ShaderObject::compile(const GlslSource& source) {
 	return _compile_status == GL_TRUE;
 }
 
+
 bool ShaderObject::compileFromFile(const std::string& filename) {
 	GlslSource source;
 	source.loadFromFile(filename);
 	return compile(source);
 }
 
+
 bool ShaderObject::compileFromStream(std::istream& in) {
 	GlslSource source;
 	source.loadFromStream(in);
 	return compile(source);
 }
+
 
 void ShaderObject::dumpLog(std::ostream& out) const {
 	lairAssert(_id != 0);
@@ -99,6 +127,13 @@ void ShaderObject::dumpLog(std::ostream& out) const {
 	LAIR_THROW_IF_OPENGL_ERROR();
 
 	out << buffer.get();
+}
+
+
+void swap(ShaderObject& s0, ShaderObject& s1) {
+	std::swap(s0._type,           s1._type);
+	std::swap(s0._id,             s1._id);
+	std::swap(s0._compile_status, s1._compile_status);
 }
 
 

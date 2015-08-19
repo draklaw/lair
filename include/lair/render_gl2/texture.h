@@ -25,14 +25,22 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/sys_sdl2/sys_loader.h>
+
 #include <lair/render_gl2/gl.h>
+
 
 namespace lair
 {
 
+
 class Image;
 
+
 class Texture {
+public:
+	typedef SysLoader::ImageLoaderPtr ImageLoaderPtr;
+
 public:
 	enum {
 		MAG_NEAREST    = 0 << 1,
@@ -72,11 +80,10 @@ public:
 public:
 	Texture();
 	Texture(const Texture&) = delete;
-	Texture(Texture&&)      = delete;
+	Texture(Texture&& other);
 	~Texture();
 
-	Texture& operator=(const Texture&) = delete;
-	Texture& operator=(Texture&&)      = delete;
+	Texture& operator=(Texture other);
 
 	inline bool   isValid()    const { return _id; }
 
@@ -90,17 +97,23 @@ public:
 	inline uint16 width()      const { return _width; }
 	inline uint16 height()     const { return _height; }
 
-	bool upload(const Image& image, uint32 flags = BILINEAR | REPEAT);
-	void setFlags(uint32 flags);
-	void release();
+	void _load(ImageLoaderPtr loader);
+	bool _uploadNow();
 
+	bool _upload(const Image& image);
+	void _setFlags(uint32 flags);
+
+	friend void swap(Texture& t0, Texture& t1);
+
+	void _release();
 	inline GLuint _glId() { return _id; }
 
 protected:
-	GLuint _id;
-	uint32 _flags;
-	uint16 _width;
-	uint16 _height;
+	GLuint         _id;
+	uint32         _flags;
+	uint16         _width;
+	uint16         _height;
+	ImageLoaderPtr _loader;
 };
 
 

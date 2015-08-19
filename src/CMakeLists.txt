@@ -48,14 +48,18 @@ find_package(SDL2 REQUIRED)
 # TODO: FindSDL2_image.cmake
 #find_package(SDL2_image REQUIRED)
 
+find_package(GLEW REQUIRED)
+
 set(lair_INCLUDE_DIRS
 	PRIVATE "${PROJECT_SOURCE_DIR}/include"
+	PRIVATE "${GLEW_INCLUDE_DIRS}"
 	PRIVATE "${SDL2_INCLUDE_DIR}"
 	PRIVATE "${Boost_INCLUDE_DIRS}"
 )
 
 set(lair_LIBRARIES
 	SDL2_image
+	"${GLEW_LIBRARIES}"
 	"${SDL2_LIBRARY}"
 	"${Boost_LIBRARIES}"
 	GL
@@ -78,15 +82,18 @@ set(lair_SOURCES
 	utils/input.cpp
 	utils/loader.cpp
 
-	sys_sdl2/sys_module.cpp
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp
+	sys_sdl2/sys_loader.cpp
+	sys_sdl2/sys_module.cpp
 
 	render_gl2/gl.cpp
 	render_gl2/glsl_source.cpp
 	render_gl2/shader_object.cpp
 	render_gl2/program_object.cpp
 	render_gl2/texture.cpp
+	render_gl2/renderer.cpp
+	render_gl2/render_module.cpp
 
 	ec/entity.cpp
 	ec/entity_manager.cpp

@@ -23,19 +23,30 @@
 #define _LAIR_RENDER_GL2_RENDERER_H
 
 
+#include <unordered_map>
+#include <string>
+
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
+
+#include <lair/render_gl2/glsl_source.h>
+#include <lair/render_gl2/shader_object.h>
+#include <lair/render_gl2/program_object.h>
+#include <lair/render_gl2/texture.h>
 
 
 namespace lair
 {
 
+
 class Image;
 
-class Texture;
+class RenderModule;
+
 
 class Renderer {
 public:
-	Renderer();
+	Renderer(RenderModule* module);
 	Renderer(const Renderer&) = delete;
 	Renderer(Renderer&&)      = delete;
 	~Renderer();
@@ -43,13 +54,48 @@ public:
 	Renderer& operator=(const Renderer&) = delete;
 	Renderer& operator=(Renderer&&)      = delete;
 
-	void initialize();
-	void shutdown();
+	Texture* loadTexture(const std::string& file,
+	                     uint32 flags = Texture::BILINEAR | Texture::REPEAT);
 
-	Texture* texture(const Image& image, uint32 flags);
+	const ProgramObject* defaultShader() const {
+		return &_defaultShader;
+	}
 
+	Logger& log();
+
+	ShaderObject _compileShader(const char* name, const GlslSource& source);
+	ProgramObject _compileProgram(const char* name,
+	                              const ShaderObject* vert,
+	                              const ShaderObject* frag);
 
 protected:
+	struct TexId {
+		inline TexId(const std::string& file, uint32 flags)
+		    : file(file), flags(flags) {}
+		inline bool operator==(const TexId& rhs) const {
+			return file == rhs.file && flags == rhs.flags;
+		}
+		inline bool operator!=(const TexId& rhs) const {
+			return !(*this == rhs);
+		}
+
+		std::string file;
+		uint32      flags;
+	};
+
+	struct HashTexId {
+		size_t operator()(const TexId& texId) const;
+	};
+
+	typedef std::unordered_map<TexId, Texture, HashTexId> TextureMap;
+
+protected:
+	RenderModule* _module;
+
+	Texture       _defaultTexture;
+	TextureMap    _textures;
+
+	ProgramObject _defaultShader;
 };
 
 

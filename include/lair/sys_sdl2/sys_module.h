@@ -28,6 +28,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/sys_sdl2/sys_loader.h>
+
 
 extern "C" {
 typedef union  SDL_Event SDL_Event;
@@ -54,7 +56,7 @@ public:
 	/// \{
 	/// \name Constructor, destructor, initialization and shutdown.
 
-	SysModule(MasterLogger* logger = 0);
+	SysModule(MasterLogger* logger = nullptr);
 	SysModule(const SysModule&) = delete;
 	SysModule(SysModule&&) = delete;
 	~SysModule();
@@ -104,6 +106,15 @@ public:
 	/// \}
 
 	/// \{
+	/// \name File loading
+
+	inline SysLoader& loader() {
+		return _loader;
+	}
+
+	/// \}
+
+	/// \{
 	/// \name Utility
 
 	inline Logger& log() {
@@ -143,10 +154,12 @@ private:
 	Window* _windowFromID(unsigned windowID);
 
 private:
+	Logger _log;
+
 	bool _initialized;
 	WindowMap _windowMap;
 
-	Logger _log;
+	SysLoader _loader;
 };
 
 

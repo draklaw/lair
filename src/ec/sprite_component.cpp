@@ -67,7 +67,8 @@ void SpriteComponentManager::addComponent(_Entity* entity) {
 
 	SpriteComponent* sc = _firstFree;
 	lairAssert(sc && !sc->_entity());
-	_firstFree = reinterpret_cast<SpriteComponent*>(sc->texture());
+	_firstFree = reinterpret_cast<SpriteComponent*>(
+	            const_cast<Texture*>(sc->texture()));
 
 	sc->_setEntity(entity);
 	sc->setTexture(nullptr);

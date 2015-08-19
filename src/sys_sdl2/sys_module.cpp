@@ -35,9 +35,10 @@ namespace lair
 
 SysModule::SysModule(MasterLogger* logger)
     : onQuit(nullptr),
+      _log("sys_sdl2", logger),
       _initialized(false),
       _windowMap(),
-      _log("sys_sdl2", logger) {
+      _loader(0, 1, _log) {
 }
 
 

@@ -109,16 +109,13 @@ public:
 
 public:
 	LoaderManager(size_t maxCacheSize, unsigned nThread = 1,
-	              MasterLogger* logger = nullptr, LogLevel logLevel = LogLevel::Log);
+	              Logger& log = noopLogger);
 	LoaderManager(const LoaderManager&) = delete;
 	LoaderManager(LoaderManager&&)      = delete;
 	~LoaderManager();
 
 	LoaderManager& operator=(const LoaderManager&) = delete;
 	LoaderManager& operator=(LoaderManager&&)      = delete;
-
-	const Logger& logger() const { return _logger; }
-	Logger& logger() { return _logger; }
 
 	unsigned nThread() const { return _nThread; }
 	size_t   cacheSize();
@@ -130,11 +127,11 @@ public:
 	std::shared_ptr<L> load(const std::string& file, Args&&... args) {
 		auto it = _cache.find(file);
 		if(it != _cache.end()) {
-			_logger.debug("Serve ", file, " from cache.");
+			log().debug("Serve ", file, " from cache.");
 			return std::dynamic_pointer_cast<L>(it->second);
 		}
 
-		_logger.info("Request ", file, " loading...");
+		log().info("Request ", file, " loading...");
 		// TODO: use a FileSystem to access file
 		auto loader = std::make_shared<L>(this, file /*_fs.absPath(file)*/,
 		                                  std::forward<Args>(args)...);
@@ -145,6 +142,8 @@ public:
 
 	void clearCache();
 
+	Logger& log() { return *_logger; }
+
 	void _enqueueLoader(LoaderPtr loader);
 	LoaderPtr _popLoader();
 	void _doneLoading(Loader* loader, size_t size);
@@ -154,7 +153,7 @@ private:
 	typedef std::unordered_map<std::string, LoaderPtr> Cache;
 
 private:
-	Logger        _logger;
+	Logger*       _logger;
 
 	std::mutex    _queueLock;
 	std::condition_variable

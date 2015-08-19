@@ -34,16 +34,67 @@ Texture::Texture()
     : _id(0),
       _flags(0),
       _width(0),
-      _height(0) {
+      _height(0),
+      _loader() {
+}
+
+
+Texture::Texture(Texture&& other)
+    : _id(other._id),
+      _flags(other._flags),
+      _width(other._width),
+      _height(other._height),
+      _loader() {
+	other._id = 0;
+	other._flags = 0;
+	other._width = 0;
+	other._height = 0;
+	other._loader.reset();
 }
 
 
 Texture::~Texture() {
-	release();
+	_release();
 }
 
 
-bool Texture::upload(const Image& image, uint32 flags) {
+Texture& Texture::operator=(Texture other) {
+	swap(*this, other);
+	return *this;
+}
+
+
+void Texture::_load(ImageLoaderPtr loader) {
+	lairAssert(!isValid() && !_loader);
+	_loader = loader;
+}
+
+
+bool Texture::_uploadNow() {
+	if(isValid()) {
+		// Valid textures should not hold a reference to a loader.
+		lairAssert(!_loader);
+		return true;
+	}
+	if(!_loader) {
+		// We likely failed loading previously.
+		return false;
+	}
+
+	_loader->wait();
+	bool ok = false;
+	if(_loader->getImage().isValid()) {
+		ok = _upload(_loader->getImage());
+	}
+	_loader.reset();
+
+	return ok;
+}
+
+
+bool Texture::_upload(const Image& image) {
+	lairAssert(image.isValid());
+
 	if(!_id) {
 		glGenTextures(1, &_id);
 	}
@@ -51,16 +102,26 @@ bool Texture::upload(const Image& image, uint32 flags) {
 	glBindTexture(GL_TEXTURE_2D, _id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0,
 	             GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+	glGenerateMipmap(GL_TEXTURE_2D);
 	LAIR_THROW_IF_OPENGL_ERROR();
 
 	_width  = image.width();
 	_height = image.height();
-	setFlags(flags);
+
 	return true;
 }
 
 
-void Texture::setFlags(uint32 flags) {
+void swap(Texture& t0, Texture& t1) {
+	std::swap(t0._id,     t1._id);
+	std::swap(t0._flags,  t1._flags);
+	std::swap(t0._width,  t1._width);
+	std::swap(t0._height, t1._height);
+	std::swap(t0._loader, t1._loader);
+}
+
+
+void Texture::_setFlags(uint32 flags) {
 	_flags = flags;
 
 	GLenum mag;
@@ -99,15 +160,11 @@ void Texture::setFlags(uint32 flags) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     wraps);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     wrapt);
 
-	if(mipmapMode() != MIPMAP_NONE) {
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-
 	LAIR_THROW_IF_OPENGL_ERROR();
 }
 
 
-void Texture::release() {
+void Texture::_release() {
 	if(isValid()) {
 		glDeleteTextures(1, &_id);
 	}

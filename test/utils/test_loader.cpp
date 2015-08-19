@@ -50,8 +50,9 @@ TEST(LoaderTest, Startup) {
 	MasterLogger mlog;
 	OStreamLogger coutBackend(std::cout, true);
 	mlog.addBackend(&coutBackend);
+	Logger log("test", &mlog, LogLevel::Debug);
 
-	LoaderManager lm(1 << 26, 2, &mlog, LogLevel::Debug);
+	LoaderManager lm(1 << 26, 2, log);
 
 	ASSERT_EQ(2, lm.nThread());
 	ASSERT_EQ(0, lm.cacheSize());
@@ -65,8 +66,9 @@ TEST(LoaderTest, TestLoad) {
 	MasterLogger mlog;
 	OStreamLogger coutBackend(std::cout, true);
 	mlog.addBackend(&coutBackend);
+	Logger log("test", &mlog, LogLevel::Debug);
 
-	LoaderManager lm(1 << 26, 0, &mlog, LogLevel::Debug);
+	LoaderManager lm(1 << 26, 0, log);
 
 	ASSERT_EQ(0, lm.nThread());
 
@@ -84,12 +86,12 @@ TEST(LoaderTest, TestLoad) {
 
 	for(unsigned i = 0; i < TEST_LOAD_COUNT; ++ i) {
 		if(!loaders[i]->isLoaded()) {
-			lm.logger().info("Wait for ", loaders[i]->path(), "...");
+			log.info("Wait for ", loaders[i]->path(), "...");
 			loaders[i]->wait();
 			ASSERT_TRUE(loaders[i]->isLoaded());
 			ASSERT_EQ(1, loaders[i]->size());
 		}
-		lm.logger().info("Done loading ", loaders[i]->path(), ".");
+		log.info("Done loading ", loaders[i]->path(), ".");
 	}
 
 	ASSERT_EQ(TEST_LOAD_COUNT, lm.cacheSize());

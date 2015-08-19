@@ -37,9 +37,10 @@ class ProgramObject {
 public:
 	ProgramObject();
 	ProgramObject(const ProgramObject&) = delete;
+	ProgramObject(ProgramObject&& other);
 	~ProgramObject();
 
-	ProgramObject& operator=(const ProgramObject&) = delete;
+	ProgramObject& operator=(ProgramObject);
 
 	bool isGenerated() const;
 	bool isLinked() const;
@@ -68,6 +69,8 @@ public:
 
 	void dumpLog(std::ostream& out) const;
 	void dumpInfo(std::ostream& out) const;
+
+	friend void swap(ProgramObject& p0, ProgramObject& p1);
 
 private:
 	GLuint _id;

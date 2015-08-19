@@ -39,9 +39,10 @@ class ShaderObject {
 public:
 	ShaderObject(GLenum type=0);
 	ShaderObject(const ShaderObject&) = delete;
+	ShaderObject(ShaderObject&& other);
 	~ShaderObject();
 
-	ShaderObject& operator=(const ShaderObject&) = delete;
+	ShaderObject& operator=(ShaderObject other);
 
 	bool isGenerated() const;
 	bool isCompiled() const;
@@ -56,6 +57,8 @@ public:
 	bool compileFromStream(std::istream& in);
 
 	void dumpLog(std::ostream& out) const;
+
+	friend void swap(ShaderObject& s0, ShaderObject& s1);
 
 private:
 	GLenum _type;
