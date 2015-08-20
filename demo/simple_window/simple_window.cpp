@@ -34,6 +34,7 @@
 
 #include <lair/utils/path.h>
 #include <lair/utils/input.h>
+#include <lair/utils/interp_loop.h>
 
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
@@ -154,28 +155,41 @@ int main(int /*argc*/, char** argv) {
 	        lair::Translation(-lair::Vector3(texture->width(),
 	                                         texture->height(), 0) / 2)));
 
+	lair::InterpLoop loop(&sys);
+	loop.setTickDuration(    1000000000/200);
+	loop.setFrameDuration(   1000000000/60);
+	loop.setMaxFrameDuration(2000000000/20);
+	loop.setFrameMargin(     1000000000/120);
 
+	loop.start();
 	while(running) {
-//		sys.waitAndDispatchSystemEvents();
-		sys.dispatchPendingSystemEvents();
-		inputs.sync();
-		if(space->justPressed()) glog.log("Space pressed");
-		if(space->justReleased()) glog.log("Space released");
+		switch(loop.nextEvent()) {
+		case lair::InterpLoop::Tick: {
+			inputs.sync();
+			if(space->justPressed()) glog.log("Space pressed");
+			if(space->justReleased()) glog.log("Space released");
 
-		float speed = 1;
-		lair::Transform trans = testSprite.transform();
-		if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
-		if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
-		if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
-		if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
-		testSprite.setTransform(trans);
+			float speed = 1;
+			lair::Transform trans = testSprite.transform();
+			if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
+			if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
+			if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
+			if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
+			testSprite.setTransform(trans);
 
-		entityManager.updateWorldTransform();
-		entityManager.render(camera);
-		w->swapBuffers();
+			entityManager.updateWorldTransform();
+			break;
+		}
+		case lair::InterpLoop::Frame: {
+			glog.log("frame: ", loop.frameCount(), ", ", loop.frameTime());
+			entityManager.render(camera);
+			w->swapBuffers();
 
-		LAIR_LOG_OPENGL_ERRORS_TO(glog);
+			LAIR_LOG_OPENGL_ERRORS_TO(glog);
+			break;
+		}}
 	}
+	loop.stop();
 
 	// ////////////////////////////////////////////////////////////////////////
 

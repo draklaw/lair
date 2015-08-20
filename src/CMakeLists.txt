@@ -83,6 +83,7 @@ set(lair_SOURCES
 	utils/path.cpp
 	utils/input.cpp
 	utils/loader.cpp
+	utils/interp_loop.cpp
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp

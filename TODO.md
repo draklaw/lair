@@ -8,13 +8,14 @@
   - Text
   - Use big buffers per batch, fill them after components sort ?
   - Write a class that combines Shader + uniforms values
+  - Culling
 - Config file(s) JsonCpp
 - Game loop
 - Game state
 - ec
   - Clonning
   - Load from json
-  - Sparse components
+  - ~~Sparse components~~
   - ~~ComponentManager~~
 - Audio module (OpenAL ?)
 - ec meta-code (python ?)

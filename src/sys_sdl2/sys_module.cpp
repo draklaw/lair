@@ -19,6 +19,9 @@
  */
 
 
+#include <chrono>
+#include <thread>
+
 #include <SDL.h>
 #include <SDL_image.h>
 
@@ -197,15 +200,24 @@ uint8 SysModule::getKeyState(unsigned scancode) {
 
 
 uint64 SysModule::getTimeNs() const {
-	return SDL_GetPerformanceCounter() * 1000000000
-	     / SDL_GetPerformanceFrequency();
+//	return double(SDL_GetPerformanceCounter())
+//	     / double(SDL_GetPerformanceFrequency())
+//	     * 1e9;
+//	return SDL_GetTicks() * 1000000;
+	uint64 time = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+	            std::chrono::high_resolution_clock::now()).time_since_epoch().count();
+	static uint64 start = time;
+	return time - start;
 }
 
 
 void SysModule::waitNs(uint64 ns) const {
 	if(ns == 0) return;
 	// integer division rounded up.
-	SDL_Delay((ns-1) / 1000000000 + 1);
+//	SDL_Delay((ns-1) / 1000000000 + 1);
+//	SDL_Delay(double(ns) / 1.6);
+//	SDL_Delay((ns-1) / 1000000 + 1);
+	std::this_thread::sleep_for(std::chrono::nanoseconds(ns));
 }
 
 
