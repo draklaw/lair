@@ -34,6 +34,7 @@ namespace lair
 Loader::Loader(LoaderManager* manager, const std::string& file)
     : _manager(manager),
       _isLoaded(false),
+      _isSuccessful(false),
       _size(0),
       _file(file),
       _mutex(),
@@ -48,6 +49,11 @@ Loader::~Loader() {
 bool Loader::isLoaded() {
 	std::unique_lock<std::mutex> lk(_mutex);
 	return _isLoaded;
+}
+
+
+bool Loader::isSuccessful() {
+	return _isSuccessful;
 }
 
 
@@ -70,19 +76,30 @@ void Loader::wait() {
 }
 
 
-void Loader::loadSync(Logger& /*log*/) {
+void Loader::loadSync(Logger& log) {
+	lairAssert(!_isLoaded);
+
+	// It is *very* important to catch exceptions here, or waiting threads
+	// could wait forever. Moreover, it would unexpectedly stop a worker
+	// thread.
+	try {
+		loadSyncImpl(log);
+	} catch(std::exception e) {
+		log.error("Exception caught while loading \"", _file, "\": ", e.what());
+	}
+
+	{
+		std::unique_lock<std::mutex> lk(_mutex);
+		_isLoaded = true;
+		_manager->_doneLoading(this, _size);
+	}
+	_cv.notify_all();
 }
 
 
-void Loader::_done(Logger& /*log*/, size_t size) {
-	{
-		std::unique_lock<std::mutex> lk(_mutex);
-		lairAssert(!_isLoaded);
-		_isLoaded = true;
-		_size = size;
-		_manager->_doneLoading(this, size);
-	}
-	_cv.notify_all();
+void Loader::_success(size_t size) {
+	_isSuccessful = true;
+	_size = size;
 }
 
 

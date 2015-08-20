@@ -64,19 +64,24 @@ public:
 	Loader& operator=(Loader&&)      = delete;
 
 	bool               isLoaded();
+	bool               isSuccessful();
 	size_t             size();
 	const std::string& file() const { return _file; }
 	Path               path() const;
 
 	void wait();
 
-	virtual void loadSync(Logger& log);
+	void loadSync(Logger& log);
 
-	void _done(Logger& log, size_t size);
+protected:
+	virtual void loadSyncImpl(Logger& log) = 0;
+
+	void _success(size_t size);
 
 protected:
 	LoaderManager*          _manager;
 	bool                    _isLoaded;
+	bool                    _isSuccessful;
 	size_t                  _size;
 	std::string             _file;
 	std::mutex              _mutex;

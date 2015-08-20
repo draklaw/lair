@@ -45,7 +45,8 @@ public:
 
 	const Image& getImage() const { return _image; }
 
-	virtual void loadSync(Logger& log);
+protected:
+	virtual void loadSyncImpl(Logger& log);
 
 protected:
 	Image _image;

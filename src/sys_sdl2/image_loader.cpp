@@ -42,9 +42,7 @@ ImageLoader::~ImageLoader() {
 }
 
 
-void ImageLoader::loadSync(Logger& log) {
-	Loader::loadSync(log);
-
+void ImageLoader::loadSyncImpl(Logger& log) {
 	Image img;
 
 	auto surf = make_unique(IMG_Load(path().c_str()), SDL_FreeSurface);
@@ -67,7 +65,7 @@ void ImageLoader::loadSync(Logger& log) {
 		log.error("Unable to load image \"", _file, "\": ", IMG_GetError());
 	}
 
-	_done(log, _image.sizeInBytes());
+	_success(_image.sizeInBytes());
 }
 
 

@@ -38,10 +38,9 @@ public:
 	TestLoader(LoaderManager* manager, const std::string &path)
 	    : Loader(manager, path) {}
 
-	virtual void loadSync(Logger& log) {
-		Loader::loadSync(log);
+	virtual void loadSyncImpl(Logger& log) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(20 + std::rand() % 60));
-		_done(log, 1);
+		_success(1);
 	}
 };
 
