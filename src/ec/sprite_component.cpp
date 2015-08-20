@@ -36,7 +36,10 @@ namespace lair
 {
 
 
-SpriteComponent::SpriteComponent() {
+SpriteComponent::SpriteComponent(_Entity* entity)
+    : Component(entity),
+      _sprite(nullptr),
+      _spriteIndex(0) {
 }
 
 
@@ -47,17 +50,11 @@ SpriteComponent::~SpriteComponent() {
 //---------------------------------------------------------------------------//
 
 
-SpriteComponentManager::SpriteComponentManager(EntityManager* manager)
-    : _manager(manager),
+SpriteComponentManager::SpriteComponentManager(EntityManager* manager,
+                                               size_t componentBlockSize)
+    : ComponentManager(manager, componentBlockSize),
       _renderer(_manager->renderer()),
-      _componentBlockSize(128),
-      _nComponent(0),
-      _components(),
-      _firstFree(nullptr),
-      _vertices(),
-      _indices(),
-      _vertexBuffer(0),
-      _indexBuffer(0) {
+      _defaultBatch() {
 }
 
 
@@ -65,53 +62,23 @@ SpriteComponentManager::~SpriteComponentManager() {
 }
 
 
-void SpriteComponentManager::addComponent(_Entity* entity) {
-	lairAssert(!entity->sprite);
-
-	if(!_firstFree) {
-		_addComponentBlock();
-	}
-
-	SpriteComponent* sc = _firstFree;
-	lairAssert(sc && !sc->_entity());
-	_firstFree = reinterpret_cast<SpriteComponent*>(
-	            const_cast<Sprite*>(sc->sprite()));
-
-	sc->_setEntity(entity);
-	sc->setSprite(nullptr);
-	sc->setIndex(0);
-
-	entity->sprite = sc;
-	++_nComponent;
-}
-
-
-void SpriteComponentManager::removeComponent(_Entity* entity) {
-	SpriteComponent* sc = entity->sprite;
-	lairAssert(sc && sc->_entity() == entity);
-
-	entity->sprite = nullptr;
-	--_nComponent;
-
-	sc->_reset();
-	sc->setSprite(reinterpret_cast<Sprite*>(_firstFree));
-	_firstFree = sc;
-}
-
-
 void SpriteComponentManager::render(const OrthographicCamera& camera) {
 	_defaultBatch.clearBuffers();
 
+	size_t remaining = nComponents();
 	GLuint index = 0;
-	for(ComponentBlock& block: _components) {
-		for(SpriteComponent& sc: block) {
-			if(!sc._entity()) {
+	for(SpriteComponent* block: _components) {
+		SpriteComponent* end = std::min(block + _componentBlockSize,
+		                                block + remaining);
+		remaining -= _componentBlockSize;
+		for(SpriteComponent* sc = block; sc != end; ++sc) {
+			if(!sc->_entity()) {
 				continue;
 			}
-			const Sprite* sprite = sc.sprite();
+			const Sprite* sprite = sc->sprite();
 			Texture* tex = (sprite->texture()->_uploadNow())?
 				sprite->texture(): _renderer->defaultTexture();
-			Box2 region = sprite->tileBox(sc.index());
+			Box2 region = sprite->tileBox(sc->index());
 
 			VertexBuffer& buff = _defaultBatch.getBuffer(
 			            _renderer->spriteShader()->program(),
@@ -119,7 +86,7 @@ void SpriteComponentManager::render(const OrthographicCamera& camera) {
 
 			Scalar w = tex->width();
 			Scalar h = tex->height();
-			Transform& wt = sc._entity()->worldTransform;
+			Transform& wt = sc->_entity()->worldTransform;
 			buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
 			                             Vector4(1, 1, 1, 1),
 			                             region.corner(Box2::BottomLeft) });
@@ -147,18 +114,6 @@ void SpriteComponentManager::render(const OrthographicCamera& camera) {
 	_renderer->spriteShader()->setTextureUnit(0);
 	_renderer->spriteShader()->setViewMatrix(camera.transform());
 	_defaultBatch.render();
-}
-
-
-void SpriteComponentManager::_addComponentBlock() {
-	_components.emplace_back(_componentBlockSize);
-	ComponentBlock& block = _components.back();
-	std::memset(block.data(), 0, sizeof(SpriteComponent) * block.size());
-	for(SpriteComponent& sc: block) {
-		sc.setSprite(reinterpret_cast<Sprite*>(&sc + 1));
-	}
-	block.back().setSprite(reinterpret_cast<Sprite*>(_firstFree));
-	_firstFree = &block.front();
 }
 
 

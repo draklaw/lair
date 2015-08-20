@@ -33,6 +33,10 @@
 #include <lair/render_gl2/batch.h>
 #include <lair/render_gl2/renderer.h>
 
+#include <lair/ec/entity.h>
+#include <lair/ec/component.h>
+#include <lair/ec/component_manager.h>
+
 
 namespace lair
 {
@@ -45,15 +49,15 @@ class _Entity;
 class EntityManager;
 
 
-class SpriteComponent {
+class SpriteComponent : public Component {
 public:
-	SpriteComponent();
+	SpriteComponent(_Entity* entity);
 	SpriteComponent(const SpriteComponent&) = delete;
-	SpriteComponent(SpriteComponent&&)      = delete;
+	SpriteComponent(SpriteComponent&&)      = default;
 	~SpriteComponent();
 
 	SpriteComponent& operator=(const SpriteComponent&) = delete;
-	SpriteComponent& operator=(SpriteComponent&&)      = delete;
+	SpriteComponent& operator=(SpriteComponent&&)      = default;
 
 	inline Sprite* sprite() const { return _sprite; }
 	inline void setSprite(Sprite* sprite) {
@@ -63,23 +67,19 @@ public:
 	inline unsigned index() const { return _spriteIndex; }
 	inline void setIndex(unsigned index) { _spriteIndex = index; }
 
-	inline _Entity* _entity() const { return _entityPtr; }
-	inline void _setEntity(_Entity* entity) { _entityPtr = entity; }
-
-	inline void _reset() {
-		std::memset(this, 0, sizeof(SpriteComponent));
+	static inline SpriteComponent*& _getEntityComponent(_Entity* entity) {
+		return entity->sprite;
 	}
 
 protected:
-	_Entity*  _entityPtr;
 	Sprite*   _sprite;
 	unsigned  _spriteIndex;
 };
 
 
-class SpriteComponentManager {
+class SpriteComponentManager : public ComponentManager<SpriteComponent> {
 public:
-	SpriteComponentManager(EntityManager* manager);
+	SpriteComponentManager(EntityManager* manager, size_t componentBlockSize = 1024);
 	SpriteComponentManager(const SpriteComponentManager&) = delete;
 	SpriteComponentManager(SpriteComponentManager&&)      = delete;
 	~SpriteComponentManager();
@@ -87,44 +87,12 @@ public:
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
 
-	size_t nComponent() const { return _nComponent; }
-
-	void addComponent(_Entity* entity);
-	void removeComponent(_Entity* entity);
-
 	void render(const OrthographicCamera& camera);
 
 protected:
-	typedef std::vector<SpriteComponent> ComponentBlock;
-	typedef std::list<ComponentBlock>    ComponentList;
-
-public:
-	enum {
-		PositionIndex,
-		TexCoordIndex
-	};
-private:
-	typedef std::vector<SpriteVertex> VertexVector;
-	typedef std::vector<GLuint> IndexVector;
-
-protected:
-	void _addComponentBlock();
-
-protected:
-	EntityManager*   _manager;
 	Renderer*        _renderer;
 
-	size_t           _componentBlockSize;
-	size_t           _nComponent;
-	ComponentList    _components;
-	SpriteComponent* _firstFree;
-
 	Batch            _defaultBatch;
-
-	VertexVector     _vertices;
-	IndexVector      _indices;
-	GLuint           _vertexBuffer;
-	GLuint           _indexBuffer;
 };
 
 

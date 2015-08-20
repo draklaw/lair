@@ -15,7 +15,7 @@
   - Clonning
   - Load from json
   - Sparse components
-  - ComponentManager
+  - ~~ComponentManager~~
 - Audio module (OpenAL ?)
 - ec meta-code (python ?)
 - Python

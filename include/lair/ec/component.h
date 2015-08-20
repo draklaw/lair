@@ -30,18 +30,24 @@ namespace lair
 {
 
 
+class _Entity;
+
+
 class Component {
 public:
-	Component();
+	explicit inline Component(_Entity* entity)
+	    : _entityPtr(entity) {
+	}
 	Component(const Component&) = delete;
-	Component(Component&&)      = delete;
-	~Component();
+	Component(Component&&)      = default;
 
 	Component& operator=(const Component&) = delete;
-	Component& operator=(Component&&)      = delete;
+	Component& operator=(Component&&)      = default;
 
+	inline _Entity* _entity() const { return _entityPtr; }
 
 protected:
+	_Entity*  _entityPtr;
 };
 
 
