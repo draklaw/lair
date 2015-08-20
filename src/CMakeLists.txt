@@ -75,6 +75,8 @@ add_autopy(lair_py lair.py
 )
 
 set(lair_SOURCES
+	jsoncpp.cpp
+
 	core/log.cpp
 	core/image.cpp
 

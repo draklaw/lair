@@ -31,6 +31,8 @@
 
 #include <Eigen/Geometry>
 
+#include <json/json-forwards.h>
+
 
 namespace lair {
 
@@ -94,9 +96,6 @@ typedef Eigen::AlignedBox2f Box2;
 typedef Eigen::AlignedBox3f Box3;
 
 typedef unsigned ScanCode;
-
-// TODO: update this
-typedef unsigned JsonNode;
 
 
 // Make a unique_ptr that will be destroyed with the deleter D.

@@ -6,9 +6,11 @@
 - Renderer module
   - Tilemap
   - Text
-  - Use circular buffer ?
+  - Use big buffers per batch, fill them after components sort ?
+  - Write a class that combines Shader + uniforms values
 - Config file(s) JsonCpp
 - Game loop
+- Game state
 - ec
   - Clonning
   - Load from json
