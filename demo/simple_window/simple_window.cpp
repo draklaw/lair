@@ -171,9 +171,6 @@ int main(int /*argc*/, char** argv) {
 	                   1, false, viewMatrix.data());
 	glUniform1i(glGetUniformLocation(renderer->defaultShader()->id(), "texture"), 0);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture->_glId());
-
 
 	while(running) {
 //		sys.waitAndDispatchSystemEvents();

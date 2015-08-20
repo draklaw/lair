@@ -97,54 +97,91 @@ void SpriteComponentManager::removeComponent(_Entity* entity) {
 
 
 void SpriteComponentManager::render() {
-	_vertices.clear();
-	_indices.clear();
+	_defaultBatch.clearBuffers();
+
 	GLuint index = 0;
 	for(ComponentBlock& block: _components) {
 		for(SpriteComponent& sc: block) {
 			if(!sc._entity()) {
 				continue;
 			}
-			bool texOk = sc.texture()->_uploadNow();
+			Texture* tex = (sc.texture()->_uploadNow())?
+				sc.texture(): _renderer->defaultTexture();
+
+			VertexBuffer& buff = _defaultBatch.getBuffer(
+			            _renderer->defaultShader(),
+			            tex, _renderer->spriteFormat());
+
 			Scalar w = sc.texture()->width();
 			Scalar h = sc.texture()->height();
 			Transform& wt = sc._entity()->worldTransform;
-			_vertices.insert(_vertices.end(), {
-			    SpriteVertex{ wt * Vector4(0, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 1) },
-			    SpriteVertex{ wt * Vector4(w, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 1) },
-			    SpriteVertex{ wt * Vector4(0, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 0) },
-			    SpriteVertex{ wt * Vector4(w, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 0) }
-			});
-			_indices.insert(_indices.end(), {
-			    index + 0, index + 1, index + 2,
-			    index + 2, index + 1, index + 3
-			});
+			buff.addVertex(SpriteVertex{ wt * Vector4(0, 0, 0, 1),
+			                             Vector4(1, 1, 1, 1), Vector2(0, 1) });
+			buff.addVertex(SpriteVertex{ wt * Vector4(w, 0, 0, 1),
+			                             Vector4(1, 1, 1, 1), Vector2(1, 1) });
+			buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
+			                             Vector4(1, 1, 1, 1), Vector2(0, 0) });
+			buff.addVertex(SpriteVertex{ wt * Vector4(w, h, 0, 1),
+			                             Vector4(1, 1, 1, 1), Vector2(1, 0) });
+			buff.addIndex(index + 0);
+			buff.addIndex(index + 1);
+			buff.addIndex(index + 2);
+			buff.addIndex(index + 2);
+			buff.addIndex(index + 1);
+			buff.addIndex(index + 3);
 			index += 4;
 		}
 	}
 
-	if(!_vertexBuffer) {
-		glGenBuffers(1, &_vertexBuffer);
-	}
-	if(!_indexBuffer) {
-		glGenBuffers(1, &_indexBuffer);
-	}
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	_defaultBatch.render();
 
-	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(SpriteVertex) * _vertices.size(),
-	             _vertices.data(), GL_STREAM_DRAW);
+//	_vertices.clear();
+//	_indices.clear();
+//	GLuint index = 0;
+//	for(ComponentBlock& block: _components) {
+//		for(SpriteComponent& sc: block) {
+//			if(!sc._entity()) {
+//				continue;
+//			}
+//			bool texOk = sc.texture()->_uploadNow();
+//			Scalar w = sc.texture()->width();
+//			Scalar h = sc.texture()->height();
+//			Transform& wt = sc._entity()->worldTransform;
+//			_vertices.insert(_vertices.end(), {
+//			    SpriteVertex{ wt * Vector4(0, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 1) },
+//			    SpriteVertex{ wt * Vector4(w, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 1) },
+//			    SpriteVertex{ wt * Vector4(0, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 0) },
+//			    SpriteVertex{ wt * Vector4(w, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 0) }
+//			});
+//			_indices.insert(_indices.end(), {
+//			    index + 0, index + 1, index + 2,
+//			    index + 2, index + 1, index + 3
+//			});
+//			index += 4;
+//		}
+//	}
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * _indices.size(),
-	             _indices.data(), GL_STREAM_DRAW);
+//	if(!_vertexBuffer) {
+//		glGenBuffers(1, &_vertexBuffer);
+//	}
+//	if(!_indexBuffer) {
+//		glGenBuffers(1, &_indexBuffer);
+//	}
 
-	_renderer->spriteFormat()->setup();
+//	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
+//	glBufferData(GL_ARRAY_BUFFER, sizeof(SpriteVertex) * _vertices.size(),
+//	             _vertices.data(), GL_STREAM_DRAW);
 
-	glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
+//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * _indices.size(),
+//	             _indices.data(), GL_STREAM_DRAW);
 
-	_renderer->spriteFormat()->clear();
+//	_renderer->spriteFormat()->setup();
+
+//	glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
+
+//	_renderer->spriteFormat()->clear();
 }
 
 

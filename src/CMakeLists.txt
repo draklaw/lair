@@ -89,10 +89,12 @@ set(lair_SOURCES
 
 	render_gl2/gl.cpp
 	render_gl2/vertex_format.cpp
+	render_gl2/vertex_buffer.cpp
 	render_gl2/glsl_source.cpp
 	render_gl2/shader_object.cpp
 	render_gl2/program_object.cpp
 	render_gl2/texture.cpp
+	render_gl2/batch.cpp
 	render_gl2/renderer.cpp
 	render_gl2/render_module.cpp
 

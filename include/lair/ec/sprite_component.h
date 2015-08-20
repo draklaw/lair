@@ -30,6 +30,7 @@
 #include <lair/core/lair.h>
 
 #include <lair/render_gl2/gl.h>
+#include <lair/render_gl2/batch.h>
 #include <lair/render_gl2/renderer.h>
 
 
@@ -112,6 +113,8 @@ protected:
 	size_t           _nComponent;
 	ComponentList    _components;
 	SpriteComponent* _firstFree;
+
+	Batch            _defaultBatch;
 
 	VertexVector     _vertices;
 	IndexVector      _indices;

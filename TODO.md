@@ -6,8 +6,14 @@
 - Renderer module
   - Tilemap
   - Text
+  - Use circular buffer ?
 - Config file(s) JsonCpp
 - Game loop
+- ec
+  - Clonning
+  - Load from json
+  - Sparse components
+  - ComponentManager
 - Audio module (OpenAL ?)
 - ec meta-code (python ?)
 - Python
