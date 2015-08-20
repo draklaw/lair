@@ -181,7 +181,6 @@ int main(int /*argc*/, char** argv) {
 			break;
 		}
 		case lair::InterpLoop::Frame: {
-			glog.log("frame: ", loop.frameCount(), ", ", loop.frameTime());
 			entityManager.render(camera);
 			w->swapBuffers();
 

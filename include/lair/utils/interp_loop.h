@@ -78,11 +78,12 @@ protected:
 	uint64   _tickRealTime;
 
 	uint64   _frameDuration;	// Ideal duration of 1 frame
-	float    _maxFrameDuration;	// After this delay, we slow down the game
+	uint64   _maxFrameDuration;	// After this delay, we slow down the game
 	uint64   _frameMargin;		// Try to keep the rythme if we are latter than this
 	unsigned _frameCount;
 	uint64   _frameGameTime;
 	uint64   _frameRealTime;
+	float    _frameInterp;
 };
 
 

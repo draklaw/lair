@@ -98,8 +98,9 @@ InterpLoop::EventType InterpLoop::nextEvent() {
 		return EventType::Tick;
 	} else {
 		++_frameCount;
-		_frameGameTime = (          now - _prevTickRealTime)
-		               / (_tickRealTime - _prevTickRealTime);
+		_frameInterp = double(          now - _prevTickRealTime)
+		             / double(_tickRealTime - _prevTickRealTime);
+		_frameGameTime = lerp(_frameInterp, _prevTickGameTime, _tickGameTime);
 		_frameRealTime = std::max(_frameRealTime + _frameDuration, now - _frameMargin);
 		return EventType::Frame;
 	}
@@ -127,8 +128,7 @@ uint64  InterpLoop::frameTime() const {
 
 
 float InterpLoop::frameInterp() const {
-	return (_frameGameTime - _prevTickGameTime)
-	     / ( _tickGameTime - _prevTickGameTime);
+	return _frameInterp;
 }
 
 
