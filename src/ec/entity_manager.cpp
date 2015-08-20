@@ -118,8 +118,8 @@ void EntityManager::updateWorldTransform() {
 }
 
 
-void EntityManager::render() {
-	_spriteManager->render();
+void EntityManager::render(const OrthographicCamera& camera) {
+	_spriteManager->render(camera);
 }
 
 

@@ -88,6 +88,7 @@ set(lair_SOURCES
 	sys_sdl2/sys_module.cpp
 
 	render_gl2/gl.cpp
+	render_gl2/orthographic_camera.cpp
 	render_gl2/vertex_format.cpp
 	render_gl2/vertex_buffer.cpp
 	render_gl2/glsl_source.cpp

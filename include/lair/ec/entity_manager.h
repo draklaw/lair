@@ -38,6 +38,7 @@ namespace lair
 {
 
 
+class OrthographicCamera;
 class Renderer;
 
 class Component;
@@ -74,7 +75,7 @@ public:
 	void removeSpriteComponent(EntityRef& entity);
 
 	void updateWorldTransform();
-	void render();
+	void render(const OrthographicCamera& camera);
 
 protected:
 	typedef std::vector<_Entity>   EntityBlock;

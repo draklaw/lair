@@ -91,25 +91,44 @@ const char* defaultFragGlsl =
 //---------------------------------------------------------------------------//
 
 
+SpriteShader::SpriteShader()
+    : _shader       (nullptr),
+      _viewMatrixLoc(-1),
+      _textureLoc   (-1) {
+}
+
+
+SpriteShader::SpriteShader(const ProgramObject* shader)
+    : _shader       (shader),
+      _viewMatrixLoc(glGetUniformLocation(_shader->id(), "viewMatrix")),
+      _textureLoc   (glGetUniformLocation(_shader->id(), "texture")) {
+}
+
+
+//---------------------------------------------------------------------------//
+
+
 Renderer::Renderer(RenderModule* module)
     : _module(module),
       _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
       _defaultTexture(),
       _textures(),
-      _defaultShader() {
+      _spriteShaderProg(),
+      _spriteShader() {
 	lairAssert(_module);
 
 	_createDefaultTexture();
 
-	ShaderObject vert = _compileShader("default", GL_VERTEX_SHADER,
+	ShaderObject vert = _compileShader("sprite", GL_VERTEX_SHADER,
 	                                   GlslSource(defaultVertGlsl));
-	ShaderObject frag = _compileShader("default", GL_FRAGMENT_SHADER,
+	ShaderObject frag = _compileShader("sprite", GL_FRAGMENT_SHADER,
 	                                   GlslSource(defaultFragGlsl));
 	if(vert.isCompiled() && frag.isCompiled()) {
-		_defaultShader = _compileProgram("default",
+		_spriteShaderProg = _compileProgram("sprite",
 		        &_spriteFormat, &vert, &frag);
 	}
-	lairAssert(_defaultShader.isLinked());
+	lairAssert(_spriteShaderProg.isLinked());
+	_spriteShader = SpriteShader(&_spriteShaderProg);
 }
 
 

@@ -39,6 +39,7 @@
 #include <lair/sys_sdl2/window.h>
 #include <lair/sys_sdl2/sys_loader.h>
 
+#include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
@@ -135,22 +136,8 @@ int main(int /*argc*/, char** argv) {
 
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
-
-	float rpl = viewBox.max()(0) + viewBox.min()(0);
-	float tpb = viewBox.max()(1) + viewBox.min()(1);
-	float fpn = viewBox.max()(2) + viewBox.min()(2);
-
-	float rml = viewBox.max()(0) - viewBox.min()(0);
-	float tmb = viewBox.max()(1) - viewBox.min()(1);
-	float fmn = viewBox.max()(2) - viewBox.min()(2);
-
-	Eigen::Matrix4f viewMatrix;
-	viewMatrix << 2.f/rml,       0,        0, -rpl/rml,
-	                    0, 2.f/tmb,        0, -tpb/tmb,
-	                    0,       0, -2.f/fmn,  fpn/fmn,
-	                    0,       0,        0,        1;
-
-	std::cout << viewMatrix << "\n";
+	lair::OrthographicCamera camera;
+	camera.setViewBox(viewBox);
 
 
 	lair::EntityManager entityManager(renderer);
@@ -162,17 +149,10 @@ int main(int /*argc*/, char** argv) {
 
 	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
 	entityManager.addSpriteComponent(testSprite);
-//	testSprite.sprite()->setTexture(texture);
 	testSprite.sprite()->setSprite(&sprite);
 	testSprite.setTransform(lair::Transform(
-//	        lair::Translation(-lair::Vector3(imgSize, imgSize, 0) / 2)));
 	        lair::Translation(-lair::Vector3(texture->width(),
 	                                         texture->height(), 0) / 2)));
-
-	renderer->defaultShader()->use();
-	glUniformMatrix4fv(glGetUniformLocation(renderer->defaultShader()->id(), "viewMatrix"),
-	                   1, false, viewMatrix.data());
-	glUniform1i(glGetUniformLocation(renderer->defaultShader()->id(), "texture"), 0);
 
 
 	while(running) {
@@ -191,7 +171,7 @@ int main(int /*argc*/, char** argv) {
 		testSprite.setTransform(trans);
 
 		entityManager.updateWorldTransform();
-		entityManager.render();
+		entityManager.render(camera);
 		w->swapBuffers();
 
 		LAIR_LOG_OPENGL_ERRORS_TO(glog);

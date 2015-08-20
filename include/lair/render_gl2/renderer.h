@@ -52,6 +52,33 @@ struct SpriteVertex {
 };
 
 
+class SpriteShader {
+public:
+	SpriteShader();
+	SpriteShader(const ProgramObject* shader);
+
+	inline const ProgramObject* program() const { return _shader; }
+	inline void use() const { if(_shader) _shader->use(); }
+
+	inline void setViewMatrix(const Matrix4& transform) const {
+		if(_viewMatrixLoc >= 0) {
+			glUniformMatrix4fv(_viewMatrixLoc, 1, false, transform.data());
+		}
+	}
+
+	void setTextureUnit(unsigned unit) const {
+		if(_textureLoc >= 0) {
+			glUniform1i(_textureLoc, unit);
+		}
+	}
+
+private:
+	const ProgramObject* _shader;
+	GLint _viewMatrixLoc;
+	GLint _textureLoc;
+};
+
+
 class Renderer {
 public:
 	enum {
@@ -78,8 +105,8 @@ public:
 		return &_defaultTexture;
 	}
 
-	const ProgramObject* defaultShader() const {
-		return &_defaultShader;
+	const SpriteShader* spriteShader() const {
+		return &_spriteShader;
 	}
 
 	Logger& log();
@@ -123,7 +150,8 @@ protected:
 	Texture       _defaultTexture;
 	TextureMap    _textures;
 
-	ProgramObject _defaultShader;
+	ProgramObject _spriteShaderProg;
+	SpriteShader  _spriteShader;
 };
 
 

@@ -21,6 +21,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/texture.h>
 #include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/renderer.h>
@@ -98,7 +99,7 @@ void SpriteComponentManager::removeComponent(_Entity* entity) {
 }
 
 
-void SpriteComponentManager::render() {
+void SpriteComponentManager::render(const OrthographicCamera& camera) {
 	_defaultBatch.clearBuffers();
 
 	GLuint index = 0;
@@ -113,7 +114,7 @@ void SpriteComponentManager::render() {
 			Box2 region = sprite->tileBox(sc.index());
 
 			VertexBuffer& buff = _defaultBatch.getBuffer(
-			            _renderer->defaultShader(),
+			            _renderer->spriteShader()->program(),
 			            tex, _renderer->spriteFormat());
 
 			Scalar w = tex->width();
@@ -142,6 +143,9 @@ void SpriteComponentManager::render() {
 	}
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	_renderer->spriteShader()->use();
+	_renderer->spriteShader()->setTextureUnit(0);
+	_renderer->spriteShader()->setViewMatrix(camera.transform());
 	_defaultBatch.render();
 }
 
