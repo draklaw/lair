@@ -42,6 +42,117 @@ class ComponentManager {
 public:
 	typedef _Component Component;
 
+	typedef ptrdiff_t  difference_type;
+	typedef Component  value_type;
+	typedef Component* pointer;
+	typedef Component& reference;
+	typedef std::random_access_iterator_tag iterator_category;
+
+public:
+
+	class Iterator {
+	public:
+		Iterator(ComponentManager<Component>* manager, unsigned index)
+		    : _manager(manager),
+		      _index(index) {
+		}
+
+		bool operator==(const Iterator& other) const {
+			return _manager == other._manager && _index == other._index;
+		}
+		bool operator!=(const Iterator& other) const {
+			return !(*this == other);
+		}
+
+		bool operator<(const Iterator& other) const {
+			return _manager < other._manager
+			    || (_manager == other._manager && _index < other._index);
+		}
+		bool operator<=(const Iterator& other) const {
+			return *this < other || *this == other;
+		}
+		bool operator>(const Iterator& other) const {
+			return !(*this <= other);
+		}
+		bool operator>=(const Iterator& other) const {
+			return !(*this < other);
+		}
+
+		Iterator& operator++() {
+			++_index;
+			return *this;
+		}
+		Iterator operator++(int) {
+			Iterator tmp(*this);
+			++_index;
+			return tmp;
+		}
+
+		Iterator& operator--() {
+			--_index;
+			return *this;
+		}
+		Iterator operator--(int) {
+			Iterator tmp(*this);
+			--_index;
+			return tmp;
+		}
+
+		Iterator& operator+=(ptrdiff_t n) {
+			_index += n;
+			return *this;
+		}
+
+		Iterator& operator-=(ptrdiff_t n) {
+			_index -= n;
+			return *this;
+		}
+
+		friend Iterator& operator+(Iterator it, ptrdiff_t n) {
+			it += n;
+			return it;
+		}
+		friend Iterator& operator+(ptrdiff_t n, Iterator it) {
+			it += n;
+			return it;
+		}
+
+		friend Iterator& operator-(Iterator it, ptrdiff_t n) {
+			it -= n;
+			return it;
+		}
+		friend Iterator& operator-(ptrdiff_t n, Iterator it) {
+			it -= n;
+			return it;
+		}
+
+		ptrdiff_t operator-(const Iterator& other) {
+			return _index - other._index;
+		}
+
+		const Component& operator*() const {
+			lairAssert(_index < _manager->nComponents());
+			return *_manager->_get(_index);
+		}
+		Component& operator*() {
+			lairAssert(_index < _manager->nComponents());
+			return *_manager->_get(_index);
+		}
+
+		const Component& operator[](size_t subIndex) const {
+			lairAssert(_index + subIndex < _manager->nComponents());
+			return *_manager->_get(_index + subIndex);
+		}
+		Component& operator[](size_t subIndex) {
+			lairAssert(_index + subIndex < _manager->nComponents());
+			return *_manager->_get(_index + subIndex);
+		}
+
+	protected:
+		ComponentManager<Component>* _manager;
+		unsigned                     _index;
+	};
+
 public:
 	ComponentManager(EntityManager* manager, size_t componentBlockSize)
 	    : _manager(manager),
@@ -66,6 +177,9 @@ public:
 
 	size_t nComponents() const { return _nComponents; }
 
+	Iterator begin() { return Iterator(this, 0); }
+	Iterator end()   { return Iterator(this, _nComponents); }
+
 	void addComponent(_Entity* entity) {
 		Component* comp = _get(_nComponents);
 		new (comp) Component(entity);
@@ -81,14 +195,13 @@ public:
 		--_nComponents;
 		comp->~Component();
 
-		*comp = std::move(*_get(_nComponents));
+		Component* last = _get(_nComponents);
+		if(comp != last) {
+			*comp = std::move(*last);
+		}
 		Component::_getEntityComponent(comp->_entity()) = comp;
 	}
 
-protected:
-	typedef std::vector<Component*>   ComponentList;
-
-protected:
 	Component* _get(size_t index) {
 		unsigned block = index / _componentBlockSize;
 		unsigned ci    = index % _componentBlockSize;
@@ -98,6 +211,9 @@ protected:
 		}
 		return &_components[block][ci];
 	}
+
+protected:
+	typedef std::vector<Component*>   ComponentList;
 
 protected:
 	EntityManager*   _manager;

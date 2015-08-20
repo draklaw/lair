@@ -65,48 +65,42 @@ SpriteComponentManager::~SpriteComponentManager() {
 void SpriteComponentManager::render(const OrthographicCamera& camera) {
 	_defaultBatch.clearBuffers();
 
-	size_t remaining = nComponents();
 	GLuint index = 0;
-	for(SpriteComponent* block: _components) {
-		SpriteComponent* end = std::min(block + _componentBlockSize,
-		                                block + remaining);
-		remaining -= _componentBlockSize;
-		for(SpriteComponent* sc = block; sc != end; ++sc) {
-			if(!sc->_entity()) {
-				continue;
-			}
-			const Sprite* sprite = sc->sprite();
-			Texture* tex = (sprite->texture()->_uploadNow())?
-				sprite->texture(): _renderer->defaultTexture();
-			Box2 region = sprite->tileBox(sc->index());
-
-			VertexBuffer& buff = _defaultBatch.getBuffer(
-			            _renderer->spriteShader()->program(),
-			            tex, _renderer->spriteFormat());
-
-			Scalar w = tex->width();
-			Scalar h = tex->height();
-			Transform& wt = sc->_entity()->worldTransform;
-			buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
-			                             Vector4(1, 1, 1, 1),
-			                             region.corner(Box2::BottomLeft) });
-			buff.addVertex(SpriteVertex{ wt * Vector4(0, 0, 0, 1),
-			                             Vector4(1, 1, 1, 1),
-			                             region.corner(Box2::TopLeft) });
-			buff.addVertex(SpriteVertex{ wt * Vector4(w, h, 0, 1),
-			                             Vector4(1, 1, 1, 1),
-			                             region.corner(Box2::BottomRight) });
-			buff.addVertex(SpriteVertex{ wt * Vector4(w, 0, 0, 1),
-			                             Vector4(1, 1, 1, 1),
-			                             region.corner(Box2::TopRight) });
-			buff.addIndex(index + 0);
-			buff.addIndex(index + 1);
-			buff.addIndex(index + 2);
-			buff.addIndex(index + 2);
-			buff.addIndex(index + 1);
-			buff.addIndex(index + 3);
-			index += 4;
+	for(SpriteComponent& sc: *this) {
+		if(!sc._entity()) {
+			continue;
 		}
+		const Sprite* sprite = sc.sprite();
+		Texture* tex = (sprite->texture()->_uploadNow())?
+			sprite->texture(): _renderer->defaultTexture();
+		Box2 region = sprite->tileBox(sc.index());
+
+		VertexBuffer& buff = _defaultBatch.getBuffer(
+					_renderer->spriteShader()->program(),
+					tex, _renderer->spriteFormat());
+
+		Scalar w = tex->width();
+		Scalar h = tex->height();
+		Transform& wt = sc._entity()->worldTransform;
+		buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
+									 Vector4(1, 1, 1, 1),
+									 region.corner(Box2::BottomLeft) });
+		buff.addVertex(SpriteVertex{ wt * Vector4(0, 0, 0, 1),
+									 Vector4(1, 1, 1, 1),
+									 region.corner(Box2::TopLeft) });
+		buff.addVertex(SpriteVertex{ wt * Vector4(w, h, 0, 1),
+									 Vector4(1, 1, 1, 1),
+									 region.corner(Box2::BottomRight) });
+		buff.addVertex(SpriteVertex{ wt * Vector4(w, 0, 0, 1),
+									 Vector4(1, 1, 1, 1),
+									 region.corner(Box2::TopRight) });
+		buff.addIndex(index + 0);
+		buff.addIndex(index + 1);
+		buff.addIndex(index + 2);
+		buff.addIndex(index + 2);
+		buff.addIndex(index + 1);
+		buff.addIndex(index + 3);
+		index += 4;
 	}
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
