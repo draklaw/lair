@@ -90,6 +90,9 @@ typedef Eigen::Quaternion<Scalar>        Quaternion;
 typedef Eigen::AngleAxis<Scalar>         AngleAxis;
 typedef Eigen::Translation<Scalar, 3>    Translation;
 
+typedef Eigen::AlignedBox2f Box2;
+typedef Eigen::AlignedBox3f Box3;
+
 typedef unsigned ScanCode;
 
 // TODO: update this
@@ -98,10 +101,17 @@ typedef unsigned JsonNode;
 
 // Make a unique_ptr that will be destroyed with the deleter D.
 // Useful when using C APIs that provide "destructor" functions.
-template<typename T, typename D>
+template < typename T, typename D >
 inline std::unique_ptr<T, D> make_unique(T* ptr, D deleter) {
 	return std::unique_ptr<T, D>(ptr, deleter);
 }
+
+
+template < typename S, typename T >
+T lerp(S x, const T& v0, const T& v1) {
+	return (1-x) * v0 + x * v1;
+}
+
 
 }
 

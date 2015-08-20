@@ -1,0 +1,74 @@
+/*
+ *  Copyright (C) 2015 Simon Boyé
+ *
+ *  This file is part of lair.
+ *
+ *  lair is free software: you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  lair is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with lair.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+#include <lair/core/lair.h>
+#include <lair/core/log.h>
+
+#include <lair/render_gl2/gl.h>
+
+#include "lair/render_gl2/vertex_buffer.h"
+
+
+namespace lair
+{
+
+
+VertexBuffer::VertexBuffer(size_t vertexSize)
+	: _vertexSize(vertexSize),
+	  _vxBuffer(),
+	  _indexBuffer(),
+	  _vxBufferId(0),
+	  _indexBufferId(0) {
+}
+
+
+VertexBuffer::~VertexBuffer() {
+}
+
+
+void VertexBuffer::addIndex(unsigned index) {
+	_indexBuffer.push_back(index);
+}
+
+void VertexBuffer::clear() {
+	_vxBuffer.clear();
+	_indexBuffer.clear();
+}
+
+
+void VertexBuffer::bindAndUpload() {
+	if(!_vxBufferId) {
+		glGenBuffers(1, &_vxBufferId);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, _vxBufferId);
+	glBufferData(GL_ARRAY_BUFFER, _vxBuffer.size(), _vxBuffer.data(),
+	             GL_STREAM_DRAW);
+
+	if(!_indexBufferId) {
+		glGenBuffers(1, &_indexBufferId);
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferId);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer.size() * sizeof(unsigned),
+	             _indexBuffer.data(), GL_STREAM_DRAW);
+}
+
+
+}

@@ -38,7 +38,7 @@ namespace lair
 {
 
 
-class Texture;
+class Sprite;
 
 class _Entity;
 class EntityManager;
@@ -54,10 +54,13 @@ public:
 	SpriteComponent& operator=(const SpriteComponent&) = delete;
 	SpriteComponent& operator=(SpriteComponent&&)      = delete;
 
-	inline Texture* texture() const { return _texture; }
-	inline void setTexture(Texture* texture) {
-		_texture = texture;
+	inline Sprite* sprite() const { return _sprite; }
+	inline void setSprite(Sprite* sprite) {
+		_sprite = sprite;
 	}
+
+	inline unsigned index() const { return _spriteIndex; }
+	inline void setIndex(unsigned index) { _spriteIndex = index; }
 
 	inline _Entity* _entity() const { return _entityPtr; }
 	inline void _setEntity(_Entity* entity) { _entityPtr = entity; }
@@ -68,7 +71,8 @@ public:
 
 protected:
 	_Entity*  _entityPtr;
-	Texture*  _texture;
+	Sprite*   _sprite;
+	unsigned  _spriteIndex;
 };
 
 

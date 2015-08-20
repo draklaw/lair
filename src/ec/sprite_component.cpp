@@ -22,6 +22,7 @@
 #include <lair/core/log.h>
 
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/renderer.h>
 
 #include "lair/ec/entity.h"
@@ -73,10 +74,11 @@ void SpriteComponentManager::addComponent(_Entity* entity) {
 	SpriteComponent* sc = _firstFree;
 	lairAssert(sc && !sc->_entity());
 	_firstFree = reinterpret_cast<SpriteComponent*>(
-	            const_cast<Texture*>(sc->texture()));
+	            const_cast<Sprite*>(sc->sprite()));
 
 	sc->_setEntity(entity);
-	sc->setTexture(nullptr);
+	sc->setSprite(nullptr);
+	sc->setIndex(0);
 
 	entity->sprite = sc;
 	++_nComponent;
@@ -91,7 +93,7 @@ void SpriteComponentManager::removeComponent(_Entity* entity) {
 	--_nComponent;
 
 	sc->_reset();
-	sc->setTexture(reinterpret_cast<Texture*>(_firstFree));
+	sc->setSprite(reinterpret_cast<Sprite*>(_firstFree));
 	_firstFree = sc;
 }
 
@@ -105,24 +107,30 @@ void SpriteComponentManager::render() {
 			if(!sc._entity()) {
 				continue;
 			}
-			Texture* tex = (sc.texture()->_uploadNow())?
-				sc.texture(): _renderer->defaultTexture();
+			const Sprite* sprite = sc.sprite();
+			Texture* tex = (sprite->texture()->_uploadNow())?
+				sprite->texture(): _renderer->defaultTexture();
+			Box2 region = sprite->tileBox(sc.index());
 
 			VertexBuffer& buff = _defaultBatch.getBuffer(
 			            _renderer->defaultShader(),
 			            tex, _renderer->spriteFormat());
 
-			Scalar w = sc.texture()->width();
-			Scalar h = sc.texture()->height();
+			Scalar w = tex->width();
+			Scalar h = tex->height();
 			Transform& wt = sc._entity()->worldTransform;
-			buff.addVertex(SpriteVertex{ wt * Vector4(0, 0, 0, 1),
-			                             Vector4(1, 1, 1, 1), Vector2(0, 1) });
-			buff.addVertex(SpriteVertex{ wt * Vector4(w, 0, 0, 1),
-			                             Vector4(1, 1, 1, 1), Vector2(1, 1) });
 			buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
-			                             Vector4(1, 1, 1, 1), Vector2(0, 0) });
+			                             Vector4(1, 1, 1, 1),
+			                             region.corner(Box2::BottomLeft) });
+			buff.addVertex(SpriteVertex{ wt * Vector4(0, 0, 0, 1),
+			                             Vector4(1, 1, 1, 1),
+			                             region.corner(Box2::TopLeft) });
 			buff.addVertex(SpriteVertex{ wt * Vector4(w, h, 0, 1),
-			                             Vector4(1, 1, 1, 1), Vector2(1, 0) });
+			                             Vector4(1, 1, 1, 1),
+			                             region.corner(Box2::BottomRight) });
+			buff.addVertex(SpriteVertex{ wt * Vector4(w, 0, 0, 1),
+			                             Vector4(1, 1, 1, 1),
+			                             region.corner(Box2::TopRight) });
 			buff.addIndex(index + 0);
 			buff.addIndex(index + 1);
 			buff.addIndex(index + 2);
@@ -135,53 +143,6 @@ void SpriteComponentManager::render() {
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	_defaultBatch.render();
-
-//	_vertices.clear();
-//	_indices.clear();
-//	GLuint index = 0;
-//	for(ComponentBlock& block: _components) {
-//		for(SpriteComponent& sc: block) {
-//			if(!sc._entity()) {
-//				continue;
-//			}
-//			bool texOk = sc.texture()->_uploadNow();
-//			Scalar w = sc.texture()->width();
-//			Scalar h = sc.texture()->height();
-//			Transform& wt = sc._entity()->worldTransform;
-//			_vertices.insert(_vertices.end(), {
-//			    SpriteVertex{ wt * Vector4(0, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 1) },
-//			    SpriteVertex{ wt * Vector4(w, 0, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 1) },
-//			    SpriteVertex{ wt * Vector4(0, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(0, 0) },
-//			    SpriteVertex{ wt * Vector4(w, h, 0, 1), Vector4(1, 1, 1, 1), Vector2(1, 0) }
-//			});
-//			_indices.insert(_indices.end(), {
-//			    index + 0, index + 1, index + 2,
-//			    index + 2, index + 1, index + 3
-//			});
-//			index += 4;
-//		}
-//	}
-
-//	if(!_vertexBuffer) {
-//		glGenBuffers(1, &_vertexBuffer);
-//	}
-//	if(!_indexBuffer) {
-//		glGenBuffers(1, &_indexBuffer);
-//	}
-
-//	glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(SpriteVertex) * _vertices.size(),
-//	             _vertices.data(), GL_STREAM_DRAW);
-
-//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
-//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * _indices.size(),
-//	             _indices.data(), GL_STREAM_DRAW);
-
-//	_renderer->spriteFormat()->setup();
-
-//	glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, 0);
-
-//	_renderer->spriteFormat()->clear();
 }
 
 
@@ -190,9 +151,9 @@ void SpriteComponentManager::_addComponentBlock() {
 	ComponentBlock& block = _components.back();
 	std::memset(block.data(), 0, sizeof(SpriteComponent) * block.size());
 	for(SpriteComponent& sc: block) {
-		sc.setTexture(reinterpret_cast<Texture*>(&sc + 1));
+		sc.setSprite(reinterpret_cast<Sprite*>(&sc + 1));
 	}
-	block.back().setTexture(reinterpret_cast<Texture*>(_firstFree));
+	block.back().setSprite(reinterpret_cast<Sprite*>(_firstFree));
 	_firstFree = &block.front();
 }
 

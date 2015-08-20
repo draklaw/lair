@@ -94,6 +94,7 @@ set(lair_SOURCES
 	render_gl2/shader_object.cpp
 	render_gl2/program_object.cpp
 	render_gl2/texture.cpp
+	render_gl2/sprite.cpp
 	render_gl2/batch.cpp
 	render_gl2/renderer.cpp
 	render_gl2/render_module.cpp

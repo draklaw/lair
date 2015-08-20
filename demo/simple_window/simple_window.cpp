@@ -42,6 +42,7 @@
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/render_module.h>
 
@@ -130,6 +131,7 @@ int main(int /*argc*/, char** argv) {
 	lair::Renderer* renderer = renderModule.createRenderer();
 
 	lair::Texture* texture = renderer->loadTexture("lair.png");
+	lair::Sprite   sprite(texture);
 
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
@@ -160,7 +162,8 @@ int main(int /*argc*/, char** argv) {
 
 	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
 	entityManager.addSpriteComponent(testSprite);
-	testSprite.sprite()->setTexture(texture);
+//	testSprite.sprite()->setTexture(texture);
+	testSprite.sprite()->setSprite(&sprite);
 	testSprite.setTransform(lair::Transform(
 //	        lair::Translation(-lair::Vector3(imgSize, imgSize, 0) / 2)));
 	        lair::Translation(-lair::Vector3(texture->width(),
