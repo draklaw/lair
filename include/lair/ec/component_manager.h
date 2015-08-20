@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include <lair/core/lair.h>
 
@@ -163,6 +164,7 @@ public:
 
 	ComponentManager(const ComponentManager&) = delete;
 	ComponentManager(ComponentManager&&)      = delete;
+
 	~ComponentManager() {
 		while(_nComponents) {
 			removeComponent(_get(_nComponents - 1)->_entity());
@@ -181,6 +183,8 @@ public:
 	Iterator end()   { return Iterator(this, _nComponents); }
 
 	void addComponent(_Entity* entity) {
+		lairAssert(Component::_getEntityComponent(entity) == nullptr);
+
 		Component* comp = _get(_nComponents);
 		new (comp) Component(entity);
 		++_nComponents;
@@ -193,6 +197,7 @@ public:
 		lairAssert(comp && comp->_entity() == entity);
 
 		--_nComponents;
+		Component::_getEntityComponent(comp->_entity()) = nullptr;
 		comp->~Component();
 
 		Component* last = _get(_nComponents);
@@ -221,6 +226,66 @@ protected:
 	size_t           _componentBlockSize;
 	size_t           _nComponents;
 	ComponentList    _components;
+};
+
+
+template < typename _Component >
+class SparseComponentManager {
+public:
+	typedef _Component Component;
+
+protected:
+	typedef std::unordered_map<_Entity*, Component> ComponentMap;
+
+public:
+	typedef typename ComponentMap::iterator Iterator;
+
+public:
+	SparseComponentManager(EntityManager* manager)
+	    : _manager(manager),
+	      _components() {
+	}
+
+	SparseComponentManager(const SparseComponentManager&) = delete;
+	SparseComponentManager(SparseComponentManager&&)      = delete;
+
+	~SparseComponentManager() {
+	}
+
+	SparseComponentManager& operator=(const SparseComponentManager&) = delete;
+	SparseComponentManager& operator=(SparseComponentManager&&)      = delete;
+
+	size_t nComponent() const { return _components.size(); }
+
+	Iterator begin() { return _components.begin(); }
+	Iterator end()   { return _components.end(); }
+
+	void addComponent(_Entity* entity) {
+		auto it = _components.find(entity);
+		lairAssert(it == _components.end());
+
+		it = _components.emplace_hint(it, entity, Component(entity));
+	}
+
+	void removeComponent(_Entity* entity) {
+		auto it = _components.find(entity);
+		lairAssert(it != _components.end());
+
+		_components.erase(it);
+	}
+
+	Component* get(_Entity* entity) {
+		auto it = _components.find(entity);
+		if(it == _components.end()) {
+			return nullptr;
+		}
+		return &it->second;
+	}
+
+
+protected:
+	EntityManager* _manager;
+	ComponentMap   _components;
 };
 
 
