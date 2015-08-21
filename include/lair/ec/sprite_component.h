@@ -69,6 +69,9 @@ public:
 	inline unsigned index() const { return _spriteIndex; }
 	inline void setIndex(unsigned index) { _spriteIndex = index; }
 
+	inline const Vector2& anchor() const { return _anchor; }
+	inline void setAnchor(const Vector2& anchor) { _anchor = anchor; }
+
 	virtual void destroy();
 	virtual void clone(EntityRef& target);
 
@@ -80,6 +83,7 @@ protected:
 	SpriteComponentManager* _manager;
 	Sprite*   _sprite;
 	unsigned  _spriteIndex;
+	Vector2   _anchor;
 };
 
 

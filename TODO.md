@@ -15,6 +15,7 @@
 - ec
   - ~~Clonning~~
   - ~Load from json
+  - Go template ?
   - ~~Sparse components~~
   - ~~ComponentManager~~
 - Audio module (OpenAL ?)
@@ -25,6 +26,7 @@
   - Re-implement test-window
   - ~Investigate packaging
 - ~~Loader~~
+  - make preload / get functions.
   - ~~ImageLoader~~
   - Auto-remove cached objects when max size is exceded
   - ~~Move to utils ?~~

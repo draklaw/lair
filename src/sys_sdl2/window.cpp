@@ -94,8 +94,8 @@ void Window::destroy() {
 
 	unsigned id = _windowID();
 
-//	SDL_GL_DeleteContext(_glContext);
-//	_glContext = 0;
+	SDL_GL_DeleteContext(_glContext);
+	_glContext = 0;
 
 	SDL_DestroyWindow(_window);
 	_window = 0;

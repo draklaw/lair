@@ -42,7 +42,8 @@ SpriteComponent::SpriteComponent(_Entity* entity,
     : Component(entity),
       _manager(static_cast<SpriteComponentManager*>(manager)),
       _sprite(nullptr),
-      _spriteIndex(0) {
+      _spriteIndex(0),
+      _anchor(0, 0) {
 }
 
 
@@ -79,6 +80,14 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 		comp->setSprite(_renderer->getSprite(json["sprite"].asString()));
 	}
 	comp->setIndex(json.get("index", 0).asInt());
+	if(json.isMember("anchor")) {
+		Json::Value anchor = json["anchor"];
+		if(anchor.isArray() || anchor.size() == 2) {
+			comp->setAnchor(Vector2(anchor[0].asFloat(), anchor[1].asFloat()));
+		} /*else {
+			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
+		}*/
+	}
 }
 
 
@@ -88,6 +97,7 @@ void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	SpriteComponent* comp = entity.sprite();
 	comp->setSprite(baseComp->sprite());
 	comp->setIndex(baseComp->index());
+	comp->setAnchor(baseComp->anchor());
 }
 
 
@@ -111,16 +121,18 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		Matrix4 wt = lerp(interp,
 		                  sc._entity()->prevWorldTransform.matrix(),
 		                  sc._entity()->worldTransform.matrix());
-		buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
+		Vector4 offset(-w * sc.anchor().x(),
+		                h * sc.anchor().y(), 0, 0);
+		buff.addVertex(SpriteVertex{ wt * (Vector4(0,  0, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::BottomLeft) });
-		buff.addVertex(SpriteVertex{ wt * Vector4(0, 0, 0, 1),
+		buff.addVertex(SpriteVertex{ wt * (Vector4(0, -h, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::TopLeft) });
-		buff.addVertex(SpriteVertex{ wt * Vector4(w, h, 0, 1),
+		buff.addVertex(SpriteVertex{ wt * (Vector4(w,  0, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::BottomRight) });
-		buff.addVertex(SpriteVertex{ wt * Vector4(w, 0, 0, 1),
+		buff.addVertex(SpriteVertex{ wt * (Vector4(w, -h, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::TopRight) });
 		buff.addIndex(index + 0);

@@ -152,15 +152,14 @@ int main(int /*argc*/, char** argv) {
 	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
 	            lair::EntityRef(), testJson->getValue());
 	spriteManager.addComponentFromJson(baseSprite, testJson->getValue()["sprite"]);
-	baseSprite.setTransform(lair::Transform(
-	        lair::Translation(-lair::Vector3(sprite->width(),
-	                                         sprite->height(), 0) / 2)));
+
+	glog.warning("Anchor: ", baseSprite.sprite()->anchor().transpose());
 
 	lair::EntityRef testSprite = baseSprite.clone(entityManager.root(), "mainLair");
 
-	for(unsigned i = 0; i < 8; ++i) {
+	for(unsigned i = 1; i <= 8; ++i) {
 		lair::Transform t = lair::Transform::Identity();
-		t.translate(lair::Vector3(i * 32, i * 16, 0));
+		t.translate(lair::Vector3(i * 32, 0, 0));
 		t.rotate(Eigen::AngleAxisf(i*.5, lair::Vector3::UnitZ()));
 
 		glog.info("Clone ", i, "...");

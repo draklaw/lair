@@ -2,6 +2,7 @@
 	"name":   "lair",
 	"sprite": {
 		"sprite": "lair.spr",
-		"index":  3
+		"index":  3,
+		"anchor": [ 1.0, 1.0 ]
 	}
 }
