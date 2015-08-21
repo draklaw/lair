@@ -187,6 +187,8 @@ public:
 		/* * */_entity->transform = transform;
 	}
 
+	EntityRef clone(EntityRef newParent, const char* newName = nullptr);
+
 	inline SpriteComponent* sprite() {
 		return _entity->sprite;
 	}

@@ -92,9 +92,7 @@ void Window::destroy() {
 
 //	onDestroy();
 
-	if(_sys) {
-		_sys->_removeWindow(_windowID());
-	}
+	unsigned id = _windowID();
 
 //	SDL_GL_DeleteContext(_glContext);
 //	_glContext = 0;
@@ -102,7 +100,10 @@ void Window::destroy() {
 	SDL_DestroyWindow(_window);
 	_window = 0;
 
-	_sys = 0;
+	if(_sys) {
+		// DELETE THE WINDOW ! Do not do anything after this.
+		_sys->_removeWindow(id);
+	}
 }
 
 

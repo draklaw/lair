@@ -51,11 +51,23 @@ void _Entity::_removeComponent(Component* comp) {
 void EntityRef::release() {
 	if(_entity) {
 		--_entity->weakRefCount;
-		if(!_entity->isAlive() && _entity->weakRefCount == 0) {
+		if((!_entity->isAlive() || !_entity->parent)
+		&& _entity->weakRefCount == 0) {
 			_entity->manager->_releaseEntity(_entity);
 		}
 		_entity = nullptr;
 	}
+}
+
+
+EntityRef EntityRef::clone(EntityRef newParent, const char* newName) {
+	EntityRef entity = _entity->manager->cloneEntity(*this, newParent, newName);
+	Component* comp = _entity->firstComponent;
+	while(comp) {
+		comp->clone(entity);
+		comp = comp->_nextComponent;
+	}
+	return entity;
 }
 
 

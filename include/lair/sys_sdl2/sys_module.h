@@ -146,8 +146,9 @@ public:
 
 
 private:
-	typedef std::pair<unsigned, Window*> WindowPair;
-	typedef std::unordered_map<unsigned, Window*> WindowMap;
+	typedef std::unique_ptr<Window> WindowPtr;
+	typedef std::pair<unsigned, WindowPtr> WindowPair;
+	typedef std::unordered_map<unsigned, WindowPtr> WindowMap;
 
 
 private:

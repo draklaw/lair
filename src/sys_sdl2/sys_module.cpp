@@ -155,16 +155,16 @@ Window* SysModule::createWindow(const char* utf8Title, int width, int height) {
 	lairAssert(_initialized);
 
 	log().log("Create window: \"", utf8Title, "\", ", width, "x", height);
-	Window* window = new Window(this);
+	WindowPtr window(new Window(this));
 	SDL_Window* sdlWindow = window->_create(utf8Title, width, height);
 	if(!sdlWindow) {
-		delete window;
 		return 0;
 	}
 
-	_windowMap.insert(std::make_pair(window->_windowID(), window));
+	Window* ptr = window.get();
+	_windowMap.emplace(window->_windowID(), std::move(window));
 
-	return window;
+	return ptr;
 }
 
 
@@ -366,7 +366,7 @@ void SysModule::_dispatchSystemEvent(const SDL_Event& event)
 Window* SysModule::_windowFromID(unsigned windowID) {
 	auto it = _windowMap.find(windowID);
 	if(it != _windowMap.end())
-		return it->second;
+		return it->second.get();
 	else
 		return 0;
 }

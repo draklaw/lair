@@ -70,6 +70,7 @@ public:
 	inline void setIndex(unsigned index) { _spriteIndex = index; }
 
 	virtual void destroy();
+	virtual void clone(EntityRef& target);
 
 	static inline SpriteComponent*& _getEntityComponent(_Entity* entity) {
 		return entity->sprite;
@@ -94,6 +95,7 @@ public:
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
 
 	void addComponentFromJson(EntityRef entity, const Json::Value& json);
+	void cloneComponent(EntityRef base, EntityRef entity);
 
 	void render(float interp, const OrthographicCamera& camera);
 

@@ -134,9 +134,6 @@ int main(int /*argc*/, char** argv) {
 
 	lair::Renderer* renderer = renderModule.createRenderer();
 
-//	renderer->preloadTexture("lair.png");
-//	lair::Texture* texture = renderer->loadTexture("lair.png");
-//	lair::Sprite   sprite(texture);
 	renderer->preloadSprite("lair.spr");
 
 
@@ -145,26 +142,31 @@ int main(int /*argc*/, char** argv) {
 	camera.setViewBox(viewBox);
 
 
-	lair::EntityManager entityManager;
+	lair::EntityManager entityManager(glog);
 	lair::SpriteComponentManager spriteManager(renderer);
 
-//	lair::Texture* texture = renderer->getTexture("lair.png");
-//	lair::Sprite   sprite(texture);
 	lair::Sprite* sprite = renderer->getSprite("lair.spr");
-	glog.info("Sprite: ", sprite->hTiles(), ", ", sprite->vTiles(),
-	          " - ", sprite->width(), ", ", sprite->height());
 
-//	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
-//	spriteManager.addComponent(testSprite);
-//	testSprite.sprite()->setSprite(sprite);
 	auto testJson = sys.loader().loadJson("lair.obj");
 	testJson->wait();
-	lair::EntityRef testSprite = entityManager.createEntityFromJson(
-	            entityManager.root(), testJson->getValue());
-	spriteManager.addComponentFromJson(testSprite, testJson->getValue()["sprite"]);
-	testSprite.setTransform(lair::Transform(
+	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
+	            lair::EntityRef(), testJson->getValue());
+	spriteManager.addComponentFromJson(baseSprite, testJson->getValue()["sprite"]);
+	baseSprite.setTransform(lair::Transform(
 	        lair::Translation(-lair::Vector3(sprite->width(),
 	                                         sprite->height(), 0) / 2)));
+
+	lair::EntityRef testSprite = baseSprite.clone(entityManager.root(), "mainLair");
+
+	for(unsigned i = 0; i < 8; ++i) {
+		lair::Transform t = lair::Transform::Identity();
+		t.translate(lair::Vector3(i * 32, i * 16, 0));
+		t.rotate(Eigen::AngleAxisf(i*.5, lair::Vector3::UnitZ()));
+
+		glog.info("Clone ", i, "...");
+		lair::EntityRef e = baseSprite.clone(testSprite, "Clone");
+		e.setTransform(t);
+	}
 
 	auto mapJson = sys.loader().loadJson("map.json");
 	mapJson->wait();

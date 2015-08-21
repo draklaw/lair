@@ -54,6 +54,9 @@ void SpriteComponent::destroy() {
 	_manager->_removeComponent(_entity());
 }
 
+void SpriteComponent::clone(EntityRef& target) {
+	_manager->cloneComponent(EntityRef(_entity()), target);
+}
 
 //---------------------------------------------------------------------------//
 
@@ -76,6 +79,15 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 		comp->setSprite(_renderer->getSprite(json["sprite"].asString()));
 	}
 	comp->setIndex(json.get("index", 0).asInt());
+}
+
+
+void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
+	addComponent(entity);
+	SpriteComponent* baseComp = base.sprite();
+	SpriteComponent* comp = entity.sprite();
+	comp->setSprite(baseComp->sprite());
+	comp->setIndex(baseComp->index());
 }
 
 

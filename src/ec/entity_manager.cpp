@@ -35,18 +35,20 @@ namespace lair
 {
 
 
-EntityManager::EntityManager(size_t entityBlockSize)
-    : _root           (nullptr),
+EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
+    : _logger(&logger),
+      _root           (nullptr),
       _firstFree      (nullptr),
       _entityBlockSize(entityBlockSize),
       _nEntities      (0),
       _nZombieEntities(0),
       _entities       () {
-	_root = _createDetachedEntity("__root__");
+	_root = createEntity(EntityRef(), "__root__");
 }
 
 
 EntityManager::~EntityManager() {
+	_root.release();
 }
 
 
@@ -60,9 +62,10 @@ size_t EntityManager::entityCapacity() const {
 
 
 EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
-	lairAssert(parent.isValid());
 	_Entity* entity = _createDetachedEntity(name);
-	_addChild(parent._get(), entity);
+	if(parent.isValid()) {
+		_addChild(parent._get(), entity);
+	}
 	return EntityRef(entity);
 }
 
@@ -77,8 +80,15 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
 }
 
 
+EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name) {
+	EntityRef entity = createEntity(newParent, name? name: base.name());
+	entity.setTransform(base.transform());
+	return entity;
+}
+
+
 void EntityManager::destroyEntity(EntityRef entity) {
-	lairAssert(entity.isValid() && entity._get() != _root);
+	lairAssert(entity.isValid() && entity != _root);
 
 	while(entity.firstChild().isValid()) {
 		destroyEntity(entity.firstChild());
@@ -99,6 +109,7 @@ void EntityManager::destroyEntity(EntityRef entity) {
 
 void EntityManager::_releaseEntity(_Entity* entity) {
 	entity->nextSibling = _firstFree;
+	entity->flags = 0;
 	_firstFree = entity;
 	--_nZombieEntities;
 }
@@ -115,7 +126,7 @@ void EntityManager::updateWorldTransform() {
 	// TODO: Update this algorithm when using homogenous arrays to make it
 	// more cache-firendly.
 
-	_updateWorldTransformHelper(_root, Transform::Identity());
+	_updateWorldTransformHelper(_root._get(), Transform::Identity());
 }
 
 

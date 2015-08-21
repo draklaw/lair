@@ -31,6 +31,7 @@ namespace lair
 
 
 class _Entity;
+class EntityRef;
 
 
 class Component {
@@ -47,6 +48,7 @@ public:
 	Component& operator=(Component&&)      = default;
 
 	virtual void destroy() = 0;
+	virtual void clone(EntityRef& target) = 0;
 
 	inline _Entity* _entity() const { return _entityPtr; }
 

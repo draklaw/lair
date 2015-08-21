@@ -4,17 +4,17 @@
 - ~~Copyright notice~~
 - ~File system abstraction ?
 - Renderer module
-  - Tilemap
+  - ~~Tilemap~~
   - Text
   - Use big buffers per batch, fill them after components sort ?
   - Write a class that combines Shader + uniforms values
   - Culling
 - Config file(s) JsonCpp
 - ~~Game loop~~
-- Game state
+- ~Game state
 - ec
-  - Clonning
-  - Load from json
+  - ~~Clonning~~
+  - ~Load from json
   - ~~Sparse components~~
   - ~~ComponentManager~~
 - Audio module (OpenAL ?)

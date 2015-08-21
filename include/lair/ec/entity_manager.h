@@ -30,6 +30,7 @@
 #include <string>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
 
 #include <lair/ec/entity.h>
 
@@ -46,7 +47,7 @@ class Component;
 
 class EntityManager {
 public:
-	EntityManager(size_t entityBlockSize = 1024);
+	EntityManager(Logger& logger, size_t entityBlockSize = 1024);
 	EntityManager(const EntityManager&) = delete;
 	EntityManager(EntityManager&&)      = delete;
 	~EntityManager();
@@ -56,12 +57,13 @@ public:
 
 	inline size_t    nEntities()       const { return _nEntities; }
 	inline size_t    nZombieEntities() const { return _nZombieEntities; }
-	inline EntityRef root()            const { return EntityRef(_root); }
+	inline EntityRef root()            const { return _root; }
 
 	size_t entityCapacity() const;
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
 	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json);
+	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr);
 
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
@@ -71,6 +73,8 @@ public:
 	void moveEntity(EntityRef& entity, EntityRef& newParent);
 
 	void updateWorldTransform();
+
+	Logger& log() { return _logger; }
 
 protected:
 	typedef std::vector<_Entity>   EntityBlock;
@@ -84,7 +88,8 @@ protected:
 	void _updateWorldTransformHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:
-	_Entity*        _root;
+	Logger          _logger;
+	EntityRef       _root;
 	_Entity*        _firstFree;
 	size_t          _entityBlockSize;
 	size_t          _nEntities;
