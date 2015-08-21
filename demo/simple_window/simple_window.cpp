@@ -157,10 +157,12 @@ int main(int /*argc*/, char** argv) {
 	                                         texture->height(), 0) / 2)));
 
 	lair::InterpLoop loop(&sys);
-	loop.setTickDuration(    1000000000/200);
+	loop.setTickDuration(    1000000000/120);
 	loop.setFrameDuration(   1000000000/60);
 	loop.setMaxFrameDuration(1000000000/20);
 	loop.setFrameMargin(     1000000000/120);
+
+	glog.info("tps: ", 1000000000. / loop.tickDuration());
 
 	loop.start();
 	while(running) {
@@ -170,7 +172,7 @@ int main(int /*argc*/, char** argv) {
 			if(space->justPressed()) glog.log("Space pressed");
 			if(space->justReleased()) glog.log("Space released");
 
-			float speed = 1;
+			float speed = 100. * loop.tickDuration() / 1000000000;
 			lair::Transform trans = testSprite.transform();
 			if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
 			if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
@@ -182,7 +184,7 @@ int main(int /*argc*/, char** argv) {
 			break;
 		}
 		case lair::InterpLoop::Frame: {
-			spriteManager.render(camera);
+			spriteManager.render(loop.frameInterp(), camera);
 			w->swapBuffers();
 
 			LAIR_LOG_OPENGL_ERRORS_TO(glog);

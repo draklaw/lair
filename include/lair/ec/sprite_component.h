@@ -93,7 +93,7 @@ public:
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
 
-	void render(const OrthographicCamera& camera);
+	void render(float interp, const OrthographicCamera& camera);
 
 protected:
 	Renderer*        _renderer;

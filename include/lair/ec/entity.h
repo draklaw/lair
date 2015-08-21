@@ -89,6 +89,7 @@ public:
 	// TODO: make homogenous arrays for these (managed by EntityManager)
 	Transform      transform;
 	Transform      worldTransform;
+	Transform      prevWorldTransform;
 //	Transform*     transform;
 //	Transform*     worldTransform;
 

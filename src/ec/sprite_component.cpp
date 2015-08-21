@@ -69,7 +69,7 @@ SpriteComponentManager::~SpriteComponentManager() {
 }
 
 
-void SpriteComponentManager::render(const OrthographicCamera& camera) {
+void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
 	_defaultBatch.clearBuffers();
 
 	GLuint index = 0;
@@ -88,7 +88,9 @@ void SpriteComponentManager::render(const OrthographicCamera& camera) {
 
 		Scalar w = tex->width();
 		Scalar h = tex->height();
-		Transform& wt = sc._entity()->worldTransform;
+		Matrix4 wt = lerp(interp,
+		                  sc._entity()->prevWorldTransform.matrix(),
+		                  sc._entity()->worldTransform.matrix());
 		buff.addVertex(SpriteVertex{ wt * Vector4(0, h, 0, 1),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::BottomLeft) });

@@ -178,6 +178,7 @@ void EntityManager::_detach(_Entity* child) {
 
 void EntityManager::_updateWorldTransformHelper(
         _Entity* entity, const Transform& parentTransform) {
+	entity->prevWorldTransform = entity->worldTransform;
 	entity->worldTransform = parentTransform * entity->transform;
 
 	_Entity* child = entity->firstChild;
