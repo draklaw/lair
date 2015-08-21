@@ -136,18 +136,60 @@ Renderer::~Renderer() {
 }
 
 
-Texture* Renderer::loadTexture(const std::string& file, uint32 flags) {
+void Renderer::preloadTexture(const std::string& file, uint32 flags) {
 	TexId id(file, flags);
+	std::unique_lock<std::mutex> lk(_textureLock);
 	auto texIt = _textures.find(id);
-	if(texIt != _textures.end()) {
-		return &texIt->second;
+	if(texIt == _textures.end()) {
+		texIt = _textures.emplace_hint(texIt, id, Texture());
+		texIt->second._load(_module->sys()->loader().loadImage(file));
 	}
+}
 
-	texIt = _textures.emplace_hint(texIt, id, Texture());
-	texIt->second._load(_module->sys()->loader().loadImage(file));
+
+void Renderer::preloadSprite(const std::string& file) {
+	std::unique_lock<std::mutex> lk(_spriteLock);
+	auto spriteIt = _sprites.find(file);
+	if(spriteIt == _sprites.end()) {
+		spriteIt = _sprites.emplace_hint(spriteIt, file,
+		                _module->sys()->loader().load<SpriteLoader>(file, this));
+	}
+}
+
+
+Texture* Renderer::getTexture(const std::string& file, uint32 flags) {
+	TexId id(file, flags);
+	std::unique_lock<std::mutex> lk(_textureLock);
+	auto texIt = _textures.find(id);
+	if(texIt == _textures.end()) {
+		log().warning("Texture \"", file, "\" not preloaded.");
+		preloadTexture(file, flags);
+		texIt = _textures.find(id);
+	}
+	lairAssert(texIt != _textures.end());
+	texIt->second._uploadNow();
 	texIt->second._setFlags(flags);
-
 	return &texIt->second;
+}
+
+
+Sprite* Renderer::getSprite(const std::string& file) {
+	std::unique_lock<std::mutex> lk(_spriteLock);
+	auto spriteIt = _sprites.find(file);
+	if(spriteIt == _sprites.end()) {
+		log().warning("Sprite \"", file, "\" not preloaded.");
+		preloadSprite(file);
+		spriteIt = _sprites.find(file);
+	}
+	lairAssert(spriteIt != _sprites.end());
+	spriteIt->second->wait();
+	if(spriteIt->second->isSuccessful()) {
+		spriteIt->second->_sprite._texture = getTexture(spriteIt->second->_texture,
+														spriteIt->second->_textureFlags);
+	} else {
+		spriteIt->second->_sprite._texture = defaultTexture();
+	}
+	return &spriteIt->second->_sprite;
 }
 
 

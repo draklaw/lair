@@ -19,33 +19,38 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
+#ifndef _LAIR_UTILS_GAME_STATE_H
+#define _LAIR_UTILS_GAME_STATE_H
 
-#include "lair/sys_sdl2/sys_loader.h"
+
+#include <lair/core/lair.h>
 
 
 namespace lair
 {
 
 
-SysLoader::SysLoader(size_t maxCacheSize, unsigned nThread, Logger& logger)
-    : LoaderManager(maxCacheSize, nThread, logger) {
+class GameState {
+public:
+	GameState();
+	GameState(const GameState&) = delete;
+	GameState(GameState&&)      = delete;
+	~GameState();
+
+	GameState& operator=(const GameState&) = delete;
+	GameState& operator=(GameState&&)      = delete;
+
+	virtual void initialize();
+	virtual void shutdown();
+
+	virtual void start();
+	virtual void stop();
+
+protected:
+};
+
+
 }
 
 
-SysLoader::~SysLoader() {
-}
-
-
-SysLoader::ImageLoaderPtr SysLoader::loadImage(const std::string file) {
-	return load<ImageLoader>(file);
-}
-
-
-SysLoader::JsonLoaderPtr SysLoader::loadJson(const std::string file) {
-	return load<JsonLoader>(file);
-}
-
-
-}
+#endif

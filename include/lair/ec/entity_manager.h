@@ -61,6 +61,8 @@ public:
 	size_t entityCapacity() const;
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
+	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json);
+
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
 	void destroyEntity(EntityRef entity);

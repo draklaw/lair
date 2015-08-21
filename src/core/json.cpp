@@ -19,32 +19,31 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
-
-#include "lair/sys_sdl2/sys_loader.h"
+#include "lair/core/json.h"
 
 
-namespace lair
-{
+namespace lair {
 
 
-SysLoader::SysLoader(size_t maxCacheSize, unsigned nThread, Logger& logger)
-    : LoaderManager(maxCacheSize, nThread, logger) {
-}
+Matrix4 parseMatrix4(const Json::Value& json, bool* ok) {
+	Matrix4 m = Matrix4::Identity();
+	if(!json.isArray() || (json.size() != 12 && json.size() != 16)) {
+		if(ok) *ok = false;
+		return m;
+	}
 
+	unsigned index = 0;
+	for(const Json::Value& v: json) {
+		if(!v.isNumeric()) {
+			if(ok) *ok = false;
+			return Matrix4::Identity();
+		}
+		m(index / 4, index % 4) = v.asFloat();
+		++index;
+	}
 
-SysLoader::~SysLoader() {
-}
-
-
-SysLoader::ImageLoaderPtr SysLoader::loadImage(const std::string file) {
-	return load<ImageLoader>(file);
-}
-
-
-SysLoader::JsonLoaderPtr SysLoader::loadJson(const std::string file) {
-	return load<JsonLoader>(file);
+	if(ok) *ok = true;
+	return m;
 }
 
 

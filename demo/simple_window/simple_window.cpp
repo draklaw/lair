@@ -132,8 +132,10 @@ int main(int /*argc*/, char** argv) {
 
 	lair::Renderer* renderer = renderModule.createRenderer();
 
-	lair::Texture* texture = renderer->loadTexture("lair.png");
-	lair::Sprite   sprite(texture);
+//	renderer->preloadTexture("lair.png");
+//	lair::Texture* texture = renderer->loadTexture("lair.png");
+//	lair::Sprite   sprite(texture);
+	renderer->preloadSprite("lair.spr");
 
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
@@ -144,17 +146,23 @@ int main(int /*argc*/, char** argv) {
 	lair::EntityManager entityManager;
 	lair::SpriteComponentManager spriteManager(renderer);
 
-	// Need to know the size to create entity.
-	if(!texture->_uploadNow()) {
-		texture = renderer->defaultTexture();
-	}
+//	lair::Texture* texture = renderer->getTexture("lair.png");
+//	lair::Sprite   sprite(texture);
+	lair::Sprite* sprite = renderer->getSprite("lair.spr");
+	glog.info("Sprite: ", sprite->hTiles(), ", ", sprite->vTiles(),
+	          " - ", sprite->width(), ", ", sprite->height());
 
-	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
-	spriteManager.addComponent(testSprite);
-	testSprite.sprite()->setSprite(&sprite);
+//	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
+//	spriteManager.addComponent(testSprite);
+//	testSprite.sprite()->setSprite(sprite);
+	auto testJson = sys.loader().loadJson("lair.obj");
+	testJson->wait();
+	lair::EntityRef testSprite = entityManager.createEntityFromJson(
+	            entityManager.root(), testJson->getValue());
+	spriteManager.addComponentFromJson(testSprite, testJson->getValue()["sprite"]);
 	testSprite.setTransform(lair::Transform(
-	        lair::Translation(-lair::Vector3(texture->width(),
-	                                         texture->height(), 0) / 2)));
+	        lair::Translation(-lair::Vector3(sprite->width(),
+	                                         sprite->height(), 0) / 2)));
 
 	lair::InterpLoop loop(&sys);
 	loop.setTickDuration(    1000000000/120);
@@ -184,6 +192,8 @@ int main(int /*argc*/, char** argv) {
 			break;
 		}
 		case lair::InterpLoop::Frame: {
+			testSprite.sprite()->setIndex(loop.frameTime() / 200000000);
+
 			spriteManager.render(loop.frameInterp(), camera);
 			w->swapBuffers();
 

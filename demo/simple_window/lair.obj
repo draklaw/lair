@@ -1,0 +1,7 @@
+{
+	"name":   "lair",
+	"sprite": {
+		"sprite": "lair.spr",
+		"index":  3
+	}
+}

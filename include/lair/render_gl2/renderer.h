@@ -25,6 +25,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <mutex>
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
@@ -34,6 +35,7 @@
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/sprite.h>
 
 
 namespace lair
@@ -98,8 +100,13 @@ public:
 
 	const VertexFormat* spriteFormat() const { return &_spriteFormat; }
 
-	Texture* loadTexture(const std::string& file,
-	                     uint32 flags = Texture::BILINEAR | Texture::REPEAT);
+	void preloadTexture(const std::string& file,
+	                    uint32 flags = Texture::BILINEAR | Texture::REPEAT);
+	void preloadSprite(const std::string& file);
+
+	Texture* getTexture(const std::string& file,
+	                    uint32 flags = Texture::BILINEAR | Texture::REPEAT);
+	Sprite* getSprite(const std::string& file);
 
 	Texture* defaultTexture() {
 		return &_defaultTexture;
@@ -139,6 +146,9 @@ protected:
 
 	typedef std::unordered_map<TexId, Texture, HashTexId> TextureMap;
 
+	typedef std::shared_ptr<SpriteLoader> SpriteLoaderPtr;
+	typedef std::unordered_map<std::string, SpriteLoaderPtr> SpriteMap;
+
 protected:
 	void _createDefaultTexture();
 
@@ -148,7 +158,11 @@ protected:
 	VertexFormat  _spriteFormat;
 
 	Texture       _defaultTexture;
+	std::mutex    _textureLock;
 	TextureMap    _textures;
+
+	std::mutex    _spriteLock;
+	SpriteMap     _sprites;
 
 	ProgramObject _spriteShaderProg;
 	SpriteShader  _spriteShader;

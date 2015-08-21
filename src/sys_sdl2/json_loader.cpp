@@ -19,32 +19,44 @@
  */
 
 
+#include <fstream>
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/sys_sdl2/sys_loader.h"
+#include "lair/sys_sdl2/json_loader.h"
 
 
 namespace lair
 {
 
 
-SysLoader::SysLoader(size_t maxCacheSize, unsigned nThread, Logger& logger)
-    : LoaderManager(maxCacheSize, nThread, logger) {
+JsonLoader::JsonLoader(LoaderManager* manager, const std::string& path)
+    : Loader(manager, path),
+      _value() {
 }
 
 
-SysLoader::~SysLoader() {
+JsonLoader::~JsonLoader() {
 }
 
 
-SysLoader::ImageLoaderPtr SysLoader::loadImage(const std::string file) {
-	return load<ImageLoader>(file);
-}
+void JsonLoader::loadSyncImpl(Logger& log) {
+	std::ifstream in(path().c_str());
+	if(!in.good()) {
+		log.error("Unable to read \"", _file, "\".");
+		return;
+	}
 
+	Json::Reader reader;
+	if(!reader.parse(in, _value)) {
+		log.error("Error while parsing json \"", _file, "\": ",
+		          reader.getFormattedErrorMessages());
+		return;
+	}
 
-SysLoader::JsonLoaderPtr SysLoader::loadJson(const std::string file) {
-	return load<JsonLoader>(file);
+	// TODO: Return the real size ?
+	_success(1024);
 }
 
 

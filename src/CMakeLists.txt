@@ -78,6 +78,7 @@ set(lair_SOURCES
 	jsoncpp.cpp
 
 	core/log.cpp
+	core/json.cpp
 	core/image.cpp
 
 	utils/path.cpp
@@ -87,6 +88,7 @@ set(lair_SOURCES
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp
+	sys_sdl2/json_loader.cpp
 	sys_sdl2/sys_loader.cpp
 	sys_sdl2/sys_module.cpp
 

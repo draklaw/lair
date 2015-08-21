@@ -19,33 +19,41 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
+#ifndef _LAIR_SYS_SDL2_JSON_LOADER_H
+#define _LAIR_SYS_SDL2_JSON_LOADER_H
 
-#include "lair/sys_sdl2/sys_loader.h"
+
+#include <lair/core/lair.h>
+#include <lair/core/json.h>
+
+#include <lair/utils/loader.h>
 
 
 namespace lair
 {
 
 
-SysLoader::SysLoader(size_t maxCacheSize, unsigned nThread, Logger& logger)
-    : LoaderManager(maxCacheSize, nThread, logger) {
+class JsonLoader : public Loader {
+public:
+	JsonLoader(LoaderManager* manager, const std::string& path);
+	JsonLoader(const JsonLoader&) = delete;
+	JsonLoader(JsonLoader&&)      = delete;
+	~JsonLoader();
+
+	JsonLoader& operator=(const JsonLoader&) = delete;
+	JsonLoader& operator=(JsonLoader&&)      = delete;
+
+	const Json::Value getValue() const { return _value; }
+
+protected:
+	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	Json::Value _value;
+};
+
+
 }
 
 
-SysLoader::~SysLoader() {
-}
-
-
-SysLoader::ImageLoaderPtr SysLoader::loadImage(const std::string file) {
-	return load<ImageLoader>(file);
-}
-
-
-SysLoader::JsonLoaderPtr SysLoader::loadJson(const std::string file) {
-	return load<JsonLoader>(file);
-}
-
-
-}
+#endif

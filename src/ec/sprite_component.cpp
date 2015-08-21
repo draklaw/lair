@@ -19,6 +19,7 @@
  */
 
 #include <lair/core/lair.h>
+#include <lair/core/json.h>
 #include <lair/core/log.h>
 
 #include <lair/render_gl2/orthographic_camera.h>
@@ -69,6 +70,16 @@ SpriteComponentManager::~SpriteComponentManager() {
 }
 
 
+void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json) {
+	addComponent(entity);
+	SpriteComponent* comp = entity.sprite();
+	if(json.isMember("sprite")) {
+		comp->setSprite(_renderer->getSprite(json["sprite"].asString()));
+	}
+	comp->setIndex(json.get("index", 0).asInt());
+}
+
+
 void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
 	_defaultBatch.clearBuffers();
 
@@ -78,16 +89,14 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 			continue;
 		}
 		const Sprite* sprite = sc.sprite();
-		Texture* tex = (sprite->texture()->_uploadNow())?
-			sprite->texture(): _renderer->defaultTexture();
 		Box2 region = sprite->tileBox(sc.index());
 
 		VertexBuffer& buff = _defaultBatch.getBuffer(
 					_renderer->spriteShader()->program(),
-					tex, _renderer->spriteFormat());
+					sprite->texture(), _renderer->spriteFormat());
 
-		Scalar w = tex->width();
-		Scalar h = tex->height();
+		Scalar w = sprite->width();
+		Scalar h = sprite->height();
 		Matrix4 wt = lerp(interp,
 		                  sc._entity()->prevWorldTransform.matrix(),
 		                  sc._entity()->worldTransform.matrix());

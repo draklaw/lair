@@ -28,6 +28,7 @@
 #include <lair/utils/loader.h>
 
 #include <lair/sys_sdl2/image_loader.h>
+#include <lair/sys_sdl2/json_loader.h>
 
 
 namespace lair
@@ -37,6 +38,7 @@ namespace lair
 class SysLoader : public LoaderManager {
 public:
 	typedef std::shared_ptr<ImageLoader> ImageLoaderPtr;
+	typedef std::shared_ptr<JsonLoader> JsonLoaderPtr;
 
 public:
 	SysLoader(size_t maxCacheSize, unsigned nThread = 1,
@@ -49,6 +51,7 @@ public:
 	SysLoader& operator=(SysLoader&&)      = delete;
 
 	ImageLoaderPtr loadImage(const std::string file);
+	JsonLoaderPtr loadJson(const std::string file);
 
 protected:
 };

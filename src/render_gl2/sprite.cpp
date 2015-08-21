@@ -19,8 +19,14 @@
  */
 
 
+#include <fstream>
+
 #include <lair/core/lair.h>
+#include <lair/core/json.h>
 #include <lair/core/log.h>
+
+#include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/renderer.h>
 
 #include "lair/render_gl2/sprite.h"
 
@@ -54,6 +60,47 @@ Box2 Sprite::tileBox(unsigned tx, unsigned ty) const {
 	                    lerp(float(ty)   / float(_vTiles), _region.min().y(), _region.max().y())),
 	            Vector2(lerp(float(tx+1) / float(_hTiles), _region.min().x(), _region.max().x()),
 	                    lerp(float(ty+1) / float(_vTiles), _region.min().y(), _region.max().y())));
+}
+
+
+SpriteLoader::SpriteLoader(LoaderManager* manager, const std::string& path,
+                           Renderer* renderer)
+    : Loader(manager, path),
+      _renderer(renderer) {
+}
+
+
+SpriteLoader::~SpriteLoader() {
+}
+
+
+void SpriteLoader::loadSyncImpl(Logger& log) {
+	std::ifstream in(path().c_str());
+	if(!in.good()) {
+		log.error("Unable to read \"", _file, "\".");
+		return;
+	}
+
+	Json::Value value;
+	Json::Reader reader;
+	if(!reader.parse(in, value, false)) {
+		log.error("Error while parsing json \"", _file, "\": ",
+		          reader.getFormattedErrorMessages());
+		return;
+	}
+
+	if(!value.isMember("texture")) {
+		log.error("Sprite \"", _file, "\" does not have a texture field.");
+		return;
+	}
+	_texture = value["texture"].asString();
+	_textureFlags = Texture::BILINEAR | Texture::REPEAT;
+	_renderer->preloadTexture(_texture, _textureFlags);
+
+	_sprite._hTiles = value.get("hTiles", 1).asInt();
+	_sprite._vTiles = value.get("vTiles", 1).asInt();
+
+	_success(sizeof(Sprite));
 }
 
 

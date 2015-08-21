@@ -22,29 +22,18 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/sys_sdl2/sys_loader.h"
+#include "lair/utils/game_state.h"
 
 
 namespace lair
 {
 
 
-SysLoader::SysLoader(size_t maxCacheSize, unsigned nThread, Logger& logger)
-    : LoaderManager(maxCacheSize, nThread, logger) {
+GameState::GameState() {
 }
 
 
-SysLoader::~SysLoader() {
-}
-
-
-SysLoader::ImageLoaderPtr SysLoader::loadImage(const std::string file) {
-	return load<ImageLoader>(file);
-}
-
-
-SysLoader::JsonLoaderPtr SysLoader::loadJson(const std::string file) {
-	return load<JsonLoader>(file);
+GameState::~GameState() {
 }
 
 

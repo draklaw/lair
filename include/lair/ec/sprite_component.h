@@ -93,6 +93,8 @@ public:
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
 
+	void addComponentFromJson(EntityRef entity, const Json::Value& json);
+
 	void render(float interp, const OrthographicCamera& camera);
 
 protected:

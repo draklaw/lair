@@ -23,6 +23,7 @@
 #include <cmath>
 
 #include <lair/core/lair.h>
+#include <lair/core/json.h>
 #include <lair/core/log.h>
 
 #include <lair/ec/component.h>
@@ -64,6 +65,17 @@ EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
 	_addChild(parent._get(), entity);
 	return EntityRef(entity);
 }
+
+
+EntityRef EntityManager::createEntityFromJson(EntityRef parent,
+                                              const Json::Value& json) {
+	EntityRef entity = createEntity(parent, json.get("name", "").asString().c_str());
+	if(json.isMember("transform")) {
+		entity.setTransform(Transform(parseMatrix4(json["transform"])));
+	}
+	return entity;
+}
+
 
 void EntityManager::destroyEntity(EntityRef entity) {
 	lairAssert(entity.isValid() && entity._get() != _root);
