@@ -36,6 +36,7 @@
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
 #include <lair/render_gl2/sprite.h>
+#include <lair/render_gl2/batch.h>
 
 
 namespace lair
@@ -116,6 +117,8 @@ public:
 		return &_spriteShader;
 	}
 
+	Batch& mainBatch() { return _mainBatch; }
+
 	Logger& log();
 
 	ShaderObject _compileShader(const char* name, GLenum type,
@@ -166,6 +169,8 @@ protected:
 
 	ProgramObject _spriteShaderProg;
 	SpriteShader  _spriteShader;
+
+	Batch         _mainBatch;
 };
 
 

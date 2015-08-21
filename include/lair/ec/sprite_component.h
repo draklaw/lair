@@ -99,8 +99,6 @@ public:
 
 protected:
 	Renderer*        _renderer;
-
-	Batch            _defaultBatch;
 };
 
 

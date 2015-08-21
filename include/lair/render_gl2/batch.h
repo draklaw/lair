@@ -50,6 +50,7 @@ public:
 
 	VertexBuffer& getBuffer(const ProgramObject* shader, Texture* texture,
 	                        const VertexFormat* format);
+
 	void clearBuffers();
 	void clearAll();
 

@@ -51,6 +51,8 @@
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/sprite_component.h>
 
+#include <lair/utils/tiled_map.h>
+
 
 #ifndef SIMPLE_WINDOW_DATA_DIR
 #define SIMPLE_WINDOW_DATA_DIR "."
@@ -164,6 +166,12 @@ int main(int /*argc*/, char** argv) {
 	        lair::Translation(-lair::Vector3(sprite->width(),
 	                                         sprite->height(), 0) / 2)));
 
+	auto mapJson = sys.loader().loadJson("map.json");
+	mapJson->wait();
+	lair::TiledMap map;
+	map.setFromJson(glog, "map.json", mapJson->getValue());
+	map.setTileset(sprite);
+
 	lair::InterpLoop loop(&sys);
 	loop.setTickDuration(    1000000000/120);
 	loop.setFrameDuration(   1000000000/60);
@@ -194,7 +202,20 @@ int main(int /*argc*/, char** argv) {
 		case lair::InterpLoop::Frame: {
 			testSprite.sprite()->setIndex(loop.frameTime() / 200000000);
 
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			renderer->mainBatch().clearBuffers();
+
+			map.render(renderer);
 			spriteManager.render(loop.frameInterp(), camera);
+
+			lair::Transform t = lair::Transform::Identity();
+			t.translate(-testSprite.transform().translation());
+
+			renderer->spriteShader()->use();
+			renderer->spriteShader()->setTextureUnit(0);
+			renderer->spriteShader()->setViewMatrix(camera.transform() * t.matrix());
+			renderer->mainBatch().render();
+
 			w->swapBuffers();
 
 			LAIR_LOG_OPENGL_ERRORS_TO(glog);

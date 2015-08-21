@@ -43,6 +43,7 @@ public:
 	VertexBuffer& operator=(VertexBuffer&&)      = default;
 
 	inline size_t vertexSize() const { return _vxBuffer.size(); }
+	inline unsigned vertexCount() const { return _vxBuffer.size() / _vertexSize; }
 	inline const Byte* vertexData() const { return _vxBuffer.data(); }
 
 	inline size_t indexSize() const { return _indexBuffer.size(); }

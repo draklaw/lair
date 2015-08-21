@@ -22,6 +22,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/render_gl2/renderer.h>
+
 #include "lair/utils/tiled_map.h"
 
 
@@ -29,7 +31,8 @@ namespace lair
 {
 
 
-TiledMap::TiledMap() {
+TiledMap::TiledMap()
+    : _tileset(nullptr) {
 }
 
 
@@ -53,14 +56,14 @@ unsigned TiledMap::height(unsigned /*layer*/) const {
 
 
 TiledMap::TileIndex TiledMap::tile(unsigned x, unsigned y, unsigned layer) const {
-	unsigned i = y * width(layer) * x;
+	unsigned i = y * width(layer) + x;
 	lairAssert(i < _layers[layer].size());
 	return _layers[layer][i];
 }
 
 
 void TiledMap::setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile) {
-	unsigned i = y * width(layer) * x;
+	unsigned i = y * width(layer) + x;
 	lairAssert(i < _layers[layer].size());
 	_layers[layer][i] = tile;
 }
@@ -92,6 +95,11 @@ unsigned TiledMap::tileSetVTiles() const {
 }
 
 
+void TiledMap::setTileset(Sprite* tileset) {
+	_tileset = tileset;
+}
+
+
 bool TiledMap::setFromJson(Logger& log, const std::string& name, const Json::Value& value) {
 	_width  = value.get("width",  0).asInt();
 	_height = value.get("height", 0).asInt();
@@ -112,6 +120,8 @@ bool TiledMap::setFromJson(Logger& log, const std::string& name, const Json::Val
 	_tileSetVTiles = tilesets[0].get("imageheight", 0).asInt()
 	               / tilesets[0].get("tileheight", 1).asInt();
 
+	_layers.clear();
+	_objectLayers.clear();
 	for(const Json::Value& layer: value["layers"]) {
 		if(layer.get("type", "").asString() == "tilelayer") {
 			unsigned width  = layer.get("width",  0).asInt();
@@ -138,6 +148,49 @@ bool TiledMap::setFromJson(Logger& log, const std::string& name, const Json::Val
 	}
 
 	return true;
+}
+
+
+void TiledMap::render(Renderer* renderer) const {
+	lairAssert(_tileset);
+	Batch& batch = renderer->mainBatch();
+	VertexBuffer& buff = batch.getBuffer(
+				renderer->spriteShader()->program(),
+				_tileset->texture(), renderer->spriteFormat());
+	GLuint index = buff.vertexCount();
+	unsigned layer = 0;
+	for(const TileMap& map: _layers) {
+		for(unsigned y = 0; y < _height; ++y) {
+			for(unsigned x = 0; x < _width; ++x) {
+				TileIndex ti = tile(x, y, layer);
+				if(ti == 0) {
+					continue;
+				}
+				Box2 region = _tileset->tileBox(ti - 1);
+				Vector4 v0((x + 0) * _tileset->width(), -float(y + 0) * _tileset->height(), 0, 1);
+				Vector4 v1((x + 0) * _tileset->width(), -float(y + 1) * _tileset->height(), 0, 1);
+				Vector4 v2((x + 1) * _tileset->width(), -float(y + 0) * _tileset->height(), 0, 1);
+				Vector4 v3((x + 1) * _tileset->width(), -float(y + 1) * _tileset->height(), 0, 1);
+				Vector4 color(1, 1, 1, 1);
+				buff.addVertex(SpriteVertex{
+						v0, color, region.corner(Box2::BottomLeft) });
+				buff.addVertex(SpriteVertex{
+						v1, color, region.corner(Box2::TopLeft) });
+				buff.addVertex(SpriteVertex{
+						v2, color, region.corner(Box2::BottomRight) });
+				buff.addVertex(SpriteVertex{
+						v3, color, region.corner(Box2::TopRight) });
+				buff.addIndex(index + 0);
+				buff.addIndex(index + 1);
+				buff.addIndex(index + 2);
+				buff.addIndex(index + 2);
+				buff.addIndex(index + 1);
+				buff.addIndex(index + 3);
+				index += 4;
+			}
+		}
+		++layer;
+	}
 }
 
 

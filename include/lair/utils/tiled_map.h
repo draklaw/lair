@@ -32,6 +32,10 @@ namespace lair
 {
 
 
+class Renderer;
+class Sprite;
+
+
 class TiledMap {
 public:
 	typedef unsigned TileIndex;
@@ -58,7 +62,11 @@ public:
 	unsigned tileSetHTiles() const;
 	unsigned tileSetVTiles() const;
 
+	void setTileset(Sprite* tileset);
+
 	bool setFromJson(Logger& log, const std::string& name, const Json::Value& value);
+
+	void render(Renderer* renderer) const;
 
 protected:
 	typedef std::vector<TileIndex> TileMap;
@@ -76,6 +84,8 @@ protected:
 	std::string _tileSetFile;
 	unsigned    _tileSetHTiles;
 	unsigned    _tileSetVTiles;
+
+	Sprite* _tileset;
 };
 
 

@@ -66,7 +66,7 @@ const char* defaultVertGlsl =
 
 	"void main() {\n"
 	"	gl_Position = viewMatrix * vx_position;\n"
-	"	position    = gl_Position;\n"
+	"	position    = vx_position;\n"
 	"	color       = vx_color;\n"
 	"	texCoord    = vx_texCoord;\n"
 	"}\n";

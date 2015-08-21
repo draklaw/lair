@@ -61,8 +61,7 @@ void SpriteComponent::destroy() {
 SpriteComponentManager::SpriteComponentManager(Renderer* renderer,
                                                size_t componentBlockSize)
     : ComponentManager(componentBlockSize),
-      _renderer(renderer),
-      _defaultBatch() {
+      _renderer(renderer) {
 }
 
 
@@ -81,9 +80,8 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 
 
 void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
-	_defaultBatch.clearBuffers();
+	Batch& batch = _renderer->mainBatch();
 
-	GLuint index = 0;
 	for(SpriteComponent& sc: *this) {
 		if(!sc._entity()) {
 			continue;
@@ -91,9 +89,10 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		const Sprite* sprite = sc.sprite();
 		Box2 region = sprite->tileBox(sc.index());
 
-		VertexBuffer& buff = _defaultBatch.getBuffer(
+		VertexBuffer& buff = batch.getBuffer(
 					_renderer->spriteShader()->program(),
 					sprite->texture(), _renderer->spriteFormat());
+		GLuint index = buff.vertexCount();
 
 		Scalar w = sprite->width();
 		Scalar h = sprite->height();
@@ -120,12 +119,6 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		buff.addIndex(index + 3);
 		index += 4;
 	}
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	_renderer->spriteShader()->use();
-	_renderer->spriteShader()->setTextureUnit(0);
-	_renderer->spriteShader()->setViewMatrix(camera.transform());
-	_defaultBatch.render();
 }
 
 
