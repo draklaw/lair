@@ -25,7 +25,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include <lair/ec/sprite_component.h>
+#include <lair/ec/component.h>
 
 #include "lair/ec/entity_manager.h"
 
@@ -34,15 +34,13 @@ namespace lair
 {
 
 
-EntityManager::EntityManager(Renderer* renderer, size_t entityBlockSize)
+EntityManager::EntityManager(size_t entityBlockSize)
     : _root           (nullptr),
       _firstFree      (nullptr),
       _entityBlockSize(entityBlockSize),
       _nEntities      (0),
       _nZombieEntities(0),
-      _entities       (),
-      _renderer       (renderer),
-      _spriteManager  (new SpriteComponentManager(this)){
+      _entities       () {
 	_root = _createDetachedEntity("__root__");
 }
 
@@ -74,8 +72,11 @@ void EntityManager::destroyEntity(EntityRef entity) {
 		destroyEntity(entity.firstChild());
 	}
 
-	if(entity.sprite()) {
-		removeSpriteComponent(entity);
+	Component* cmp = entity._get()->firstComponent;
+	while(cmp) {
+		Component* tmp = cmp;
+		cmp = cmp->_nextComponent;
+		tmp->destroy();
 	}
 
 	_detach(entity._get());
@@ -98,28 +99,11 @@ void EntityManager::moveEntity(EntityRef& entity, EntityRef& newParent) {
 }
 
 
-void EntityManager::addSpriteComponent(EntityRef& entity) {
-	lairAssert(entity.isValid());
-	_spriteManager->addComponent(entity._get());
-}
-
-
-void EntityManager::removeSpriteComponent(EntityRef& entity) {
-	lairAssert(entity.isValid());
-	_spriteManager->removeComponent(entity._get());
-}
-
-
 void EntityManager::updateWorldTransform() {
 	// TODO: Update this algorithm when using homogenous arrays to make it
 	// more cache-firendly.
 
 	_updateWorldTransformHelper(_root, Transform::Identity());
-}
-
-
-void EntityManager::render(const OrthographicCamera& camera) {
-	_spriteManager->render(camera);
 }
 
 

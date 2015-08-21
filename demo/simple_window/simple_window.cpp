@@ -141,7 +141,8 @@ int main(int /*argc*/, char** argv) {
 	camera.setViewBox(viewBox);
 
 
-	lair::EntityManager entityManager(renderer);
+	lair::EntityManager entityManager;
+	lair::SpriteComponentManager spriteManager(renderer);
 
 	// Need to know the size to create entity.
 	if(!texture->_uploadNow()) {
@@ -149,7 +150,7 @@ int main(int /*argc*/, char** argv) {
 	}
 
 	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
-	entityManager.addSpriteComponent(testSprite);
+	spriteManager.addComponent(testSprite);
 	testSprite.sprite()->setSprite(&sprite);
 	testSprite.setTransform(lair::Transform(
 	        lair::Translation(-lair::Vector3(texture->width(),
@@ -158,7 +159,7 @@ int main(int /*argc*/, char** argv) {
 	lair::InterpLoop loop(&sys);
 	loop.setTickDuration(    1000000000/200);
 	loop.setFrameDuration(   1000000000/60);
-	loop.setMaxFrameDuration(2000000000/20);
+	loop.setMaxFrameDuration(1000000000/20);
 	loop.setFrameMargin(     1000000000/120);
 
 	loop.start();
@@ -181,7 +182,7 @@ int main(int /*argc*/, char** argv) {
 			break;
 		}
 		case lair::InterpLoop::Frame: {
-			entityManager.render(camera);
+			spriteManager.render(camera);
 			w->swapBuffers();
 
 			LAIR_LOG_OPENGL_ERRORS_TO(glog);

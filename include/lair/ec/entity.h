@@ -28,6 +28,8 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/ec/component.h>
+
 
 namespace lair
 {
@@ -70,6 +72,9 @@ public:
 		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
 	}
 
+	void _addComponent(Component* comp);
+	void _removeComponent(Component* comp);
+
 public:
 	uint32         weakRefCount;
 	EntityManager* manager;
@@ -86,6 +91,9 @@ public:
 	Transform      worldTransform;
 //	Transform*     transform;
 //	Transform*     worldTransform;
+
+	// Components form a single linked list for efficient iteration.
+	Component*     firstComponent;
 
 	/* Components here ! */
 	SpriteComponent* sprite;

@@ -43,12 +43,10 @@ class Renderer;
 
 class Component;
 
-class SpriteComponentManager;
-
 
 class EntityManager {
 public:
-	EntityManager(lair::Renderer* renderer, size_t entityBlockSize = 1024);
+	EntityManager(size_t entityBlockSize = 1024);
 	EntityManager(const EntityManager&) = delete;
 	EntityManager(EntityManager&&)      = delete;
 	~EntityManager();
@@ -70,12 +68,7 @@ public:
 
 	void moveEntity(EntityRef& entity, EntityRef& newParent);
 
-	inline Renderer* renderer() { return _renderer; }
-	void addSpriteComponent(EntityRef& entity);
-	void removeSpriteComponent(EntityRef& entity);
-
 	void updateWorldTransform();
-	void render(const OrthographicCamera& camera);
 
 protected:
 	typedef std::vector<_Entity>   EntityBlock;
@@ -95,9 +88,6 @@ protected:
 	size_t          _nEntities;
 	size_t          _nZombieEntities;
 	EntityBlockList _entities;
-
-	Renderer*       _renderer;
-	std::unique_ptr<SpriteComponentManager> _spriteManager;
 };
 
 

@@ -30,6 +30,24 @@ namespace lair
 {
 
 
+void _Entity::_addComponent(Component* comp) {
+	comp->_nextComponent = firstComponent;
+	firstComponent = comp;
+}
+
+
+void _Entity::_removeComponent(Component* comp) {
+	if(firstComponent == comp) {
+		firstComponent = comp->_nextComponent;
+	} else {
+		Component* prev = firstComponent;
+		while(prev && prev->_nextComponent != comp) prev = prev->_nextComponent;
+		lairAssert(prev);
+		prev->_nextComponent = prev->_nextComponent->_nextComponent;
+	}
+}
+
+
 void EntityRef::release() {
 	if(_entity) {
 		--_entity->weakRefCount;

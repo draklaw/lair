@@ -10,7 +10,7 @@
   - Write a class that combines Shader + uniforms values
   - Culling
 - Config file(s) JsonCpp
-- Game loop
+- ~~Game loop~~
 - Game state
 - ec
   - Clonning

@@ -36,8 +36,10 @@ namespace lair
 {
 
 
-SpriteComponent::SpriteComponent(_Entity* entity)
+SpriteComponent::SpriteComponent(_Entity* entity,
+                                 ComponentManager<SpriteComponent>* manager)
     : Component(entity),
+      _manager(static_cast<SpriteComponentManager*>(manager)),
       _sprite(nullptr),
       _spriteIndex(0) {
 }
@@ -47,13 +49,18 @@ SpriteComponent::~SpriteComponent() {
 }
 
 
+void SpriteComponent::destroy() {
+	_manager->_removeComponent(_entity());
+}
+
+
 //---------------------------------------------------------------------------//
 
 
-SpriteComponentManager::SpriteComponentManager(EntityManager* manager,
+SpriteComponentManager::SpriteComponentManager(Renderer* renderer,
                                                size_t componentBlockSize)
-    : ComponentManager(manager, componentBlockSize),
-      _renderer(_manager->renderer()),
+    : ComponentManager(componentBlockSize),
+      _renderer(renderer),
       _defaultBatch() {
 }
 

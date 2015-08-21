@@ -48,10 +48,12 @@ class Sprite;
 class _Entity;
 class EntityManager;
 
+class SpriteComponentManager;
+
 
 class SpriteComponent : public Component {
 public:
-	SpriteComponent(_Entity* entity);
+	SpriteComponent(_Entity* entity, ComponentManager<SpriteComponent>* manager);
 	SpriteComponent(const SpriteComponent&) = delete;
 	SpriteComponent(SpriteComponent&&)      = default;
 	~SpriteComponent();
@@ -67,11 +69,14 @@ public:
 	inline unsigned index() const { return _spriteIndex; }
 	inline void setIndex(unsigned index) { _spriteIndex = index; }
 
+	virtual void destroy();
+
 	static inline SpriteComponent*& _getEntityComponent(_Entity* entity) {
 		return entity->sprite;
 	}
 
 protected:
+	SpriteComponentManager* _manager;
 	Sprite*   _sprite;
 	unsigned  _spriteIndex;
 };
@@ -79,7 +84,8 @@ protected:
 
 class SpriteComponentManager : public ComponentManager<SpriteComponent> {
 public:
-	SpriteComponentManager(EntityManager* manager, size_t componentBlockSize = 1024);
+	SpriteComponentManager(Renderer* renderer,
+	                       size_t componentBlockSize = 1024);
 	SpriteComponentManager(const SpriteComponentManager&) = delete;
 	SpriteComponentManager(SpriteComponentManager&&)      = delete;
 	~SpriteComponentManager();

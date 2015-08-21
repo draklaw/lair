@@ -40,14 +40,21 @@ public:
 	}
 	Component(const Component&) = delete;
 	Component(Component&&)      = default;
+	inline virtual ~Component() {
+	}
 
 	Component& operator=(const Component&) = delete;
 	Component& operator=(Component&&)      = default;
 
+	virtual void destroy() = 0;
+
 	inline _Entity* _entity() const { return _entityPtr; }
 
 protected:
-	_Entity*  _entityPtr;
+	_Entity*   _entityPtr;
+
+public:
+	Component* _nextComponent;
 };
 
 

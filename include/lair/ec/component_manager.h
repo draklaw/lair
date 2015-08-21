@@ -29,13 +29,11 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/ec/entity.h>
+
 
 namespace lair
 {
-
-
-class _Entity;
-class EntityManager;
 
 
 template < typename _Component >
@@ -155,9 +153,8 @@ public:
 	};
 
 public:
-	ComponentManager(EntityManager* manager, size_t componentBlockSize)
-	    : _manager(manager),
-	      _componentBlockSize(componentBlockSize),
+	ComponentManager(size_t componentBlockSize)
+	    : _componentBlockSize(componentBlockSize),
 	      _nComponents(0),
 	      _components() {
 	}
@@ -167,7 +164,7 @@ public:
 
 	~ComponentManager() {
 		while(_nComponents) {
-			removeComponent(_get(_nComponents - 1)->_entity());
+			_removeComponent(_get(_nComponents - 1)->_entity());
 		}
 		for(Component* block: _components) {
 			free(block);
@@ -182,22 +179,30 @@ public:
 	Iterator begin() { return Iterator(this, 0); }
 	Iterator end()   { return Iterator(this, _nComponents); }
 
-	void addComponent(_Entity* entity) {
-		lairAssert(Component::_getEntityComponent(entity) == nullptr);
+	void addComponent(EntityRef entity) {
+		lairAssert(entity.isValid());
+		lairAssert(Component::_getEntityComponent(entity._get()) == nullptr);
 
 		Component* comp = _get(_nComponents);
-		new (comp) Component(entity);
+		new (comp) Component(entity._get(), this);
+		entity._get()->_addComponent(comp);
 		++_nComponents;
 
-		Component::_getEntityComponent(entity) = comp;
+		Component::_getEntityComponent(entity._get()) = comp;
 	}
 
-	void removeComponent(_Entity* entity) {
+	void removeComponent(EntityRef entity) {
+		lairAssert(entity.isValid());
+		_removeComponent(entity._get());
+	}
+
+	void _removeComponent(_Entity* entity) {
 		Component* comp = Component::_getEntityComponent(entity);
 		lairAssert(comp && comp->_entity() == entity);
 
 		--_nComponents;
 		Component::_getEntityComponent(comp->_entity()) = nullptr;
+		entity->_removeComponent(comp);
 		comp->~Component();
 
 		Component* last = _get(_nComponents);
@@ -221,8 +226,6 @@ protected:
 	typedef std::vector<Component*>   ComponentList;
 
 protected:
-	EntityManager*   _manager;
-
 	size_t           _componentBlockSize;
 	size_t           _nComponents;
 	ComponentList    _components;
@@ -241,9 +244,8 @@ public:
 	typedef typename ComponentMap::iterator Iterator;
 
 public:
-	SparseComponentManager(EntityManager* manager)
-	    : _manager(manager),
-	      _components() {
+	SparseComponentManager()
+	    : _components() {
 	}
 
 	SparseComponentManager(const SparseComponentManager&) = delete;
@@ -260,22 +262,27 @@ public:
 	Iterator begin() { return _components.begin(); }
 	Iterator end()   { return _components.end(); }
 
-	void addComponent(_Entity* entity) {
-		auto it = _components.find(entity);
+	void addComponent(EntityRef& entity) {
+		lairAssert(entity.isValid());
+		auto it = _components.find(entity._get());
 		lairAssert(it == _components.end());
 
-		it = _components.emplace_hint(it, entity, Component(entity));
+		it = _components.emplace_hint(it, entity._get(), Component(entity));
+
+		entity._get()->_addComponent(&it->second);
 	}
 
-	void removeComponent(_Entity* entity) {
-		auto it = _components.find(entity);
+	void removeComponent(EntityRef& entity) {
+		lairAssert(entity.isValid());
+		auto it = _components.find(entity._get());
 		lairAssert(it != _components.end());
 
+		entity._get()->_removeComponent(&it->second);
 		_components.erase(it);
 	}
 
-	Component* get(_Entity* entity) {
-		auto it = _components.find(entity);
+	Component* get(EntityRef entity) {
+		auto it = _components.find(entity._get());
 		if(it == _components.end()) {
 			return nullptr;
 		}
@@ -284,7 +291,6 @@ public:
 
 
 protected:
-	EntityManager* _manager;
 	ComponentMap   _components;
 };
 
