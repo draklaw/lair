@@ -77,7 +77,7 @@ public:
 	Logger& log() { return _logger; }
 
 protected:
-	typedef std::vector<_Entity>   EntityBlock;
+	typedef std::vector<_Entity, Eigen::aligned_allocator<_Entity>>   EntityBlock;
 	typedef std::list<EntityBlock> EntityBlockList;
 
 protected:
