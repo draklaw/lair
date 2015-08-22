@@ -47,6 +47,9 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 	if(surf) {
 		Image::Format format;
 		switch(surf->format->format) {
+		case SDL_PIXELFORMAT_RGB24:
+			format = Image::Format::FormatRGB8;
+			break;
 		case SDL_PIXELFORMAT_ABGR8888:
 			format = Image::Format::FormatRGBA8;
 			break;

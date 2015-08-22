@@ -40,6 +40,7 @@ public:
 	OrthographicCamera& operator=(const OrthographicCamera&) = delete;
 	OrthographicCamera& operator=(OrthographicCamera&&)      = delete;
 
+	const Box3& viewBox() const { return _viewBox; }
 	void setViewBox(const Box3& viewBox);
 
 	Matrix4 transform() const;

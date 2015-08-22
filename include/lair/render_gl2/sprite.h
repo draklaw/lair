@@ -41,11 +41,11 @@ public:
 	Sprite(Texture* texture = nullptr, unsigned hTiles = 1, unsigned vTiles = 1,
 	       const Box2& region = Box2(Vector2(0, 0), Vector2(1, 1)));
 	Sprite(const Sprite&) = delete;
-	Sprite(Sprite&&)      = delete;
+	Sprite(Sprite&&)      = default;
 	~Sprite();
 
 	Sprite& operator=(const Sprite&) = delete;
-	Sprite& operator=(Sprite&&)      = delete;
+	Sprite& operator=(Sprite&&)      = default;
 
 	inline Texture*   texture() const { return _texture; }
 	inline const Box2 region()  const { return _region; }

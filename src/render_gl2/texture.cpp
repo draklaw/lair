@@ -99,9 +99,24 @@ bool Texture::_upload(const Image& image) {
 		glGenTextures(1, &_id);
 	}
 
+	GLenum iformat;
+	GLenum format;
+	switch(image.format()) {
+	case Image::FormatRGB8:
+		iformat = GL_RGB;
+		format  = GL_RGB;
+		break;
+	case Image::FormatRGBA8:
+		iformat = GL_RGBA;
+		format  = GL_RGBA;
+		break;
+	default:
+		return false;
+	}
+
 	glBindTexture(GL_TEXTURE_2D, _id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0,
-	             GL_RGBA, GL_UNSIGNED_BYTE, image.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, iformat, image.width(), image.height(), 0,
+	             format, GL_UNSIGNED_BYTE, image.data());
 	glGenerateMipmap(GL_TEXTURE_2D);
 	LAIR_THROW_IF_OPENGL_ERROR();
 

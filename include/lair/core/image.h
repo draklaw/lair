@@ -36,6 +36,7 @@ class Image {
 public:
 	enum Format {
 		FormatInvalid,
+		FormatRGB8,
 		FormatRGBA8,
 	};
 
