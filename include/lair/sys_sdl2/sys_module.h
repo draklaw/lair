@@ -24,6 +24,7 @@
 
 
 #include <unordered_map>
+#include <functional>
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
@@ -50,7 +51,7 @@ class Window;
  */
 class SysModule {
 public:
-	typedef bool (*QuitCallback)();
+	typedef std::function<bool()> QuitCallback;
 
 public:
 	/// \{

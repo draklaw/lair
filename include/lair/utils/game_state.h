@@ -43,8 +43,7 @@ public:
 	virtual void initialize();
 	virtual void shutdown();
 
-	virtual void start();
-	virtual void stop();
+	virtual void run();
 
 protected:
 };
