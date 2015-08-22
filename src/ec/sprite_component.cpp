@@ -105,7 +105,7 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 	Batch& batch = _renderer->mainBatch();
 
 	for(SpriteComponent& sc: *this) {
-		if(!sc._entity()) {
+		if(!sc._entity() || !sc.sprite()) {
 			continue;
 		}
 		const Sprite* sprite = sc.sprite();

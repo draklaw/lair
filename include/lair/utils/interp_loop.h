@@ -43,6 +43,8 @@ public:
 	InterpLoop(SysModule* sys);
 	~InterpLoop();
 
+	void reset();
+
 	void start();
 	void stop();
 

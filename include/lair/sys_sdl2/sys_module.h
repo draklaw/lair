@@ -51,7 +51,7 @@ class Window;
  */
 class SysModule {
 public:
-	typedef std::function<bool()> QuitCallback;
+	typedef std::function<void()> QuitCallback;
 
 public:
 	/// \{

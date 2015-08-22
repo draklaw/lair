@@ -86,7 +86,7 @@ bool SysModule::initialize() {
 		return false;
 	}
 
-	int imgErr = IMG_Init(IMG_INIT_PNG);
+	int imgErr = IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
 	if(imgErr < 0) {
 		log().error("SDL image initialization failed: ", IMG_GetError());
 		return false;

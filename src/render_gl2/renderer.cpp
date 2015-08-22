@@ -163,8 +163,8 @@ Texture* Renderer::getTexture(const std::string& file, uint32 flags) {
 	auto texIt = _textures.find(id);
 	if(texIt == _textures.end()) {
 		log().warning("Texture \"", file, "\" not preloaded.");
-		preloadTexture(file, flags);
-		texIt = _textures.find(id);
+		texIt = _textures.emplace_hint(texIt, id, Texture());
+		texIt->second._load(_module->sys()->loader().preloadImage(file));
 	}
 	lairAssert(texIt != _textures.end());
 	texIt->second._uploadNow();
@@ -178,8 +178,8 @@ Sprite* Renderer::getSprite(const std::string& file) {
 	auto spriteIt = _sprites.find(file);
 	if(spriteIt == _sprites.end()) {
 		log().warning("Sprite \"", file, "\" not preloaded.");
-		preloadSprite(file);
-		spriteIt = _sprites.find(file);
+		spriteIt = _sprites.emplace_hint(spriteIt, file,
+		                _module->sys()->loader().load<SpriteLoader>(file, this));
 	}
 	lairAssert(spriteIt != _sprites.end());
 	spriteIt->second->wait();

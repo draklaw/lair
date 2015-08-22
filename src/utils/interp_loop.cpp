@@ -53,6 +53,18 @@ InterpLoop::~InterpLoop() {
 }
 
 
+void InterpLoop::reset() {
+	_prevTickGameTime = 0;
+	_tickGameTime     = 0;
+	_prevTickRealTime = 0;
+	_tickRealTime     = 0;
+
+	_frameCount       = 0;
+	_frameGameTime    = 0;
+	_frameRealTime    = 0;
+}
+
+
 void InterpLoop::start() {
 	uint64 now = _sys->getTimeNs();
 

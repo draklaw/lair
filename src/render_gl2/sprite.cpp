@@ -75,30 +75,40 @@ SpriteLoader::~SpriteLoader() {
 
 
 void SpriteLoader::loadSyncImpl(Logger& log) {
-	std::ifstream in(path().c_str());
-	if(!in.good()) {
-		log.error("Unable to read \"", _file, "\".");
-		return;
-	}
+	std::string ext = _file.substr(_file.size() - 4, 4);
+	if(ext == ".png" || ext == ".jpg") {
+		_texture = _file;
+		_textureFlags = Texture::BILINEAR | Texture::REPEAT;
+		_renderer->preloadTexture(_file, _textureFlags);
 
-	Json::Value value;
-	Json::Reader reader;
-	if(!reader.parse(in, value, false)) {
-		log.error("Error while parsing json \"", _file, "\": ",
-		          reader.getFormattedErrorMessages());
-		return;
-	}
+		_sprite._hTiles = 1;
+		_sprite._vTiles = 1;
+	} else {
+		std::ifstream in(path().c_str());
+		if(!in.good()) {
+			log.error("Unable to read \"", _file, "\".");
+			return;
+		}
 
-	if(!value.isMember("texture")) {
-		log.error("Sprite \"", _file, "\" does not have a texture field.");
-		return;
-	}
-	_texture = value["texture"].asString();
-	_textureFlags = Texture::BILINEAR | Texture::REPEAT;
-	_renderer->preloadTexture(_texture, _textureFlags);
+		Json::Value value;
+		Json::Reader reader;
+		if(!reader.parse(in, value, false)) {
+			log.error("Error while parsing json \"", _file, "\": ",
+					  reader.getFormattedErrorMessages());
+			return;
+		}
 
-	_sprite._hTiles = value.get("hTiles", 1).asInt();
-	_sprite._vTiles = value.get("vTiles", 1).asInt();
+		if(!value.isMember("texture")) {
+			log.error("Sprite \"", _file, "\" does not have a texture field.");
+			return;
+		}
+		_texture = value["texture"].asString();
+		_textureFlags = Texture::BILINEAR | Texture::REPEAT;
+		_renderer->preloadTexture(_texture, _textureFlags);
+
+		_sprite._hTiles = value.get("hTiles", 1).asInt();
+		_sprite._vTiles = value.get("vTiles", 1).asInt();
+	}
 
 	_success(sizeof(Sprite));
 }
