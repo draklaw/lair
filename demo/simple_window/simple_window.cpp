@@ -147,11 +147,10 @@ int main(int /*argc*/, char** argv) {
 
 	lair::Sprite* sprite = renderer->getSprite("lair.spr");
 
-	auto testJson = sys.loader().loadJson("lair.obj");
-	testJson->wait();
+	const Json::Value& testJson = sys.loader().getJson("lair.obj");
 	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
-	            lair::EntityRef(), testJson->getValue());
-	spriteManager.addComponentFromJson(baseSprite, testJson->getValue()["sprite"]);
+	            lair::EntityRef(), testJson);
+	spriteManager.addComponentFromJson(baseSprite, testJson["sprite"]);
 
 	glog.warning("Anchor: ", baseSprite.sprite()->anchor().transpose());
 
@@ -167,10 +166,9 @@ int main(int /*argc*/, char** argv) {
 		e.setTransform(t);
 	}
 
-	auto mapJson = sys.loader().loadJson("map.json");
-	mapJson->wait();
+	const Json::Value& mapJson = sys.loader().getJson("map.json");
 	lair::TiledMap map;
-	map.setFromJson(glog, "map.json", mapJson->getValue());
+	map.setFromJson(glog, "map.json", mapJson);
 	map.setTileset(sprite);
 
 	lair::InterpLoop loop(&sys);

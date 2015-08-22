@@ -3,6 +3,6 @@
 	"sprite": {
 		"sprite": "lair.spr",
 		"index":  3,
-		"anchor": [ 1.0, 1.0 ]
+		"anchor": [ 0.5, 0.5]
 	}
 }

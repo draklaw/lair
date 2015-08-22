@@ -50,8 +50,11 @@ public:
 	SysLoader& operator=(const SysLoader&) = delete;
 	SysLoader& operator=(SysLoader&&)      = delete;
 
-	ImageLoaderPtr loadImage(const std::string file);
-	JsonLoaderPtr loadJson(const std::string file);
+	ImageLoaderPtr preloadImage(const std::string file);
+	const Image& getImage(const std::string file);
+
+	JsonLoaderPtr preloadJson(const std::string file);
+	const Json::Value& getJson(const std::string file);
 
 protected:
 };

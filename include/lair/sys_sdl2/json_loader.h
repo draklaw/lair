@@ -43,7 +43,7 @@ public:
 	JsonLoader& operator=(const JsonLoader&) = delete;
 	JsonLoader& operator=(JsonLoader&&)      = delete;
 
-	const Json::Value getValue() const { return _value; }
+	const Json::Value& getValue() const { return _value; }
 
 protected:
 	virtual void loadSyncImpl(Logger& log);

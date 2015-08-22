@@ -142,7 +142,7 @@ void Renderer::preloadTexture(const std::string& file, uint32 flags) {
 	auto texIt = _textures.find(id);
 	if(texIt == _textures.end()) {
 		texIt = _textures.emplace_hint(texIt, id, Texture());
-		texIt->second._load(_module->sys()->loader().loadImage(file));
+		texIt->second._load(_module->sys()->loader().preloadImage(file));
 	}
 }
 
