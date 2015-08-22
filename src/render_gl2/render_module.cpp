@@ -66,8 +66,9 @@ bool RenderModule::initialize() {
 	log().info("OpenGL vendor: ",       glGetString(GL_VENDOR));
 	log().info("OpenGL renderer: ",     glGetString(GL_RENDERER));
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	_initialized = true;
 

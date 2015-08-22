@@ -141,32 +141,32 @@ void Texture::_setFlags(uint32 flags) {
 
 	GLenum mag;
 	switch(magFilter()) {
-	case MAG_NEAREST: mag = GL_NEAREST;
-	case MAG_LINEAR:  mag = GL_LINEAR;
+	case MAG_NEAREST: mag = GL_NEAREST; break;
+	case MAG_LINEAR:  mag = GL_LINEAR; break;
 	}
 
 	GLenum min;
 	switch(minFilter() | mipmapMode()) {
-	case MIN_NEAREST | MIPMAP_NONE:    min = GL_NEAREST;
-	case MIN_LINEAR  | MIPMAP_NONE:    min = GL_LINEAR;
-	case MIN_NEAREST | MIPMAP_NEAREST: min = GL_NEAREST_MIPMAP_NEAREST;
-	case MIN_LINEAR  | MIPMAP_NEAREST: min = GL_LINEAR_MIPMAP_NEAREST;
-	case MIN_NEAREST | MIPMAP_LINEAR:  min = GL_NEAREST_MIPMAP_LINEAR;
-	case MIN_LINEAR  | MIPMAP_LINEAR:  min = GL_LINEAR_MIPMAP_LINEAR;
+	case MIN_NEAREST | MIPMAP_NONE:    min = GL_NEAREST; break;
+	case MIN_LINEAR  | MIPMAP_NONE:    min = GL_LINEAR; break;
+	case MIN_NEAREST | MIPMAP_NEAREST: min = GL_NEAREST_MIPMAP_NEAREST; break;
+	case MIN_LINEAR  | MIPMAP_NEAREST: min = GL_LINEAR_MIPMAP_NEAREST; break;
+	case MIN_NEAREST | MIPMAP_LINEAR:  min = GL_NEAREST_MIPMAP_LINEAR; break;
+	case MIN_LINEAR  | MIPMAP_LINEAR:  min = GL_LINEAR_MIPMAP_LINEAR; break;
 	}
 
 	GLenum wraps;
 	switch(wrapS()) {
-	case REPEAT_S: wraps = GL_REPEAT;
-	case CLAMP_S:  wraps = GL_CLAMP_TO_EDGE;
-	case MIRROR_S: wraps = GL_MIRRORED_REPEAT;
+	case REPEAT_S: wraps = GL_REPEAT; break;
+	case CLAMP_S:  wraps = GL_CLAMP_TO_EDGE; break;
+	case MIRROR_S: wraps = GL_MIRRORED_REPEAT; break;
 	}
 
 	GLenum wrapt;
 	switch(wrapT()) {
-	case REPEAT_T: wrapt = GL_REPEAT;
-	case CLAMP_T:  wrapt = GL_CLAMP_TO_EDGE;
-	case MIRROR_T: wrapt = GL_MIRRORED_REPEAT;
+	case REPEAT_T: wrapt = GL_REPEAT; break;
+	case CLAMP_T:  wrapt = GL_CLAMP_TO_EDGE; break;
+	case MIRROR_T: wrapt = GL_MIRRORED_REPEAT; break;
 	}
 
 	glBindTexture(GL_TEXTURE_2D, _id);
