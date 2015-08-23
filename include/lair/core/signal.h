@@ -102,23 +102,15 @@ struct _Connection {
 
 class SlotTracker {
 public:
-	SlotTracker()
-	    : _firstConn() {
-	}
+	SlotTracker();
 	SlotTracker(const SlotTracker&) = delete;
 	SlotTracker(SlotTracker&&)      = delete;
-	~SlotTracker() {
-		disconnectAll();
-	}
+	~SlotTracker();
 
 	SlotTracker& operator=(const SlotTracker&) = delete;
 	SlotTracker& operator=(SlotTracker&&)      = delete;
 
-	void disconnectAll() {
-		while(_firstConn.isValid()) {
-			_firstConn.disconnect();
-		}
-	}
+	void disconnectAll();
 
 public:
 	ConnectionRef _firstConn;
@@ -214,134 +206,6 @@ protected:
 	ConnectionRef _firstConnection;
 	ConnectionRef _lastConnection;
 };
-
-
-//---------------------------------------------------------------------------//
-
-
-ConnectionRef::ConnectionRef()
-    : _c(nullptr),
-      _ownConnection(false) {
-}
-
-ConnectionRef::ConnectionRef(_Connection* connection)
-    : _c(connection),
-      _ownConnection(false) {
-	if(_c) {
-		++_c->refCount;
-	}
-}
-
-ConnectionRef::ConnectionRef(const ConnectionRef& cr)
-    : _c(cr._c),
-      _ownConnection(false) {
-	if(_c) {
-		++_c->refCount;
-	}
-}
-
-ConnectionRef::ConnectionRef(ConnectionRef&& cr)
-    : _c(cr._c),
-      _ownConnection(false) {
-	cr._c = nullptr;
-}
-
-ConnectionRef::~ConnectionRef() {
-	if(isValid()) {
-		if(_ownConnection && isConnected()) {
-			disconnect();
-		}
-		release();
-	}
-}
-
-ConnectionRef& ConnectionRef::operator=(ConnectionRef rhs) {
-	swap(*this, rhs);
-	return *this;
-}
-
-bool ConnectionRef::operator==(const ConnectionRef& rhs) const {
-	return _c == rhs._c;
-}
-
-bool ConnectionRef::operator!=(const ConnectionRef& rhs) const {
-	return !(*this == rhs);
-}
-
-void ConnectionRef::release() {
-	if(isValid()) {
-		assert(_c->refCount > 0);
-		--_c->refCount;
-		if(_c->refCount == 0) {
-			// Can not be connected here (cause Signal own a ref)
-			delete _c;
-		}
-		_c = nullptr;
-	}
-}
-
-bool ConnectionRef::isValid() const {
-	return _c;
-}
-
-bool ConnectionRef::isConnected() const {
-	return _c && _c->signal;
-}
-
-bool ConnectionRef::isOwning() const {
-	return _ownConnection;
-}
-
-void ConnectionRef::own() {
-	_ownConnection = true;
-}
-
-void ConnectionRef::disown() {
-	_ownConnection = false;
-}
-
-ConnectionRef& ConnectionRef::track(SlotTracker& tracker) {
-	lairAssert(!_c->tracker);
-	_c->tracker = &tracker;
-	_c->trackerNext = _c->tracker->_firstConn;
-	if(_c->tracker->_firstConn.isValid()) {
-		_c->tracker->_firstConn._get()->trackerPrev = *this;
-	}
-	_c->tracker->_firstConn = *this;
-	return *this;
-}
-
-void ConnectionRef::disconnect() {
-	if(isConnected()) {
-		_Connection* conn = _c;
-		if(conn->tracker) {
-			_untrack(conn);
-		}
-		conn->signal->_disconnect(conn);
-	}
-}
-
-_Connection* ConnectionRef::_get() {
-	lairAssert(_c);
-	return _c;
-}
-
-void ConnectionRef::_untrack(_Connection* conn) {
-	lairAssert(conn->tracker);
-	if(conn->trackerPrev.isValid()) {
-		conn->trackerPrev._get()->trackerNext = conn->trackerNext;
-	} else {
-		conn->tracker->_firstConn = conn->trackerNext;
-	}
-	conn->tracker = nullptr;
-	conn->trackerPrev.release();
-	conn->trackerNext.release();
-}
-
-void swap(ConnectionRef& cr0, ConnectionRef& cr1) {
-	std::swap(cr0._c, cr1._c);
-	std::swap(cr0._ownConnection, cr1._ownConnection);
-}
 
 
 }

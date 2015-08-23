@@ -80,6 +80,7 @@ set(lair_SOURCES
 	core/log.cpp
 	core/json.cpp
 	core/image.cpp
+	core/signal.cpp
 
 	utils/path.cpp
 	utils/input.cpp
