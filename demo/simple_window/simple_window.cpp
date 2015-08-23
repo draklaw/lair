@@ -166,6 +166,9 @@ int main(int /*argc*/, char** argv) {
 		e.setTransform(t);
 	}
 
+	testSprite.sprite()->setView(lair::Box2(lair::Vector2(.25, .25),
+	                                        lair::Vector2(.75, .75)));
+
 	const Json::Value& mapJson = sys.loader().getJson("map.json");
 	lair::TiledMap map;
 	map.setFromJson(glog, "map.json", mapJson);

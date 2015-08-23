@@ -72,6 +72,9 @@ public:
 	inline const Vector2& anchor() const { return _anchor; }
 	inline void setAnchor(const Vector2& anchor) { _anchor = anchor; }
 
+	inline const Box2& view() const { return _view; }
+	inline void setView(const Box2& view) { _view = view; }
+
 	virtual void destroy();
 	virtual void clone(EntityRef& target);
 
@@ -84,6 +87,7 @@ protected:
 	Sprite*   _sprite;
 	unsigned  _spriteIndex;
 	Vector2   _anchor;
+	Box2      _view;
 };
 
 

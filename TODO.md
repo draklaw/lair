@@ -9,6 +9,7 @@
   - Use big buffers per batch, fill them after components sort ?
   - Write a class that combines Shader + uniforms values
   - Culling
+  - React on windows resize (viewport)
 - Config file(s) JsonCpp
 - ~~Game loop~~
 - ~Game state

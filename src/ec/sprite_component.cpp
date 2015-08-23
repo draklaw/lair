@@ -43,7 +43,8 @@ SpriteComponent::SpriteComponent(_Entity* entity,
       _manager(static_cast<SpriteComponentManager*>(manager)),
       _sprite(nullptr),
       _spriteIndex(0),
-      _anchor(0, 0) {
+      _anchor(0, 0),
+      _view(Vector2(0, 0), Vector2(1, 1)) {
 }
 
 
@@ -88,6 +89,15 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
 		}*/
 	}
+	if(json.isMember("view")) {
+		Json::Value view = json["view"];
+		if(view.isArray() || view.size() == 4) {
+			comp->setView(Box2(Vector2(view[0].asFloat(), view[1].asFloat()),
+			        Vector2(view[2].asFloat(), view[3].asFloat())));
+		} /*else {
+			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
+		}*/
+	}
 }
 
 
@@ -98,6 +108,7 @@ void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	comp->setSprite(baseComp->sprite());
 	comp->setIndex(baseComp->index());
 	comp->setAnchor(baseComp->anchor());
+	comp->setView(baseComp->view());
 }
 
 
@@ -121,20 +132,25 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		Matrix4 wt = lerp(interp,
 		                  sc._entity()->prevWorldTransform.matrix(),
 		                  sc._entity()->worldTransform.matrix());
+		const Box2& view = sc.view();
+		const Box2 view2(Vector2(view.min().x(), 1 - view.min().y()),
+		                 Vector2(view.max().x(), 1 - view.max().y()));
+
 		Vector4 offset(-w * sc.anchor().x(),
 		               -h * sc.anchor().y(), 0, 0);
-		buff.addVertex(SpriteVertex{ wt * (Vector4(0, h, 0, 1) + offset),
-									 Vector4(1, 1, 1, 1),
-									 region.corner(Box2::BottomLeft) });
-		buff.addVertex(SpriteVertex{ wt * (Vector4(0, 0, 0, 1) + offset),
-									 Vector4(1, 1, 1, 1),
-									 region.corner(Box2::TopLeft) });
-		buff.addVertex(SpriteVertex{ wt * (Vector4(w, h, 0, 1) + offset),
-									 Vector4(1, 1, 1, 1),
-									 region.corner(Box2::BottomRight) });
-		buff.addVertex(SpriteVertex{ wt * (Vector4(w, 0, 0, 1) + offset),
-									 Vector4(1, 1, 1, 1),
-									 region.corner(Box2::TopRight) });
+		Vector4 color(1, 1, 1, 1);
+		Vector4 v0(view.min().x() * w, view.max().y() * h, 0, 1);
+		Vector4 v1(view.min().x() * w, view.min().y() * h, 0, 1);
+		Vector4 v2(view.max().x() * w, view.max().y() * h, 0, 1);
+		Vector4 v3(view.max().x() * w, view.min().y() * h, 0, 1);
+		Vector2 tc0 = region.min() + (region.sizes().array() * view2.corner(Box2::TopLeft).array()).matrix();
+		Vector2 tc1 = region.min() + (region.sizes().array() * view2.corner(Box2::BottomLeft).array()).matrix();
+		Vector2 tc2 = region.min() + (region.sizes().array() * view2.corner(Box2::TopRight).array()).matrix();
+		Vector2 tc3 = region.min() + (region.sizes().array() * view2.corner(Box2::BottomRight).array()).matrix();
+		buff.addVertex(SpriteVertex{ wt * (v0 + offset), color, tc0 });
+		buff.addVertex(SpriteVertex{ wt * (v1 + offset), color, tc1 });
+		buff.addVertex(SpriteVertex{ wt * (v2 + offset), color, tc2 });
+		buff.addVertex(SpriteVertex{ wt * (v3 + offset), color, tc3 });
 		buff.addIndex(index + 0);
 		buff.addIndex(index + 1);
 		buff.addIndex(index + 2);
