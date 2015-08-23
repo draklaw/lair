@@ -52,7 +52,7 @@ public:
 	bool operator==(const ConnectionRef& rhs) const;
 	bool operator!=(const ConnectionRef& rhs) const;
 
-	inline void release();
+	void release();
 
 	bool isValid() const;
 	bool isConnected() const;

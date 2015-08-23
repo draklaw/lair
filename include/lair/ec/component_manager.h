@@ -223,7 +223,7 @@ public:
 	}
 
 protected:
-	typedef std::vector<Component*>   ComponentList;
+	typedef std::vector<Component*, Eigen::aligned_allocator<Component>>   ComponentList;
 
 protected:
 	size_t           _componentBlockSize;
@@ -238,7 +238,9 @@ public:
 	typedef _Component Component;
 
 protected:
-	typedef std::unordered_map<_Entity*, Component> ComponentMap;
+	typedef std::unordered_map<_Entity*, Component,
+			std::hash<_Entity*>, std::equal_to<_Entity*>,
+			Eigen::aligned_allocator<std::pair<_Entity*, Component>>> ComponentMap;
 
 public:
 	typedef typename ComponentMap::iterator Iterator;
@@ -267,12 +269,12 @@ public:
 		auto it = _components.find(entity._get());
 		lairAssert(it == _components.end());
 
-		it = _components.emplace_hint(it, entity._get(), Component(entity));
+		it = _components.emplace_hint(it, entity._get(), Component(entity._get(), this));
 
 		entity._get()->_addComponent(&it->second);
 	}
 
-	void removeComponent(EntityRef& entity) {
+	void removeComponent(EntityRef entity) {
 		lairAssert(entity.isValid());
 		auto it = _components.find(entity._get());
 		lairAssert(it != _components.end());
