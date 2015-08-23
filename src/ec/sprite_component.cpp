@@ -122,17 +122,17 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		                  sc._entity()->prevWorldTransform.matrix(),
 		                  sc._entity()->worldTransform.matrix());
 		Vector4 offset(-w * sc.anchor().x(),
-		                h * sc.anchor().y(), 0, 0);
-		buff.addVertex(SpriteVertex{ wt * (Vector4(0,  0, 0, 1) + offset),
+		               -h * sc.anchor().y(), 0, 0);
+		buff.addVertex(SpriteVertex{ wt * (Vector4(0, h, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::BottomLeft) });
-		buff.addVertex(SpriteVertex{ wt * (Vector4(0, -h, 0, 1) + offset),
+		buff.addVertex(SpriteVertex{ wt * (Vector4(0, 0, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::TopLeft) });
-		buff.addVertex(SpriteVertex{ wt * (Vector4(w,  0, 0, 1) + offset),
+		buff.addVertex(SpriteVertex{ wt * (Vector4(w, h, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::BottomRight) });
-		buff.addVertex(SpriteVertex{ wt * (Vector4(w, -h, 0, 1) + offset),
+		buff.addVertex(SpriteVertex{ wt * (Vector4(w, 0, 0, 1) + offset),
 									 Vector4(1, 1, 1, 1),
 									 region.corner(Box2::TopRight) });
 		buff.addIndex(index + 0);

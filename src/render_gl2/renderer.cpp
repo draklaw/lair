@@ -79,14 +79,16 @@ const char* defaultFragGlsl =
 
 	"uniform sampler2D texture;\n"
 
+	"varying highp   vec4 position;\n"
+	"varying lowp    vec4 color;\n"
 	"varying mediump vec2 texCoord;\n"
 
 	"void main() {\n"
-	"	vec4 color = texture2D(texture, texCoord);\n"
-	"	if(color.a < .5/256.){\n"
+	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
+	"	if(fcolor.a < .5/256.){\n"
 	"		discard;\n"
 	"	}\n"
-	"	gl_FragColor = color;\n"
+	"	gl_FragColor = fcolor;\n"
 	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
 	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
 	"}\n";
