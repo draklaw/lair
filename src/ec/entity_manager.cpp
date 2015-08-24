@@ -98,8 +98,10 @@ void EntityManager::destroyEntity(EntityRef entity) {
 	while(cmp) {
 		Component* tmp = cmp;
 		cmp = cmp->_nextComponent;
-		tmp->destroy();
-	}
+		//if (tmp->_alive)
+			tmp->destroy();
+	} //FIXME
+	//entity._get()->firstComponent = nullptr;
 
 	_detach(entity._get());
 	entity._get()->reset();
@@ -108,9 +110,10 @@ void EntityManager::destroyEntity(EntityRef entity) {
 }
 
 void EntityManager::_releaseEntity(_Entity* entity) {
-	entity->nextSibling = _firstFree;
+//FIXME: Pretty please.
+// 	entity->nextSibling = _firstFree;
 	entity->flags = 0;
-	_firstFree = entity;
+// 	_firstFree = entity;
 	--_nZombieEntities;
 }
 
