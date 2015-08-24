@@ -85,7 +85,7 @@ const char* defaultFragGlsl =
 
 	"void main() {\n"
 	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
-	"	if(fcolor.a < .5/256.){\n"
+	"	if(fcolor.a < .5){\n"
 	"		discard;\n"
 	"	}\n"
 	"	gl_FragColor = fcolor;\n"

@@ -72,6 +72,9 @@ public:
 	inline const Vector2& anchor() const { return _anchor; }
 	inline void setAnchor(const Vector2& anchor) { _anchor = anchor; }
 
+	inline const Vector4& color() const { return _color; }
+	inline void setColor(const Vector4& color) { _color = color; }
+
 	inline const Box2& view() const { return _view; }
 	inline void setView(const Box2& view) { _view = view; }
 
@@ -87,6 +90,7 @@ protected:
 	Sprite*   _sprite;
 	unsigned  _spriteIndex;
 	Vector2   _anchor;
+	Vector4   _color;
 	Box2      _view;
 };
 

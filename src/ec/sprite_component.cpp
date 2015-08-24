@@ -44,6 +44,7 @@ SpriteComponent::SpriteComponent(_Entity* entity,
       _sprite(nullptr),
       _spriteIndex(0),
       _anchor(0, 0),
+      _color(1, 1, 1, 1),
       _view(Vector2(0, 0), Vector2(1, 1)) {
 }
 
@@ -138,7 +139,6 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 
 		Vector4 offset(-w * sc.anchor().x(),
 		               -h * sc.anchor().y(), 0, 0);
-		Vector4 color(1, 1, 1, 1);
 		Vector4 v0(view.min().x() * w, view.max().y() * h, 0, 1);
 		Vector4 v1(view.min().x() * w, view.min().y() * h, 0, 1);
 		Vector4 v2(view.max().x() * w, view.max().y() * h, 0, 1);
@@ -147,10 +147,10 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		Vector2 tc1 = region.min() + (region.sizes().array() * view2.corner(Box2::BottomLeft).array()).matrix();
 		Vector2 tc2 = region.min() + (region.sizes().array() * view2.corner(Box2::TopRight).array()).matrix();
 		Vector2 tc3 = region.min() + (region.sizes().array() * view2.corner(Box2::BottomRight).array()).matrix();
-		buff.addVertex(SpriteVertex{ wt * (v0 + offset), color, tc0 });
-		buff.addVertex(SpriteVertex{ wt * (v1 + offset), color, tc1 });
-		buff.addVertex(SpriteVertex{ wt * (v2 + offset), color, tc2 });
-		buff.addVertex(SpriteVertex{ wt * (v3 + offset), color, tc3 });
+		buff.addVertex(SpriteVertex{ wt * (v0 + offset), sc.color(), tc0 });
+		buff.addVertex(SpriteVertex{ wt * (v1 + offset), sc.color(), tc1 });
+		buff.addVertex(SpriteVertex{ wt * (v2 + offset), sc.color(), tc2 });
+		buff.addVertex(SpriteVertex{ wt * (v3 + offset), sc.color(), tc3 });
 		buff.addIndex(index + 0);
 		buff.addIndex(index + 1);
 		buff.addIndex(index + 2);
