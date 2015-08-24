@@ -41,16 +41,16 @@ class ComponentManager {
 public:
 	typedef _Component Component;
 
-	typedef ptrdiff_t  difference_type;
-	typedef Component  value_type;
-	typedef Component* pointer;
-	typedef Component& reference;
-	typedef std::random_access_iterator_tag iterator_category;
-
 public:
 
 	class Iterator {
 	public:
+		typedef ptrdiff_t  difference_type;
+		typedef Component  value_type;
+		typedef Component* pointer;
+		typedef Component& reference;
+		typedef std::random_access_iterator_tag iterator_category;
+
 		Iterator(ComponentManager<Component>* manager, unsigned index)
 		    : _manager(manager),
 		      _index(index) {
@@ -167,7 +167,7 @@ public:
 			_removeComponent(_get(_nComponents - 1)->_entity());
 		}
 		for(Component* block: _components) {
-			free(block);
+			Eigen::internal::aligned_free(block);
 		}
 	}
 
@@ -217,7 +217,7 @@ public:
 		unsigned ci    = index % _componentBlockSize;
 		if(block == _components.size()) {
 			_components.emplace_back(reinterpret_cast<Component*>(
-			        std::malloc(sizeof(Component) * _componentBlockSize)));
+			        Eigen::internal::aligned_malloc(sizeof(Component) * _componentBlockSize)));
 		}
 		return &_components[block][ci];
 	}
