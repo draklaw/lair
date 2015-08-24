@@ -35,6 +35,7 @@ InterpLoop::InterpLoop(SysModule* sys)
     : _sys(sys),
 
       _tickDuration    (1000000000/60),
+      _tickCount       (0),
       _prevTickGameTime(0),
       _tickGameTime    (0),
       _prevTickRealTime(0),
@@ -45,7 +46,8 @@ InterpLoop::InterpLoop(SysModule* sys)
       _frameMargin     (_frameDuration / 2),
       _frameCount      (0),
       _frameGameTime   (0),
-      _frameRealTime   (0) {
+      _frameRealTime   (0),
+      _frameInterp     (0) {
 }
 
 
@@ -68,6 +70,7 @@ void InterpLoop::reset() {
 void InterpLoop::start() {
 	uint64 now = _sys->getTimeNs();
 
+	_tickCount        = 0;
 	_prevTickRealTime = 0;
 	_tickRealTime     = now;
 	_frameRealTime    = 0;
