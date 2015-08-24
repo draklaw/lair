@@ -181,7 +181,22 @@ public:
 		return /* * */_entity->worldTransform;
 	}
 
-	inline void setTransform(const Transform& transform) {
+	inline Transform computeWorldTransform() const {
+		if(parent().isValid()) {
+			return parent().computeWorldTransform() * _entity->transform;
+		} else {
+			return _entity->transform;
+		}
+	}
+
+	inline void place(const Transform& transform) {
+		lairAssert(isValid());
+//		lairAssert(_entity->transform);
+		/* * */_entity->transform = transform;
+		_entity->worldTransform = computeWorldTransform();
+	}
+
+	inline void move(const Transform& transform) {
 		lairAssert(isValid());
 //		lairAssert(_entity->transform);
 		/* * */_entity->transform = transform;

@@ -74,7 +74,7 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
                                               const Json::Value& json) {
 	EntityRef entity = createEntity(parent, json.get("name", "").asString().c_str());
 	if(json.isMember("transform")) {
-		entity.setTransform(Transform(parseMatrix4(json["transform"])));
+		entity.place(Transform(parseMatrix4(json["transform"])));
 	}
 	return entity;
 }
@@ -82,7 +82,7 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
 
 EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name) {
 	EntityRef entity = createEntity(newParent, name? name: base.name());
-	entity.setTransform(base.transform());
+	entity.place(base.transform());
 	return entity;
 }
 

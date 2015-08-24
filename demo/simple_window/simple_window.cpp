@@ -163,7 +163,7 @@ int main(int /*argc*/, char** argv) {
 
 		glog.info("Clone ", i, "...");
 		lair::EntityRef e = baseSprite.clone(testSprite, "Clone");
-		e.setTransform(t);
+		e.place(t);
 	}
 
 	testSprite.sprite()->setView(lair::Box2(lair::Vector2(.25, .25),
@@ -196,7 +196,7 @@ int main(int /*argc*/, char** argv) {
 			if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
 			if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
 			if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
-			testSprite.setTransform(trans);
+			testSprite.move(trans);
 
 			entityManager.updateWorldTransform();
 			break;
