@@ -267,9 +267,14 @@ public:
 	void addComponent(EntityRef& entity) {
 		lairAssert(entity.isValid());
 		auto it = _components.find(entity._get());
-		lairAssert(it == _components.end());
 
-		it = _components.emplace_hint(it, entity._get(), Component(entity._get(), this));
+		lairAssert(it == _components.end() || !it->second._alive);
+
+		if(it == _components.end()) {
+			it = _components.emplace_hint(it, entity._get(), Component(entity._get(), this));
+		} else {
+			it->second = Component(entity._get(), this);
+		}
 
 		entity._get()->_addComponent(&it->second);
 	}
@@ -280,7 +285,8 @@ public:
 		lairAssert(it != _components.end());
 
 		entity._get()->_removeComponent(&it->second);
-		_components.erase(it);
+		it->second._alive = false;
+//		_components.erase(it);
 	}
 
 	Component* get(EntityRef entity) {
@@ -291,6 +297,17 @@ public:
 		return &it->second;
 	}
 
+	void _collectGarbages() {
+		std::vector<typename ComponentMap::iterator> toRemove;
+		for(auto it = _components.begin(); it != _components.end(); ++it) {
+			if(!it->second._alive) {
+				toRemove.push_back(it);
+			}
+		}
+		for(auto it: toRemove) {
+			_components.erase(it);
+		}
+	}
 
 protected:
 	ComponentMap   _components;

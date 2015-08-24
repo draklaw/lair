@@ -37,7 +37,7 @@ class EntityRef;
 class Component {
 public:
 	explicit inline Component(_Entity* entity)
-	    : _entityPtr(entity) {
+	    : _alive(true), _entityPtr(entity) {
 	}
 	Component(const Component&) = delete;
 	Component(Component&&)      = default;
@@ -51,6 +51,8 @@ public:
 	virtual void clone(EntityRef& target) = 0;
 
 	inline _Entity* _entity() const { return _entityPtr; }
+
+	bool _alive;
 
 protected:
 	_Entity*   _entityPtr;

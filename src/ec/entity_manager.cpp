@@ -144,10 +144,11 @@ void EntityManager::_addEntityBlock() {
 _Entity* EntityManager::_createDetachedEntity(const char* name) {
 	// Do this first so there is no side effect in case of bad_alloc.
 	std::unique_ptr<char> ownedName;
-	if(name) {
-		ownedName.reset(new char[std::strlen(name) + 1]);
-		std::strcpy(ownedName.get(), name);
+	if(!name) {
+		name = "";
 	}
+	ownedName.reset(new char[std::strlen(name) + 1]);
+	std::strcpy(ownedName.get(), name);
 
 	if(!_firstFree) {
 		_addEntityBlock();
