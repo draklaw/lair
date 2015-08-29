@@ -39,31 +39,42 @@ function(add_autopy TARGET MODULE_FILE)
 endfunction()
 
 
+find_package(SDL2 REQUIRED)
+find_package(SDL2_image REQUIRED)
+find_package(SDL2_mixer REQUIRED)
+
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
 find_package(Boost REQUIRED COMPONENTS
 	system
 	filesystem
 )
 
-find_package(SDL2 REQUIRED)
-# TODO: FindSDL2_image.cmake
-#find_package(SDL2_image REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-find_package(GLEW REQUIRED)
 
 set(lair_INCLUDE_DIRS
-	PRIVATE "${PROJECT_SOURCE_DIR}/include"
-	PRIVATE "${GLEW_INCLUDE_DIRS}"
-	PRIVATE "${SDL2_INCLUDE_DIR}"
-	PRIVATE "${Boost_INCLUDE_DIRS}"
+	PUBLIC ${PROJECT_SOURCE_DIR}/include
+
+	PUBLIC ${EIGEN3_INCLUDE_DIR}
+	PUBLIC ${SDL2IMAGE_INCLUDE_DIR}
+	PUBLIC ${SDL2MIXER_INCLUDE_DIR}
+	PUBLIC ${SDL2_INCLUDE_DIR}
+	PUBLIC ${GLEW_INCLUDE_DIRS}
+	PUBLIC ${OPENGL_INCLUDE_DIR}
+	PUBLIC ${Boost_INCLUDE_DIRS}
 )
 
 set(lair_LIBRARIES
-	SDL2_image
-	"${GLEW_LIBRARIES}"
-	"${SDL2_LIBRARY}"
-	"${Boost_LIBRARIES}"
-	GL
+	PUBLIC ${SDL2IMAGE_LIBRARY}
+	PUBLIC ${SDL2MIXER_LIBRARY}
+	PUBLIC ${SDL2_LIBRARY}
+	PUBLIC ${GLEW_LIBRARIES}
+	PUBLIC ${OPENGL_LIBRARIES}
+	PUBLIC ${Boost_LIBRARIES}
 )
+
 
 add_autopy(core/core_py core/core.py)
 add_autopy(sys_sdl2/sys_sdl2_py sys_sdl2/sys_sdl2.py)
@@ -73,6 +84,7 @@ add_autopy(lair_py lair.py
 	sys_sdl2
 	ec
 )
+
 
 set(lair_SOURCES
 	jsoncpp.cpp
@@ -120,7 +132,9 @@ set(lair_py_SOURCES
 	lair_py.cpp
 )
 
+
 ###
+
 
 add_library(lair STATIC
 	${lair_SOURCES}

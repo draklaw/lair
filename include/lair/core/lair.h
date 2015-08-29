@@ -62,8 +62,8 @@ inline void lairAssert(bool result, const char* testCode, const char* file, int 
 #define lairAssert(_test) lair::lairAssert(_test, #_test, __FILE__, __LINE__)
 
 
-typedef std::size_t    size_t;
-typedef std::ptrdiff_t ptrdiff_t;
+typedef std::size_t    Size;
+typedef std::ptrdiff_t PtrDiff;
 
 typedef std::uint8_t   Byte;
 typedef std::uint8_t   uint8;

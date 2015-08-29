@@ -158,8 +158,7 @@ void TiledMap::render(Renderer* renderer) const {
 				renderer->spriteShader()->program(),
 				_tileset->texture(), renderer->spriteFormat());
 	GLuint index = buff.vertexCount();
-	unsigned layer = 0;
-	for(const TileMap& map: _layers) {
+	for(unsigned layer = 0; layer < nLayers(); ++layer) {
 		for(unsigned y = 0; y < _height; ++y) {
 			for(unsigned x = 0; x < _width; ++x) {
 				TileIndex ti = tile(x, y, layer);
