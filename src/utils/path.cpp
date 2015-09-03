@@ -46,7 +46,7 @@ Path exePath(const char* progName) {
 		ssize_t res = readlink("/proc/self/exe", buff, 4096);
 		if(res != -1) {
 			p = buff;
-		)
+		}
 	}
 #elif defined(_WIN32)
 	{
