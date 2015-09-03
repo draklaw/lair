@@ -43,7 +43,7 @@ ImageLoader::~ImageLoader() {
 
 
 void ImageLoader::loadSyncImpl(Logger& log) {
-	auto surf = make_unique(IMG_Load(path().c_str()), SDL_FreeSurface);
+	auto surf = make_unique(IMG_Load(path().string().c_str()), SDL_FreeSurface);
 	if(surf) {
 		Image::Format format;
 		switch(surf->format->format) {

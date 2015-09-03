@@ -46,6 +46,9 @@ find_package(SDL2_mixer REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
+set(Boost_USE_STATIC_LIBS    ON)
+set(Boost_USE_MULTITHREADED  ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost REQUIRED COMPONENTS
 	system
 	filesystem
@@ -150,6 +153,13 @@ set_target_properties(lair PROPERTIES
 #	OUTPUT_NAME "_lair"
 #	PREFIX ""
 )
+if(MSVC)
+	target_compile_options(lair PUBLIC "/MD")
+else()
+	target_compile_options(lair PUBLIC "-std=c++11")
+endif()
+
+
 
 ###
 

@@ -23,7 +23,8 @@
 #define _LAIR_RENDER_GL2_GL_H
 
 
-#include <GLES2/gl2.h>
+//#include <GLES2/gl2.h>
+#include <GL/glew.h>
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>

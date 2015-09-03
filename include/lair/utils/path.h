@@ -36,20 +36,6 @@ typedef boost::filesystem::path Path;
 
 Path exePath(const char* progName);
 
-//class Path {
-//public:
-//	Path();
-//	Path(const Path&) = delete;
-//	Path(Path&&)      = delete;
-//	~Path();
-
-//	Path& operator=(const Path&) = delete;
-//	Path& operator=(Path&&)      = delete;
-
-
-//protected:
-//};
-
 
 }
 

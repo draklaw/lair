@@ -19,6 +19,14 @@
  */
 
 
+#include <cstdlib>
+
+#if defined(__linux__)
+#  include <unistd.h>
+#elif defined(_WIN32)
+#  include <Windows.h>
+#endif
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
@@ -31,18 +39,32 @@ namespace lair
 {
 
 Path exePath(const char* progName) {
-   Path p = current_path();
-   p /= progName;
+	Path p;
+#if defined(__linux__)
+	{
+		char buff[4096];
+		ssize_t res = readlink("/proc/self/exe", buff, 4096);
+		if(res != -1) {
+			p = buff;
+		)
+	}
+#elif defined(_WIN32)
+	{
+		CHAR buff[4096];
+		GetModuleFileName(NULL, buff, 4096);
+		p = buff;
+	}
+#endif
 
-   return canonical(p.parent_path());
+	if(p.empty()) {
+		p = current_path();
+		p /= progName;
+	}
+
+	p = canonical(p.parent_path());
+
+	return p;
 }
-
-//Path::Path() {
-//}
-
-
-//Path::~Path() {
-//}
 
 
 }
