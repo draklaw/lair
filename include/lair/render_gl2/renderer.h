@@ -29,6 +29,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/path.h>
 
 #include <lair/render_gl2/vertex_format.h>
 #include <lair/render_gl2/glsl_source.h>
@@ -101,13 +102,13 @@ public:
 
 	const VertexFormat* spriteFormat() const { return &_spriteFormat; }
 
-	void preloadTexture(const std::string& file,
+	void preloadTexture(const Path& file,
 	                    uint32 flags = Texture::BILINEAR | Texture::REPEAT);
-	void preloadSprite(const std::string& file);
+	void preloadSprite(const Path& file);
 
-	Texture* getTexture(const std::string& file,
+	Texture* getTexture(const Path& file,
 	                    uint32 flags = Texture::BILINEAR | Texture::REPEAT);
-	Sprite* getSprite(const std::string& file);
+	Sprite* getSprite(const Path& file);
 
 	Texture* defaultTexture() {
 		return &_defaultTexture;
@@ -130,7 +131,7 @@ public:
 
 protected:
 	struct TexId {
-		inline TexId(const std::string& file, uint32 flags)
+		inline TexId(const Path& file, uint32 flags)
 		    : file(file), flags(flags) {}
 		inline bool operator==(const TexId& rhs) const {
 			return file == rhs.file && flags == rhs.flags;
@@ -139,7 +140,7 @@ protected:
 			return !(*this == rhs);
 		}
 
-		std::string file;
+		Path        file;
 		uint32      flags;
 	};
 
@@ -150,7 +151,7 @@ protected:
 	typedef std::unordered_map<TexId, Texture, HashTexId> TextureMap;
 
 	typedef std::shared_ptr<SpriteLoader> SpriteLoaderPtr;
-	typedef std::unordered_map<std::string, SpriteLoaderPtr> SpriteMap;
+	typedef std::unordered_map<Path, SpriteLoaderPtr> SpriteMap;
 
 protected:
 	void _createDefaultTexture();

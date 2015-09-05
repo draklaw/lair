@@ -24,6 +24,7 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/path.h>
 
 #include <lair/utils/loader.h>
 
@@ -50,11 +51,11 @@ public:
 	SysLoader& operator=(const SysLoader&) = delete;
 	SysLoader& operator=(SysLoader&&)      = delete;
 
-	ImageLoaderPtr preloadImage(const std::string file);
-	const Image& getImage(const std::string file);
+	ImageLoaderPtr preloadImage(const Path& file);
+	const Image& getImage(const Path& file);
 
-	JsonLoaderPtr preloadJson(const std::string file);
-	const Json::Value& getJson(const std::string file);
+	JsonLoaderPtr preloadJson(const Path& file);
+	const Json::Value& getJson(const Path& file);
 
 protected:
 };

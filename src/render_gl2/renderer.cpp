@@ -142,7 +142,7 @@ Renderer::~Renderer() {
 }
 
 
-void Renderer::preloadTexture(const std::string& file, uint32 flags) {
+void Renderer::preloadTexture(const Path& file, uint32 flags) {
 	TexId id(file, flags);
 	std::unique_lock<std::mutex> lk(_textureLock);
 	auto texIt = _textures.find(id);
@@ -153,7 +153,7 @@ void Renderer::preloadTexture(const std::string& file, uint32 flags) {
 }
 
 
-void Renderer::preloadSprite(const std::string& file) {
+void Renderer::preloadSprite(const Path& file) {
 	std::unique_lock<std::mutex> lk(_spriteLock);
 	auto spriteIt = _sprites.find(file);
 	if(spriteIt == _sprites.end()) {
@@ -163,7 +163,7 @@ void Renderer::preloadSprite(const std::string& file) {
 }
 
 
-Texture* Renderer::getTexture(const std::string& file, uint32 flags) {
+Texture* Renderer::getTexture(const Path& file, uint32 flags) {
 	TexId id(file, flags);
 	std::unique_lock<std::mutex> lk(_textureLock);
 	auto texIt = _textures.find(id);
@@ -179,7 +179,7 @@ Texture* Renderer::getTexture(const std::string& file, uint32 flags) {
 }
 
 
-Sprite* Renderer::getSprite(const std::string& file) {
+Sprite* Renderer::getSprite(const Path& file) {
 	std::unique_lock<std::mutex> lk(_spriteLock);
 	auto spriteIt = _sprites.find(file);
 	if(spriteIt == _sprites.end()) {

@@ -31,7 +31,7 @@ namespace lair
 {
 
 
-Loader::Loader(LoaderManager* manager, const std::string& file)
+Loader::Loader(LoaderManager* manager, const Path& file)
     : _manager(manager),
       _isLoaded(false),
       _isSuccessful(false),

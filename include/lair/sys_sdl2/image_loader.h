@@ -25,6 +25,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/image.h>
+#include <lair/core/path.h>
 
 #include <lair/utils/loader.h>
 
@@ -35,7 +36,7 @@ namespace lair
 
 class ImageLoader : public Loader {
 public:
-	ImageLoader(LoaderManager* manager, const std::string& path);
+	ImageLoader(LoaderManager* manager, const Path& path);
 	ImageLoader(const ImageLoader&) = delete;
 	ImageLoader(ImageLoader&&)      = delete;
 	~ImageLoader();

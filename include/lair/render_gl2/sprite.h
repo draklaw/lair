@@ -24,6 +24,8 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/path.h>
+
 
 #include <lair/utils/loader.h>
 
@@ -68,7 +70,7 @@ public:
 
 class SpriteLoader : public Loader {
 public:
-	SpriteLoader(LoaderManager* manager, const std::string& path, Renderer* renderer);
+	SpriteLoader(LoaderManager* manager, const Path& path, Renderer* renderer);
 	SpriteLoader(const SpriteLoader&) = delete;
 	SpriteLoader(SpriteLoader&&)      = delete;
 	~SpriteLoader();

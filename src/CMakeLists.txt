@@ -48,6 +48,8 @@ find_package(GLEW REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
+find_package(Boost REQUIRED)
+
 
 set(lair_INCLUDE_DIRS
 	PUBLIC ${PROJECT_SOURCE_DIR}/include
@@ -58,6 +60,7 @@ set(lair_INCLUDE_DIRS
 	PUBLIC ${SDL2_INCLUDE_DIR}
 	PUBLIC ${GLEW_INCLUDE_DIRS}
 	PUBLIC ${OPENGL_INCLUDE_DIR}
+	PUBLIC ${Boost_INCLUDE_DIR}
 )
 
 set(lair_LIBRARIES

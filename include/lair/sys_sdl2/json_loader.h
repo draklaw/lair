@@ -25,6 +25,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/json.h>
+#include <lair/core/path.h>
 
 #include <lair/utils/loader.h>
 
@@ -35,7 +36,7 @@ namespace lair
 
 class JsonLoader : public Loader {
 public:
-	JsonLoader(LoaderManager* manager, const std::string& path);
+	JsonLoader(LoaderManager* manager, const Path& path);
 	JsonLoader(const JsonLoader&) = delete;
 	JsonLoader(JsonLoader&&)      = delete;
 	~JsonLoader();

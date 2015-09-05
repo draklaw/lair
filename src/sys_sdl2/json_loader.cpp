@@ -31,7 +31,7 @@ namespace lair
 {
 
 
-JsonLoader::JsonLoader(LoaderManager* manager, const std::string& path)
+JsonLoader::JsonLoader(LoaderManager* manager, const Path& path)
     : Loader(manager, path),
       _value() {
 }
@@ -43,6 +43,11 @@ JsonLoader::~JsonLoader() {
 
 void JsonLoader::loadSyncImpl(Logger& log) {
 	std::ifstream in(path().native().c_str());
+	std::ostringstream test;
+	for(wchar_t c : path().native()) {
+		test << "\\u" << std::hex << c;
+	}
+	log.warning("##### Path \"", path(), "\": ", test.str());
 	if(!in.good()) {
 		log.error("Unable to read \"", _file, "\".");
 		return;

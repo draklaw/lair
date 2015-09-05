@@ -32,7 +32,7 @@ namespace lair
 {
 
 
-ImageLoader::ImageLoader(LoaderManager* manager, const std::string& path)
+ImageLoader::ImageLoader(LoaderManager* manager, const Path& path)
     : Loader(manager, path),
       _image() {
 }

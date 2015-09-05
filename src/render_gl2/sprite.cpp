@@ -63,7 +63,7 @@ Box2 Sprite::tileBox(unsigned tx, unsigned ty) const {
 }
 
 
-SpriteLoader::SpriteLoader(LoaderManager* manager, const std::string& path,
+SpriteLoader::SpriteLoader(LoaderManager* manager, const Path& path,
                            Renderer* renderer)
     : Loader(manager, path),
       _renderer(renderer) {

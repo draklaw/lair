@@ -54,7 +54,7 @@ class LoaderManager;
 
 class Loader {
 public:
-	Loader(LoaderManager* manager, const std::string& file);
+	Loader(LoaderManager* manager, const Path& file);
 	Loader(const Loader&) = delete;
 	Loader(Loader&&)      = delete;
 	virtual ~Loader();
@@ -65,7 +65,7 @@ public:
 	bool               isLoaded();
 	bool               isSuccessful();
 	size_t             size();
-	const std::string& file() const { return _file; }
+	const Path&        file() const { return _file; }
 	Path               path() const;
 
 	void wait();
@@ -82,7 +82,7 @@ protected:
 	bool                    _isLoaded;
 	bool                    _isSuccessful;
 	size_t                  _size;
-	std::string             _file;
+	Path                    _file;
 	std::mutex              _mutex;
 	std::condition_variable _cv;
 };
@@ -133,7 +133,7 @@ public:
 	void setBasePath(const Path& path);
 
 	template < typename L, typename... Args >
-	std::shared_ptr<L> load(const std::string& file, Args&&... args) {
+	std::shared_ptr<L> load(const Path& file, Args&&... args) {
 		auto it = _cache.find(file);
 		if(it != _cache.end()) {
 			log().debug("Serve ", file, " from cache.");
@@ -159,7 +159,7 @@ public:
 
 private:
 	typedef std::deque<LoaderPtr> Queue;
-	typedef std::unordered_map<std::string, LoaderPtr> Cache;
+	typedef std::unordered_map<Path, LoaderPtr> Cache;
 
 private:
 	Logger*       _logger;

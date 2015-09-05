@@ -20,6 +20,7 @@
 
 
 #include <locale>
+#include <codecvt>
 
 #include "lair/core/path.h"
 
@@ -27,30 +28,13 @@
 namespace lair {
 
 
+#ifdef _WIN32
 std::wstring utf16FromUtf8(const std::string& utf8) {
 	typedef std::codecvt<wchar_t, char, std::mbstate_t> codecvt;
-	// FIXME: NOT thread safe.
-#ifndef _WIN32
-	static std::locale loc = std::locale("C.UTF-8");
-#else
-	static std::locale loc = std::locale(std::locale(), new std::codecvt_utf8_utf16<wchar_t>);
-#endif
-	const codecvt& cvt = std::use_facet<codecvt>(loc);
-	std::wstring utf16;
-	std::mbstate_t mb;
-	const char* fromNext =  &utf8[0];
-	wchar_t*      toNext = &utf16[0];
-	std::codecvt_base::result res = std::codecvt_base::result::partial;
-	while(res == std::codecvt_base::result::partial) {
-		PtrDiff offset = toNext - &utf16[0];
-		utf16.resize(std::min(utf16.size() * 2, Size(4096)));
-		toNext = &utf16[0] + offset;
-		res = cvt.in(mb,
-			         fromNext, & utf8[ utf8.size()], fromNext,
-			         toNext,   &utf16[utf16.size()], toNext);
-	}
-	return utf16;
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf16conv;
+	return utf16conv.from_bytes(utf8);
 }
+#endif
 
 
 #ifndef _WIN32

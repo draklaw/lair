@@ -38,24 +38,24 @@ SysLoader::~SysLoader() {
 }
 
 
-SysLoader::ImageLoaderPtr SysLoader::preloadImage(const std::string file) {
+SysLoader::ImageLoaderPtr SysLoader::preloadImage(const Path& file) {
 	return load<ImageLoader>(file);
 }
 
 
-const Image& SysLoader::getImage(const std::string file) {
+const Image& SysLoader::getImage(const Path& file) {
 	ImageLoaderPtr loader = load<ImageLoader>(file);
 	loader->wait();
 	return loader->getImage();
 }
 
 
-SysLoader::JsonLoaderPtr SysLoader::preloadJson(const std::string file) {
+SysLoader::JsonLoaderPtr SysLoader::preloadJson(const Path& file) {
 	return load<JsonLoader>(file);
 }
 
 
-const Json::Value& SysLoader::getJson(const std::string file) {
+const Json::Value& SysLoader::getJson(const Path& file) {
 	JsonLoaderPtr loader = load<JsonLoader>(file);
 	loader->wait();
 	return loader->getValue();

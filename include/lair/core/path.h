@@ -26,6 +26,8 @@
 #include <functional>
 #include <ostream>
 
+#include <boost/functional/hash.hpp>
+
 #include <lair/core/lair.h>
 
 
@@ -72,6 +74,12 @@ public:
 private:
 	std::string _path;
 };
+
+
+// Used by boost using Argument Dependant Lookup.
+inline std::size_t hash_value(const Path& path) {
+	return hash_value(path.utf8String());
+}
 
 
 Path operator/(const Path& lp, const Path& rp);
