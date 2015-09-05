@@ -28,6 +28,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/path.h>
 
 #include <lair/sys_sdl2/sys_loader.h>
 
@@ -109,6 +110,9 @@ public:
 	/// \{
 	/// \name File loading
 
+	const Path& basePath();
+	const Path getPrefPath(const char* org, const char* app);
+
 	inline SysLoader& loader() {
 		return _loader;
 	}
@@ -156,12 +160,14 @@ private:
 	Window* _windowFromID(unsigned windowID);
 
 private:
-	Logger _log;
+	Logger              _log;
 
-	bool _initialized;
-	WindowMap _windowMap;
+	bool                _initialized;
+	WindowMap           _windowMap;
 
-	SysLoader _loader;
+	Path                _basePath;
+
+	SysLoader           _loader;
 };
 
 

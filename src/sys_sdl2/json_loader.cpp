@@ -42,7 +42,7 @@ JsonLoader::~JsonLoader() {
 
 
 void JsonLoader::loadSyncImpl(Logger& log) {
-	std::ifstream in(path().c_str());
+	std::ifstream in(path().native().c_str());
 	if(!in.good()) {
 		log.error("Unable to read \"", _file, "\".");
 		return;

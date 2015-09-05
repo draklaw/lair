@@ -46,14 +46,6 @@ find_package(SDL2_mixer REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-set(Boost_USE_STATIC_LIBS    ON)
-set(Boost_USE_MULTITHREADED  ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost REQUIRED COMPONENTS
-	system
-	filesystem
-)
-
 find_package(Eigen3 REQUIRED)
 
 
@@ -66,7 +58,6 @@ set(lair_INCLUDE_DIRS
 	PUBLIC ${SDL2_INCLUDE_DIR}
 	PUBLIC ${GLEW_INCLUDE_DIRS}
 	PUBLIC ${OPENGL_INCLUDE_DIR}
-	PUBLIC ${Boost_INCLUDE_DIRS}
 )
 
 set(lair_LIBRARIES
@@ -75,7 +66,6 @@ set(lair_LIBRARIES
 	PUBLIC ${SDL2_LIBRARY}
 	PUBLIC ${GLEW_LIBRARIES}
 	PUBLIC ${OPENGL_LIBRARIES}
-	PUBLIC ${Boost_LIBRARIES}
 )
 
 
@@ -94,10 +84,10 @@ set(lair_SOURCES
 
 	core/log.cpp
 	core/json.cpp
+	core/path.cpp
 	core/image.cpp
 	core/signal.cpp
 
-	utils/path.cpp
 	utils/input.cpp
 	utils/loader.cpp
 	utils/interp_loop.cpp

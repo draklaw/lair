@@ -97,6 +97,8 @@ typedef Eigen::AlignedBox3f Box3;
 
 typedef unsigned ScanCode;
 
+class Path;
+
 
 // Make a unique_ptr that will be destroyed with the deleter D.
 // Useful when using C APIs that provide "destructor" functions.

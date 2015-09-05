@@ -37,8 +37,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-
-#include <lair/utils/path.h>
+#include <lair/core/path.h>
 
 
 namespace lair

@@ -23,6 +23,7 @@
 #include <thread>
 
 #include <SDL.h>
+#include <SDL_filesystem.h>
 #include <SDL_image.h>
 
 #include <lair/core/lair.h>
@@ -41,6 +42,7 @@ SysModule::SysModule(MasterLogger* logger, LogLevel level)
       _log("sys_sdl2", logger, level),
       _initialized(false),
       _windowMap(),
+      _basePath(),
       _loader(0, 1, _log) {
 }
 
@@ -92,6 +94,11 @@ bool SysModule::initialize() {
 		return false;
 	}
 
+	{
+		auto basePath = make_unique(SDL_GetBasePath(), SDL_free);
+		_basePath = Path(basePath.get());
+	}
+	log().info("System base path: ", _basePath.utf8String());
 
 	_initialized = true;
 
@@ -196,6 +203,22 @@ uint8 SysModule::getKeyState(unsigned scancode) {
 	int size = 0;
 	const uint8* states = SDL_GetKeyboardState(&size);
 	return (scancode < unsigned(size))? states[scancode]: 0;
+}
+
+
+const Path& SysModule::basePath() {
+	return _basePath;
+}
+
+
+const Path SysModule::getPrefPath(const char* org, const char* app) {
+	Path p;
+	{
+		auto path = make_unique(SDL_GetPrefPath(org, app), SDL_free);
+		_basePath = Path(path.get());
+	}
+	log().info("Preference path (", org, ", ", app, "): ", p);
+	return p;
 }
 
 
