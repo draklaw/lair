@@ -78,7 +78,7 @@ private:
 
 // Used by boost using Argument Dependant Lookup.
 inline std::size_t hash_value(const Path& path) {
-	return hash_value(path.utf8String());
+	return boost::hash_value<std::string>(path.utf8String());
 }
 
 

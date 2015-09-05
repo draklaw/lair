@@ -19,8 +19,10 @@
  */
 
 
+#ifdef _WIN32
 #include <locale>
 #include <codecvt>
+#endif
 
 #include "lair/core/path.h"
 
