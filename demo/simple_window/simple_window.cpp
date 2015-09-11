@@ -31,8 +31,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/image.h>
+#include <lair/core/path.h>
 
-#include <lair/utils/path.h>
 #include <lair/utils/input.h>
 #include <lair/utils/interp_loop.h>
 
@@ -86,13 +86,6 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
-#ifdef SIMPLE_WINDOW_DATA_DIR
-	lair::Path dataPath = boost::filesystem::canonical(SIMPLE_WINDOW_DATA_DIR);
-#else
-	lair::Path dataPath = lair::exePath(argv[0]);
-#endif
-	glog.log("Data directory: ", dataPath.native());
-
 //	dataDir = SIMPLE_WINDOW_DATA_DIR;
 //	glog.log("Data directory: \"", dataDir, "\"");
 
@@ -106,6 +99,15 @@ int main(int /*argc*/, char** argv) {
 	ok = sys.initialize();
 	if(!ok) abort();
 	sys.onQuit = quit;
+
+#ifdef SIMPLE_WINDOW_DATA_DIR
+	lair::Path dataPath = lair::Path(SIMPLE_WINDOW_DATA_DIR);
+#else
+	lair::Path dataPath = sys.basePath();
+#endif
+
+	glog.log("Data directory: ", dataPath.native());
+
 	sys.loader().setBasePath(dataPath);
 
 	lair::Window* w = sys.createWindow("simple_window", 800, 600);

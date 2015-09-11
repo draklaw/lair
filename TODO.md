@@ -5,7 +5,7 @@
 - ~File system abstraction ?
 - Renderer module
   - ~~Tilemap~~
-  - Text
+  - ~Text
   - Use big buffers per batch, fill them after components sort ?
   - Write a class that combines Shader + uniforms values
   - Culling
