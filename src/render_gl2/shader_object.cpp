@@ -92,7 +92,7 @@ void ShaderObject::deleteObject() {
 
 bool ShaderObject::compile(const GlslSource& source) {
 	lairAssert(_id != 0);
-	glShaderSource(_id, source.count(), source.string(), source.length());
+	glShaderSource(_id, source.count(), (const GLchar**)source.string(), source.length());
 	LAIR_THROW_IF_OPENGL_ERROR();
 	glCompileShader(_id); LAIR_THROW_IF_OPENGL_ERROR();
 
