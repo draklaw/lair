@@ -36,3 +36,7 @@
 - Make Input part of sys (with support for events) ?
 - Collision module (Based on Box2D ? Bullet ?)
 - Geometric shapes ?
+- UI elements
+
+
+- Move to Python coding convention ? (Closer to stdc++ & same conventions for python and C)
