@@ -117,7 +117,7 @@ void _LoaderThread::start() {
 	}
 	_manager->log().debug("Starting loader thread...");
 	_running = true;
-	_thread = std::thread(&_LoaderThread::_run, std::ref(*this));
+	_thread = std::thread(&_LoaderThread::_run, this);
 }
 
 

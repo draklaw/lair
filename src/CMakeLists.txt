@@ -39,14 +39,15 @@ function(add_autopy TARGET MODULE_FILE)
 endfunction()
 
 
+find_package(OpenGL REQUIRED)
+
 find_package(Boost REQUIRED COMPONENTS
 	system
 	filesystem
 )
 
 find_package(SDL2 REQUIRED)
-# TODO: FindSDL2_image.cmake
-#find_package(SDL2_image REQUIRED)
+find_package(SDL2_image REQUIRED)
 
 find_package(GLEW REQUIRED)
 
@@ -54,15 +55,17 @@ set(lair_INCLUDE_DIRS
 	PRIVATE "${PROJECT_SOURCE_DIR}/include"
 	PRIVATE "${GLEW_INCLUDE_DIRS}"
 	PRIVATE "${SDL2_INCLUDE_DIR}"
-	PRIVATE "${Boost_INCLUDE_DIRS}"
+	PRIVATE "${OPENGL_INCLUDE_DIR}"
+	PRIVATE "${SDL2IMAGE_INCLUDE_DIR}"
+	PUBLIC "${Boost_INCLUDE_DIRS}"
 )
 
 set(lair_LIBRARIES
-	SDL2_image
+	"${SDL2IMAGE_LIBRARY}"
 	"${GLEW_LIBRARIES}"
 	"${SDL2_LIBRARY}"
 	"${Boost_LIBRARIES}"
-	GL
+	"${OPENGL_gl_LIBRARY}"
 )
 
 add_autopy(core/core_py core/core.py)
