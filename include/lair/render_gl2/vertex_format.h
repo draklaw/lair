@@ -27,7 +27,7 @@
 
 #include <lair/core/lair.h>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/render_gl2/context.h>
 
 
 namespace lair
@@ -65,8 +65,8 @@ public:
 	AttribIterator begin() const;
 	AttribIterator end() const;
 
-	void setup() const;
-	void clear() const;
+	void setup(Context* glc) const;
+	void clear(Context* glc) const;
 
 protected:
 	GLsizei    _sizeInBytes;

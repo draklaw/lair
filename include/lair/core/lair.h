@@ -53,13 +53,13 @@ private:
 };
 
 
-inline void lairAssert(bool result, const char* testCode, const char* file, int line) {
+inline void _lairAssert(bool result, const char* testCode, const char* file, int line) {
 	if(!result) {
 		throw AssertionFailedError(testCode, file, line);
 	}
 }
 
-#define lairAssert(_test) lair::lairAssert(_test, #_test, __FILE__, __LINE__)
+#define lairAssert(_test) lair::_lairAssert(_test, #_test, __FILE__, __LINE__)
 
 
 typedef std::size_t    Size;
@@ -94,6 +94,8 @@ typedef Eigen::Translation<Scalar, 3>    Translation;
 
 typedef Eigen::AlignedBox2f Box2;
 typedef Eigen::AlignedBox3f Box3;
+typedef Eigen::AlignedBox2i Box2i;
+typedef Eigen::AlignedBox3i Box3i;
 
 typedef unsigned ScanCode;
 

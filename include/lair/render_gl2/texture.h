@@ -34,6 +34,8 @@ namespace lair
 {
 
 
+class Context;
+class Renderer;
 class Image;
 
 
@@ -78,7 +80,7 @@ public:
 	};
 
 public:
-	Texture();
+	Texture(Renderer* renderer = nullptr);
 	Texture(const Texture&) = delete;
 	Texture(Texture&& other);
 	~Texture();
@@ -109,6 +111,8 @@ public:
 	inline GLuint _glId() { return _id; }
 
 protected:
+	Context*       _context;
+	Renderer*      _renderer;
 	GLuint         _id;
 	uint32         _flags;
 	uint16         _width;

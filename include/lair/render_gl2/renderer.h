@@ -31,13 +31,15 @@
 #include <lair/core/log.h>
 #include <lair/core/path.h>
 
+#include <lair/render_gl2/context.h>
 #include <lair/render_gl2/vertex_format.h>
 #include <lair/render_gl2/glsl_source.h>
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/sprite.h>
+//#include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/batch.h>
+#include <lair/render_gl2/render_pass.h>
 
 
 namespace lair
@@ -49,38 +51,38 @@ class Image;
 class RenderModule;
 
 
-struct SpriteVertex {
-	Vector4 position;
-	Vector4 color;
-	Vector2 texCoord;
-};
+//struct SpriteVertex {
+//	Vector4 position;
+//	Vector4 color;
+//	Vector2 texCoord;
+//};
 
 
-class SpriteShader {
-public:
-	SpriteShader();
-	SpriteShader(const ProgramObject* shader);
+//class SpriteShader {
+//public:
+//	SpriteShader();
+//	SpriteShader(const ProgramObject* shader);
 
-	inline const ProgramObject* program() const { return _shader; }
-	inline void use() const { if(_shader) _shader->use(); }
+//	inline const ProgramObject* program() const { return _shader; }
+//	inline void use() const { if(_shader) _shader->use(); }
 
-	inline void setViewMatrix(const Matrix4& transform) const {
-		if(_viewMatrixLoc >= 0) {
-			glUniformMatrix4fv(_viewMatrixLoc, 1, false, transform.data());
-		}
-	}
+//	inline void setViewMatrix(const Matrix4& transform) const {
+//		if(_viewMatrixLoc >= 0) {
+//			glUniformMatrix4fv(_viewMatrixLoc, 1, false, transform.data());
+//		}
+//	}
 
-	void setTextureUnit(unsigned unit) const {
-		if(_textureLoc >= 0) {
-			glUniform1i(_textureLoc, unit);
-		}
-	}
+//	void setTextureUnit(unsigned unit) const {
+//		if(_textureLoc >= 0) {
+//			glUniform1i(_textureLoc, unit);
+//		}
+//	}
 
-private:
-	const ProgramObject* _shader;
-	GLint _viewMatrixLoc;
-	GLint _textureLoc;
-};
+//private:
+//	const ProgramObject* _shader;
+//	GLint _viewMatrixLoc;
+//	GLint _textureLoc;
+//};
 
 
 class Renderer {
@@ -100,23 +102,36 @@ public:
 	Renderer& operator=(const Renderer&) = delete;
 	Renderer& operator=(Renderer&&)      = delete;
 
-	const VertexFormat* spriteFormat() const { return &_spriteFormat; }
+	Context* context();
+
+	PassStates* currentPassStates();
+
+	inline bool passStatesDirty() const {
+		return _passStatesDirty;
+	}
+	inline void setPassStatesDirty(bool dirty = true) {
+		_passStatesDirty = dirty;
+	}
+
+//	const VertexFormat* spriteFormat() const { return &_spriteFormat; }
+
+	ShaderObject* compileShader(GLenum type, const GlslSource& source);
 
 	void preloadTexture(const Path& file,
 	                    uint32 flags = Texture::BILINEAR | Texture::REPEAT);
-	void preloadSprite(const Path& file);
+//	void preloadSprite(const Path& file);
 
 	Texture* getTexture(const Path& file,
 	                    uint32 flags = Texture::BILINEAR | Texture::REPEAT);
-	Sprite* getSprite(const Path& file);
+//	Sprite* getSprite(const Path& file);
 
 	Texture* defaultTexture() {
 		return &_defaultTexture;
 	}
 
-	const SpriteShader* spriteShader() const {
-		return &_spriteShader;
-	}
+//	const SpriteShader* spriteShader() const {
+//		return &_spriteShader;
+//	}
 
 	Batch& mainBatch() { return _mainBatch; }
 
@@ -150,8 +165,8 @@ protected:
 
 	typedef std::unordered_map<TexId, Texture, HashTexId> TextureMap;
 
-	typedef std::shared_ptr<SpriteLoader> SpriteLoaderPtr;
-	typedef std::unordered_map<Path, SpriteLoaderPtr> SpriteMap;
+//	typedef std::shared_ptr<SpriteLoader> SpriteLoaderPtr;
+//	typedef std::unordered_map<Path, SpriteLoaderPtr> SpriteMap;
 
 protected:
 	void _createDefaultTexture();
@@ -159,17 +174,22 @@ protected:
 protected:
 	RenderModule* _module;
 
-	VertexFormat  _spriteFormat;
+	Context*      _context;
+
+	PassStates    _currentPassStates;
+	bool          _passStatesDirty;
+
+//	VertexFormat  _spriteFormat;
 
 	Texture       _defaultTexture;
 	std::mutex    _textureLock;
 	TextureMap    _textures;
 
-	std::mutex    _spriteLock;
-	SpriteMap     _sprites;
+//	std::mutex    _spriteLock;
+//	SpriteMap     _sprites;
 
-	ProgramObject _spriteShaderProg;
-	SpriteShader  _spriteShader;
+//	ProgramObject _spriteShaderProg;
+//	SpriteShader  _spriteShader;
 
 	Batch         _mainBatch;
 };

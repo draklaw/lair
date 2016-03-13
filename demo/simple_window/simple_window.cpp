@@ -136,7 +136,9 @@ int main(int /*argc*/, char** argv) {
 
 	lair::Renderer* renderer = renderModule.createRenderer();
 
-	renderer->preloadSprite("lair.spr");
+	renderer->preloadTexture("lair.png");
+	lair::Texture* tex = renderer->getTexture("lair.png");
+//	renderer->preloadSprite("lair.spr");
 
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
@@ -144,37 +146,37 @@ int main(int /*argc*/, char** argv) {
 	camera.setViewBox(viewBox);
 
 
-	lair::EntityManager entityManager(glog);
-	lair::SpriteComponentManager spriteManager(renderer);
+//	lair::EntityManager entityManager(glog);
+//	lair::SpriteComponentManager spriteManager(renderer);
 
-	lair::Sprite* sprite = renderer->getSprite("lair.spr");
+//	lair::Sprite* sprite = renderer->getSprite("lair.spr");
 
-	const Json::Value& testJson = sys.loader().getJson("lair.obj");
-	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
-	            lair::EntityRef(), testJson);
-	spriteManager.addComponentFromJson(baseSprite, testJson["sprite"]);
+//	const Json::Value& testJson = sys.loader().getJson("lair.obj");
+//	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
+//	            lair::EntityRef(), testJson);
+//	spriteManager.addComponentFromJson(baseSprite, testJson["sprite"]);
 
-	glog.warning("Anchor: ", baseSprite.sprite()->anchor().transpose());
+//	glog.warning("Anchor: ", baseSprite.sprite()->anchor().transpose());
 
-	lair::EntityRef testSprite = baseSprite.clone(entityManager.root(), "mainLair");
+//	lair::EntityRef testSprite = baseSprite.clone(entityManager.root(), "mainLair");
 
-	for(unsigned i = 1; i <= 8; ++i) {
-		lair::Transform t = lair::Transform::Identity();
-		t.translate(lair::Vector3(i * 32, 0, 0));
-		t.rotate(Eigen::AngleAxisf(i*.5, lair::Vector3::UnitZ()));
+//	for(unsigned i = 1; i <= 8; ++i) {
+//		lair::Transform t = lair::Transform::Identity();
+//		t.translate(lair::Vector3(i * 32, 0, 0));
+//		t.rotate(Eigen::AngleAxisf(i*.5, lair::Vector3::UnitZ()));
 
-		glog.info("Clone ", i, "...");
-		lair::EntityRef e = baseSprite.clone(testSprite, "Clone");
-		e.place(t);
-	}
+//		glog.info("Clone ", i, "...");
+//		lair::EntityRef e = baseSprite.clone(testSprite, "Clone");
+//		e.place(t);
+//	}
 
-	testSprite.sprite()->setView(lair::Box2(lair::Vector2(.25, .25),
-	                                        lair::Vector2(.75, .75)));
+//	testSprite.sprite()->setView(lair::Box2(lair::Vector2(.25, .25),
+//	                                        lair::Vector2(.75, .75)));
 
-	const Json::Value& mapJson = sys.loader().getJson("map.json");
-	lair::TiledMap map;
-	map.setFromJson(glog, "map.json", mapJson);
-	map.setTileset(sprite);
+//	const Json::Value& mapJson = sys.loader().getJson("map.json");
+//	lair::TiledMap map;
+//	map.setFromJson(glog, "map.json", mapJson);
+//	map.setTileset(sprite);
 
 	lair::InterpLoop loop(&sys);
 	loop.setTickDuration(    1000000000/120);
@@ -192,37 +194,37 @@ int main(int /*argc*/, char** argv) {
 			if(space->justPressed()) glog.log("Space pressed");
 			if(space->justReleased()) glog.log("Space released");
 
-			float speed = 100. * loop.tickDuration() / 1000000000;
-			lair::Transform trans = testSprite.transform();
-			if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
-			if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
-			if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
-			if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
-			testSprite.move(trans);
+//			float speed = 100. * loop.tickDuration() / 1000000000;
+//			lair::Transform trans = testSprite.transform();
+//			if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
+//			if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
+//			if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
+//			if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
+//			testSprite.move(trans);
 
-			entityManager.updateWorldTransform();
+//			entityManager.updateWorldTransform();
 			break;
 		}
 		case lair::InterpLoop::Frame: {
-			testSprite.sprite()->setIndex(loop.frameTime() / 200000000);
+//			testSprite.sprite()->setIndex(loop.frameTime() / 200000000);
 
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			renderer->context()->clear(lair::gl::COLOR_BUFFER_BIT | lair::gl::DEPTH_BUFFER_BIT);
 			renderer->mainBatch().clearBuffers();
 
-			map.render(renderer);
-			spriteManager.render(loop.frameInterp(), camera);
+//			map.render(renderer);
+//			spriteManager.render(loop.frameInterp(), camera);
 
-			lair::Transform t = lair::Transform::Identity();
-			t.translate(-testSprite.transform().translation());
+//			lair::Transform t = lair::Transform::Identity();
+//			t.translate(-testSprite.transform().translation());
 
-			renderer->spriteShader()->use();
-			renderer->spriteShader()->setTextureUnit(0);
-			renderer->spriteShader()->setViewMatrix(camera.transform() * t.matrix());
-			renderer->mainBatch().render();
+//			renderer->spriteShader()->use();
+//			renderer->spriteShader()->setTextureUnit(0);
+//			renderer->spriteShader()->setViewMatrix(camera.transform() * t.matrix());
+//			renderer->mainBatch().render(renderer->context());
 
 			w->swapBuffers();
 
-			LAIR_LOG_OPENGL_ERRORS_TO(glog);
+			LAIR_LOG_OPENGL_ERRORS_TO(renderer->context(), glog);
 			break;
 		}}
 	}

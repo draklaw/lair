@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <lair/render_gl2/glsl_source.h>
+#include <lair/render_gl2/renderer.h>
 
 #include <lair/render_gl2/shader_object.h>
 
@@ -30,19 +31,26 @@
 namespace lair {
 
 
-ShaderObject::ShaderObject(GLenum type)
-    : _type(type),
-      _id(0),
-      _compile_status(GL_FALSE) {
+ShaderObject::ShaderObject(Renderer* renderer, GLenum type)
+    : _context       (renderer? renderer->context(): nullptr),
+      _renderer      (renderer),
+      _type          (type),
+      _id            (0),
+      _compile_status(gl::FALSE) {
 }
 
 
 ShaderObject::ShaderObject(ShaderObject&& other)
-    : _type(other._type),
-      _id(other._id),
+    : _context       (other._context),
+      _renderer      (other._renderer),
+      _type          (other._type),
+      _id            (other._id),
       _compile_status(other._compile_status) {
-	other._id = 0;
-	other._compile_status = GL_FALSE;
+	other._context        = nullptr;
+	other._renderer       = nullptr;
+	other._type           = 0;
+	other._id             = 0;
+	other._compile_status = gl::FALSE;
 }
 
 
@@ -58,13 +66,18 @@ ShaderObject& ShaderObject::operator=(ShaderObject other) {
 }
 
 
+bool ShaderObject::isValid() const {
+	return _renderer;
+}
+
+
 bool ShaderObject::isGenerated() const {
 	return _id != 0;
 }
 
 
 bool ShaderObject::isCompiled() const {
-	return _compile_status == GL_TRUE;
+	return _compile_status == gl::TRUE;
 }
 
 
@@ -79,26 +92,24 @@ void ShaderObject::generateObject(GLenum type) {
 		_type = type;
 	lairAssert(_type != 0);
 
-	_id = glCreateShader(_type); LAIR_THROW_IF_OPENGL_ERROR();
+	_id = _context->createShader(_type);
 }
 
 
 void ShaderObject::deleteObject() {
 	lairAssert(_id != 0);
-	glDeleteShader(_id); LAIR_THROW_IF_OPENGL_ERROR();
+	_context->deleteShader(_id);
 	_id = 0;
 }
 
 
 bool ShaderObject::compile(const GlslSource& source) {
 	lairAssert(_id != 0);
-	glShaderSource(_id, source.count(), (const GLchar**)source.string(), source.length());
-	LAIR_THROW_IF_OPENGL_ERROR();
-	glCompileShader(_id); LAIR_THROW_IF_OPENGL_ERROR();
+	_context->shaderSource(_id, source.count(), (GLchar* const*)source.string(), (int*)source.length());
+	_context->compileShader(_id);
 
-	glGetShaderiv(_id, GL_COMPILE_STATUS, &_compile_status);
-	LAIR_THROW_IF_OPENGL_ERROR();
-	return _compile_status == GL_TRUE;
+	_context->getShaderiv(_id, gl::COMPILE_STATUS, &_compile_status);
+	return _compile_status == gl::TRUE;
 }
 
 
@@ -119,18 +130,18 @@ bool ShaderObject::compileFromStream(std::istream& in) {
 void ShaderObject::getLog(std::string& out) const {
 	lairAssert(_id != 0);
 	GLint log_size;
-	glGetShaderiv(_id, GL_INFO_LOG_LENGTH, &log_size);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getShaderiv(_id, gl::INFO_LOG_LENGTH, &log_size);
 
 	std::unique_ptr<GLchar[]> buffer(new GLchar[log_size]);
-	glGetShaderInfoLog(_id, log_size, NULL, buffer.get());
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getShaderInfoLog(_id, log_size, NULL, buffer.get());
 
 	out.assign(buffer.get());
 }
 
 
 void swap(ShaderObject& s0, ShaderObject& s1) {
+	std::swap(s0._context,        s1._context);
+	std::swap(s0._renderer,       s1._renderer);
 	std::swap(s0._type,           s1._type);
 	std::swap(s0._id,             s1._id);
 	std::swap(s0._compile_status, s1._compile_status);

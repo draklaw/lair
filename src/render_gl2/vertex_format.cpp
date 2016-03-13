@@ -52,21 +52,19 @@ VertexFormat::AttribIterator VertexFormat::end() const {
 }
 
 
-void VertexFormat::setup() const {
+void VertexFormat::setup(Context* glc) const {
 	for(const VertexAttrib& attrib: _attribs) {
-		glEnableVertexAttribArray(attrib.index);
-		glVertexAttribPointer(attrib.index, attrib.size, attrib.type,
-		                      attrib.normalized, _sizeInBytes,
-		                      reinterpret_cast<const void*>(attrib.offset));
+		glc->enableVertexAttribArray(attrib.index);
+		glc->vertexAttribPointer(attrib.index, attrib.size, attrib.type,
+		                         attrib.normalized, _sizeInBytes,
+		                         reinterpret_cast<const void*>(attrib.offset));
 	}
-
-	LAIR_THROW_IF_OPENGL_ERROR();
 }
 
 
-void VertexFormat::clear() const {
+void VertexFormat::clear(Context* glc) const {
 	for(const VertexAttrib& attrib: _attribs) {
-		glDisableVertexAttribArray(attrib.index);
+		glc->disableVertexAttribArray(attrib.index);
 	}
 }
 

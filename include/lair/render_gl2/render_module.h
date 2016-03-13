@@ -29,6 +29,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/render_gl2/context.h>
+
 
 namespace lair
 {
@@ -55,6 +57,10 @@ public:
 
 	Renderer* createRenderer();
 
+	Context* context() {
+		return &_context;
+	}
+
 	SysModule* sys() {
 		return _sys;
 	}
@@ -72,6 +78,7 @@ protected:
 	bool         _initialized;
 	SysModule*   _sys;
 
+	Context      _context;
 	RendererList _renderers;
 };
 

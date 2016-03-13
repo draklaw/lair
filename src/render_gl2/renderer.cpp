@@ -38,77 +38,77 @@ namespace lair
 {
 
 
-static const VertexAttrib _spriteVertexFormat[] = {
-    { "vx_position", Renderer::VxPosition, 4, GL_FLOAT, false,
-      offsetof(SpriteVertex, position) },
-    { "vx_color",    Renderer::VxColor, 4, GL_FLOAT, false,
-      offsetof(SpriteVertex, color) },
-    { "vx_texCoord", Renderer::VxTexCoord, 2, GL_FLOAT, false,
-      offsetof(SpriteVertex, texCoord) },
-    { nullptr, 0, 0, 0, false, 0 }
-};
+//static const VertexAttrib _spriteVertexFormat[] = {
+//    { "vx_position", Renderer::VxPosition, 4, GL_FLOAT, false,
+//      offsetof(SpriteVertex, position) },
+//    { "vx_color",    Renderer::VxColor, 4, GL_FLOAT, false,
+//      offsetof(SpriteVertex, color) },
+//    { "vx_texCoord", Renderer::VxTexCoord, 2, GL_FLOAT, false,
+//      offsetof(SpriteVertex, texCoord) },
+//    { nullptr, 0, 0, 0, false, 0 }
+//};
 
 
-const char* defaultVertGlsl =
-	"#define lowp\n"
-	"#define mediump\n"
-	"#define highp\n"
+//const char* defaultVertGlsl =
+//	"#define lowp\n"
+//	"#define mediump\n"
+//	"#define highp\n"
 
-	"uniform highp mat4 viewMatrix;\n"
+//	"uniform highp mat4 viewMatrix;\n"
 
-	"attribute highp   vec4 vx_position;\n"
-	"attribute lowp    vec4 vx_color;\n"
-	"attribute mediump vec2 vx_texCoord;\n"
+//	"attribute highp   vec4 vx_position;\n"
+//	"attribute lowp    vec4 vx_color;\n"
+//	"attribute mediump vec2 vx_texCoord;\n"
 
-	"varying highp   vec4 position;\n"
-	"varying lowp    vec4 color;\n"
-	"varying mediump vec2 texCoord;\n"
+//	"varying highp   vec4 position;\n"
+//	"varying lowp    vec4 color;\n"
+//	"varying mediump vec2 texCoord;\n"
 
-	"void main() {\n"
-	"	gl_Position = viewMatrix * vx_position;\n"
-	"	position    = vx_position;\n"
-	"	color       = vx_color;\n"
-	"	texCoord    = vx_texCoord;\n"
-	"}\n";
+//	"void main() {\n"
+//	"	gl_Position = viewMatrix * vx_position;\n"
+//	"	position    = vx_position;\n"
+//	"	color       = vx_color;\n"
+//	"	texCoord    = vx_texCoord;\n"
+//	"}\n";
 
 
-const char* defaultFragGlsl =
-	"#define lowp\n"
-	"#define mediump\n"
-	"#define highp\n"
+//const char* defaultFragGlsl =
+//	"#define lowp\n"
+//	"#define mediump\n"
+//	"#define highp\n"
 
-	"uniform sampler2D texture;\n"
+//	"uniform sampler2D texture;\n"
 
-	"varying highp   vec4 position;\n"
-	"varying lowp    vec4 color;\n"
-	"varying mediump vec2 texCoord;\n"
+//	"varying highp   vec4 position;\n"
+//	"varying lowp    vec4 color;\n"
+//	"varying mediump vec2 texCoord;\n"
 
-	"void main() {\n"
-	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
-	"	if(fcolor.a < .5){\n"
-	"		discard;\n"
-	"	}\n"
-	"	gl_FragColor = fcolor;\n"
-	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
-	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
-	"}\n";
+//	"void main() {\n"
+//	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
+//	"	if(fcolor.a < .5){\n"
+//	"		discard;\n"
+//	"	}\n"
+//	"	gl_FragColor = fcolor;\n"
+//	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
+//	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
+//	"}\n";
 
 
 //---------------------------------------------------------------------------//
 
 
-SpriteShader::SpriteShader()
-    : _shader       (nullptr),
-      _viewMatrixLoc(-1),
-      _textureLoc   (-1) {
-}
+//SpriteShader::SpriteShader()
+//    : _shader       (nullptr),
+//      _viewMatrixLoc(-1),
+//      _textureLoc   (-1) {
+//}
 
 
-SpriteShader::SpriteShader(const ProgramObject* shader)
-    : _shader       (shader),
-      _viewMatrixLoc(glGetUniformLocation(_shader->id(), "viewMatrix")),
-      _textureLoc   (glGetUniformLocation(_shader->id(), "texture")) {
-}
+//SpriteShader::SpriteShader(const ProgramObject* shader)
+//    : _shader       (shader),
+//      _viewMatrixLoc(glGetUniformLocation(_shader->id(), "viewMatrix")),
+//      _textureLoc   (glGetUniformLocation(_shader->id(), "texture")) {
+//}
 
 
 //---------------------------------------------------------------------------//
@@ -116,25 +116,27 @@ SpriteShader::SpriteShader(const ProgramObject* shader)
 
 Renderer::Renderer(RenderModule* module)
     : _module(module),
-      _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
+      _context(module? module->context(): nullptr),
+      _passStatesDirty(true),
+//      _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
       _defaultTexture(),
-      _textures(),
+      _textures()/*,
       _spriteShaderProg(),
-      _spriteShader() {
+      _spriteShader()*/ {
 	lairAssert(_module);
 
-	_createDefaultTexture();
+//	_createDefaultTexture();
 
-	ShaderObject vert = _compileShader("sprite", GL_VERTEX_SHADER,
-	                                   GlslSource(defaultVertGlsl));
-	ShaderObject frag = _compileShader("sprite", GL_FRAGMENT_SHADER,
-	                                   GlslSource(defaultFragGlsl));
-	if(vert.isCompiled() && frag.isCompiled()) {
-		_spriteShaderProg = _compileProgram("sprite",
-		        &_spriteFormat, &vert, &frag);
-	}
-	lairAssert(_spriteShaderProg.isLinked());
-	_spriteShader = SpriteShader(&_spriteShaderProg);
+//	ShaderObject vert = _compileShader("sprite", GL_VERTEX_SHADER,
+//	                                   GlslSource(defaultVertGlsl));
+//	ShaderObject frag = _compileShader("sprite", GL_FRAGMENT_SHADER,
+//	                                   GlslSource(defaultFragGlsl));
+//	if(vert.isCompiled() && frag.isCompiled()) {
+//		_spriteShaderProg = _compileProgram("sprite",
+//		        &_spriteFormat, &vert, &frag);
+//	}
+//	lairAssert(_spriteShaderProg.isLinked());
+//	_spriteShader = SpriteShader(&_spriteShaderProg);
 }
 
 
@@ -142,25 +144,34 @@ Renderer::~Renderer() {
 }
 
 
+Context* Renderer::context() {
+	return _context;
+}
+
+
+PassStates* Renderer::currentPassStates() {
+	return &_currentPassStates;
+}
+
 void Renderer::preloadTexture(const Path& file, uint32 flags) {
 	TexId id(file, flags);
 	std::unique_lock<std::mutex> lk(_textureLock);
 	auto texIt = _textures.find(id);
 	if(texIt == _textures.end()) {
-		texIt = _textures.emplace_hint(texIt, id, Texture());
+		texIt = _textures.emplace_hint(texIt, id, Texture(this));
 		texIt->second._load(_module->sys()->loader().preloadImage(file));
 	}
 }
 
 
-void Renderer::preloadSprite(const Path& file) {
-	std::unique_lock<std::mutex> lk(_spriteLock);
-	auto spriteIt = _sprites.find(file);
-	if(spriteIt == _sprites.end()) {
-		spriteIt = _sprites.emplace_hint(spriteIt, file,
-		                _module->sys()->loader().load<SpriteLoader>(file, this));
-	}
-}
+//void Renderer::preloadSprite(const Path& file) {
+//	std::unique_lock<std::mutex> lk(_spriteLock);
+//	auto spriteIt = _sprites.find(file);
+//	if(spriteIt == _sprites.end()) {
+//		spriteIt = _sprites.emplace_hint(spriteIt, file,
+//		                _module->sys()->loader().load<SpriteLoader>(file, this));
+//	}
+//}
 
 
 Texture* Renderer::getTexture(const Path& file, uint32 flags) {
@@ -169,7 +180,7 @@ Texture* Renderer::getTexture(const Path& file, uint32 flags) {
 	auto texIt = _textures.find(id);
 	if(texIt == _textures.end()) {
 		log().warning("Texture \"", file, "\" not preloaded.");
-		texIt = _textures.emplace_hint(texIt, id, Texture());
+		texIt = _textures.emplace_hint(texIt, id, Texture(this));
 		texIt->second._load(_module->sys()->loader().preloadImage(file));
 	}
 	lairAssert(texIt != _textures.end());
@@ -179,27 +190,29 @@ Texture* Renderer::getTexture(const Path& file, uint32 flags) {
 }
 
 
-Sprite* Renderer::getSprite(const Path& file) {
-	std::unique_lock<std::mutex> lk(_spriteLock);
-	auto spriteIt = _sprites.find(file);
-	if(spriteIt == _sprites.end()) {
-		log().warning("Sprite \"", file, "\" not preloaded.");
-		spriteIt = _sprites.emplace_hint(spriteIt, file,
-		                _module->sys()->loader().load<SpriteLoader>(file, this));
-	}
-	lairAssert(spriteIt != _sprites.end());
-	spriteIt->second->wait();
-	if(spriteIt->second->isSuccessful()) {
-		spriteIt->second->_sprite._texture = getTexture(spriteIt->second->_texture,
-														spriteIt->second->_textureFlags);
-	} else {
-		spriteIt->second->_sprite._texture = defaultTexture();
-	}
-	return &spriteIt->second->_sprite;
+//Sprite* Renderer::getSprite(const Path& file) {
+//	std::unique_lock<std::mutex> lk(_spriteLock);
+//	auto spriteIt = _sprites.find(file);
+//	if(spriteIt == _sprites.end()) {
+//		log().warning("Sprite \"", file, "\" not preloaded.");
+//		spriteIt = _sprites.emplace_hint(spriteIt, file,
+//		                _module->sys()->loader().load<SpriteLoader>(file, this));
+//	}
+//	lairAssert(spriteIt != _sprites.end());
+//	spriteIt->second->wait();
+//	if(spriteIt->second->isSuccessful()) {
+//		spriteIt->second->_sprite._texture = getTexture(spriteIt->second->_texture,
+//														spriteIt->second->_textureFlags);
+//	} else {
+//		spriteIt->second->_sprite._texture = defaultTexture();
+//	}
+//	return &spriteIt->second->_sprite;
+//}
+
+
+Logger& Renderer::log() {
+	return _module->log();
 }
-
-
-Logger& Renderer::log() { return _module->log(); }
 
 
 size_t Renderer::HashTexId::operator()(const TexId& texId) const {
@@ -256,13 +269,13 @@ void Renderer::_createDefaultTexture() {
 
 ShaderObject Renderer::_compileShader(const char* name, GLenum type,
                                       const GlslSource& source) {
-	ShaderObject shader(type);
+	ShaderObject shader(this, type);
 	shader.generateObject();
 	if(!shader.compile(source)) {
 		std::string sLog;
 		shader.getLog(sLog);
 		log().error("Failed to compile ",
-		            (type == GL_VERTEX_SHADER)? "vertex": "fragment",
+		            (type == gl::VERTEX_SHADER)? "vertex": "fragment",
 		            " shader object \"", name, "\":\n", sLog);
 	}
 	return shader;

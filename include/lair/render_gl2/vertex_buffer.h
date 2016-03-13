@@ -60,7 +60,7 @@ public:
 
 	void clear();
 
-	void bindAndUpload();
+	void bindAndUpload(Context* glc);
 
 protected:
 	typedef std::vector<Byte> Buffer;

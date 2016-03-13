@@ -67,17 +67,17 @@ void Batch::clearAll() {
 }
 
 
-void Batch::render() {
-	glActiveTexture(GL_TEXTURE0);
+void Batch::render(Context* glc) {
+	glc->activeTexture(gl::TEXTURE0);
 	for(auto& idBuff: _buffers) {
 		idBuff.first.shader->use();
-		glBindTexture(GL_TEXTURE_2D, idBuff.first.texture->_glId());
-		idBuff.second.bindAndUpload();
-		idBuff.first.format->setup();
+		glc->bindTexture(gl::TEXTURE_2D, idBuff.first.texture->_glId());
+		idBuff.second.bindAndUpload(glc);
+		idBuff.first.format->setup(glc);
 
-		glDrawElements(GL_TRIANGLES, idBuff.second.indexSize(), GL_UNSIGNED_INT, 0);
+		glc->drawElements(gl::TRIANGLES, idBuff.second.indexSize(), gl::UNSIGNED_INT, 0);
 
-		idBuff.first.format->clear();
+		idBuff.first.format->clear(glc);
 	}
 }
 

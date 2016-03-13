@@ -54,20 +54,20 @@ void VertexBuffer::clear() {
 }
 
 
-void VertexBuffer::bindAndUpload() {
+void VertexBuffer::bindAndUpload(Context* glc) {
 	if(!_vxBufferId) {
-		glGenBuffers(1, &_vxBufferId);
+		glc->genBuffers(1, &_vxBufferId);
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, _vxBufferId);
-	glBufferData(GL_ARRAY_BUFFER, _vxBuffer.size(), _vxBuffer.data(),
-	             GL_STREAM_DRAW);
+	glc->bindBuffer(gl::ARRAY_BUFFER, _vxBufferId);
+	glc->bufferData(gl::ARRAY_BUFFER, _vxBuffer.size(), _vxBuffer.data(),
+	                gl::STREAM_DRAW);
 
 	if(!_indexBufferId) {
-		glGenBuffers(1, &_indexBufferId);
+		glc->genBuffers(1, &_indexBufferId);
 	}
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBufferId);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer.size() * sizeof(unsigned),
-	             _indexBuffer.data(), GL_STREAM_DRAW);
+	glc->bindBuffer(gl::ELEMENT_ARRAY_BUFFER, _indexBufferId);
+	glc->bufferData(gl::ELEMENT_ARRAY_BUFFER, _indexBuffer.size() * sizeof(unsigned),
+	                _indexBuffer.data(), gl::STREAM_DRAW);
 }
 
 

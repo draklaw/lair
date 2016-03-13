@@ -23,16 +23,15 @@
 #define _LAIR_RENDER_GL2_GL_H
 
 
-//#include <GLES2/gl2.h>
-#include <GL/glew.h>
-
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/render_gl2/context.h>
 
-#define LAIR_THROW_IF_OPENGL_ERROR() lair::throwGlError(__FILE__, __LINE__)
-#define LAIR_LOG_OPENGL_ERRORS() lair::logGlError(log(), __FILE__, __LINE__)
-#define LAIR_LOG_OPENGL_ERRORS_TO(_log) lair::logGlError(_log, __FILE__, __LINE__)
+
+#define LAIR_THROW_IF_OPENGL_ERROR(_glc) lair::throwGlError(_glc, __FILE__, __LINE__)
+#define LAIR_LOG_OPENGL_ERRORS(_glc) lair::logGlError(_glc, log(), __FILE__, __LINE__)
+#define LAIR_LOG_OPENGL_ERRORS_TO(_glc, _log) lair::logGlError(_glc, _log, __FILE__, __LINE__)
 
 
 namespace lair {
@@ -50,20 +49,20 @@ struct GLOutOfMemory : public std::runtime_error {
 const char* glErrorString(GLenum error);
 
 
-inline void logGlError(Logger& log, const char* file, int line) {
+inline void logGlError(Context* glc, Logger& log, const char* file, int line) {
 	GLenum error;
-	while((error = glGetError()) != GL_NO_ERROR) {
-		if(error == GL_OUT_OF_MEMORY)
+	while((error = glc->getError()) != gl::NO_ERROR) {
+		if(error == gl::OUT_OF_MEMORY)
 			throw GLOutOfMemory();
 
 		log.error(file, ":", line, ": OpenGL error: ", glErrorString(error));
 	}
 }
 
-inline void throwGlError(const char* file, int line) {
-	GLenum error = glGetError();
-	if(error != GL_NO_ERROR) {
-		if(error == GL_OUT_OF_MEMORY)
+inline void throwGlError(Context* glc, const char* file, int line) {
+	GLenum error = glc->getError();
+	if(error != gl::NO_ERROR) {
+		if(error == gl::OUT_OF_MEMORY)
 			throw GLOutOfMemory();
 		throw GLError(error, file, line);
 	}

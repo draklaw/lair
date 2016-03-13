@@ -152,44 +152,44 @@ bool TiledMap::setFromJson(Logger& log, const std::string& name, const Json::Val
 
 
 void TiledMap::render(Renderer* renderer) const {
-	lairAssert(_tileset);
-	Batch& batch = renderer->mainBatch();
-	VertexBuffer& buff = batch.getBuffer(
-				renderer->spriteShader()->program(),
-				_tileset->texture(), renderer->spriteFormat());
-	GLuint index = buff.vertexCount();
-	for(unsigned layer = 0; layer < nLayers(); ++layer) {
-		for(unsigned y = 0; y < _height; ++y) {
-			for(unsigned x = 0; x < _width; ++x) {
-				TileIndex ti = tile(x, y, layer);
-				if(ti == 0) {
-					continue;
-				}
-				Box2 region = _tileset->tileBox(ti - 1);
-				Vector4 v0((x + 0) * _tileset->width(), -float(y + 0) * _tileset->height(), 0, 1);
-				Vector4 v1((x + 0) * _tileset->width(), -float(y + 1) * _tileset->height(), 0, 1);
-				Vector4 v2((x + 1) * _tileset->width(), -float(y + 0) * _tileset->height(), 0, 1);
-				Vector4 v3((x + 1) * _tileset->width(), -float(y + 1) * _tileset->height(), 0, 1);
-				Vector4 color(1, 1, 1, 1);
-				buff.addVertex(SpriteVertex{
-						v0, color, region.corner(Box2::BottomLeft) });
-				buff.addVertex(SpriteVertex{
-						v1, color, region.corner(Box2::TopLeft) });
-				buff.addVertex(SpriteVertex{
-						v2, color, region.corner(Box2::BottomRight) });
-				buff.addVertex(SpriteVertex{
-						v3, color, region.corner(Box2::TopRight) });
-				buff.addIndex(index + 0);
-				buff.addIndex(index + 1);
-				buff.addIndex(index + 2);
-				buff.addIndex(index + 2);
-				buff.addIndex(index + 1);
-				buff.addIndex(index + 3);
-				index += 4;
-			}
-		}
-		++layer;
-	}
+//	lairAssert(_tileset);
+//	Batch& batch = renderer->mainBatch();
+//	VertexBuffer& buff = batch.getBuffer(
+//				renderer->spriteShader()->program(),
+//				_tileset->texture(), renderer->spriteFormat());
+//	GLuint index = buff.vertexCount();
+//	for(unsigned layer = 0; layer < nLayers(); ++layer) {
+//		for(unsigned y = 0; y < _height; ++y) {
+//			for(unsigned x = 0; x < _width; ++x) {
+//				TileIndex ti = tile(x, y, layer);
+//				if(ti == 0) {
+//					continue;
+//				}
+//				Box2 region = _tileset->tileBox(ti - 1);
+//				Vector4 v0((x + 0) * _tileset->width(), -float(y + 0) * _tileset->height(), 0, 1);
+//				Vector4 v1((x + 0) * _tileset->width(), -float(y + 1) * _tileset->height(), 0, 1);
+//				Vector4 v2((x + 1) * _tileset->width(), -float(y + 0) * _tileset->height(), 0, 1);
+//				Vector4 v3((x + 1) * _tileset->width(), -float(y + 1) * _tileset->height(), 0, 1);
+//				Vector4 color(1, 1, 1, 1);
+//				buff.addVertex(SpriteVertex{
+//						v0, color, region.corner(Box2::BottomLeft) });
+//				buff.addVertex(SpriteVertex{
+//						v1, color, region.corner(Box2::TopLeft) });
+//				buff.addVertex(SpriteVertex{
+//						v2, color, region.corner(Box2::BottomRight) });
+//				buff.addVertex(SpriteVertex{
+//						v3, color, region.corner(Box2::TopRight) });
+//				buff.addIndex(index + 0);
+//				buff.addIndex(index + 1);
+//				buff.addIndex(index + 2);
+//				buff.addIndex(index + 2);
+//				buff.addIndex(index + 1);
+//				buff.addIndex(index + 3);
+//				index += 4;
+//			}
+//		}
+//		++layer;
+//	}
 }
 
 

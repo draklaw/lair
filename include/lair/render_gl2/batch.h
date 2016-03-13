@@ -34,9 +34,11 @@ namespace lair
 {
 
 
+class Context;
 class ProgramObject;
 class Texture;
 class VertexFormat;
+
 
 class Batch {
 public:
@@ -54,7 +56,7 @@ public:
 	void clearBuffers();
 	void clearAll();
 
-	void render();
+	void render(Context* glc);
 
 protected:
 	struct BufferId {
@@ -72,7 +74,7 @@ protected:
 
 		const ProgramObject* shader;
 		Texture*             texture;
-		const VertexFormat*        format;
+		const VertexFormat*  format;
 	};
 
 	struct HashBufferId {

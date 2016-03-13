@@ -22,7 +22,8 @@
 #include <algorithm>
 #include <memory>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/render_gl2/context.h>
+#include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/shader_object.h>
 
 #include <lair/render_gl2/program_object.h>
@@ -31,17 +32,23 @@
 namespace lair {
 
 
-ProgramObject::ProgramObject()
-    : _id(0),
-      _link_status(GL_FALSE) {
+ProgramObject::ProgramObject(Renderer* renderer)
+	: _context    (renderer? renderer->context(): nullptr),
+	  _renderer   (renderer),
+	  _id         (0),
+	  _link_status(gl::FALSE) {
 }
 
 
 ProgramObject::ProgramObject(ProgramObject&& other)
-    : _id(other._id),
-      _link_status(other._link_status) {
-	other._id = 0;
-	other._link_status = GL_FALSE;
+	: _context    (other._context),
+	  _renderer   (other._renderer),
+	  _id         (other._id),
+	  _link_status(other._link_status) {
+	other._context     = nullptr;
+	other._renderer    = nullptr;
+	other._id          = 0;
+	other._link_status = gl::FALSE;
 }
 
 
@@ -57,13 +64,17 @@ ProgramObject& ProgramObject::operator=(ProgramObject other) {
 }
 
 
+bool ProgramObject::isValid() const {
+	return _renderer;
+}
+
 bool ProgramObject::isGenerated() const {
 	return _id != 0;
 }
 
 
 bool ProgramObject::isLinked() const {
-	return _link_status == GL_TRUE;
+	return _link_status == gl::TRUE;
 }
 
 
@@ -74,26 +85,26 @@ GLuint ProgramObject::id() const {
 
 void ProgramObject::generateObject() {
 	assert(!isGenerated());
-	_id = glCreateProgram(); LAIR_THROW_IF_OPENGL_ERROR();
+	_id = _context->createProgram();
 }
 
 
 void ProgramObject::deleteObject() {
 	assert(isGenerated());
-	glDeleteProgram(_id); LAIR_THROW_IF_OPENGL_ERROR();
+	_context->deleteProgram(_id);
 	_id = 0;
 }
 
 
 void ProgramObject::attachShader(const ShaderObject& shader) {
 	assert(isGenerated() && shader.isGenerated());
-	glAttachShader(_id, shader.id()); LAIR_THROW_IF_OPENGL_ERROR();
+	_context->attachShader(_id, shader.id());
 }
 
 
 void ProgramObject::detachShader(const ShaderObject& shader) {
 	assert(isGenerated() && shader.isGenerated());
-	glDetachShader(_id, shader.id()); LAIR_THROW_IF_OPENGL_ERROR();
+	_context->detachShader(_id, shader.id());
 }
 
 
@@ -101,60 +112,53 @@ void ProgramObject::detachAllShaders() {
 	assert(isGenerated());
 
 	GLint nb_shaders;
-	glGetProgramiv(_id, GL_ATTACHED_SHADERS, &nb_shaders);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramiv(_id, gl::ATTACHED_SHADERS, &nb_shaders);
 
 	std::unique_ptr<GLuint[]> shader_id(new GLuint[nb_shaders]);
-	glGetAttachedShaders(_id, nb_shaders, NULL, shader_id.get());
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getAttachedShaders(_id, nb_shaders, NULL, shader_id.get());
 
 	for(int i=0; i<nb_shaders; ++i)
-		glDetachShader(_id, shader_id[i]); LAIR_THROW_IF_OPENGL_ERROR();
+		_context->detachShader(_id, shader_id[i]);
 }
 
 
 void ProgramObject::bindAttributeLocation(const GLchar* name, GLuint index) {
 	assert(isGenerated());
-	glBindAttribLocation(_id, index, name);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->bindAttribLocation(_id, index, (GLchar*)name);
 }
 
 
 bool ProgramObject::link() {
 	assert(isGenerated());
 
-	glLinkProgram(_id); LAIR_THROW_IF_OPENGL_ERROR();
-	glGetProgramiv(_id, GL_LINK_STATUS, &_link_status);
-	LAIR_THROW_IF_OPENGL_ERROR();
-	return _link_status == GL_TRUE;
+	_context->linkProgram(_id);
+	_context->getProgramiv(_id, gl::LINK_STATUS, &_link_status);
+	return _link_status == gl::TRUE;
 }
 
 
 bool ProgramObject::validate() {
 	assert(isLinked());
 
-	glValidateProgram(_id);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->validateProgram(_id);
 
 	GLint validate_status;
-	glGetProgramiv(_id, GL_VALIDATE_STATUS, &validate_status);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramiv(_id, gl::VALIDATE_STATUS, &validate_status);
 
-	return validate_status == GL_TRUE;
+	return validate_status == gl::TRUE;
 }
 
 
 void ProgramObject::use() const {
 	assert(isLinked());
-	glUseProgram(_id); LAIR_THROW_IF_OPENGL_ERROR();
+	_context->useProgram(_id);
 }
 
 
 GLint ProgramObject::nbActiveAttributes() const {
 	assert(isLinked());
 	GLint nb_active_attributes;
-	glGetProgramiv(_id, GL_ACTIVE_ATTRIBUTES, &nb_active_attributes);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramiv(_id, gl::ACTIVE_ATTRIBUTES, &nb_active_attributes);
 	return nb_active_attributes;
 }
 
@@ -162,34 +166,31 @@ GLint ProgramObject::nbActiveAttributes() const {
 GLint ProgramObject::nbActiveUniforms() const {
 	assert(isLinked());
 	GLint nb_active_uniforms;
-	glGetProgramiv(_id, GL_ACTIVE_UNIFORMS, &nb_active_uniforms);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramiv(_id, gl::ACTIVE_UNIFORMS, &nb_active_uniforms);
 	return nb_active_uniforms;
 }
 
 
 GLint ProgramObject::getAttributeLocation(const GLchar* name) const {
 	assert(isLinked());
-	GLint res = glGetAttribLocation(_id, name); LAIR_THROW_IF_OPENGL_ERROR();
+	GLint res = _context->getAttribLocation(_id, (GLchar*)name);
 	return res;
 }
 
 
 GLint ProgramObject::getUniformLocation(const GLchar* name) const {
 	assert(isLinked());
-	GLint res = glGetUniformLocation(_id, name); LAIR_THROW_IF_OPENGL_ERROR();
+	GLint res = _context->getUniformLocation(_id, (GLchar*)name);
 	return res;
 }
 
 
 void ProgramObject::getLog(std::string& out) const {
 	GLint log_size;
-	glGetProgramiv(_id, GL_INFO_LOG_LENGTH, &log_size);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramiv(_id, gl::INFO_LOG_LENGTH, &log_size);
 
 	std::unique_ptr<GLchar[]> buffer(new GLchar[log_size]);
-	glGetProgramInfoLog(_id, log_size, NULL, buffer.get());
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramInfoLog(_id, log_size, NULL, buffer.get());
 
 	out.assign(buffer.get());
 }
@@ -201,12 +202,10 @@ void ProgramObject::dumpInfo(std::ostream& out) const {
 
 	GLint max_attrib_name_length;
 	GLint max_uniform_name_length;
-	glGetProgramiv(_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
-				   &max_attrib_name_length);
-	LAIR_THROW_IF_OPENGL_ERROR();
-	glGetProgramiv(_id, GL_ACTIVE_UNIFORM_MAX_LENGTH,
-				   &max_uniform_name_length);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->getProgramiv(_id, gl::ACTIVE_ATTRIBUTE_MAX_LENGTH,
+	                       &max_attrib_name_length);
+	_context->getProgramiv(_id, gl::ACTIVE_UNIFORM_MAX_LENGTH,
+	                       &max_uniform_name_length);
 
 	GLsizei buf_size = std::max(max_attrib_name_length,
 	                            max_uniform_name_length);
@@ -217,10 +216,9 @@ void ProgramObject::dumpInfo(std::ostream& out) const {
 	for(int i=0; i<nb_attributes; ++i) {
 		GLint size;
 		GLenum type;
-		glGetActiveAttrib(_id, i, buf_size, NULL, &size, &type, buffer.get());
-		LAIR_THROW_IF_OPENGL_ERROR();
+		_context->getActiveAttrib(_id, i, buf_size, NULL, &size, &type, buffer.get());
 		out << getAttributeLocation(buffer.get()) << ": " << buffer.get() << " - "
-			<< /*typeString(type)*/type << "[" << size << "]\n";
+		    << /*typeString(type)*/type << "[" << size << "]\n";
 	}
 
 	out << "Program uniforms:\n";
@@ -228,10 +226,9 @@ void ProgramObject::dumpInfo(std::ostream& out) const {
 	for(int i=0; i<nb_uniforms; ++i) {
 		GLint size;
 		GLenum type;
-		glGetActiveUniform(_id, i, buf_size, NULL, &size, &type, buffer.get());
-		LAIR_THROW_IF_OPENGL_ERROR();
+		_context->getActiveUniform(_id, i, buf_size, NULL, &size, &type, buffer.get());
 		out << getUniformLocation(buffer.get()) << ": " << buffer.get() << " - "
-			<< /*typeString(type)*/type << "[" << size << "]\n";
+		    << /*typeString(type)*/type << "[" << size << "]\n";
 	}
 }
 
