@@ -24,8 +24,7 @@
 
 
 #include <lair/core/lair.h>
-
-#include <lair/sys_sdl2/sys_loader.h>
+#include <lair/core/asset_manager.h>
 
 #include <lair/render_gl2/gl.h>
 
@@ -40,9 +39,6 @@ class Image;
 
 
 class Texture {
-public:
-	typedef SysLoader::ImageLoaderPtr ImageLoaderPtr;
-
 public:
 	enum {
 		MAG_NEAREST    = 0 << 1,
@@ -99,9 +95,6 @@ public:
 	inline uint16 width()      const { return _width; }
 	inline uint16 height()     const { return _height; }
 
-	void _load(ImageLoaderPtr loader);
-	bool _uploadNow();
-
 	bool _upload(const Image& image);
 	void _setFlags(uint32 flags);
 
@@ -117,8 +110,29 @@ protected:
 	uint32         _flags;
 	uint16         _width;
 	uint16         _height;
-	ImageLoaderPtr _loader;
 };
+
+
+class TextureAspect : public Aspect {
+public:
+	TextureAspect(AssetSP asset, Renderer* renderer);
+	TextureAspect(const TextureAspect&)  = delete;
+	TextureAspect(      TextureAspect&&) = delete;
+	~TextureAspect() = default;
+
+	TextureAspect& operator=(const TextureAspect&)  = delete;
+	TextureAspect& operator=(      TextureAspect&&) = delete;
+
+	const Texture& texture() const { return _tex; }
+
+	Texture&      _texture()       { return _tex; }
+
+private:
+	Texture _tex;
+};
+
+typedef std::shared_ptr<TextureAspect> TextureAspectSP;
+typedef std::weak_ptr  <TextureAspect> TextureAspectWP;
 
 
 }

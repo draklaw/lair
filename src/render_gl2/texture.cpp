@@ -34,31 +34,28 @@ namespace lair
 
 
 Texture::Texture(Renderer* renderer)
-    : _context (renderer? renderer->context(): nullptr),
-      _renderer(renderer),
-      _id      (0),
-      _flags   (0),
-      _width   (0),
-      _height  (0),
-      _loader  () {
+	: _context (renderer? renderer->context(): nullptr),
+	  _renderer(renderer),
+	  _id      (0),
+	  _flags   (0),
+	  _width   (0),
+	  _height  (0) {
 }
 
 
 Texture::Texture(Texture&& other)
-    : _context (other._context),
-      _renderer(other._renderer),
-      _id      (other._id),
-      _flags   (other._flags),
-      _width   (other._width),
-      _height  (other._height),
-      _loader  () {
+	: _context (other._context),
+	  _renderer(other._renderer),
+	  _id      (other._id),
+	  _flags   (other._flags),
+	  _width   (other._width),
+	  _height  (other._height) {
 	other._context  = nullptr;
 	other._renderer = nullptr;
 	other._id       = 0;
 	other._flags    = 0;
 	other._width    = 0;
 	other._height   = 0;
-	other._loader.reset();
 }
 
 
@@ -70,34 +67,6 @@ Texture::~Texture() {
 Texture& Texture::operator=(Texture other) {
 	swap(*this, other);
 	return *this;
-}
-
-
-void Texture::_load(ImageLoaderPtr loader) {
-	lairAssert(!isValid() && !_loader);
-	_loader = loader;
-}
-
-
-bool Texture::_uploadNow() {
-	if(isValid()) {
-		// Valid textures should not hold a reference to a loader.
-		lairAssert(!_loader);
-		return true;
-	}
-	if(!_loader) {
-		// We likely failed loading previously.
-		return false;
-	}
-
-	_loader->wait();
-	bool ok = false;
-	if(_loader->getImage().isValid()) {
-		ok = _upload(_loader->getImage());
-	}
-	_loader.reset();
-
-	return ok;
 }
 
 
@@ -142,7 +111,6 @@ void swap(Texture& t0, Texture& t1) {
 	std::swap(t0._flags,    t1._flags);
 	std::swap(t0._width,    t1._width);
 	std::swap(t0._height,   t1._height);
-	std::swap(t0._loader,   t1._loader);
 }
 
 
@@ -191,6 +159,12 @@ void Texture::_release() {
 	if(isValid()) {
 		_context->deleteTextures(1, &_id);
 	}
+}
+
+
+TextureAspect::TextureAspect(AssetSP asset, Renderer* renderer)
+	: Aspect(asset),
+	  _tex(renderer) {
 }
 
 

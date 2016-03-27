@@ -38,6 +38,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/path.h>
+#include <lair/core/asset_manager.h>
 
 
 namespace lair
@@ -49,12 +50,15 @@ enum {
 };
 
 
+class Loader;
 class LoaderManager;
+
+typedef std::shared_ptr<Loader> LoaderSP;
 
 
 class Loader {
 public:
-	Loader(LoaderManager* manager, const Path& file);
+	Loader(LoaderManager* manager, AssetSP asset);
 	Loader(const Loader&) = delete;
 	Loader(Loader&&)      = delete;
 	virtual ~Loader();
@@ -64,9 +68,8 @@ public:
 
 	bool               isLoaded();
 	bool               isSuccessful();
-	size_t             size();
-	const Path&        file() const { return _file; }
-	Path               path() const;
+	AssetSP            asset() { return _asset; }
+	Path               realPath() const;
 
 	void wait();
 
@@ -75,14 +78,13 @@ public:
 protected:
 	virtual void loadSyncImpl(Logger& log) = 0;
 
-	void _success(size_t size);
+	void _success();
 
 protected:
 	LoaderManager*          _manager;
 	bool                    _isLoaded;
 	bool                    _isSuccessful;
-	size_t                  _size;
-	Path                    _file;
+	AssetSP                 _asset;
 	std::mutex              _mutex;
 	std::condition_variable _cv;
 };
@@ -112,10 +114,7 @@ private:
 
 class LoaderManager {
 public:
-	typedef std::shared_ptr<Loader> LoaderPtr;
-
-public:
-	LoaderManager(size_t maxCacheSize, unsigned nThread = 1,
+	LoaderManager(unsigned nThread = 1,
 	              Logger& log = noopLogger);
 	LoaderManager(const LoaderManager&) = delete;
 	LoaderManager(LoaderManager&&)      = delete;
@@ -125,41 +124,30 @@ public:
 	LoaderManager& operator=(LoaderManager&&)      = delete;
 
 	unsigned    nThread() const { return _nThread; }
-	size_t      cacheSize();
 	unsigned    nToLoad();
 	const Path& basePath() const { return _basePath; }
 
 	void setNThread(unsigned count);
 	void setBasePath(const Path& path);
+	Path realFromLogic(const Path& path) const;
 
 	template < typename L, typename... Args >
-	std::shared_ptr<L> load(const Path& file, Args&&... args) {
-		auto it = _cache.find(file);
-		if(it != _cache.end()) {
-			log().debug("Serve ", file, " from cache.");
-			return std::dynamic_pointer_cast<L>(it->second);
-		}
-
-		log().info("Request ", file, " loading...");
-		// TODO: use a FileSystem to access file
-		auto loader = std::make_shared<L>(this, file,
+	std::shared_ptr<L> load(AssetSP asset, Args&&... args) {
+		log().info("Request ", asset->logicPath(), " loading...");
+		auto loader = std::make_shared<L>(this, asset,
 		                                  std::forward<Args>(args)...);
 		_enqueueLoader(loader);
-		_cache.emplace(file, loader);
 		return loader;
 	}
 
-	void clearCache();
-
 	Logger& log() { return *_logger; }
 
-	void _enqueueLoader(LoaderPtr loader);
-	LoaderPtr _popLoader();
-	void _doneLoading(Loader* loader, size_t size);
+	void _enqueueLoader(LoaderSP loader);
+	LoaderSP _popLoader();
 
 private:
-	typedef std::deque<LoaderPtr> Queue;
-	typedef std::unordered_map<Path, LoaderPtr> Cache;
+	typedef std::deque<LoaderSP> Queue;
+	typedef std::list <LoaderSP> LoaderList;
 
 private:
 	Logger*       _logger;
@@ -168,29 +156,13 @@ private:
 	std::condition_variable
 	              _queueCv;
 	Queue         _queue;
-
-	std::mutex    _cacheLock;
-	Cache         _cache;
-	size_t        _cacheSize;
-	size_t        _maxCacheSize;
+	LoaderList    _wipList;
 
 	unsigned      _nThread;
 	_LoaderThread _threadPool[MAX_LOADER_THREADS];
 
 	Path          _basePath;
 };
-
-
-//class ImageLoader : public Loader {
-//public:
-//	ImageLoader();
-//	virtual ~ImageLoader();
-
-//	const Image* getImage() const;
-
-//private:
-//	Image* _image;
-//};
 
 
 }

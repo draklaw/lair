@@ -31,12 +31,11 @@ namespace lair
 {
 
 
-Loader::Loader(LoaderManager* manager, const Path& file)
+Loader::Loader(LoaderManager* manager, AssetSP asset)
     : _manager(manager),
       _isLoaded(false),
       _isSuccessful(false),
-      _size(0),
-      _file(file),
+      _asset(asset),
       _mutex(),
       _cv() {
 }
@@ -57,14 +56,8 @@ bool Loader::isSuccessful() {
 }
 
 
-size_t Loader::size() {
-	std::unique_lock<std::mutex> lk(_mutex);
-	return _size;
-}
-
-
-Path Loader::path() const {
-	return _manager->basePath() / _file;
+Path Loader::realPath() const {
+	return _manager->realFromLogic(_asset->logicPath());
 }
 
 
@@ -85,21 +78,19 @@ void Loader::loadSync(Logger& log) {
 	try {
 		loadSyncImpl(log);
 	} catch(std::exception e) {
-		log.error("Exception caught while loading \"", _file, "\": ", e.what());
+		log.error("Exception caught while loading \"", _asset->logicPath(), "\": ", e.what());
 	}
 
 	{
 		std::unique_lock<std::mutex> lk(_mutex);
 		_isLoaded = true;
-		_manager->_doneLoading(this, _size);
 	}
 	_cv.notify_all();
 }
 
 
-void Loader::_success(size_t size) {
+void Loader::_success() {
 	_isSuccessful = true;
-	_size = size;
 }
 
 
@@ -108,8 +99,8 @@ void Loader::_success(size_t size) {
 
 _LoaderThread::_LoaderThread()
 	: _manager(nullptr),
-      _thread (),
-      _running(false) {
+	  _thread (),
+	  _running(false) {
 }
 
 
@@ -158,33 +149,28 @@ void _LoaderThread::wait() {
 
 
 void _LoaderThread::_run() {
-	_logger.info("Start loader thread ", _thread.get_id(), ".");
+	_logger.log("Start loader thread ", _thread.get_id(), ".");
 	while(_running) {
-		std::shared_ptr<Loader> loader = _manager->_popLoader();
+		LoaderSP loader = _manager->_popLoader();
 		// Loader can be null to signal the thread it may be stopped
 		if(loader) {
-			_logger.log("Loading ", loader->file(), " from thread ", _thread.get_id(), "...");
+			_logger.log("Loading ", loader->asset()->logicPath(), " from thread ", _thread.get_id(), "...");
 			loader->loadSync(_logger);
-			_logger.info("Done loading ", loader->file(), " from thread ", _thread.get_id(), ".");
+			_logger.info("Done loading ", loader->asset()->logicPath(), " from thread ", _thread.get_id(), ".");
 		}
 	}
-	_logger.info("Stop loader thread ", _thread.get_id(), ".");
+	_logger.log("Stop loader thread ", _thread.get_id(), ".");
 }
 
 
 //---------------------------------------------------------------------------//
 
 
-LoaderManager::LoaderManager(size_t maxCacheSize, unsigned nThread,
-                             Logger& logger)
+LoaderManager::LoaderManager(unsigned nThread, Logger& logger)
     : _logger(&logger),
       _queueLock(),
       _queueCv(),
       _queue(),
-      _cacheLock(),
-      _cache(),
-      _cacheSize(0),
-      _maxCacheSize(maxCacheSize),
       _nThread(0),
       _threadPool() {
 	for(int i = 0; i < MAX_LOADER_THREADS; ++i) {
@@ -205,12 +191,6 @@ LoaderManager::~LoaderManager() {
 unsigned LoaderManager::nToLoad() {
 	std::unique_lock<std::mutex> lk(_queueLock);
 	return _queue.size();
-}
-
-
-size_t LoaderManager::cacheSize() {
-	std::unique_lock<std::mutex> lk(_cacheLock);
-	return _cacheSize;
 }
 
 
@@ -237,12 +217,13 @@ void LoaderManager::setBasePath(const Path& path) {
 }
 
 
-void LoaderManager::clearCache() {
-	_cache.clear();
+Path LoaderManager::realFromLogic(const Path& path) const {
+	// TODO: use a FileSystem to access file
+	return _basePath / path;
 }
 
 
-void LoaderManager::_enqueueLoader(LoaderPtr loader) {
+void LoaderManager::_enqueueLoader(LoaderSP loader) {
 	{
 		std::unique_lock<std::mutex> lk(_queueLock);
 		_queue.push_back(loader);
@@ -250,23 +231,20 @@ void LoaderManager::_enqueueLoader(LoaderPtr loader) {
 	_queueCv.notify_one();
 }
 
-LoaderManager::LoaderPtr LoaderManager::_popLoader() {
+
+LoaderSP LoaderManager::_popLoader() {
 	std::unique_lock<std::mutex> lk(_queueLock);
 	if(!_queue.size()) {
 		_queueCv.wait(lk);
 	}
-	LoaderPtr loader;
+
+	LoaderSP loader;
 	if(_queue.size()) {
 		loader = _queue.front();
 		_queue.pop_front();
+		_wipList.push_back(loader);
 	}
 	return loader;
-}
-
-
-void LoaderManager::_doneLoading(Loader* /*loader*/, size_t size) {
-	std::unique_lock<std::mutex> lk(_cacheLock);
-	_cacheSize += size;
 }
 
 

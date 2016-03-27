@@ -20,14 +20,13 @@
 
 
 #include <vector>
-
-#include <boost/functional/hash.hpp>
+#include <algorithm>
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/image.h>
 
-#include <lair/sys_sdl2/sys_module.h>
-#include <lair/sys_sdl2/sys_loader.h>
+#include <lair/sys_sdl2/image_loader.h>
 
 #include "lair/render_gl2/render_module.h"
 
@@ -114,16 +113,14 @@ namespace lair
 //---------------------------------------------------------------------------//
 
 
-Renderer::Renderer(RenderModule* module)
+Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
     : _module(module),
+      _assetManager(assetManager),
       _context(module? module->context(): nullptr),
       _passStatesDirty(true),
-//      _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
-      _defaultTexture(),
-      _textures()/*,
-      _spriteShaderProg(),
-      _spriteShader()*/ {
+      _defaultTexture() {
 	lairAssert(_module);
+	lairAssert(_assetManager);
 
 //	_createDefaultTexture();
 
@@ -153,74 +150,40 @@ PassStates* Renderer::currentPassStates() {
 	return &_currentPassStates;
 }
 
-void Renderer::preloadTexture(const Path& file, uint32 flags) {
-	TexId id(file, flags);
-	std::unique_lock<std::mutex> lk(_textureLock);
-	auto texIt = _textures.find(id);
-	if(texIt == _textures.end()) {
-		texIt = _textures.emplace_hint(texIt, id, Texture(this));
-		texIt->second._load(_module->sys()->loader().preloadImage(file));
+
+TextureAspectSP Renderer::createTexture(AssetSP asset) {
+	lairAssert(bool(asset));
+	TextureAspectSP aspect = asset->aspect<TextureAspect>();
+	if(!aspect) {
+		aspect = asset->createAspect<TextureAspect>(this);
+		enqueueToUpload(aspect);
 	}
+	return aspect;
 }
 
 
-//void Renderer::preloadSprite(const Path& file) {
-//	std::unique_lock<std::mutex> lk(_spriteLock);
-//	auto spriteIt = _sprites.find(file);
-//	if(spriteIt == _sprites.end()) {
-//		spriteIt = _sprites.emplace_hint(spriteIt, file,
-//		                _module->sys()->loader().load<SpriteLoader>(file, this));
-//	}
-//}
-
-
-Texture* Renderer::getTexture(const Path& file, uint32 flags) {
-	TexId id(file, flags);
-	std::unique_lock<std::mutex> lk(_textureLock);
-	auto texIt = _textures.find(id);
-	if(texIt == _textures.end()) {
-		log().warning("Texture \"", file, "\" not preloaded.");
-		texIt = _textures.emplace_hint(texIt, id, Texture(this));
-		texIt->second._load(_module->sys()->loader().preloadImage(file));
-	}
-	lairAssert(texIt != _textures.end());
-	texIt->second._uploadNow();
-	texIt->second._setFlags(flags);
-	return &texIt->second;
+void Renderer::enqueueToUpload(TextureAspectSP texture) {
+	_pendingTextures.push_back(texture);
 }
 
 
-//Sprite* Renderer::getSprite(const Path& file) {
-//	std::unique_lock<std::mutex> lk(_spriteLock);
-//	auto spriteIt = _sprites.find(file);
-//	if(spriteIt == _sprites.end()) {
-//		log().warning("Sprite \"", file, "\" not preloaded.");
-//		spriteIt = _sprites.emplace_hint(spriteIt, file,
-//		                _module->sys()->loader().load<SpriteLoader>(file, this));
-//	}
-//	lairAssert(spriteIt != _sprites.end());
-//	spriteIt->second->wait();
-//	if(spriteIt->second->isSuccessful()) {
-//		spriteIt->second->_sprite._texture = getTexture(spriteIt->second->_texture,
-//														spriteIt->second->_textureFlags);
-//	} else {
-//		spriteIt->second->_sprite._texture = defaultTexture();
-//	}
-//	return &spriteIt->second->_sprite;
-//}
+void Renderer::uploadPendingTextures() {
+	for(TextureAspectSP texture: _pendingTextures) {
+		ImageAspectSP image = texture->asset()->aspect<ImageAspect>();
+		if(image && !texture->texture().isValid()) {
+			log().info("Upload texture \"", texture->asset()->logicPath(), "\"...");
+			texture->_texture()._upload(image->image());
+		}
+	}
+
+	auto end = std::remove_if(_pendingTextures.begin(), _pendingTextures.end(),
+	                          [](TextureAspectSP tex) { return tex->texture().isValid(); });
+	_pendingTextures.erase(end, _pendingTextures.end());
+}
 
 
 Logger& Renderer::log() {
 	return _module->log();
-}
-
-
-size_t Renderer::HashTexId::operator()(const TexId& texId) const {
-	using namespace boost;
-	size_t h = 0;
-	hash_combine(h, texId.file);
-	hash_combine(h, texId.flags);
-	return h;
 }
 
 

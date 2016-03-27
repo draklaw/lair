@@ -70,7 +70,7 @@ public:
 
 class SpriteLoader : public Loader {
 public:
-	SpriteLoader(LoaderManager* manager, const Path& path, Renderer* renderer);
+	SpriteLoader(LoaderManager* manager, const Path& realPath, Renderer* renderer);
 	SpriteLoader(const SpriteLoader&) = delete;
 	SpriteLoader(SpriteLoader&&)      = delete;
 	~SpriteLoader();

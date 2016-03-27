@@ -42,8 +42,7 @@ SysModule::SysModule(MasterLogger* logger, LogLevel level)
       _log("sys_sdl2", logger, level),
       _initialized(false),
       _windowMap(),
-      _basePath(),
-      _loader(0, 1, _log) {
+      _basePath() {
 }
 
 

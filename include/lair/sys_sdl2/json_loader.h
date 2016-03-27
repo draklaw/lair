@@ -36,7 +36,7 @@ namespace lair
 
 class JsonLoader : public Loader {
 public:
-	JsonLoader(LoaderManager* manager, const Path& path);
+	JsonLoader(LoaderManager* manager, const Path& realPath);
 	JsonLoader(const JsonLoader&) = delete;
 	JsonLoader(JsonLoader&&)      = delete;
 	~JsonLoader();

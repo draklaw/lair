@@ -30,8 +30,6 @@
 #include <lair/core/log.h>
 #include <lair/core/path.h>
 
-#include <lair/sys_sdl2/sys_loader.h>
-
 
 extern "C" {
 typedef union  SDL_Event SDL_Event;
@@ -113,10 +111,6 @@ public:
 	const Path& basePath();
 	const Path getPrefPath(const char* org, const char* app);
 
-	inline SysLoader& loader() {
-		return _loader;
-	}
-
 	/// \}
 
 	/// \{
@@ -166,8 +160,6 @@ private:
 	WindowMap           _windowMap;
 
 	Path                _basePath;
-
-	SysLoader           _loader;
 };
 
 

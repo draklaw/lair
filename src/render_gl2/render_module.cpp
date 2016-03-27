@@ -31,13 +31,16 @@ namespace lair
 {
 
 
-RenderModule::RenderModule(SysModule* sys, MasterLogger* logger, LogLevel level)
+RenderModule::RenderModule(SysModule* sys, AssetManager* assetManager,
+                           MasterLogger* logger, LogLevel level)
     : _log("render_gl2", logger, level),
       _initialized(false),
       _sys(sys),
+      _assetManager(assetManager),
       _context(&_log),
       _renderers() {
 	lairAssert(sys);
+	lairAssert(_assetManager);
 }
 
 
@@ -69,7 +72,7 @@ void RenderModule::shutdown() {
 
 
 Renderer* RenderModule::createRenderer() {
-	_renderers.emplace_back(new Renderer(this));
+	_renderers.emplace_back(new Renderer(this, _assetManager));
 	return _renderers.back().get();
 }
 

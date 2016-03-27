@@ -90,6 +90,7 @@ set(lair_SOURCES
 	core/path.cpp
 	core/image.cpp
 	core/signal.cpp
+	core/asset_manager.cpp
 
 	utils/input.cpp
 	utils/loader.cpp
@@ -98,8 +99,7 @@ set(lair_SOURCES
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp
-	sys_sdl2/json_loader.cpp
-	sys_sdl2/sys_loader.cpp
+#	sys_sdl2/json_loader.cpp
 	sys_sdl2/sys_module.cpp
 
 	render_gl2/gl.cpp

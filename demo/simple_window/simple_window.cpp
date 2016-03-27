@@ -35,10 +35,11 @@
 
 #include <lair/utils/input.h>
 #include <lair/utils/interp_loop.h>
+#include <lair/utils/loader.h>
 
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
-#include <lair/sys_sdl2/sys_loader.h>
+#include <lair/sys_sdl2/image_loader.h>
 
 #include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/shader_object.h>
@@ -108,7 +109,10 @@ int main(int /*argc*/, char** argv) {
 
 	glog.log("Data directory: ", dataPath.native());
 
-	sys.loader().setBasePath(dataPath);
+	lair::AssetManager assets;
+
+	lair::LoaderManager loader(1, glog);
+	loader.setBasePath(dataPath);
 
 	lair::Window* w = sys.createWindow("simple_window", 800, 600);
 //	w->setFullscreen(true);
@@ -131,14 +135,20 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
-	lair::RenderModule renderModule(&sys, &logger, lair::LogLevel::Info);
+	lair::RenderModule renderModule(&sys, &assets, &logger, lair::LogLevel::Info);
 	renderModule.initialize();
 
 	lair::Renderer* renderer = renderModule.createRenderer();
 
-	renderer->preloadTexture("lair.png");
-	lair::Texture* tex = renderer->getTexture("lair.png");
+	lair::AssetSP texAsset = assets.createAsset("lair.png");
+	auto texLoader = loader.load<lair::ImageLoader>(texAsset);
+	renderer->createTexture(texAsset);
+	texLoader->wait();
+	renderer->uploadPendingTextures();
+	const lair::Texture& tex = texAsset->aspect<lair::TextureAspect>()->texture();
 //	renderer->preloadSprite("lair.spr");
+
+	glog.error("Texture: ", tex.width(), "x", tex.height());
 
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
@@ -209,7 +219,7 @@ int main(int /*argc*/, char** argv) {
 //			testSprite.sprite()->setIndex(loop.frameTime() / 200000000);
 
 			renderer->context()->clear(lair::gl::COLOR_BUFFER_BIT | lair::gl::DEPTH_BUFFER_BIT);
-			renderer->mainBatch().clearBuffers();
+//			renderer->mainBatch().clearBuffers();
 
 //			map.render(renderer);
 //			spriteManager.render(loop.frameInterp(), camera);
