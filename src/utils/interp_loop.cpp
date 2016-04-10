@@ -94,15 +94,16 @@ InterpLoop::EventType InterpLoop::nextEvent() {
 	}
 	_sys->dispatchPendingSystemEvents();
 
-	uint64 maxFrameTime = _frameRealTime + _maxFrameDuration;
-	if(_tickRealTime > maxFrameTime) {
-		// We are late !
-		int64 offset = now - maxFrameTime;
-		if(offset > 0) {
-			_prevTickRealTime += offset;
-			_tickRealTime     += offset;
-		}
-	}
+	// FIXME: Works only if getTimeNs is near 0 when program start.
+	// uint64 maxFrameTime = _frameRealTime + _maxFrameDuration;
+	// if(_tickRealTime > maxFrameTime) {
+	// 	// We are late !
+	// 	int64 offset = now - maxFrameTime;
+	// 	if(offset > 0) {
+	// 		_prevTickRealTime += offset;
+	// 		_tickRealTime     += offset;
+	// 	}
+	// }
 
 	if(_tickRealTime < now) {
 		++_tickCount;

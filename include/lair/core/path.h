@@ -55,7 +55,8 @@ public:
 
 	const std::string& utf8String() const;
 	const char* utf8CStr() const;
-#ifndef _WIN32
+//#ifndef _WIN32
+#if 1
 	const std::string& native() const;
 #else
 	const std::wstring native() const;

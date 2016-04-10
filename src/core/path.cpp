@@ -30,7 +30,8 @@
 namespace lair {
 
 
-#ifdef _WIN32
+//#ifdef _WIN32
+#if 0
 std::wstring utf16FromUtf8(const std::string& utf8) {
 	typedef std::codecvt<wchar_t, char, std::mbstate_t> codecvt;
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf16conv;
@@ -39,7 +40,8 @@ std::wstring utf16FromUtf8(const std::string& utf8) {
 #endif
 
 
-#ifndef _WIN32
+//#ifndef _WIN32
+#if 1
 char Path::directory_separator = '/';
 #else
 char Path::directory_separator = '\\';
@@ -75,7 +77,8 @@ const char* Path::utf8CStr() const {
 }
 
 
-#ifndef _WIN32
+//#ifndef _WIN32
+#if 1
 const std::string& Path::native() const {
 	return _path;
 }

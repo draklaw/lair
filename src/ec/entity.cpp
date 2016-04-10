@@ -37,6 +37,7 @@ void _Entity::_addComponent(Component* comp) {
 
 
 void _Entity::_removeComponent(Component* comp) {
+	lairAssert(comp);
 	if(firstComponent == comp) {
 		firstComponent = comp->_nextComponent;
 	} else {
