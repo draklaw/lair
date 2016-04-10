@@ -143,7 +143,8 @@ SpriteComponent::SpriteComponent(_Entity* entity,
       _tileGridSize(1, 1),
       _tileIndex(0),
       _view(Vector2(0, 0), Vector2(1, 1)),
-      _blendingMode(BLEND_NONE) {
+      _blendingMode(BLEND_NONE),
+      _textureFlags(Texture::BILINEAR | Texture::REPEAT) {
 }
 
 
@@ -231,9 +232,6 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 	if(json.isMember("sprite")) {
 		comp->setTexture(json["sprite"].asString());
 	}
-	comp->setTileGridSize(Vector2i(json.get("h_tiles", 1).asInt(),
-	                               json.get("v_tiles", 1).asInt()));
-	comp->setTileIndex(json.get("index", 0).asInt());
 	if(json.isMember("anchor")) {
 		Json::Value anchor = json["anchor"];
 		if(anchor.isArray() || anchor.size() == 2) {
@@ -242,6 +240,18 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
 		}*/
 	}
+	if(json.isMember("color")) {
+		Json::Value color = json["color"];
+		if(color.isArray() || color.size() == 4) {
+			comp->setColor(Vector4(color[0].asFloat(), color[1].asFloat(),
+			               color[2].asFloat(), color[3].asFloat()));
+		} /*else {
+			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
+		}*/
+	}
+	comp->setTileGridSize(Vector2i(json.get("h_tiles", 1).asInt(),
+	                               json.get("v_tiles", 1).asInt()));
+	comp->setTileIndex(json.get("index", 0).asInt());
 	if(json.isMember("view")) {
 		Json::Value view = json["view"];
 		if(view.isArray() || view.size() == 4) {
@@ -250,6 +260,33 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 		} /*else {
 			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
 		}*/
+	}
+	if(json.isMember("blend")) {
+		std::string blend = json["blend"].asString();
+		if(blend == "none") {
+			comp->setBlendingMode(BLEND_NONE);
+		}
+		else if(blend == "alpha") {
+			comp->setBlendingMode(BLEND_ALPHA);
+		}
+		else if(blend == "add") {
+			comp->setBlendingMode(BLEND_ADD);
+		}
+		else if(blend == "multiply") {
+			comp->setBlendingMode(BLEND_MULTIPLY);
+		}
+	}
+	if(json.isMember("texture_flags")) {
+		std::string flags = json["texture_flags"].asString();
+		if(flags == "nearest") {
+			comp->setTextureFlags(Texture::NEAREST | Texture::REPEAT);
+		}
+		if(flags == "bilinear") {
+			comp->setTextureFlags(Texture::BILINEAR | Texture::REPEAT);
+		}
+		if(flags == "trilinear") {
+			comp->setTextureFlags(Texture::TRILINEAR | Texture::REPEAT);
+		}
 	}
 }
 
@@ -265,6 +302,7 @@ void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	comp->setTileIndex(   baseComp->tileIndex());
 	comp->setView(        baseComp->view());
 	comp->setBlendingMode(baseComp->blendingMode());
+	comp->setTextureFlags(baseComp->textureFlags());
 }
 
 
@@ -326,12 +364,13 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 		if(!sc._entity() || !sc.texture()) {
 			continue;
 		}
-		const Texture& tex = sc.texture()->texture();
+		Texture& tex = sc.texture()->_texture();
 		// TODO: replace this by a default texture
 		if(!tex.isValid()) {
 			continue;
 		}
 		tex.bind();
+		tex._setFlags(sc.textureFlags());
 
 		switch(sc.blendingMode()) {
 		case BLEND_NONE:

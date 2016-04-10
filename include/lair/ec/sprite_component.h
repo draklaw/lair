@@ -135,6 +135,9 @@ public:
 	inline BlendingMode blendingMode() const { return _blendingMode; }
 	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
+	inline unsigned textureFlags() const { return _textureFlags; }
+	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
+
 	virtual void destroy();
 	virtual void clone(EntityRef& target);
 
@@ -153,6 +156,7 @@ protected:
 	unsigned        _tileIndex;
 	Box2            _view;
 	BlendingMode    _blendingMode;
+	unsigned        _textureFlags;
 };
 
 
