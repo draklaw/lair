@@ -19,10 +19,34 @@
  */
 
 
+#include <fstream>
+
 #include "lair/core/json.h"
 
 
 namespace lair {
+
+
+bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log) {
+	Json::Reader reader;
+	if(reader.parse(in, value)) {
+		return true;
+	}
+	log.error("Error while parsing json \"", localPath, "\": ",
+				reader.getFormattedErrorMessages());
+	return false;
+}
+
+
+bool parseJson(Json::Value& value, const Path& basePath, const Path& localPath, Logger& log) {
+	Path realPath = basePath / localPath;
+	std::ifstream in(realPath.native().c_str());
+	if(!in.good()) {
+		log.error("Unable to read \"", localPath, "\".");
+		return false;
+	}
+	return parseJson(value, in, localPath, log);
+}
 
 
 Matrix4 parseMatrix4(const Json::Value& json, bool* ok) {

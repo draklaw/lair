@@ -172,17 +172,8 @@ EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& 
 	Path localPath = make_absolute(cd, path);
 	log().info("Load entity \"", localPath, "\"");
 
-	std::ifstream in((_game->dataPath() / localPath).native().c_str());
-	if(!in.good()) {
-		log().error("Unable to read \"", localPath, "\".");
-		return EntityRef();
-	}
-
 	Json::Value json;
-	Json::Reader reader;
-	if(!reader.parse(in, json)) {
-		log().error("Error while parsing json \"", localPath, "\": ",
-		            reader.getFormattedErrorMessages());
+	if(!parseJson(json, _game->dataPath(), localPath, log())) {
 		return EntityRef();
 	}
 

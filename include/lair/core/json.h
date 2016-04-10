@@ -23,13 +23,20 @@
 #define _LAIR_CORE_JSON_H
 
 
+#include <istream>
+
 #include <json/json.h>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
+#include <lair/core/path.h>
 
 
 namespace lair {
 
+
+bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log);
+bool parseJson(Json::Value& value, const Path& basePath, const Path& localPath, Logger& log);
 
 Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);
 
