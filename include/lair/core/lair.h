@@ -113,6 +113,11 @@ inline std::unique_ptr<T, D> make_unique(T* ptr, D deleter) {
 	return std::unique_ptr<T, D>(ptr, deleter);
 }
 
+template < typename T >
+inline std::unique_ptr<T> make_unique(T* ptr) {
+	return std::unique_ptr<T>(ptr);
+}
+
 
 template < typename S, typename T >
 T lerp(S x, const T& v0, const T& v1) {

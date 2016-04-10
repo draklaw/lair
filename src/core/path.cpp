@@ -60,6 +60,11 @@ size_t Path::size() const {
 }
 
 
+bool Path::empty() const {
+	return !_path.size();
+}
+
+
 const std::string& Path::utf8String() const {
 	return _path;
 }
@@ -81,25 +86,40 @@ const std::wstring Path::native() const {
 #endif
 
 
+bool Path::isAbsolute() const {
+	return !empty() && _path[0] == '/';
+}
+
+
 Path& Path::operator/=(const Path& path) {
-	bool needSep = (_path.back() != directory_separator);
-	_path.reserve(_path.size() + needSep + path.size());
-	if(needSep) {
-		_path.push_back(directory_separator);
+	if(!path.empty()) {
+		bool needSep = (!empty() && _path.back() != '/');
+		_path.reserve(_path.size() + needSep + path.size());
+		if(needSep) {
+			_path.push_back('/');
+		}
+		_path.append(path._path);
 	}
-	_path.append(path._path);
 	return *this;
 }
 
 
-inline void Path::make_preferred() {
-#ifdef _WIN32
-	for(char& c: _path) {
-		if(c == '/') {
-			c = directory_separator;
-		}
-	}
-#endif
+void Path::removeTrailingSeparators() {
+	int end = size() - 1;
+	while(end > 0 && _path[end] == '/') --end;
+	_path.resize(end + 1);
+}
+
+
+Path Path::dir() {
+	removeTrailingSeparators();
+	int end = size() - 1;
+	while(end > 0 && _path[end] != '/') --end;
+	while(end > 1 && _path[end-1] == '/') --end; // If there is several slashes...
+	Path p;
+	p._path.reserve(end);
+	p._path.append(_path.begin(), _path.begin() + end);
+	return p;
 }
 
 
@@ -107,6 +127,13 @@ Path operator/(const Path& lp, const Path& rp) {
 	Path p(lp);
 	p /= rp;
 	return p;
+}
+
+
+Path make_absolute(const Path& cd, const Path& path) {
+	if(path.isAbsolute())
+		return path;
+	return cd / path;
 }
 
 

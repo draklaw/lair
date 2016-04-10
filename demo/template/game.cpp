@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,21 +19,43 @@
  */
 
 
-#ifndef _LAIR_CORE_JSON_H
-#define _LAIR_CORE_JSON_H
+#include "main_state.h"
+
+#include "game.h"
 
 
-#include <json/json.h>
-
-#include <lair/core/lair.h>
-
-
-namespace lair {
-
-
-Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);
-
-
+Game::Game(int argc, char** argv)
+    : GameBase(argc, argv),
+      _mainState() {
 }
 
+
+Game::~Game() {
+}
+
+
+void Game::initialize() {
+	GameBase::initialize();
+
+#ifdef LAIR_DATA_DIR
+	_dataPath = LAIR_DATA_DIR;
+	_loader->setBasePath(_dataPath);
 #endif
+
+	window()->setUtf8Title("Lair - template");
+
+	_mainState.reset(new MainState(this));
+	_mainState->initialize();
+}
+
+
+void Game::shutdown() {
+	_mainState->shutdown();
+
+	GameBase::shutdown();
+}
+
+
+MainState* Game::mainState() {
+	return _mainState.get();
+}

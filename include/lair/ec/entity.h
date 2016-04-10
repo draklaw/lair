@@ -103,7 +103,11 @@ public:
 
 class EntityRef {
 public:
-	explicit inline EntityRef(_Entity* entity = nullptr)
+	inline EntityRef()
+	    : _entity(nullptr) {
+	}
+
+	explicit inline EntityRef(_Entity* entity)
 	    : _entity(entity) {
 		if(_entity) {
 			++_entity->weakRefCount;
@@ -194,6 +198,10 @@ public:
 //		lairAssert(_entity->transform);
 		/* * */_entity->transform = transform;
 		_entity->worldTransform = computeWorldTransform();
+	}
+
+	inline void place(const Vector3& pos) {
+		place(Transform(Translation(pos)));
 	}
 
 	inline void move(const Transform& transform) {

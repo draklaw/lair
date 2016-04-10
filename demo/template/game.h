@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,21 +19,37 @@
  */
 
 
-#ifndef _LAIR_CORE_JSON_H
-#define _LAIR_CORE_JSON_H
+#ifndef _LAIR_DEMO_TEMPLATE_GAME_H
+#define _LAIR_DEMO_TEMPLATE_GAME_H
 
 
-#include <json/json.h>
-
-#include <lair/core/lair.h>
+#include <lair/utils/game_base.h>
 
 
-namespace lair {
+using namespace lair;
 
 
-Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);
+class MainState;
 
 
-}
+class Game : public GameBase {
+public:
+	Game(int argc, char** argv);
+	Game(const Game&)  = delete;
+	Game(      Game&&) = delete;
+	~Game();
+
+	Game& operator=(const Game&)  = delete;
+	Game& operator=(      Game&&) = delete;
+
+	void initialize();
+	void shutdown();
+
+	MainState* mainState();
+
+protected:
+	std::unique_ptr<MainState> _mainState;
+};
+
 
 #endif

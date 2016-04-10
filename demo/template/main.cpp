@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,21 +19,19 @@
  */
 
 
-#ifndef _LAIR_CORE_JSON_H
-#define _LAIR_CORE_JSON_H
+#include <cstdlib>
+
+#include "game.h"
+#include "main_state.h"
 
 
-#include <json/json.h>
+int main(int argc, char** argv) {
+	Game game(argc, argv);
+	game.initialize();
 
-#include <lair/core/lair.h>
+	game.setNextState(game.mainState());
+	game.run();
 
-
-namespace lair {
-
-
-Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);
-
-
+	game.shutdown();
+	return EXIT_SUCCESS;
 }
-
-#endif

@@ -27,6 +27,7 @@
 #include <lair/core/log.h>
 
 #include <lair/ec/component.h>
+#include <lair/ec/component_manager.h>
 
 #include "lair/ec/entity_manager.h"
 
@@ -52,6 +53,11 @@ EntityManager::~EntityManager() {
 }
 
 
+void EntityManager::registerComponentManager(ComponentManagerInterface* cmi) {
+	_compManagers[cmi->name()] = cmi;
+}
+
+
 size_t EntityManager::entityCapacity() const {
 	size_t cap = 0;
 	for(const EntityBlock& block: _entities) {
@@ -71,10 +77,17 @@ EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
 
 
 EntityRef EntityManager::createEntityFromJson(EntityRef parent,
-                                              const Json::Value& json) {
+                                              const Json::Value& json,
+                                              const Path& cd) {
 	EntityRef entity = createEntity(parent, json.get("name", "").asString().c_str());
 	if(json.isMember("transform")) {
 		entity.place(Transform(parseMatrix4(json["transform"])));
+	}
+	for(const std::string key: json.getMemberNames()) {
+		auto it = _compManagers.find(key);
+		if(it != _compManagers.end()) {
+			it->second->addComponentFromJson(entity, json[key], cd);
+		}
 	}
 	return entity;
 }

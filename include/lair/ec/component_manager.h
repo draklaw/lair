@@ -28,6 +28,7 @@
 #include <unordered_map>
 
 #include <lair/core/lair.h>
+#include <lair/core/path.h>
 
 #include <lair/ec/entity.h>
 
@@ -36,8 +37,18 @@ namespace lair
 {
 
 
+class ComponentManagerInterface {
+public:
+	virtual const std::string& name() const = 0;
+
+	virtual void addComponentFromJson(EntityRef entity, const Json::Value& json,
+	                                  const Path& cd=Path()) = 0;
+	virtual void cloneComponent(EntityRef base, EntityRef entity) = 0;
+};
+
+
 template < typename _Component >
-class ComponentManager {
+class ComponentManager : public ComponentManagerInterface {
 public:
 	typedef _Component Component;
 
@@ -153,8 +164,9 @@ public:
 	};
 
 public:
-	ComponentManager(size_t componentBlockSize)
-	    : _componentBlockSize(componentBlockSize),
+	ComponentManager(const std::string& name, size_t componentBlockSize)
+	    : _name(name),
+	      _componentBlockSize(componentBlockSize),
 	      _nComponents(0),
 	      _components() {
 	}
@@ -178,6 +190,8 @@ public:
 
 	Iterator begin() { return Iterator(this, 0); }
 	Iterator end()   { return Iterator(this, _nComponents); }
+
+	virtual const std::string& name() const { return _name; }
 
 	void addComponent(EntityRef entity) {
 		lairAssert(entity.isValid());
@@ -226,6 +240,7 @@ protected:
 	typedef std::vector<Component*, Eigen::aligned_allocator<Component>>   ComponentList;
 
 protected:
+	std::string      _name;
 	size_t           _componentBlockSize;
 	size_t           _nComponents;
 	ComponentList    _components;
@@ -233,7 +248,7 @@ protected:
 
 
 template < typename _Component >
-class SparseComponentManager {
+class SparseComponentManager : public ComponentManagerInterface {
 public:
 	typedef _Component Component;
 
@@ -246,8 +261,9 @@ public:
 	typedef typename ComponentMap::iterator Iterator;
 
 public:
-	SparseComponentManager()
-	    : _components() {
+	SparseComponentManager(const std::string& name)
+	    : _name(name),
+	      _components() {
 	}
 
 	SparseComponentManager(const SparseComponentManager&) = delete;
@@ -263,6 +279,8 @@ public:
 
 	Iterator begin() { return _components.begin(); }
 	Iterator end()   { return _components.end(); }
+
+	virtual const std::string& name() const { return _name; }
 
 	void addComponent(EntityRef& entity) {
 		lairAssert(entity.isValid());
@@ -310,6 +328,7 @@ public:
 	}
 
 protected:
+	std::string    _name;
 	ComponentMap   _components;
 };
 

@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_UTILS_ASSET_MANAGER_H
-#define _LAIR_UTILS_ASSET_MANAGER_H
+#ifndef _LAIR_CORE_ASSET_MANAGER_H
+#define _LAIR_CORE_ASSET_MANAGER_H
 
 
 #include <memory>

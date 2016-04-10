@@ -17,12 +17,31 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+find_package(Eigen3 REQUIRED)
+find_package(SDL2 REQUIRED)
 
-add_custom_target(demo)
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /SUBSYSTEM:WINDOWS")
+endif()
+
+add_definitions(-D "'LAIR_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"'")
 
 include_directories(
-	"${PROJECT_SOURCE_DIR}/include"
+	"${EIGEN3_INCLUDE_DIR}"
+	"${SDL2_INCLUDE_DIR}"
 )
 
-add_subdirectory(simple_window)
-add_subdirectory(template)
+add_executable(template
+	main.cpp
+	game.cpp
+	main_state.cpp
+)
+
+target_link_libraries(template
+	lair
+#	GLEW
+	GL
+#	/usr/lib/x86_64-linux-gnu/libGLESv2.so.2
+	${SDL2_LIBRARY}
+)
+add_dependencies(demo template)

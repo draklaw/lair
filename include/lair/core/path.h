@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_UTILS_PATH_H
-#define _LAIR_UTILS_PATH_H
+#ifndef _LAIR_CORE_PATH_H
+#define _LAIR_CORE_PATH_H
 
 
 #include <functional>
@@ -51,6 +51,7 @@ public:
 	Path& operator=(Path&& path)      = default;
 
 	size_t size() const;
+	bool empty() const;
 
 	const std::string& utf8String() const;
 	const char* utf8CStr() const;
@@ -59,6 +60,8 @@ public:
 #else
 	const std::wstring native() const;
 #endif
+
+	bool isAbsolute() const;
 
 	bool operator==(const Path& other) const { return _path == other._path; }
 	bool operator!=(const Path& other) const { return _path != other._path; }
@@ -69,7 +72,8 @@ public:
 
 	Path& operator/=(const Path& path);
 
-	void make_preferred();
+	void removeTrailingSeparators();
+	Path dir();
 
 private:
 	std::string _path;
@@ -83,6 +87,7 @@ inline std::size_t hash_value(const Path& path) {
 
 
 Path operator/(const Path& lp, const Path& rp);
+Path make_absolute(const Path& cd, const Path& path);
 
 inline std::ostream& operator<<(std::ostream& out, const Path& path) {
 	// FIXME: assume that the output stream is utf-8.

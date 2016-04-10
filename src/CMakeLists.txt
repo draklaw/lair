@@ -96,6 +96,7 @@ set(lair_SOURCES
 	utils/input.cpp
 	utils/interp_loop.cpp
 	utils/tiled_map.cpp
+	utils/game_base.cpp
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp

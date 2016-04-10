@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_UTILS_LOADER_H
-#define _LAIR_UTILS_LOADER_H
+#ifndef _LAIR_CORE_LOADER_H
+#define _LAIR_CORE_LOADER_H
 
 
 #include <memory>

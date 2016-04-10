@@ -201,12 +201,15 @@ SpriteComponentManager::SpriteComponentManager(Renderer* renderer,
                                                AssetManager* assetManager,
                                                LoaderManager* loaderManager,
                                                size_t componentBlockSize)
-    : ComponentManager(componentBlockSize),
+    : ComponentManager("sprite", componentBlockSize),
       _renderer(renderer),
       _assets(assetManager),
       _loader(loaderManager),
       _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
       _buffer(sizeof(SpriteVertex)) {
+	lairAssert(_renderer);
+	lairAssert(_assets);
+	lairAssert(_loader);
 
 	ShaderObject vert = _renderer->compileShader("sprite", gl::VERTEX_SHADER,
 	                                   GlslSource(_spriteVertGlsl));
@@ -225,11 +228,12 @@ SpriteComponentManager::~SpriteComponentManager() {
 }
 
 
-void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json) {
+void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json,
+                                                  const Path& cd) {
 	addComponent(entity);
 	SpriteComponent* comp = entity.sprite();
 	if(json.isMember("sprite")) {
-		comp->setTexture(json["sprite"].asString());
+		comp->setTexture(make_absolute(cd, json["sprite"].asString()));
 	}
 	if(json.isMember("anchor")) {
 		Json::Value anchor = json["anchor"];

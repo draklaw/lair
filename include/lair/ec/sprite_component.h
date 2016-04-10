@@ -172,8 +172,9 @@ public:
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
 
-	void addComponentFromJson(EntityRef entity, const Json::Value& json);
-	void cloneComponent(EntityRef base, EntityRef entity);
+	virtual void addComponentFromJson(EntityRef entity, const Json::Value& json,
+	                                  const Path& cd=Path());
+	virtual void cloneComponent(EntityRef base, EntityRef entity);
 
 	void render(float interp, const OrthographicCamera& camera);
 

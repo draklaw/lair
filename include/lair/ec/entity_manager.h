@@ -31,6 +31,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/path.h>
+#include <lair/core/loader.h>
 
 #include <lair/ec/entity.h>
 
@@ -43,6 +45,7 @@ class OrthographicCamera;
 class Renderer;
 
 class Component;
+class ComponentManagerInterface;
 
 
 class EntityManager {
@@ -59,10 +62,12 @@ public:
 	inline size_t    nZombieEntities() const { return _nZombieEntities; }
 	inline EntityRef root()            const { return _root; }
 
+	void registerComponentManager(ComponentManagerInterface* cmi);
+
 	size_t entityCapacity() const;
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
-	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json);
+	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr);
 
 	// Operates in linear time wrt the number of siblings
@@ -79,6 +84,7 @@ public:
 protected:
 	typedef std::vector<_Entity, Eigen::aligned_allocator<_Entity>>   EntityBlock;
 	typedef std::list<EntityBlock> EntityBlockList;
+	typedef std::unordered_map<std::string, ComponentManagerInterface*> CompManagerMap;
 
 protected:
 	void _addEntityBlock();
@@ -89,6 +95,9 @@ protected:
 
 protected:
 	Logger          _logger;
+
+	CompManagerMap  _compManagers;
+
 	EntityRef       _root;
 	_Entity*        _firstFree;
 	size_t          _entityBlockSize;

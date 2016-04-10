@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2015, 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -23,33 +23,32 @@
 #define _LAIR_UTILS_GAME_STATE_H
 
 
+#include <memory>
+
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
 
 
-namespace lair
-{
+namespace lair {
 
 
 class GameState {
 public:
-	GameState();
-	GameState(const GameState&) = delete;
-	GameState(GameState&&)      = delete;
-	~GameState();
+	GameState() = default;
+	virtual ~GameState() = default;
 
-	GameState& operator=(const GameState&) = delete;
-	GameState& operator=(GameState&&)      = delete;
+	virtual void initialize() = 0;
+	virtual void shutdown() = 0;
 
-	virtual void initialize();
-	virtual void shutdown();
-
-	virtual void run();
+	virtual void run() = 0;
+	virtual void quit() = 0;
 
 protected:
 };
 
+typedef std::unique_ptr<GameState> GameStateUP;
+
 
 }
-
 
 #endif
