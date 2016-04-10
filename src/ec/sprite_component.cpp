@@ -24,7 +24,6 @@
 
 #include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/renderer.h>
 
 #include "lair/ec/entity.h"

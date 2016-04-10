@@ -91,9 +91,9 @@ set(lair_SOURCES
 	core/image.cpp
 	core/signal.cpp
 	core/asset_manager.cpp
+	core/loader.cpp
 
 	utils/input.cpp
-	utils/loader.cpp
 	utils/interp_loop.cpp
 	utils/tiled_map.cpp
 

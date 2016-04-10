@@ -32,10 +32,10 @@
 #include <lair/core/log.h>
 #include <lair/core/image.h>
 #include <lair/core/path.h>
+#include <lair/core/loader.h>
 
 #include <lair/utils/input.h>
 #include <lair/utils/interp_loop.h>
-#include <lair/utils/loader.h>
 
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
@@ -45,7 +45,6 @@
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/render_module.h>
 

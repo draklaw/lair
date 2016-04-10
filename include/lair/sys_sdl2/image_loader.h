@@ -27,8 +27,7 @@
 #include <lair/core/image.h>
 #include <lair/core/path.h>
 #include <lair/core/asset_manager.h>
-
-#include <lair/utils/loader.h>
+#include <lair/core/loader.h>
 
 
 namespace lair

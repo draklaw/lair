@@ -26,8 +26,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/json.h>
 #include <lair/core/path.h>
-
-#include <lair/utils/loader.h>
+#include <lair/core/loader.h>
 
 
 namespace lair
