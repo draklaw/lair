@@ -234,6 +234,8 @@ void ProgramObject::dumpInfo(std::ostream& out) const {
 
 
 void swap(ProgramObject& p0, ProgramObject& p1) {
+	std::swap(p0._context,     p1._context);
+	std::swap(p0._renderer,    p1._renderer);
 	std::swap(p0._id,          p1._id);
 	std::swap(p0._link_status, p1._link_status);
 }

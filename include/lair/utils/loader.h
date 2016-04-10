@@ -140,10 +140,13 @@ public:
 		return loader;
 	}
 
+	void waitAll();
+
 	Logger& log() { return *_logger; }
 
 	void _enqueueLoader(LoaderSP loader);
 	LoaderSP _popLoader();
+	LoaderSP _getAnyPendingLoader();
 
 private:
 	typedef std::deque<LoaderSP> Queue;

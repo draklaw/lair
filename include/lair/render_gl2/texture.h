@@ -95,6 +95,8 @@ public:
 	inline uint16 width()      const { return _width; }
 	inline uint16 height()     const { return _height; }
 
+	void bind() const;
+
 	bool _upload(const Image& image);
 	void _setFlags(uint32 flags);
 

@@ -61,6 +61,7 @@ void EntityRef::release() {
 
 
 EntityRef EntityRef::clone(EntityRef newParent, const char* newName) {
+	lairAssert(isValid());
 	EntityRef entity = _entity->manager->cloneEntity(*this, newParent, newName);
 	Component* comp = _entity->firstComponent;
 	while(comp) {

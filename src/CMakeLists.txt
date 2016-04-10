@@ -119,7 +119,7 @@ set(lair_SOURCES
 
 	ec/entity.cpp
 	ec/entity_manager.cpp
-#	ec/sprite_component.cpp
+	ec/sprite_component.cpp
 )
 
 set(lair_py_SOURCES

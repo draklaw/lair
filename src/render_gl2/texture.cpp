@@ -70,6 +70,12 @@ Texture& Texture::operator=(Texture other) {
 }
 
 
+void Texture::bind() const {
+	lairAssert(_id);
+	_context->bindTexture(gl::TEXTURE_2D, _id);
+}
+
+
 bool Texture::_upload(const Image& image) {
 	lairAssert(image.isValid());
 

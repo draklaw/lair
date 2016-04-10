@@ -38,7 +38,6 @@
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
-//#include <lair/render_gl2/sprite.h>
 #include <lair/render_gl2/batch.h>
 #include <lair/render_gl2/render_pass.h>
 
@@ -52,48 +51,7 @@ class Image;
 class RenderModule;
 
 
-//struct SpriteVertex {
-//	Vector4 position;
-//	Vector4 color;
-//	Vector2 texCoord;
-//};
-
-
-//class SpriteShader {
-//public:
-//	SpriteShader();
-//	SpriteShader(const ProgramObject* shader);
-
-//	inline const ProgramObject* program() const { return _shader; }
-//	inline void use() const { if(_shader) _shader->use(); }
-
-//	inline void setViewMatrix(const Matrix4& transform) const {
-//		if(_viewMatrixLoc >= 0) {
-//			glUniformMatrix4fv(_viewMatrixLoc, 1, false, transform.data());
-//		}
-//	}
-
-//	void setTextureUnit(unsigned unit) const {
-//		if(_textureLoc >= 0) {
-//			glUniform1i(_textureLoc, unit);
-//		}
-//	}
-
-//private:
-//	const ProgramObject* _shader;
-//	GLint _viewMatrixLoc;
-//	GLint _textureLoc;
-//};
-
-
 class Renderer {
-public:
-	enum {
-		VxPosition,
-		VxColor,
-		VxTexCoord
-	};
-
 public:
 	Renderer(RenderModule* module, AssetManager* assetManager);
 	Renderer(const Renderer&) = delete;
@@ -114,7 +72,12 @@ public:
 		_passStatesDirty = dirty;
 	}
 
-	ShaderObject* compileShader(GLenum type, const GlslSource& source);
+	ShaderObject compileShader(const char* name, GLenum type,
+	                           const GlslSource& source);
+	ProgramObject compileProgram(const char* name,
+	                             const VertexFormat* format,
+	                             const ShaderObject* vert,
+	                             const ShaderObject* frag);
 
 	TextureAspectSP createTexture(AssetSP asset);
 	void enqueueToUpload(TextureAspectSP texture);
@@ -125,13 +88,6 @@ public:
 	}
 
 	Logger& log();
-
-	ShaderObject _compileShader(const char* name, GLenum type,
-	                            const GlslSource& source);
-	ProgramObject _compileProgram(const char* name,
-	                              const VertexFormat* format,
-	                              const ShaderObject* vert,
-	                              const ShaderObject* frag);
 
 protected:
 	typedef std::vector<TextureAspectSP> TextureList;

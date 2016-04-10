@@ -223,6 +223,13 @@ Path LoaderManager::realFromLogic(const Path& path) const {
 }
 
 
+void LoaderManager::waitAll() {
+	while(LoaderSP loader = _getAnyPendingLoader()) {
+		loader->wait();
+	}
+}
+
+
 void LoaderManager::_enqueueLoader(LoaderSP loader) {
 	{
 		std::unique_lock<std::mutex> lk(_queueLock);
@@ -245,6 +252,18 @@ LoaderSP LoaderManager::_popLoader() {
 		_wipList.push_back(loader);
 	}
 	return loader;
+}
+
+
+LoaderSP LoaderManager::_getAnyPendingLoader() {
+	std::unique_lock<std::mutex> lk(_queueLock);
+	if(_queue.empty()) {
+		while(!_wipList.empty() && _wipList.back()->isLoaded()) {
+			_wipList.pop_front();
+		}
+		return _wipList.empty()? LoaderSP(): _wipList.front();
+	}
+	return _queue.back();
 }
 
 

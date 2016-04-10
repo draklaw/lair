@@ -37,19 +37,152 @@ namespace lair
 {
 
 
+static const VertexAttrib _spriteVertexFormat[] = {
+    { "vx_position", VxPosition, 4, gl::FLOAT, false,
+      offsetof(SpriteVertex, position) },
+    { "vx_color",    VxColor,    4, gl::FLOAT, false,
+      offsetof(SpriteVertex, color) },
+    { "vx_texCoord", VxTexCoord, 2, gl::FLOAT, false,
+      offsetof(SpriteVertex, texCoord) },
+    { nullptr, 0, 0, 0, false, 0 }
+};
+
+
+const char* _spriteVertGlsl =
+	"#define lowp\n"
+	"#define mediump\n"
+	"#define highp\n"
+
+	"uniform highp mat4 viewMatrix;\n"
+
+	"attribute highp   vec4 vx_position;\n"
+	"attribute lowp    vec4 vx_color;\n"
+	"attribute mediump vec2 vx_texCoord;\n"
+
+	"varying highp   vec4 position;\n"
+	"varying lowp    vec4 color;\n"
+	"varying mediump vec2 texCoord;\n"
+
+	"void main() {\n"
+	"	gl_Position = viewMatrix * vx_position;\n"
+	"	position    = vx_position;\n"
+	"	color       = vx_color;\n"
+	"	texCoord    = vx_texCoord;\n"
+	"}\n";
+
+
+const char* _spriteFragGlsl =
+	"#define lowp\n"
+	"#define mediump\n"
+	"#define highp\n"
+
+	"uniform sampler2D texture;\n"
+
+	"varying highp   vec4 position;\n"
+	"varying lowp    vec4 color;\n"
+	"varying mediump vec2 texCoord;\n"
+
+	"void main() {\n"
+	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
+	"	if(fcolor.a < .5){\n"
+	"		discard;\n"
+	"	}\n"
+	"	gl_FragColor = fcolor;\n"
+	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
+	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
+	"}\n";
+
+
+//---------------------------------------------------------------------------//
+
+
+SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, unsigned texUnit)
+	: viewMatrix(viewMatrix),
+	  texUnit(texUnit) {
+}
+
+
+//---------------------------------------------------------------------------//
+
+
+SpriteShader::SpriteShader()
+    : _shader       (nullptr),
+      _viewMatrixLoc(-1),
+      _textureLoc   (-1) {
+}
+
+
+SpriteShader::SpriteShader(const ProgramObject* shader)
+    : _shader       (shader),
+      _viewMatrixLoc(shader->getUniformLocation("viewMatrix")),
+      _textureLoc   (shader->getUniformLocation("texture")) {
+}
+
+
+void SpriteShader::setParams(Context* glc, const SpriteShaderParams& params) {
+	if(_viewMatrixLoc >= 0) {
+		glc->uniformMatrix4fv(_viewMatrixLoc, 1, false,
+							  const_cast<float*>(params.viewMatrix.data()));
+	}
+	if(_textureLoc >= 0) {
+		glc->uniform1i(_textureLoc, params.texUnit);
+	}
+}
+
+
+//---------------------------------------------------------------------------//
+
+
 SpriteComponent::SpriteComponent(_Entity* entity,
                                  ComponentManager<SpriteComponent>* manager)
     : Component(entity),
       _manager(static_cast<SpriteComponentManager*>(manager)),
-      _sprite(nullptr),
-      _spriteIndex(0),
+      _texture(),
       _anchor(0, 0),
       _color(1, 1, 1, 1),
-      _view(Vector2(0, 0), Vector2(1, 1)) {
+      _tileGridSize(1, 1),
+      _tileIndex(0),
+      _view(Vector2(0, 0), Vector2(1, 1)),
+      _blendingMode(BLEND_NONE) {
 }
 
 
 SpriteComponent::~SpriteComponent() {
+}
+
+
+void SpriteComponent::setTexture(AssetSP texture) {
+	TextureAspectSP ta = texture->aspect<TextureAspect>();
+	if(!ta) {
+		ta = _manager->renderer()->createTexture(texture);
+	}
+	setTexture(ta);
+}
+
+
+void SpriteComponent::setTexture(const Path& logicPath) {
+	AssetSP asset = _manager->assets()->getAsset(logicPath);
+	if(!asset) {
+		asset = _manager->assets()->createAsset(logicPath);
+	}
+	ImageAspectSP img = asset->aspect<ImageAspect>();
+	if(!img) {
+		_manager->loader()->load<ImageLoader>(asset);
+	}
+	setTexture(asset);
+}
+
+
+Box2 SpriteComponent::_texCoords() const {
+	Vector2i size = _tileGridSize.cwiseMax(Vector2i(1, 1));
+	unsigned i = _tileIndex % size.prod();
+	std::div_t tile = std::div(i, size(0));
+	unsigned x = tile.rem;
+	unsigned y = tile.quot;
+	Vector2 vmin = Vector2i(x  , y  ).cast<Scalar>().cwiseQuotient(size.cast<Scalar>());
+	Vector2 vmax = Vector2i(x+1, y+1).cast<Scalar>().cwiseQuotient(size.cast<Scalar>());
+	return Box2(vmin + _view.min().cwiseProduct(vmax - vmin),
+	            vmin + _view.max().cwiseProduct(vmax - vmin));
 }
 
 
@@ -65,9 +198,26 @@ void SpriteComponent::clone(EntityRef& target) {
 
 
 SpriteComponentManager::SpriteComponentManager(Renderer* renderer,
+                                               AssetManager* assetManager,
+                                               LoaderManager* loaderManager,
                                                size_t componentBlockSize)
     : ComponentManager(componentBlockSize),
-      _renderer(renderer) {
+      _renderer(renderer),
+      _assets(assetManager),
+      _loader(loaderManager),
+      _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
+      _buffer(sizeof(SpriteVertex)) {
+
+	ShaderObject vert = _renderer->compileShader("sprite", gl::VERTEX_SHADER,
+	                                   GlslSource(_spriteVertGlsl));
+	ShaderObject frag = _renderer->compileShader("sprite", gl::FRAGMENT_SHADER,
+	                                   GlslSource(_spriteFragGlsl));
+	if(vert.isCompiled() && frag.isCompiled()) {
+		_defaultShaderProg = _renderer->compileProgram(
+		                         "sprite", &_spriteFormat, &vert, &frag);
+	}
+	lairAssert(_defaultShaderProg.isLinked());
+	_defaultShader = SpriteShader(&_defaultShaderProg);
 }
 
 
@@ -79,9 +229,11 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 	addComponent(entity);
 	SpriteComponent* comp = entity.sprite();
 	if(json.isMember("sprite")) {
-		comp->setSprite(_renderer->getSprite(json["sprite"].asString()));
+		comp->setTexture(json["sprite"].asString());
 	}
-	comp->setIndex(json.get("index", 0).asInt());
+	comp->setTileGridSize(Vector2i(json.get("h_tiles", 1).asInt(),
+	                               json.get("v_tiles", 1).asInt()));
+	comp->setTileIndex(json.get("index", 0).asInt());
 	if(json.isMember("anchor")) {
 		Json::Value anchor = json["anchor"];
 		if(anchor.isArray() || anchor.size() == 2) {
@@ -106,59 +258,121 @@ void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	addComponent(entity);
 	SpriteComponent* baseComp = base.sprite();
 	SpriteComponent* comp = entity.sprite();
-	comp->setSprite(baseComp->sprite());
-	comp->setIndex(baseComp->index());
-	comp->setAnchor(baseComp->anchor());
-	comp->setView(baseComp->view());
+	comp->setTexture(     baseComp->texture());
+	comp->setAnchor(      baseComp->anchor());
+	comp->setColor(       baseComp->color());
+	comp->setTileGridSize(baseComp->tileGridSize());
+	comp->setTileIndex(   baseComp->tileIndex());
+	comp->setView(        baseComp->view());
+	comp->setBlendingMode(baseComp->blendingMode());
 }
 
 
 void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
-	Batch& batch = _renderer->mainBatch();
+	Context* glc = _renderer->context();
+	_buffer.clear();
 
 	for(SpriteComponent& sc: *this) {
-		if(!sc._entity() || !sc.sprite()) {
+		if(!sc._entity() || !sc.texture()) {
 			continue;
 		}
-		const Sprite* sprite = sc.sprite();
-		Box2 region = sprite->tileBox(sc.index());
+		const Texture& tex = sc.texture()->texture();
 
-		VertexBuffer& buff = batch.getBuffer(
-					_renderer->spriteShader()->program(),
-					sprite->texture(), _renderer->spriteFormat());
-		GLuint index = buff.vertexCount();
+		GLuint index = _buffer.vertexCount();
 
-		Scalar w = sprite->width();
-		Scalar h = sprite->height();
+		const Box2& view = sc._texCoords();
+		Scalar w = tex.width()  * view.sizes()(0);
+		Scalar h = tex.height() * view.sizes()(1);
 		Matrix4 wt = lerp(interp,
 		                  sc._entity()->prevWorldTransform.matrix(),
 		                  sc._entity()->worldTransform.matrix());
-		const Box2& view = sc.view();
-		const Box2 view2(Vector2(view.min().x(), 1 - view.min().y()),
-		                 Vector2(view.max().x(), 1 - view.max().y()));
 
 		Vector4 offset(-w * sc.anchor().x(),
 		               -h * sc.anchor().y(), 0, 0);
-		Vector4 v0(view.min().x() * w, view.max().y() * h, 0, 1);
-		Vector4 v1(view.min().x() * w, view.min().y() * h, 0, 1);
-		Vector4 v2(view.max().x() * w, view.max().y() * h, 0, 1);
-		Vector4 v3(view.max().x() * w, view.min().y() * h, 0, 1);
-		Vector2 tc0 = region.min() + (region.sizes().array() * view2.corner(Box2::TopLeft).array()).matrix();
-		Vector2 tc1 = region.min() + (region.sizes().array() * view2.corner(Box2::BottomLeft).array()).matrix();
-		Vector2 tc2 = region.min() + (region.sizes().array() * view2.corner(Box2::TopRight).array()).matrix();
-		Vector2 tc3 = region.min() + (region.sizes().array() * view2.corner(Box2::BottomRight).array()).matrix();
-		buff.addVertex(SpriteVertex{ wt * (v0 + offset), sc.color(), tc0 });
-		buff.addVertex(SpriteVertex{ wt * (v1 + offset), sc.color(), tc1 });
-		buff.addVertex(SpriteVertex{ wt * (v2 + offset), sc.color(), tc2 });
-		buff.addVertex(SpriteVertex{ wt * (v3 + offset), sc.color(), tc3 });
-		buff.addIndex(index + 0);
-		buff.addIndex(index + 1);
-		buff.addIndex(index + 2);
-		buff.addIndex(index + 2);
-		buff.addIndex(index + 1);
-		buff.addIndex(index + 3);
-		index += 4;
+		Vector4 v0(0, h, 0, 1);
+		Vector4 v1(0, 0, 0, 1);
+		Vector4 v2(w, h, 0, 1);
+		Vector4 v3(w, 0, 0, 1);
+//		_renderer->log().warning("v0: ", (wt * (v0 + offset)).transpose(),
+//		                         " - ", view.corner(Box2::BottomLeft).transpose());
+//		_renderer->log().warning("v1: ", (wt * (v1 + offset)).transpose(),
+//		                         " - ", view.corner(Box2::TopLeft).transpose());
+//		_renderer->log().warning("v2: ", (wt * (v2 + offset)).transpose(),
+//		                         " - ", view.corner(Box2::BottomRight).transpose());
+//		_renderer->log().warning("v3: ", (wt * (v3 + offset)).transpose(),
+//		                         " - ", view.corner(Box2::TopRight).transpose());
+		_buffer.addVertex(SpriteVertex{ wt * (v0 + offset), sc.color(), view.corner(Box2::BottomLeft) });
+		_buffer.addVertex(SpriteVertex{ wt * (v1 + offset), sc.color(), view.corner(Box2::TopLeft) });
+		_buffer.addVertex(SpriteVertex{ wt * (v2 + offset), sc.color(), view.corner(Box2::BottomRight) });
+		_buffer.addVertex(SpriteVertex{ wt * (v3 + offset), sc.color(), view.corner(Box2::TopRight) });
+		_buffer.addIndex(index + 0);
+		_buffer.addIndex(index + 1);
+		_buffer.addIndex(index + 2);
+		_buffer.addIndex(index + 2);
+		_buffer.addIndex(index + 1);
+		_buffer.addIndex(index + 3);
 	}
+
+	_buffer.bindAndUpload(glc);
+	_spriteFormat.setup(glc);
+
+	_defaultShader.use();
+	SpriteShaderParams params(camera.transform());
+	_defaultShader.setParams(glc, params);
+	glc->activeTexture(gl::TEXTURE0);
+
+	uintptr index = 0;
+	for(SpriteComponent& sc: *this) {
+		if(!sc._entity() || !sc.texture()) {
+			continue;
+		}
+		const Texture& tex = sc.texture()->texture();
+		// TODO: replace this by a default texture
+		if(!tex.isValid()) {
+			continue;
+		}
+		tex.bind();
+
+		switch(sc.blendingMode()) {
+		case BLEND_NONE:
+			glc->disable(gl::BLEND);
+			break;
+		case BLEND_ALPHA:
+			glc->enable(gl::BLEND);
+			glc->blendEquation(gl::FUNC_ADD);
+			glc->blendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+			break;
+		case BLEND_ADD:
+			glc->enable(gl::BLEND);
+			glc->blendEquation(gl::FUNC_ADD);
+			glc->blendFunc(gl::ONE, gl::ONE);
+			break;
+		case BLEND_MULTIPLY:
+			glc->enable(gl::BLEND);
+			glc->blendEquation(gl::FUNC_ADD);
+			glc->blendFunc(gl::DST_COLOR, gl::ZERO);
+			break;
+		}
+
+		glc->drawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT,
+		                  reinterpret_cast<void*>(index*sizeof(unsigned)));
+		index += 6;
+	}
+}
+
+
+Renderer* SpriteComponentManager::renderer() {
+	return _renderer;
+}
+
+
+AssetManager* SpriteComponentManager::assets() {
+	return _assets;
+}
+
+
+LoaderManager* SpriteComponentManager::loader() {
+	return _loader;
 }
 
 

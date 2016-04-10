@@ -37,82 +37,6 @@ namespace lair
 {
 
 
-//static const VertexAttrib _spriteVertexFormat[] = {
-//    { "vx_position", Renderer::VxPosition, 4, GL_FLOAT, false,
-//      offsetof(SpriteVertex, position) },
-//    { "vx_color",    Renderer::VxColor, 4, GL_FLOAT, false,
-//      offsetof(SpriteVertex, color) },
-//    { "vx_texCoord", Renderer::VxTexCoord, 2, GL_FLOAT, false,
-//      offsetof(SpriteVertex, texCoord) },
-//    { nullptr, 0, 0, 0, false, 0 }
-//};
-
-
-//const char* defaultVertGlsl =
-//	"#define lowp\n"
-//	"#define mediump\n"
-//	"#define highp\n"
-
-//	"uniform highp mat4 viewMatrix;\n"
-
-//	"attribute highp   vec4 vx_position;\n"
-//	"attribute lowp    vec4 vx_color;\n"
-//	"attribute mediump vec2 vx_texCoord;\n"
-
-//	"varying highp   vec4 position;\n"
-//	"varying lowp    vec4 color;\n"
-//	"varying mediump vec2 texCoord;\n"
-
-//	"void main() {\n"
-//	"	gl_Position = viewMatrix * vx_position;\n"
-//	"	position    = vx_position;\n"
-//	"	color       = vx_color;\n"
-//	"	texCoord    = vx_texCoord;\n"
-//	"}\n";
-
-
-//const char* defaultFragGlsl =
-//	"#define lowp\n"
-//	"#define mediump\n"
-//	"#define highp\n"
-
-//	"uniform sampler2D texture;\n"
-
-//	"varying highp   vec4 position;\n"
-//	"varying lowp    vec4 color;\n"
-//	"varying mediump vec2 texCoord;\n"
-
-//	"void main() {\n"
-//	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
-//	"	if(fcolor.a < .5){\n"
-//	"		discard;\n"
-//	"	}\n"
-//	"	gl_FragColor = fcolor;\n"
-//	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
-//	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
-//	"}\n";
-
-
-//---------------------------------------------------------------------------//
-
-
-//SpriteShader::SpriteShader()
-//    : _shader       (nullptr),
-//      _viewMatrixLoc(-1),
-//      _textureLoc   (-1) {
-//}
-
-
-//SpriteShader::SpriteShader(const ProgramObject* shader)
-//    : _shader       (shader),
-//      _viewMatrixLoc(glGetUniformLocation(_shader->id(), "viewMatrix")),
-//      _textureLoc   (glGetUniformLocation(_shader->id(), "texture")) {
-//}
-
-
-//---------------------------------------------------------------------------//
-
-
 Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
     : _module(module),
       _assetManager(assetManager),
@@ -123,17 +47,6 @@ Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
 	lairAssert(_assetManager);
 
 //	_createDefaultTexture();
-
-//	ShaderObject vert = _compileShader("sprite", GL_VERTEX_SHADER,
-//	                                   GlslSource(defaultVertGlsl));
-//	ShaderObject frag = _compileShader("sprite", GL_FRAGMENT_SHADER,
-//	                                   GlslSource(defaultFragGlsl));
-//	if(vert.isCompiled() && frag.isCompiled()) {
-//		_spriteShaderProg = _compileProgram("sprite",
-//		        &_spriteFormat, &vert, &frag);
-//	}
-//	lairAssert(_spriteShaderProg.isLinked());
-//	_spriteShader = SpriteShader(&_spriteShaderProg);
 }
 
 
@@ -148,6 +61,45 @@ Context* Renderer::context() {
 
 PassStates* Renderer::currentPassStates() {
 	return &_currentPassStates;
+}
+
+
+ShaderObject Renderer::compileShader(const char* name, GLenum type,
+                                     const GlslSource& source) {
+	ShaderObject shader(this, type);
+	shader.generateObject();
+	if(!shader.compile(source)) {
+		std::string sLog;
+		shader.getLog(sLog);
+		log().error("Failed to compile ",
+		            (type == gl::VERTEX_SHADER)? "vertex": "fragment",
+		            " shader object \"", name, "\":\n", sLog);
+	}
+	return shader;
+}
+
+
+ProgramObject Renderer::compileProgram(const char* name,
+                                       const VertexFormat* format,
+                                       const ShaderObject* vert,
+                                       const ShaderObject* frag) {
+	ProgramObject prog(this);
+	prog.generateObject();
+	prog.attachShader(*vert);
+	prog.attachShader(*frag);
+
+	for(const VertexAttrib& attrib: *format) {
+		prog.bindAttributeLocation(attrib.name, attrib.index);
+		++format;
+	}
+
+	if(!prog.link()) {
+		std::string sLog;
+		prog.getLog(sLog);
+		log().error("Failed to link shader \"", name, "\":\n", sLog);
+	}
+	prog.detachAllShaders();
+	return prog;
 }
 
 
@@ -227,43 +179,6 @@ void Renderer::_createDefaultTexture() {
 	Image img(size, size, Image::Format::FormatRGBA8, buffer.data());
 	_defaultTexture._upload(img);
 	_defaultTexture._setFlags(Texture::BILINEAR | Texture::REPEAT);
-}
-
-
-ShaderObject Renderer::_compileShader(const char* name, GLenum type,
-                                      const GlslSource& source) {
-	ShaderObject shader(this, type);
-	shader.generateObject();
-	if(!shader.compile(source)) {
-		std::string sLog;
-		shader.getLog(sLog);
-		log().error("Failed to compile ",
-		            (type == gl::VERTEX_SHADER)? "vertex": "fragment",
-		            " shader object \"", name, "\":\n", sLog);
-	}
-	return shader;
-}
-
-ProgramObject Renderer::_compileProgram(const char* name,
-		const VertexFormat* format,
-		const ShaderObject* vert, const ShaderObject* frag) {
-	ProgramObject prog;
-	prog.generateObject();
-	prog.attachShader(*vert);
-	prog.attachShader(*frag);
-
-	for(const VertexAttrib& attrib: *format) {
-		prog.bindAttributeLocation(attrib.name, attrib.index);
-		++format;
-	}
-
-	if(!prog.link()) {
-		std::string sLog;
-		prog.getLog(sLog);
-		log().error("Failed to link shader \"", name, "\":\n", sLog);
-	}
-	prog.detachAllShaders();
-	return prog;
 }
 
 

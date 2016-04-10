@@ -381,6 +381,10 @@ public:
 	bool initialize();
 	void shutdown();
 
+	inline void setLogCalls(bool enable) {
+		_logCalls = enable;
+	}
+
 	Logger& log();
 
 //	void clear();

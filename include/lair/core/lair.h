@@ -82,6 +82,10 @@ typedef Eigen::Matrix<Scalar, 2, 1>      Vector2;
 typedef Eigen::Matrix<Scalar, 3, 1>      Vector3;
 typedef Eigen::Matrix<Scalar, 4, 1>      Vector4;
 
+typedef Eigen::Matrix<int, 2, 1>         Vector2i;
+typedef Eigen::Matrix<int, 3, 1>         Vector3i;
+typedef Eigen::Matrix<int, 4, 1>         Vector4i;
+
 typedef Eigen::Matrix<Scalar, 2, 2>      Matrix2;
 typedef Eigen::Matrix<Scalar, 3, 3>      Matrix3;
 typedef Eigen::Matrix<Scalar, 4, 4>      Matrix4;
