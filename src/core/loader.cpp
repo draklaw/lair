@@ -31,11 +31,11 @@ namespace lair
 {
 
 
-Loader::Loader(LoaderManager* manager, AssetSP asset)
+Loader::Loader(LoaderManager* manager, AspectSP aspect)
     : _manager(manager),
       _isLoaded(false),
       _isSuccessful(false),
-      _asset(asset),
+      _aspect(aspect),
       _mutex(),
       _cv() {
 }
@@ -57,7 +57,7 @@ bool Loader::isSuccessful() {
 
 
 Path Loader::realPath() const {
-	return _manager->realFromLogic(_asset->logicPath());
+	return _manager->realFromLogic(asset()->logicPath());
 }
 
 
@@ -78,7 +78,7 @@ void Loader::loadSync(Logger& log) {
 	try {
 		loadSyncImpl(log);
 	} catch(std::exception e) {
-		log.error("Exception caught while loading \"", _asset->logicPath(), "\": ", e.what());
+		log.error("Exception caught while loading \"", asset()->logicPath(), "\": ", e.what());
 	}
 
 	{
@@ -154,9 +154,9 @@ void _LoaderThread::_run() {
 		LoaderSP loader = _manager->_popLoader();
 		// Loader can be null to signal the thread it may be stopped
 		if(loader) {
-			_logger.log("Loading ", loader->asset()->logicPath(), " from thread ", _thread.get_id(), "...");
+			_logger.log("Loading \"", loader->asset()->logicPath(), "\" from thread ", _thread.get_id(), "...");
 			loader->loadSync(_logger);
-			_logger.info("Done loading ", loader->asset()->logicPath(), " from thread ", _thread.get_id(), ".");
+			_logger.info("Done loading \"", loader->asset()->logicPath(), "\" from thread ", _thread.get_id(), ".");
 		}
 	}
 	_logger.log("Stop loader thread ", _thread.get_id(), ".");
@@ -166,8 +166,9 @@ void _LoaderThread::_run() {
 //---------------------------------------------------------------------------//
 
 
-LoaderManager::LoaderManager(unsigned nThread, Logger& logger)
+LoaderManager::LoaderManager(AssetManager* assetManager, unsigned nThread, Logger& logger)
     : _logger(&logger),
+      _assets(assetManager),
       _queueLock(),
       _queueCv(),
       _queue(),

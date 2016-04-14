@@ -34,6 +34,7 @@
 #include <lair/ec/entity.h>
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/sprite_component.h>
+#include <lair/ec/bitmap_text_component.h>
 
 
 using namespace lair;
@@ -69,11 +70,12 @@ protected:
 
 	// More or less system stuff
 
-	EntityManager             _entities;
-	SpriteComponentManager    _sprites;
-//	TextComponentManager      _texts;
-//	AnimationComponentManager _anims;
-	InputManager              _inputs;
+	EntityManager              _entities;
+	SpriteRenderer             _spriteRenderer;
+	SpriteComponentManager     _sprites;
+	BitmapTextComponentManager _texts;
+//	AnimationComponentManager  _anims;
+	InputManager               _inputs;
 
 	SlotTracker _slotTracker;
 

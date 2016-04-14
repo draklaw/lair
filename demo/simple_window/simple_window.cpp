@@ -110,7 +110,7 @@ int main(int /*argc*/, char** argv) {
 
 	lair::AssetManager assets;
 
-	lair::LoaderManager loader(1, glog);
+	lair::LoaderManager loader(&assets, 1, glog);
 	loader.setBasePath(dataPath);
 
 	lair::Window* w = sys.createWindow("simple_window", 800, 600);
@@ -145,9 +145,10 @@ int main(int /*argc*/, char** argv) {
 	lair::OrthographicCamera camera;
 	camera.setViewBox(viewBox);
 
+	lair::SpriteRenderer spriteRenderer(renderer);
 
 	lair::EntityManager entityManager(glog);
-	lair::SpriteComponentManager spriteManager(renderer, &assets, &loader);
+	lair::SpriteComponentManager spriteManager(&assets, &loader, &spriteRenderer);
 
 //	const Json::Value& testJson = sys.loader().getJson("lair.obj");
 //	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
@@ -217,8 +218,12 @@ int main(int /*argc*/, char** argv) {
 
 			renderer->context()->clear(lair::gl::COLOR_BUFFER_BIT | lair::gl::DEPTH_BUFFER_BIT);
 
+			spriteRenderer.beginFrame();
+
 //			map.render(renderer);
 			spriteManager.render(loop.frameInterp(), camera);
+
+			spriteRenderer.endFrame(camera.transform());
 
 //			lair::Transform t = lair::Transform::Identity();
 //			t.translate(-testSprite.transform().translation());

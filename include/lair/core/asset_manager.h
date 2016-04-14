@@ -73,8 +73,9 @@ public:
 //	}
 
 protected:
-	AssetSP  _asset;      // Asset must not be destroyed before its aspects.
-//	AspectWP _nextAspect;
+	AssetSP    _asset;      // Asset must not be destroyed before its aspects.
+//	AspectWP   _nextAspect;
+	mutable std::mutex _lock;
 };
 
 
@@ -141,6 +142,9 @@ public:
 
 	template<typename _Aspect>
 	std::shared_ptr<_Aspect> getAspect(AssetSP asset);
+
+	template<typename _Aspect>
+	std::shared_ptr<_Aspect> createAspect(AssetSP asset);
 
 private:
 	typedef std::unordered_map<Path,            AssetSP>        AssetPathMap;

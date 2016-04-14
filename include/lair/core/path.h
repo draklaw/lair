@@ -74,7 +74,11 @@ public:
 	Path& operator/=(const Path& path);
 
 	void removeTrailingSeparators();
-	Path dir();
+	void removeFilename();
+	void replaceExtension(const std::string& newExt);
+
+	Path dir() const;
+	Path withExtension(const std::string& newExt) const;
 
 private:
 	std::string _path;

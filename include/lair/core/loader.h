@@ -58,7 +58,7 @@ typedef std::shared_ptr<Loader> LoaderSP;
 
 class Loader {
 public:
-	Loader(LoaderManager* manager, AssetSP asset);
+	Loader(LoaderManager* manager, AspectSP aspect);
 	Loader(const Loader&) = delete;
 	Loader(Loader&&)      = delete;
 	virtual ~Loader();
@@ -68,7 +68,8 @@ public:
 
 	bool               isLoaded();
 	bool               isSuccessful();
-	AssetSP            asset() { return _asset; }
+	AssetSP            asset()    const { return _aspect->asset(); }
+	AspectSP           aspect()   const { return _aspect; }
 	Path               realPath() const;
 
 	void wait();
@@ -84,7 +85,7 @@ protected:
 	LoaderManager*          _manager;
 	bool                    _isLoaded;
 	bool                    _isSuccessful;
-	AssetSP                 _asset;
+	AspectSP                _aspect;
 	std::mutex              _mutex;
 	std::condition_variable _cv;
 };
@@ -114,7 +115,8 @@ private:
 
 class LoaderManager {
 public:
-	LoaderManager(unsigned nThread = 1,
+	LoaderManager(AssetManager* assetManager,
+	              unsigned nThread = 1,
 	              Logger& log = noopLogger);
 	LoaderManager(const LoaderManager&) = delete;
 	LoaderManager(LoaderManager&&)      = delete;
@@ -131,13 +133,62 @@ public:
 	void setBasePath(const Path& path);
 	Path realFromLogic(const Path& path) const;
 
+	/// Load an aspect, even if already loaded.
 	template < typename L, typename... Args >
-	std::shared_ptr<L> load(AssetSP asset, Args&&... args) {
-		log().info("Request ", asset->logicPath(), " loading...");
-		auto loader = std::make_shared<L>(this, asset,
-		                                  std::forward<Args>(args)...);
+	std::shared_ptr<L> load(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
+		log().info("Request \"", aspect->asset()->logicPath(), "\" loading...");
+		auto loader = std::make_shared<L>(this, aspect,
+										  std::forward<Args>(args)...);
 		_enqueueLoader(loader);
 		return loader;
+	}
+
+	/// Load an aspect if it does not exist in the asset.
+	template < typename L, typename... Args >
+	std::shared_ptr<L> load(AssetSP asset, Args&&... args) {
+		auto aspect = asset->aspect<typename L::Aspect>();
+		if(!aspect) {
+			aspect = asset->createAspect<typename L::Aspect>();
+			return load<L>(aspect, std::forward<Args>(args)...);
+		}
+		return std::shared_ptr<L>();
+	}
+
+	/// Same as above, but create the Asset if necessary.
+	template < typename L, typename... Args >
+	std::shared_ptr<L> load(const Path& logicPath, Args&&... args) {
+		AssetSP asset = _assets->getAsset(logicPath);
+		if(!asset) {
+			asset = _assets->createAsset(logicPath);
+		}
+		return load<L>(asset, std::forward<Args>(args)...);
+	}
+
+	template < typename L, typename... Args >
+	void loadSync(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
+		log().log("Loading \"", aspect->asset()->logicPath(), "\" from thread ",
+		          std::this_thread::get_id(), " (sync)...");
+		L loader(this, aspect, std::forward<Args>(args)...);
+		loader.loadSync(log());
+	}
+
+	template < typename L, typename... Args >
+	void loadSync(AssetSP asset, Args&&... args) {
+		auto aspect = asset->aspect<typename L::Aspect>();
+		if(!aspect) {
+			aspect = asset->createAspect<typename L::Aspect>();
+			loadSync<L>(aspect, std::forward<Args>(args)...);
+		}
+	}
+
+	template < typename L, typename... Args >
+	AssetSP loadSync(const Path& logicPath, Args&&... args) {
+		AssetSP asset = _assets->getAsset(logicPath);
+		if(!asset) {
+			asset = _assets->createAsset(logicPath);
+		}
+		loadSync<L>(asset, std::forward<Args>(args)...);
+		return asset;
 	}
 
 	void waitAll();
@@ -154,6 +205,7 @@ private:
 
 private:
 	Logger*       _logger;
+	AssetManager* _assets;
 
 	std::mutex    _queueLock;
 	std::condition_variable

@@ -35,7 +35,9 @@ MainState::MainState(Game* game)
 	: _game(game),
 
       _entities(_game->log()),
-      _sprites(_game->renderer(), _game->assets(), _game->loader()),
+      _spriteRenderer(_game->renderer()),
+      _sprites(_game->assets(), _game->loader(), &_spriteRenderer),
+      _texts(_game->loader(), &_spriteRenderer),
 
       _inputs(_game->sys(), &log()),
 
@@ -50,6 +52,7 @@ MainState::MainState(Game* game)
       _quitInput(nullptr) {
 
 	_entities.registerComponentManager(&_sprites);
+	_entities.registerComponentManager(&_texts);
 }
 
 
@@ -74,9 +77,15 @@ void MainState::initialize() {
 
 	// TODO: load stuff.
 	EntityRef sprite = loadEntity("sprite.json", _entities.root());
-	sprite.place(Vector3(160, 90, .5));
+	sprite.place(Vector3(120, 90, .5));
+
+	EntityRef text = loadEntity("text.json", _entities.root());
+	text.place(Vector3(160, 90, .5));
 
 	_game->loader()->waitAll();
+
+	// Set to true to debug OpenGL calls
+	_game->renderer()->context()->setLogCalls(false);
 
 	_initialized = true;
 }
@@ -142,13 +151,18 @@ void MainState::updateTick() {
 void MainState::updateFrame() {
 	// Rendering
 	Context* glc = _game->renderer()->context();
-	_game->renderer()->uploadPendingTextures();
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
+	_spriteRenderer.beginFrame();
+
 	_sprites.render(_loop.frameInterp(), _camera);
+	_texts.render(_loop.frameInterp());
+
+	_spriteRenderer.endFrame(_camera.transform());
 
 	_game->window()->swapBuffers();
+	glc->setLogCalls(false);
 
 	uint64 now = _game->sys()->getTimeNs();
 	++_fpsCount;
@@ -173,7 +187,8 @@ EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& 
 	log().info("Load entity \"", localPath, "\"");
 
 	Json::Value json;
-	if(!parseJson(json, _game->dataPath(), localPath, log())) {
+	Path realPath = _game->dataPath() / localPath;
+	if(!parseJson(json, realPath, localPath, log())) {
 		return EntityRef();
 	}
 

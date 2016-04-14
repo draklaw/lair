@@ -36,7 +36,7 @@ namespace lair {
 
 
 bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log);
-bool parseJson(Json::Value& value, const Path& basePath, const Path& localPath, Logger& log);
+bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, Logger& log);
 
 Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);
 

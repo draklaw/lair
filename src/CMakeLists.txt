@@ -92,6 +92,7 @@ set(lair_SOURCES
 	core/signal.cpp
 	core/asset_manager.cpp
 	core/loader.cpp
+	core/bitmap_font.cpp
 
 	utils/input.cpp
 	utils/interp_loop.cpp
@@ -120,7 +121,9 @@ set(lair_SOURCES
 
 	ec/entity.cpp
 	ec/entity_manager.cpp
+	ec/sprite_renderer.cpp
 	ec/sprite_component.cpp
+	ec/bitmap_text_component.cpp
 )
 
 set(lair_py_SOURCES

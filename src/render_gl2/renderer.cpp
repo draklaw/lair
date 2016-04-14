@@ -107,7 +107,7 @@ TextureAspectSP Renderer::createTexture(AssetSP asset) {
 	lairAssert(bool(asset));
 	TextureAspectSP aspect = asset->aspect<TextureAspect>();
 	if(!aspect) {
-		aspect = asset->createAspect<TextureAspect>(this);
+		aspect = asset->createAspect<TextureAspect>();
 		enqueueToUpload(aspect);
 	}
 	return aspect;
@@ -122,14 +122,16 @@ void Renderer::enqueueToUpload(TextureAspectSP texture) {
 void Renderer::uploadPendingTextures() {
 	for(TextureAspectSP texture: _pendingTextures) {
 		ImageAspectSP image = texture->asset()->aspect<ImageAspect>();
-		if(image && !texture->texture().isValid()) {
+		if(image && !texture->texture()) {
 			log().info("Upload texture \"", texture->asset()->logicPath(), "\"...");
-			texture->_texture()._upload(image->image());
+			TextureSP tex = std::make_shared<Texture>(this);
+			tex->_upload(*image->image());
+			texture->_setTexture(tex);
 		}
 	}
 
 	auto end = std::remove_if(_pendingTextures.begin(), _pendingTextures.end(),
-	                          [](TextureAspectSP tex) { return tex->texture().isValid(); });
+	                          [](TextureAspectSP tex) { return bool(tex->texture()); });
 	_pendingTextures.erase(end, _pendingTextures.end());
 }
 

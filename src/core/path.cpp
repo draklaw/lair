@@ -114,14 +114,34 @@ void Path::removeTrailingSeparators() {
 }
 
 
-Path Path::dir() {
-	removeTrailingSeparators();
+void Path::removeFilename() {
 	int end = size() - 1;
 	while(end > 0 && _path[end] != '/') --end;
 	while(end > 1 && _path[end-1] == '/') --end; // If there is several slashes...
-	Path p;
-	p._path.reserve(end);
-	p._path.append(_path.begin(), _path.begin() + end);
+	_path.resize(end);
+}
+
+
+void Path::replaceExtension(const std::string& newExt) {
+	int i = _path.size() - 1;
+	while(i >= 0 && _path[i] != '.') --i;
+	if(i >= 0) {
+		_path.resize(i+1);
+		_path.append(newExt);
+	}
+}
+
+
+Path Path::dir() const {
+	Path p = *this;
+	p.removeFilename();
+	return p;
+}
+
+
+Path Path::withExtension(const std::string& newExt) const {
+	Path p = *this;
+	p.replaceExtension(newExt);
 	return p;
 }
 

@@ -114,10 +114,13 @@ protected:
 	uint16         _height;
 };
 
+typedef std::shared_ptr<Texture> TextureSP;
+typedef std::weak_ptr  <Texture> TextureWP;
+
 
 class TextureAspect : public Aspect {
 public:
-	TextureAspect(AssetSP asset, Renderer* renderer);
+	TextureAspect(AssetSP asset);
 	TextureAspect(const TextureAspect&)  = delete;
 	TextureAspect(      TextureAspect&&) = delete;
 	~TextureAspect() = default;
@@ -125,12 +128,12 @@ public:
 	TextureAspect& operator=(const TextureAspect&)  = delete;
 	TextureAspect& operator=(      TextureAspect&&) = delete;
 
-	const Texture& texture() const { return _tex; }
-
-	Texture&      _texture()       { return _tex; }
+	const TextureSP texture() const;
+	TextureSP      _texture();
+	void _setTexture(TextureSP texture);
 
 private:
-	Texture _tex;
+	TextureSP _tex;
 };
 
 typedef std::shared_ptr<TextureAspect> TextureAspectSP;

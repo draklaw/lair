@@ -32,13 +32,13 @@
 #include <lair/sys_sdl2/image_loader.h>
 
 #include <lair/render_gl2/gl.h>
-#include <lair/render_gl2/batch.h>
 #include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/texture.h>
 
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
+#include <lair/ec/sprite_renderer.h>
 
 
 namespace lair
@@ -52,52 +52,6 @@ class _Entity;
 class EntityManager;
 
 class SpriteComponentManager;
-
-
-enum SpriteVertexAttrib {
-	VxPosition,
-	VxColor,
-	VxTexCoord
-};
-
-struct SpriteVertex {
-	Vector4 position;
-	Vector4 color;
-	Vector2 texCoord;
-};
-
-struct SpriteShaderParams {
-	SpriteShaderParams(const Matrix4& viewMatrix = Matrix4::Identity(),
-	                   unsigned texUnit = 0);
-
-	Matrix4  viewMatrix;
-	unsigned texUnit;
-};
-
-class SpriteShader {
-public:
-	SpriteShader();
-	SpriteShader(const ProgramObject* shader);
-
-	inline const ProgramObject* program() const { return _shader; }
-	inline void use() const { if(_shader) _shader->use(); }
-
-	void setParams(Context* glc, const SpriteShaderParams& params);
-
-private:
-	const ProgramObject* _shader;
-	GLint                _viewMatrixLoc;
-	GLint                _textureLoc;
-	SpriteShaderParams   _params;
-};
-
-
-enum BlendingMode {
-	BLEND_NONE,
-	BLEND_ALPHA,
-	BLEND_ADD,
-	BLEND_MULTIPLY
-};
 
 
 class SpriteComponent : public Component {
@@ -162,8 +116,9 @@ protected:
 
 class SpriteComponentManager : public ComponentManager<SpriteComponent> {
 public:
-	SpriteComponentManager(Renderer* renderer, AssetManager* assetManager,
+	SpriteComponentManager(AssetManager* assetManager,
 	                       LoaderManager* loaderManager,
+	                       SpriteRenderer* spriteRenderer,
 	                       size_t componentBlockSize = 1024);
 	SpriteComponentManager(const SpriteComponentManager&) = delete;
 	SpriteComponentManager(SpriteComponentManager&&)      = delete;
@@ -178,20 +133,14 @@ public:
 
 	void render(float interp, const OrthographicCamera& camera);
 
-	Renderer* renderer();
 	AssetManager* assets();
 	LoaderManager* loader();
+	SpriteRenderer* spriteRenderer();
 
 protected:
-	Renderer*        _renderer;
 	AssetManager*    _assets;
 	LoaderManager*   _loader;
-
-	VertexFormat     _spriteFormat;
-	ProgramObject    _defaultShaderProg;
-	SpriteShader     _defaultShader;
-
-	VertexBuffer     _buffer;
+	SpriteRenderer*  _spriteRenderer;
 };
 
 

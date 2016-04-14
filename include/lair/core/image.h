@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <lair/core/lair.h>
+#include <lair/core/asset_manager.h>
 
 
 namespace lair {
@@ -68,6 +69,30 @@ private:
 	Format _format;
 	Data _data;
 };
+
+typedef std::shared_ptr<Image> ImageSP;
+typedef std::weak_ptr  <Image> ImageWP;
+
+
+class ImageAspect : public Aspect {
+public:
+	ImageAspect(AssetSP asset);
+	ImageAspect(const ImageAspect&)  = delete;
+	ImageAspect(      ImageAspect&&) = delete;
+	~ImageAspect() = default;
+
+	ImageAspect& operator=(const ImageAspect&)  = delete;
+	ImageAspect& operator=(      ImageAspect&&) = delete;
+
+	const ImageSP image() const;
+	void _setImage(ImageSP image);
+
+private:
+	ImageSP _image;
+};
+
+typedef std::shared_ptr<ImageAspect> ImageAspectSP;
+typedef std::weak_ptr  <ImageAspect> ImageAspectWP;
 
 
 }
