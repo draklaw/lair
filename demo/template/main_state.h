@@ -54,6 +54,8 @@ public:
 	virtual void run();
 	virtual void quit();
 
+	Game* game();
+
 	void startGame();
 	void updateTick();
 	void updateFrame();
@@ -63,11 +65,7 @@ public:
 	EntityRef loadEntity(const Path& path, EntityRef parent = EntityRef(),
 	                     const Path& cd = Path());
 
-	Logger& log();
-
 protected:
-	Game* _game;
-
 	// More or less system stuff
 
 	EntityManager              _entities;

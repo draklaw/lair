@@ -63,7 +63,8 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 
 		_success();
 	} else {
-		log.error("Unable to load image \"", asset()->logicPath(), "\" (", realPath(),"): ", IMG_GetError());
+		log.error("Failed to load image \"", asset()->logicPath(), "\" (", realPath(),
+		          "): ", IMG_GetError());
 	}
 }
 

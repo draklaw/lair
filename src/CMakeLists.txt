@@ -98,11 +98,13 @@ set(lair_SOURCES
 	utils/interp_loop.cpp
 	utils/tiled_map.cpp
 	utils/game_base.cpp
+	utils/game_state.cpp
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp
 #	sys_sdl2/json_loader.cpp
 	sys_sdl2/sys_module.cpp
+	sys_sdl2/audio_module.cpp
 
 	render_gl2/gl.cpp
 	render_gl2/context.cpp

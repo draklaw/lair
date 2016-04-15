@@ -32,10 +32,21 @@
 namespace lair {
 
 
+class SysModule;
+class Window;
+class AssetManager;
+class LoaderManager;
+class RenderModule;
+class Renderer;
+class AudioModule;
+
+class GameBase;
+
+
 class GameState {
 public:
-	GameState() = default;
-	virtual ~GameState() = default;
+	GameState(GameBase* game);
+	virtual ~GameState();
 
 	virtual void initialize() = 0;
 	virtual void shutdown() = 0;
@@ -43,7 +54,22 @@ public:
 	virtual void run() = 0;
 	virtual void quit() = 0;
 
+	SysModule*     sys();
+	Window*        window();
+
+	AssetManager*  assets();
+	LoaderManager* loader();
+
+	RenderModule*  renderModule();
+	Renderer*      renderer();
+
+	AudioModule*   audio();
+
+	Logger& log();
+
 protected:
+	GameBase* _game;
+
 };
 
 typedef std::unique_ptr<GameState> GameStateUP;

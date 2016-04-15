@@ -104,8 +104,8 @@ protected:
 		TextureSP    tex;
 		unsigned     texFlags;
 		BlendingMode blendingMode;
-		unsigned     start;
-		unsigned     count;
+		size_t       start;
+		size_t       count;
 	};
 	typedef std::vector<DrawCall> DrawCallVector;
 

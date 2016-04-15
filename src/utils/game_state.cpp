@@ -22,6 +22,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/utils/game_base.h>
+
 #include "lair/utils/game_state.h"
 
 
@@ -29,11 +31,52 @@ namespace lair
 {
 
 
-GameState::GameState() {
+GameState::GameState(GameBase* game)
+	: _game(game) {
 }
 
 
 GameState::~GameState() {
+}
+
+
+SysModule* GameState::sys() {
+	return _game->sys();
+}
+
+
+Window* GameState::window() {
+	return _game->window();
+}
+
+
+RenderModule* GameState::renderModule() {
+	return _game->renderModule();
+}
+
+
+Renderer* GameState::renderer() {
+	return _game->renderer();
+}
+
+
+AudioModule* GameState::audio() {
+	return _game->audio();
+}
+
+
+AssetManager* GameState::assets() {
+	return _game->assets();
+}
+
+
+LoaderManager* GameState::loader() {
+	return _game->loader();
+}
+
+
+Logger& GameState::log() {
+	return _game->log();
 }
 
 

@@ -49,13 +49,13 @@ GameBase::GameBase(int /*argc*/, char** /*argv*/)
       _sys(nullptr),
       _window(nullptr),
 
-      _assets(nullptr),
-      _loader(nullptr),
-
       _renderModule(nullptr),
       _renderer(nullptr),
 
-//      _audio(nullptr),
+      _audio(nullptr),
+
+      _assets(nullptr),
+      _loader(nullptr),
 
       _nextState(nullptr),
       _currentState(nullptr) {
@@ -112,9 +112,9 @@ Renderer* GameBase::renderer() {
 }
 
 
-//SoundPlayer* GameBase::audio() {
-//	return _audio.get();
-//}
+AudioModule* GameBase::audio() {
+	return _audio.get();
+}
 
 
 void GameBase::initialize() {
@@ -140,15 +140,6 @@ void GameBase::initialize() {
 	_loader = make_unique(new LoaderManager(_assets.get(), 1, _logger));
 	_loader->setBasePath(dataPath());
 
-//	SDL_InitSubSystem(SDL_INIT_AUDIO);
-//	Mix_Init(MIX_INIT_OGG);
-
-//	log().log("Initialize SDL_mixer...");
-//	if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, MIX_DEFAULT_CHANNELS, 1024)) {
-//		log().error("Failed to initialize SDL_mixer backend");
-//	}
-//	Mix_AllocateChannels(SOUNDPLAYER_MAX_CHANNELS);
-
 	_window = _sys->createWindow("Lair", 1280, 720);
 	if(_config.get("fullscreen", false).asBool()) {
 		_window->setFullscreen(true);
@@ -160,20 +151,17 @@ void GameBase::initialize() {
 	_renderModule->initialize();
 	_renderer = _renderModule->createRenderer();
 
-//	_audio.reset(new SoundPlayer(this));
-//	_audio->setMusicVolume(.2);
-//	_music = _audio->loadMusic(dataPath() / "alice_hie.ogg");
-//	_audio->playMusic(_music);
+	_audio.reset(new AudioModule(&_mlogger));
+	_audio->initialize();
+	_audio->setMusicVolume(.35);
 }
 
 
 void GameBase::shutdown() {
-//	_audio->releaseMusic(_music);
+	_audio->shutdown();
 
 	_renderModule->shutdown();
 	_renderModule.reset();
-
-//	Mix_Quit();
 
 	_window->destroy();
 	_sys->shutdown();

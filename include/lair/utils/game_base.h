@@ -35,6 +35,7 @@
 
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
+#include <lair/sys_sdl2/audio_module.h>
 
 #include <lair/render_gl2/render_module.h>
 #include <lair/render_gl2/renderer.h>
@@ -69,7 +70,7 @@ public:
 	RenderModule*  renderModule();
 	Renderer*      renderer();
 
-//	SoundPlayer*   audio();
+	AudioModule*   audio();
 
 	void initialize();
 	void shutdown();
@@ -98,18 +99,17 @@ protected:
 	              _sys;
 	Window*       _window;
 
-	std::unique_ptr<AssetManager>
-	              _assets;
-	std::unique_ptr<LoaderManager>
-	              _loader;
-
 	std::unique_ptr<RenderModule>
 	              _renderModule;
 	Renderer*     _renderer;
 
-//	std::unique_ptr<SoundPlayer>
-//	              _audio;
-//	const Music*  _music;
+	std::unique_ptr<AudioModule>
+	              _audio;
+
+	std::unique_ptr<AssetManager>
+	              _assets;
+	std::unique_ptr<LoaderManager>
+	              _loader;
 
 	GameState*    _nextState;
 	GameState*    _currentState;

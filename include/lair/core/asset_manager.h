@@ -79,6 +79,45 @@ protected:
 };
 
 
+template<typename T>
+class GenericAspect : public Aspect {
+public:
+	typedef T Data;
+	typedef std::shared_ptr<Data> DataSP;
+
+public:
+	GenericAspect(AssetSP asset)
+		: Aspect(asset),
+	      _data() {
+	}
+
+	GenericAspect(const GenericAspect&)  = delete;
+	GenericAspect(      GenericAspect&&) = delete;
+	~GenericAspect() = default;
+
+	GenericAspect& operator=(const GenericAspect&)  = delete;
+	GenericAspect& operator=(      GenericAspect&&) = delete;
+
+	const DataSP get() {
+		std::lock_guard<std::mutex> lock(_lock);
+		return _data;
+	}
+
+	DataSP _get() {
+		std::lock_guard<std::mutex> lock(_lock);
+		return _data;
+	}
+
+	void _set(DataSP data){
+		std::lock_guard<std::mutex> lock(_lock);
+		_data = data;
+	}
+
+private:
+	DataSP _data;
+};
+
+
 class Asset : public std::enable_shared_from_this<Asset> {
 public:
 	Asset(AssetManager* manager, const Path& logicPath);

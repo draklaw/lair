@@ -32,20 +32,20 @@
 
 
 MainState::MainState(Game* game)
-	: _game(game),
+	: GameState(game),
 
-      _entities(_game->log()),
-      _spriteRenderer(_game->renderer()),
-      _sprites(_game->assets(), _game->loader(), &_spriteRenderer),
-      _texts(_game->loader(), &_spriteRenderer),
+      _entities(log()),
+      _spriteRenderer(renderer()),
+      _sprites(assets(), loader(), &_spriteRenderer),
+      _texts(loader(), &_spriteRenderer),
 
-      _inputs(_game->sys(), &log()),
+      _inputs(sys(), &log()),
 
       _camera(),
 
       _initialized(false),
       _running(false),
-      _loop(_game->sys()),
+      _loop(sys()),
       _fpsTime(0),
       _fpsCount(0),
 
@@ -67,7 +67,7 @@ void MainState::initialize() {
 	_loop.setMaxFrameDuration(_loop.frameDuration() * 3);
 	_loop.setFrameMargin(     _loop.frameDuration() / 2);
 
-	_game->window()->onResize.connect(std::bind(&MainState::resizeEvent, this))
+	window()->onResize.connect(std::bind(&MainState::resizeEvent, this))
 	        .track(_slotTracker);
 
 	_quitInput = _inputs.addInput("quit");
@@ -82,18 +82,19 @@ void MainState::initialize() {
 	EntityRef text = loadEntity("text.json", _entities.root());
 	text.place(Vector3(160, 90, .5));
 
-	_game->loader()->waitAll();
+	loader()->load<SoundLoader>("sound.ogg");
+	//loader()->load<MusicLoader>("music.ogg");
+
+	loader()->waitAll();
 
 	// Set to true to debug OpenGL calls
-	_game->renderer()->context()->setLogCalls(false);
+	renderer()->context()->setLogCalls(false);
 
 	_initialized = true;
 }
 
 
 void MainState::shutdown() {
-//	_game->audio()->releaseMusic(_music1);
-
 	_slotTracker.disconnectAll();
 
 	_initialized = false;
@@ -106,7 +107,7 @@ void MainState::run() {
 	log().log("Starting main state...");
 	_running = true;
 	_loop.start();
-	_fpsTime  = _game->sys()->getTimeNs();
+	_fpsTime  = sys()->getTimeNs();
 	_fpsCount = 0;
 
 	startGame();
@@ -130,8 +131,15 @@ void MainState::quit() {
 }
 
 
+Game* MainState::game() {
+	return static_cast<Game*>(_game);
+}
+
+
 void MainState::startGame() {
 	// TODO: Setup game
+	//audio()->playMusic(assets()->getAsset("music.ogg"));
+	audio()->playSound(assets()->getAsset("sound.ogg"), 2);
 }
 
 
@@ -150,7 +158,7 @@ void MainState::updateTick() {
 
 void MainState::updateFrame() {
 	// Rendering
-	Context* glc = _game->renderer()->context();
+	Context* glc = renderer()->context();
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
@@ -161,10 +169,10 @@ void MainState::updateFrame() {
 
 	_spriteRenderer.endFrame(_camera.transform());
 
-	_game->window()->swapBuffers();
+	window()->swapBuffers();
 	glc->setLogCalls(false);
 
-	uint64 now = _game->sys()->getTimeNs();
+	uint64 now = sys()->getTimeNs();
 	++_fpsCount;
 	if(_fpsCount == 60) {
 		log().info("Fps: ", _fpsCount * float(ONE_SEC) / (now - _fpsTime));
@@ -176,8 +184,8 @@ void MainState::updateFrame() {
 
 void MainState::resizeEvent() {
 	Box3 viewBox(Vector3::Zero(),
-	             Vector3(_game->window()->width()  / 4., // Big pixels
-	                     _game->window()->height() / 4., 1));
+	             Vector3(window()->width()  / 4., // Big pixels
+	                     window()->height() / 4., 1));
 	_camera.setViewBox(viewBox);
 }
 
@@ -187,7 +195,7 @@ EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& 
 	log().info("Load entity \"", localPath, "\"");
 
 	Json::Value json;
-	Path realPath = _game->dataPath() / localPath;
+	Path realPath = game()->dataPath() / localPath;
 	if(!parseJson(json, realPath, localPath, log())) {
 		return EntityRef();
 	}
@@ -197,9 +205,4 @@ EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& 
 	}
 
 	return _entities.createEntityFromJson(parent, json, localPath.dir());
-}
-
-
-Logger& MainState::log() {
-	return _game->log();
 }
