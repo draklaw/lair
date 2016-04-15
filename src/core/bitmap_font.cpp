@@ -93,7 +93,7 @@ void BitmapFont::setFromJson(const Json::Value& json) {
 	_height = json.get("height", 0).asInt();
 	_baselineToTop = json.get("base", _height / 2).asInt();
 
-	Vector2 texSize(aspect->image()->width(), aspect->image()->height());
+	Vector2 texSize(aspect->get()->width(), aspect->get()->height());
 	for(const Json::Value& c: json.get("chars", Json::nullValue)) {
 		unsigned cp = c[0].asInt();
 		Glyph g;
@@ -182,26 +182,6 @@ unsigned BitmapFont::wordWidth(const std::string& msg, unsigned i, unsigned* ci)
 	} while(i < msg.size() && !std::isspace(msg[i]));
 	if(ci) *ci = i;
 	return w;
-}
-
-//---------------------------------------------------------------------------//
-
-
-BitmapFontAspect::BitmapFontAspect(AssetSP asset)
-	: Aspect(asset),
-	  _font() {
-}
-
-
-const BitmapFontSP BitmapFontAspect::font() const {
-	std::lock_guard<std::mutex> lock(_lock);
-	return _font;
-}
-
-
-void BitmapFontAspect::_setFont(BitmapFontSP font) {
-	std::lock_guard<std::mutex> lock(_lock);
-	_font = font;
 }
 
 

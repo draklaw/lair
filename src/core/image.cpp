@@ -82,25 +82,5 @@ size_t Image::sizeInBytes() const {
 	return sizeof(Image) + _data.size();
 }
 
-//---------------------------------------------------------------------------//
-
-
-ImageAspect::ImageAspect(AssetSP asset)
-	: Aspect(asset),
-	  _image() {
-}
-
-
-const ImageSP ImageAspect::image() const {
-	std::lock_guard<std::mutex> lock(_lock);
-	return _image;
-}
-
-
-void ImageAspect::_setImage(ImageSP image) {
-	std::lock_guard<std::mutex> lock(_lock);
-	_image = image;
-}
-
 
 }

@@ -168,28 +168,4 @@ void Texture::_release() {
 }
 
 
-TextureAspect::TextureAspect(AssetSP asset)
-	: Aspect(asset),
-	  _tex() {
-}
-
-
-const TextureSP TextureAspect::texture() const {
-	std::lock_guard<std::mutex> lock(_lock);
-	return _tex;
-}
-
-
-TextureSP TextureAspect::_texture() {
-	std::lock_guard<std::mutex> lock(_lock);
-	return _tex;
-}
-
-
-void TextureAspect::_setTexture(TextureSP texture) {
-	std::lock_guard<std::mutex> lock(_lock);
-	_tex = texture;
-}
-
-
 }

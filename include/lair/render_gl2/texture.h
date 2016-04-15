@@ -118,24 +118,7 @@ typedef std::shared_ptr<Texture> TextureSP;
 typedef std::weak_ptr  <Texture> TextureWP;
 
 
-class TextureAspect : public Aspect {
-public:
-	TextureAspect(AssetSP asset);
-	TextureAspect(const TextureAspect&)  = delete;
-	TextureAspect(      TextureAspect&&) = delete;
-	~TextureAspect() = default;
-
-	TextureAspect& operator=(const TextureAspect&)  = delete;
-	TextureAspect& operator=(      TextureAspect&&) = delete;
-
-	const TextureSP texture() const;
-	TextureSP      _texture();
-	void _setTexture(TextureSP texture);
-
-private:
-	TextureSP _tex;
-};
-
+typedef GenericAspect  <Texture>       TextureAspect;
 typedef std::shared_ptr<TextureAspect> TextureAspectSP;
 typedef std::weak_ptr  <TextureAspect> TextureAspectWP;
 

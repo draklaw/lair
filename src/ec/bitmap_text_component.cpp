@@ -57,7 +57,7 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 	AssetSP imgAsset = _manager->loadSync<ImageLoader>(imgPath);
 
 	BitmapFontAspectSP aspect = std::static_pointer_cast<BitmapFontAspect>(_aspect);
-	aspect->_setFont(std::make_shared<BitmapFont>(json, imgAsset));
+	aspect->_set(std::make_shared<BitmapFont>(json, imgAsset));
 
 	_success();
 }
@@ -92,10 +92,14 @@ void BitmapTextComponent::setFont(BitmapFontAspectSP font) {
 }
 
 
+void BitmapTextComponent::setFont(AssetSP font) {
+	setFont(font? font->aspect<BitmapFontAspect>(): BitmapFontAspectSP());
+}
+
+
 void BitmapTextComponent::setFont(const Path& logicPath) {
 	auto loader = _manager->loader()->load<BitmapFontLoader>(logicPath);
-	auto aspect = loader->asset()->aspect<BitmapFontAspect>();
-	setFont(aspect);
+	setFont(loader->asset());
 }
 
 
@@ -153,10 +157,10 @@ void BitmapTextComponentManager::render(float interp) {
 		BitmapTextComponent& comp = entityComp.second;
 
 		if(!comp._alive
-		|| !comp.font() || !comp.font()->font() || !comp.font()->font()->isValid()) {
+		|| !comp.font() || !comp.font()->get() || !comp.font()->get()->isValid()) {
 			continue;
 		}
-		BitmapFontSP font = comp.font()->font();
+		BitmapFontSP font = comp.font()->get();
 
 		if(!comp.texture()) {
 			comp._setTexture(_spriteRenderer->createTexture(font->image()));
@@ -178,7 +182,7 @@ void BitmapTextComponentManager::render(float interp) {
 			pos(1) += font->height() - size(1) - glyph.offset(1);
 			Box2 coords(pos, pos + size);
 
-			TextureSP tex = comp.texture()->_texture();
+			TextureSP tex = comp.texture()->_get();
 			_spriteRenderer->addSprite(wt, coords, comp.color(), glyph.region,
 									   tex,
 									   Texture::NEAREST | Texture::CLAMP,

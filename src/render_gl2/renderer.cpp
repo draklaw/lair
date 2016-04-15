@@ -122,16 +122,16 @@ void Renderer::enqueueToUpload(TextureAspectSP texture) {
 void Renderer::uploadPendingTextures() {
 	for(TextureAspectSP texture: _pendingTextures) {
 		ImageAspectSP image = texture->asset()->aspect<ImageAspect>();
-		if(image && !texture->texture()) {
+		if(image && !texture->get()) {
 			log().info("Upload texture \"", texture->asset()->logicPath(), "\"...");
 			TextureSP tex = std::make_shared<Texture>(this);
-			tex->_upload(*image->image());
-			texture->_setTexture(tex);
+			tex->_upload(*image->get());
+			texture->_set(tex);
 		}
 	}
 
 	auto end = std::remove_if(_pendingTextures.begin(), _pendingTextures.end(),
-	                          [](TextureAspectSP tex) { return bool(tex->texture()); });
+	                          [](TextureAspectSP tex) { return bool(tex->get()); });
 	_pendingTextures.erase(end, _pendingTextures.end());
 }
 

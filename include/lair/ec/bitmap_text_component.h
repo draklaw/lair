@@ -69,6 +69,7 @@ public:
 
 	inline BitmapFontAspectSP font() const { return _font.lock(); }
 	void setFont(BitmapFontAspectSP font);
+	void setFont(AssetSP font);
 	void setFont(const Path& logicPath);
 
 	inline TextureAspectSP texture() const { return _texture.lock(); }

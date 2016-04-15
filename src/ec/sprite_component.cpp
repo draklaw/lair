@@ -70,15 +70,8 @@ void SpriteComponent::setTexture(AssetSP texture) {
 
 
 void SpriteComponent::setTexture(const Path& logicPath) {
-	AssetSP asset = _manager->assets()->getAsset(logicPath);
-	if(!asset) {
-		asset = _manager->assets()->createAsset(logicPath);
-	}
-	ImageAspectSP img = asset->aspect<ImageAspect>();
-	if(!img) {
-		_manager->loader()->load<ImageLoader>(asset);
-	}
-	setTexture(asset);
+	auto loader = _manager->loader()->load<ImageLoader>(logicPath);
+	setTexture(loader->asset());
 }
 
 
@@ -207,11 +200,11 @@ void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 
 void SpriteComponentManager::render(float interp, const OrthographicCamera& /*camera*/) {
 	for(SpriteComponent& sc: *this) {
-		if(!sc._entity() || !sc.texture() || !sc.texture()->texture()
-		        || !sc.texture()->texture()->isValid()) {
+		if(!sc._entity() || !sc.texture() || !sc.texture()->get()
+		        || !sc.texture()->get()->isValid()) {
 			continue;
 		}
-		TextureSP tex = sc.texture()->_texture();
+		TextureSP tex = sc.texture()->_get();
 
 		Matrix4 wt = lerp(interp,
 		                  sc._entity()->prevWorldTransform.matrix(),

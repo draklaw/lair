@@ -122,23 +122,7 @@ typedef std::shared_ptr<BitmapFont> BitmapFontSP;
 typedef std::weak_ptr  <BitmapFont> BitmapFontWP;
 
 
-class BitmapFontAspect : public Aspect {
-public:
-	BitmapFontAspect(AssetSP asset);
-	BitmapFontAspect(const BitmapFontAspect&)  = delete;
-	BitmapFontAspect(      BitmapFontAspect&&) = delete;
-	~BitmapFontAspect() = default;
-
-	BitmapFontAspect& operator=(const BitmapFontAspect&)  = delete;
-	BitmapFontAspect& operator=(      BitmapFontAspect&&) = delete;
-
-	const BitmapFontSP font() const;
-	void _setFont(BitmapFontSP font);
-
-private:
-	BitmapFontSP _font;
-};
-
+typedef GenericAspect  <BitmapFont>       BitmapFontAspect;
 typedef std::shared_ptr<BitmapFontAspect> BitmapFontAspectSP;
 typedef std::weak_ptr  <BitmapFontAspect> BitmapFontAspectWP;
 

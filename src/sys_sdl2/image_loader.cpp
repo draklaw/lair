@@ -59,7 +59,7 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 		}
 
 		ImageAspectSP aspect = std::static_pointer_cast<ImageAspect>(_aspect);
-		aspect->_setImage(std::make_shared<Image>(surf->w, surf->h, format, surf->pixels));
+		aspect->_set(std::make_shared<Image>(surf->w, surf->h, format, surf->pixels));
 
 		_success();
 	} else {
