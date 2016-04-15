@@ -51,6 +51,7 @@ void Game::initialize() {
 
 void Game::shutdown() {
 	_mainState->shutdown();
+	_mainState.reset();  // Required to ensure that everything is freed
 
 	GameBase::shutdown();
 }

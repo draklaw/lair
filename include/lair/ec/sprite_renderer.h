@@ -102,7 +102,7 @@ public:
 
 protected:
 	struct DrawCall {
-		TextureSP    tex;
+		TextureWP    tex;
 		unsigned     texFlags;
 		BlendingMode blendingMode;
 		size_t       start;

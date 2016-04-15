@@ -182,7 +182,7 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 	++_spriteDepth;
 
 	if(!_drawCalls.empty()
-	&&  _drawCalls.back().tex          == texture
+	&&  _drawCalls.back().tex.lock()   == texture
 	&&  _drawCalls.back().texFlags     == texFlags
 	&&  _drawCalls.back().blendingMode == blendingMode) {
 		_drawCalls.back().count += 6;
@@ -210,12 +210,13 @@ void SpriteRenderer::endFrame(Matrix4 viewTransform) {
 	glc->activeTexture(gl::TEXTURE0);
 
 	for(const DrawCall& dc: _drawCalls) {
-		if(!dc.tex || !dc.tex->isValid()) {
+		TextureSP tex = dc.tex.lock();
+		if(!tex || !tex->isValid()) {
 			continue;
 		}
 
-		dc.tex->bind();
-		dc.tex->_setFlags(dc.texFlags);
+		tex->bind();
+		tex->_setFlags(dc.texFlags);
 
 		switch(dc.blendingMode) {
 		case BLEND_NONE:
