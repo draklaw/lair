@@ -178,6 +178,7 @@ void Logger::setFrom(Logger& other) {
 
 
 Logger noopLogger;
+Logger dbgLogger;
 
 
 }

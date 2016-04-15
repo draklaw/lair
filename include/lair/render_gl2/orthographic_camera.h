@@ -19,30 +19,38 @@
  */
 
 
+#ifndef _LAIR_RENDER_GL2_ORTHOGRAPHIC_CAMERA_H
+#define _LAIR_RENDER_GL2_ORTHOGRAPHIC_CAMERA_H
+
+
 #include <lair/core/lair.h>
-#include <lair/core/log.h>
 
-#include "lair/utils/path.h"
-
-
-using namespace boost::filesystem;
 
 namespace lair
 {
 
-Path exePath(const char* progName) {
-   Path p = current_path();
-   p /= progName;
 
-   return canonical(p.parent_path());
+class OrthographicCamera {
+public:
+	OrthographicCamera();
+	OrthographicCamera(const OrthographicCamera&) = delete;
+	OrthographicCamera(OrthographicCamera&&)      = delete;
+	~OrthographicCamera();
+
+	OrthographicCamera& operator=(const OrthographicCamera&) = delete;
+	OrthographicCamera& operator=(OrthographicCamera&&)      = delete;
+
+	const Box3& viewBox() const { return _viewBox; }
+	void setViewBox(const Box3& viewBox);
+
+	Matrix4 transform() const;
+
+protected:
+	Box3 _viewBox;
+};
+
+
 }
 
-//Path::Path() {
-//}
 
-
-//Path::~Path() {
-//}
-
-
-}
+#endif

@@ -31,14 +31,17 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/image.h>
+#include <lair/core/path.h>
+#include <lair/core/loader.h>
 
-#include <lair/utils/path.h>
 #include <lair/utils/input.h>
+#include <lair/utils/interp_loop.h>
 
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
-#include <lair/sys_sdl2/sys_loader.h>
+#include <lair/sys_sdl2/image_loader.h>
 
+#include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
@@ -47,6 +50,8 @@
 
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/sprite_component.h>
+
+#include <lair/utils/tiled_map.h>
 
 
 #ifndef SIMPLE_WINDOW_DATA_DIR
@@ -81,13 +86,6 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
-#ifdef SIMPLE_WINDOW_DATA_DIR
-	lair::Path dataPath = boost::filesystem::canonical(SIMPLE_WINDOW_DATA_DIR);
-#else
-	lair::Path dataPath = lair::exePath(argv[0]);
-#endif
-	glog.log("Data directory: ", dataPath.native());
-
 //	dataDir = SIMPLE_WINDOW_DATA_DIR;
 //	glog.log("Data directory: \"", dataDir, "\"");
 
@@ -101,7 +99,19 @@ int main(int /*argc*/, char** argv) {
 	ok = sys.initialize();
 	if(!ok) abort();
 	sys.onQuit = quit;
-	sys.loader().setBasePath(dataPath);
+
+#ifdef SIMPLE_WINDOW_DATA_DIR
+	lair::Path dataPath = lair::Path(SIMPLE_WINDOW_DATA_DIR);
+#else
+	lair::Path dataPath = sys.basePath();
+#endif
+
+	glog.log("Data directory: ", dataPath.native());
+
+	lair::AssetManager assets;
+
+	lair::LoaderManager loader(&assets, 1, glog);
+	loader.setBasePath(dataPath);
 
 	lair::Window* w = sys.createWindow("simple_window", 800, 600);
 //	w->setFullscreen(true);
@@ -124,104 +134,107 @@ int main(int /*argc*/, char** argv) {
 
 	// ////////////////////////////////////////////////////////////////////////
 
-	lair::RenderModule renderModule(&sys, &logger, lair::LogLevel::Info);
+	lair::RenderModule renderModule(&sys, &assets, &logger, lair::LogLevel::Info);
 	renderModule.initialize();
 
 	lair::Renderer* renderer = renderModule.createRenderer();
-
-	lair::Texture* texture = renderer->loadTexture("lair.png");
-
-	lair::ShaderObject vertShader;
-	vertShader.generateObject(GL_VERTEX_SHADER);
-	if(!vertShader.compileFromFile(SIMPLE_WINDOW_DATA_DIR "/vertex.glsl")) {
-		std::cerr << "Vertex shader compilation failed:\n";
-		vertShader.dumpLog(std::cerr);
-		return false;
-	}
-
-	lair::ShaderObject fragShader;
-	fragShader.generateObject(GL_FRAGMENT_SHADER);
-	if(!fragShader.compileFromFile(SIMPLE_WINDOW_DATA_DIR "/fragment.glsl")) {
-		std::cerr << "Fragment shader compilation failed:\n";
-		fragShader.dumpLog(std::cerr);
-		return false;
-	}
-
-	lair::ProgramObject shader;
-	shader.generateObject();
-	shader.attachShader(vertShader);
-	shader.attachShader(fragShader);
-	if(!shader.link()) {
-		std::cerr << "Shader link failed:\n";
-		shader.dumpLog(std::cerr);
-		return false;
-	}
+	//renderer->context()->setLogCalls(true);
 
 
 	Eigen::AlignedBox3f viewBox(Eigen::Vector3f(-400, -300, -1), Eigen::Vector3f(400, 300, 1));
+	lair::OrthographicCamera camera;
+	camera.setViewBox(viewBox);
 
-	float rpl = viewBox.max()(0) + viewBox.min()(0);
-	float tpb = viewBox.max()(1) + viewBox.min()(1);
-	float fpn = viewBox.max()(2) + viewBox.min()(2);
+	lair::SpriteRenderer spriteRenderer(renderer);
 
-	float rml = viewBox.max()(0) - viewBox.min()(0);
-	float tmb = viewBox.max()(1) - viewBox.min()(1);
-	float fmn = viewBox.max()(2) - viewBox.min()(2);
+	lair::EntityManager entityManager(glog);
+	lair::SpriteComponentManager spriteManager(&assets, &loader, &spriteRenderer);
 
-	Eigen::Matrix4f viewMatrix;
-	viewMatrix << 2.f/rml,       0,        0, -rpl/rml,
-	                    0, 2.f/tmb,        0, -tpb/tmb,
-	                    0,       0, -2.f/fmn,  fpn/fmn,
-	                    0,       0,        0,        1;
+//	const Json::Value& testJson = sys.loader().getJson("lair.obj");
+//	lair::EntityRef baseSprite = entityManager.createEntityFromJson(
+//	            lair::EntityRef(), testJson);
+//	spriteManager.addComponentFromJson(baseSprite, testJson["sprite"]);
+	lair::EntityRef baseSprite = entityManager.createEntity(entityManager.root(), "base");
+	spriteManager.addComponent(baseSprite);
+	lair::SpriteComponent* sprite = baseSprite.sprite();
+	sprite->setTexture("lair.png");
+	sprite->setTileGridSize(lair::Vector2i(3, 2));
 
-	std::cout << viewMatrix << "\n";
+	glog.warning("Anchor: ", baseSprite.sprite()->anchor().transpose());
 
+	lair::EntityRef testSprite = baseSprite.clone(entityManager.root(), "mainLair");
 
-	lair::EntityManager entityManager;
+	for(unsigned i = 1; i <= 8; ++i) {
+		lair::Transform t = lair::Transform::Identity();
+		t.translate(lair::Vector3(i * 32, 0, 0));
+		t.rotate(Eigen::AngleAxisf(i*.5, lair::Vector3::UnitZ()));
 
-	// Need to know the size to create entity.
-	if(!texture->_uploadNow()) {
-		texture = renderer->defaultTexture();
+		glog.info("Clone ", i, "...");
+		lair::EntityRef e = baseSprite.clone(testSprite, "Clone");
+		e.place(t);
 	}
 
-	lair::EntityRef testSprite = entityManager.createEntity(entityManager.root(), "test");
-	entityManager.addSpriteComponent(testSprite);
-	testSprite.sprite()->setTexture(texture);
-	testSprite.setTransform(lair::Transform(
-//	        lair::Translation(-lair::Vector3(imgSize, imgSize, 0) / 2)));
-	        lair::Translation(-lair::Vector3(texture->width(),
-	                                         texture->height(), 0) / 2)));
+	testSprite.sprite()->setView(lair::Box2(lair::Vector2(.25, .25),
+	                                        lair::Vector2(.75, .75)));
 
-	shader.use();
-	glUniformMatrix4fv(glGetUniformLocation(shader.id(), "viewMatrix"),
-	                   1, false, viewMatrix.data());
-	glUniform1i(glGetUniformLocation(shader.id(), "texture"), 0);
+//	const Json::Value& mapJson = sys.loader().getJson("map.json");
+//	lair::TiledMap map;
+//	map.setFromJson(glog, "map.json", mapJson);
+//	map.setTileset(sprite);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture->_glId());
+	loader.waitAll();
 
+	lair::InterpLoop loop(&sys);
+	loop.setTickDuration(    1000000000/120);
+	loop.setFrameDuration(   1000000000/60);
+	loop.setMaxFrameDuration(1000000000/20);
+	loop.setFrameMargin(     1000000000/120);
 
+	glog.info("tps: ", 1000000000. / loop.tickDuration());
+
+	loop.start();
 	while(running) {
-//		sys.waitAndDispatchSystemEvents();
-		sys.dispatchPendingSystemEvents();
-		inputs.sync();
-		if(space->justPressed()) glog.log("Space pressed");
-		if(space->justReleased()) glog.log("Space released");
+		switch(loop.nextEvent()) {
+		case lair::InterpLoop::Tick: {
+			inputs.sync();
+			if(space->justPressed()) glog.log("Space pressed");
+			if(space->justReleased()) glog.log("Space released");
 
-		float speed = 1;
-		lair::Transform trans = testSprite.transform();
-		if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
-		if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
-		if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
-		if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
-		testSprite.setTransform(trans);
+			float speed = 100. * loop.tickDuration() / 1000000000;
+			lair::Transform trans = testSprite.transform();
+			if( left->isPressed()) trans.translate(lair::Vector3(-speed, 0, 0));
+			if(right->isPressed()) trans.translate(lair::Vector3( speed, 0, 0));
+			if(   up->isPressed()) trans.translate(lair::Vector3(0,  speed, 0));
+			if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
+			testSprite.move(trans);
 
-		entityManager.updateWorldTransform();
-		entityManager.render();
-		w->swapBuffers();
+			entityManager.updateWorldTransform();
+			break;
+		}
+		case lair::InterpLoop::Frame: {
+			renderer->uploadPendingTextures();
 
-		LAIR_LOG_OPENGL_ERRORS_TO(glog);
+			testSprite.sprite()->setTileIndex(loop.frameTime() / 200000000);
+
+			renderer->context()->clear(lair::gl::COLOR_BUFFER_BIT | lair::gl::DEPTH_BUFFER_BIT);
+
+			spriteRenderer.beginFrame();
+
+//			map.render(renderer);
+			spriteManager.render(loop.frameInterp(), camera);
+
+			spriteRenderer.endFrame(camera.transform());
+
+//			lair::Transform t = lair::Transform::Identity();
+//			t.translate(-testSprite.transform().translation());
+
+			w->swapBuffers();
+
+			renderer->context()->setLogCalls(false);
+			break;
+		}}
 	}
+	loop.stop();
 
 	// ////////////////////////////////////////////////////////////////////////
 

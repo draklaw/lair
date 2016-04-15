@@ -18,8 +18,8 @@
 ##
 
 
-find_package(PythonInterp 3.3 REQUIRED)
-find_package(PythonLibs 3.3 REQUIRED)
+#find_package(PythonInterp 3.3)
+#find_package(PythonLibs 3.3)
 
 set(AUTOPY_DIR "${PROJECT_SOURCE_DIR}/tools")
 
@@ -39,34 +39,41 @@ function(add_autopy TARGET MODULE_FILE)
 endfunction()
 
 
-find_package(OpenGL REQUIRED)
-
-find_package(Boost REQUIRED COMPONENTS
-	system
-	filesystem
-)
-
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
+find_package(SDL2_mixer REQUIRED)
 
-find_package(GLEW REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+find_package(Boost REQUIRED)
+
 
 set(lair_INCLUDE_DIRS
-	PRIVATE "${PROJECT_SOURCE_DIR}/include"
-	PRIVATE "${GLEW_INCLUDE_DIRS}"
-	PRIVATE "${SDL2_INCLUDE_DIR}"
-	PRIVATE "${OPENGL_INCLUDE_DIR}"
-	PRIVATE "${SDL2IMAGE_INCLUDE_DIR}"
-	PUBLIC "${Boost_INCLUDE_DIRS}"
+	PUBLIC ${PROJECT_SOURCE_DIR}/include
+
+	PUBLIC ${EIGEN3_INCLUDE_DIR}
+	PUBLIC ${SDL2IMAGE_INCLUDE_DIR}
+	PUBLIC ${SDL2MIXER_INCLUDE_DIR}
+	PUBLIC ${SDL2_INCLUDE_DIR}
+	PUBLIC ${Boost_INCLUDE_DIR}
 )
 
 set(lair_LIBRARIES
-	"${SDL2IMAGE_LIBRARY}"
-	"${GLEW_LIBRARIES}"
-	"${SDL2_LIBRARY}"
-	"${Boost_LIBRARIES}"
-	"${OPENGL_gl_LIBRARY}"
+	PUBLIC ${SDL2IMAGE_LIBRARY}
+	PUBLIC ${SDL2MIXER_LIBRARY}
+	PUBLIC ${SDL2_LIBRARY}
 )
+
+if(APPLE)
+	find_package(OpenGL REQUIRED)
+	list(APPEND lair_INCLUDE_DIRS PUBLIC ${OPENGL_INCLUDE_DIRS})
+	list(APPEND lair_LIBRARIES PUBLIC ${OPENGL_LIBRARIES})
+else()
+	find_package(GLEW REQUIRED)
+	list(APPEND lair_INCLUDE_DIRS PUBLIC ${GLEW_INCLUDE_DIRS})
+	list(APPEND lair_LIBRARIES PUBLIC ${GLEW_LIBRARIES})
+endif()
+
 
 add_autopy(core/core_py core/core.py)
 add_autopy(sys_sdl2/sys_sdl2_py sys_sdl2/sys_sdl2.py)
@@ -77,20 +84,35 @@ add_autopy(lair_py lair.py
 	ec
 )
 
-set(lair_SOURCES
-	core/log.cpp
-	core/image.cpp
 
-	utils/path.cpp
+set(lair_SOURCES
+	jsoncpp.cpp
+
+	core/log.cpp
+	core/json.cpp
+	core/path.cpp
+	core/image.cpp
+	core/signal.cpp
+	core/asset_manager.cpp
+	core/loader.cpp
+	core/bitmap_font.cpp
+
 	utils/input.cpp
-	utils/loader.cpp
+	utils/interp_loop.cpp
+	utils/tiled_map.cpp
+	utils/game_base.cpp
+	utils/game_state.cpp
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp
-	sys_sdl2/sys_loader.cpp
 	sys_sdl2/sys_module.cpp
+	sys_sdl2/audio_module.cpp
 
 	render_gl2/gl.cpp
+	render_gl2/context.cpp
+	render_gl2/orthographic_camera.cpp
+	render_gl2/vertex_format.cpp
+	render_gl2/vertex_buffer.cpp
 	render_gl2/glsl_source.cpp
 	render_gl2/shader_object.cpp
 	render_gl2/program_object.cpp
@@ -100,7 +122,9 @@ set(lair_SOURCES
 
 	ec/entity.cpp
 	ec/entity_manager.cpp
+	ec/sprite_renderer.cpp
 	ec/sprite_component.cpp
+	ec/bitmap_text_component.cpp
 )
 
 set(lair_py_SOURCES
@@ -111,9 +135,11 @@ set(lair_py_SOURCES
 	lair_py.cpp
 )
 
+
 ###
 
-add_library(lair SHARED
+
+add_library(lair STATIC
 	${lair_SOURCES}
 )
 target_include_directories(lair
@@ -127,22 +153,30 @@ set_target_properties(lair PROPERTIES
 #	OUTPUT_NAME "_lair"
 #	PREFIX ""
 )
+if(MSVC)
+	target_compile_options(lair PUBLIC "/MD")
+else()
+	target_compile_options(lair PUBLIC "-std=c++11")
+endif()
+
 
 ###
 
-add_library(lair_py SHARED
-	${lair_py_SOURCES}
-)
-target_include_directories(lair_py
-	${lair_INCLUDE_DIRS}
-	PRIVATE "${PYTHON_INCLUDE_DIRS}"
-)
-target_link_libraries(lair_py
-	lair
-	${lair_LIBRARIES}
-)
-set_target_properties(lair_py PROPERTIES
-	LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
-	OUTPUT_NAME "_lair"
-	PREFIX ""
-)
+#if(PYTHONLIBS_FOUND)
+#	add_library(lair_py SHARED
+#		${lair_py_SOURCES}
+#	)
+#	target_include_directories(lair_py
+#		${lair_INCLUDE_DIRS}
+#		PRIVATE "${PYTHON_INCLUDE_DIRS}"
+#	)
+#	target_link_libraries(lair_py
+#		lair
+#		${lair_LIBRARIES}
+#	)
+#	set_target_properties(lair_py PROPERTIES
+#		LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
+#		OUTPUT_NAME "_lair"
+#		PREFIX ""
+#	)
+#endif()

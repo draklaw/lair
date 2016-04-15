@@ -27,7 +27,7 @@
 using namespace lair;
 
 TEST(EntityManagerTest, Constructor) {
-	EntityManager em(4);
+	EntityManager em(nullptr, 4);
 
 	ASSERT_EQ(1, em.nEntities());
 	ASSERT_EQ(0, em.nZombieEntities());
@@ -41,7 +41,7 @@ TEST(EntityManagerTest, Constructor) {
 }
 
 TEST(EntityManagerTest, EntityTree) {
-	EntityManager em(4);
+	EntityManager em(nullptr, 4);
 
 	EntityRef root = em.root();
 	EntityRef a = em.createEntity(root, "a");

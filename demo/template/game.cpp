@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,42 +19,43 @@
  */
 
 
-#ifndef _LAIR_SYS_SDL2_SYS_LOADER_H
-#define _LAIR_SYS_SDL2_SYS_LOADER_H
+#include "main_state.h"
+
+#include "game.h"
 
 
-#include <lair/core/lair.h>
-
-#include <lair/utils/loader.h>
-
-#include <lair/sys_sdl2/image_loader.h>
-
-
-namespace lair
-{
-
-
-class SysLoader : public LoaderManager {
-public:
-	typedef std::shared_ptr<ImageLoader> ImageLoaderPtr;
-
-public:
-	SysLoader(size_t maxCacheSize, unsigned nThread = 1,
-	          Logger& log = noopLogger);
-	SysLoader(const SysLoader&) = delete;
-	SysLoader(SysLoader&&)      = delete;
-	~SysLoader();
-
-	SysLoader& operator=(const SysLoader&) = delete;
-	SysLoader& operator=(SysLoader&&)      = delete;
-
-	ImageLoaderPtr loadImage(const std::string file);
-
-protected:
-};
-
-
+Game::Game(int argc, char** argv)
+    : GameBase(argc, argv),
+      _mainState() {
 }
 
 
+Game::~Game() {
+}
+
+
+void Game::initialize() {
+	GameBase::initialize();
+
+#ifdef LAIR_DATA_DIR
+	_dataPath = LAIR_DATA_DIR;
+	_loader->setBasePath(_dataPath);
 #endif
+
+	window()->setUtf8Title("Lair - template");
+
+	_mainState.reset(new MainState(this));
+	_mainState->initialize();
+}
+
+
+void Game::shutdown() {
+	_mainState->shutdown();
+
+	GameBase::shutdown();
+}
+
+
+MainState* Game::mainState() {
+	return _mainState.get();
+}

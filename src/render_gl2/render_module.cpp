@@ -19,8 +19,6 @@
  */
 
 
-#include <GL/glew.h>
-
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
@@ -33,12 +31,16 @@ namespace lair
 {
 
 
-RenderModule::RenderModule(SysModule* sys, MasterLogger* logger, LogLevel level)
+RenderModule::RenderModule(SysModule* sys, AssetManager* assetManager,
+                           MasterLogger* logger, LogLevel level)
     : _log("render_gl2", logger, level),
       _initialized(false),
       _sys(sys),
+      _assetManager(assetManager),
+      _context(&_log),
       _renderers() {
 	lairAssert(sys);
+	lairAssert(_assetManager);
 }
 
 
@@ -50,21 +52,9 @@ bool RenderModule::initialize() {
 	lairAssert(!_initialized);
 	log().log("Render module initialization...");
 
-	GLenum err = glewInit();
-	if(err != GLEW_OK) {
-		log().error("GLEW initialization failed: ", glewGetErrorString(err), ".");
+	if(!_context.initialize()) {
 		return false;
 	}
-
-	if(!GL_VERSION_2_1) {
-		log().error("OpenGL 2.1 is not supported.");
-		return false;
-	}
-
-	log().info("OpenGL version: ",      glGetString(GL_VERSION));
-	log().info("OpenGL GLSL version: ", glGetString(GL_SHADING_LANGUAGE_VERSION));
-	log().info("OpenGL vendor: ",       glGetString(GL_VENDOR));
-	log().info("OpenGL renderer: ",     glGetString(GL_RENDERER));
 
 	_initialized = true;
 
@@ -82,7 +72,7 @@ void RenderModule::shutdown() {
 
 
 Renderer* RenderModule::createRenderer() {
-	_renderers.emplace_back(new Renderer(this));
+	_renderers.emplace_back(new Renderer(this, _assetManager));
 	return _renderers.back().get();
 }
 

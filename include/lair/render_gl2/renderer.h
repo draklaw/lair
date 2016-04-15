@@ -25,10 +25,15 @@
 
 #include <unordered_map>
 #include <string>
+#include <mutex>
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/path.h>
+#include <lair/core/asset_manager.h>
 
+#include <lair/render_gl2/context.h>
+#include <lair/render_gl2/vertex_format.h>
 #include <lair/render_gl2/glsl_source.h>
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
@@ -46,7 +51,7 @@ class RenderModule;
 
 class Renderer {
 public:
-	Renderer(RenderModule* module);
+	Renderer(RenderModule* module, AssetManager* assetManager);
 	Renderer(const Renderer&) = delete;
 	Renderer(Renderer&&)      = delete;
 	~Renderer();
@@ -54,55 +59,39 @@ public:
 	Renderer& operator=(const Renderer&) = delete;
 	Renderer& operator=(Renderer&&)      = delete;
 
-	Texture* loadTexture(const std::string& file,
-	                     uint32 flags = Texture::BILINEAR | Texture::REPEAT);
+	Context* context();
+
+	ShaderObject compileShader(const char* name, GLenum type,
+	                           const GlslSource& source);
+	ProgramObject compileProgram(const char* name,
+	                             const VertexFormat* format,
+	                             const ShaderObject* vert,
+	                             const ShaderObject* frag);
+
+	TextureAspectSP createTexture(AssetSP asset);
+	void enqueueToUpload(TextureAspectSP texture);
+	void uploadPendingTextures();
 
 	Texture* defaultTexture() {
 		return &_defaultTexture;
 	}
 
-	const ProgramObject* defaultShader() const {
-		return &_defaultShader;
-	}
-
 	Logger& log();
 
-	ShaderObject _compileShader(const char* name, const GlslSource& source);
-	ProgramObject _compileProgram(const char* name,
-	                              const ShaderObject* vert,
-	                              const ShaderObject* frag);
-
 protected:
-	struct TexId {
-		inline TexId(const std::string& file, uint32 flags)
-		    : file(file), flags(flags) {}
-		inline bool operator==(const TexId& rhs) const {
-			return file == rhs.file && flags == rhs.flags;
-		}
-		inline bool operator!=(const TexId& rhs) const {
-			return !(*this == rhs);
-		}
-
-		std::string file;
-		uint32      flags;
-	};
-
-	struct HashTexId {
-		size_t operator()(const TexId& texId) const;
-	};
-
-	typedef std::unordered_map<TexId, Texture, HashTexId> TextureMap;
+	typedef std::vector<TextureAspectSP> TextureList;
 
 protected:
 	void _createDefaultTexture();
 
 protected:
 	RenderModule* _module;
+	AssetManager* _assetManager;
 
+	Context*      _context;
+
+	TextureList   _pendingTextures;
 	Texture       _defaultTexture;
-	TextureMap    _textures;
-
-	ProgramObject _defaultShader;
 };
 
 

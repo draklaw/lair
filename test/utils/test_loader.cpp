@@ -38,10 +38,9 @@ public:
 	TestLoader(LoaderManager* manager, const std::string &path)
 	    : Loader(manager, path) {}
 
-	virtual void loadSync(Logger& log) {
-		Loader::loadSync(log);
+	virtual void loadSyncImpl(Logger& log) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(20 + std::rand() % 60));
-		_done(log, 1);
+		_success(1);
 	}
 };
 
@@ -77,7 +76,7 @@ TEST(LoaderTest, TestLoad) {
 	for(unsigned i = 0; i < TEST_LOAD_COUNT; ++ i) {
 		std::string path = "file_" + std::to_string(i);
 		loaders[i] = lm.load<TestLoader>(path);
-		ASSERT_EQ(path, loaders[i]->path());
+		ASSERT_EQ(path, loaders[i]->realPath());
 		ASSERT_EQ(0, loaders[i]->size());
 	}
 	ASSERT_EQ(TEST_LOAD_COUNT, lm.nToLoad());
@@ -86,12 +85,12 @@ TEST(LoaderTest, TestLoad) {
 
 	for(unsigned i = 0; i < TEST_LOAD_COUNT; ++ i) {
 		if(!loaders[i]->isLoaded()) {
-			log.info("Wait for ", loaders[i]->path(), "...");
+			log.info("Wait for ", loaders[i]->realPath(), "...");
 			loaders[i]->wait();
 			ASSERT_TRUE(loaders[i]->isLoaded());
 			ASSERT_EQ(1, loaders[i]->size());
 		}
-		log.info("Done loading ", loaders[i]->path(), ".");
+		log.info("Done loading ", loaders[i]->realPath(), ".");
 	}
 
 	ASSERT_EQ(TEST_LOAD_COUNT, lm.cacheSize());

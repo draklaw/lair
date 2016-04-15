@@ -4,10 +4,21 @@
 - ~~Copyright notice~~
 - ~File system abstraction ?
 - Renderer module
-  - Tilemap
-  - Text
+  - ~~Tilemap~~
+  - ~Text
+  - Use big buffers per batch, fill them after components sort ?
+  - Write a class that combines Shader + uniforms values
+  - Culling
+  - React on windows resize (viewport)
 - Config file(s) JsonCpp
-- Game loop
+- ~~Game loop~~
+- ~Game state
+- ec
+  - ~~Clonning~~
+  - ~Load from json
+  - Go template ?
+  - ~~Sparse components~~
+  - ~~ComponentManager~~
 - Audio module (OpenAL ?)
 - ec meta-code (python ?)
 - Python
@@ -16,6 +27,7 @@
   - Re-implement test-window
   - ~Investigate packaging
 - ~~Loader~~
+  - make preload / get functions.
   - ~~ImageLoader~~
   - Auto-remove cached objects when max size is exceded
   - ~~Move to utils ?~~
@@ -24,3 +36,7 @@
 - Make Input part of sys (with support for events) ?
 - Collision module (Based on Box2D ? Bullet ?)
 - Geometric shapes ?
+- UI elements
+
+
+- Move to Python coding convention ? (Closer to stdc++ & same conventions for python and C)

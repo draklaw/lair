@@ -30,18 +30,35 @@ namespace lair
 {
 
 
+class _Entity;
+class EntityRef;
+
+
 class Component {
 public:
-	Component();
+	explicit inline Component(_Entity* entity)
+	    : _alive(true), _entityPtr(entity) {
+	}
 	Component(const Component&) = delete;
-	Component(Component&&)      = delete;
-	~Component();
+	Component(Component&&)      = default;
+	inline virtual ~Component() {
+	}
 
 	Component& operator=(const Component&) = delete;
-	Component& operator=(Component&&)      = delete;
+	Component& operator=(Component&&)      = default;
 
+	virtual void destroy() = 0;
+	virtual void clone(EntityRef& target) = 0;
+
+	inline _Entity* _entity() const { return _entityPtr; }
+
+	bool _alive;
 
 protected:
+	_Entity*   _entityPtr;
+
+public:
+	Component* _nextComponent;
 };
 
 

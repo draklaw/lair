@@ -25,8 +25,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/image.h>
-
-#include <lair/utils/loader.h>
+#include <lair/core/path.h>
+#include <lair/core/asset_manager.h>
+#include <lair/core/loader.h>
 
 
 namespace lair
@@ -35,7 +36,10 @@ namespace lair
 
 class ImageLoader : public Loader {
 public:
-	ImageLoader(LoaderManager* manager, const std::string& path);
+	typedef ImageAspect Aspect;
+
+public:
+	ImageLoader(LoaderManager* manager, AspectSP aspect);
 	ImageLoader(const ImageLoader&) = delete;
 	ImageLoader(ImageLoader&&)      = delete;
 	~ImageLoader();
@@ -43,12 +47,8 @@ public:
 	ImageLoader& operator=(const ImageLoader&) = delete;
 	ImageLoader& operator=(ImageLoader&&)      = delete;
 
-	const Image& getImage() const { return _image; }
-
-	virtual void loadSync(Logger& log);
-
 protected:
-	Image _image;
+	virtual void loadSyncImpl(Logger& log);
 };
 
 

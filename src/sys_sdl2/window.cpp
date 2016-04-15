@@ -92,17 +92,18 @@ void Window::destroy() {
 
 //	onDestroy();
 
-	if(_sys) {
-		_sys->_removeWindow(_windowID());
-	}
+	unsigned id = _windowID();
 
-//	SDL_GL_DeleteContext(_glContext);
-//	_glContext = 0;
+	SDL_GL_DeleteContext(_glContext);
+	_glContext = 0;
 
 	SDL_DestroyWindow(_window);
 	_window = 0;
 
-	_sys = 0;
+	if(_sys) {
+		// DELETE THE WINDOW ! Do not do anything after this.
+		_sys->_removeWindow(id);
+	}
 }
 
 
@@ -251,7 +252,6 @@ void Window::_processEvent(const SDL_WindowEvent& event) {
 	case SDL_WINDOWEVENT_HIDDEN:
 	case SDL_WINDOWEVENT_EXPOSED:
 	case SDL_WINDOWEVENT_MOVED:
-	case SDL_WINDOWEVENT_RESIZED:
 	case SDL_WINDOWEVENT_SIZE_CHANGED:
 	case SDL_WINDOWEVENT_MINIMIZED:
 	case SDL_WINDOWEVENT_MAXIMIZED:
@@ -259,6 +259,9 @@ void Window::_processEvent(const SDL_WindowEvent& event) {
 	case SDL_WINDOWEVENT_ENTER:
 	case SDL_WINDOWEVENT_LEAVE:
 	case SDL_WINDOWEVENT_FOCUS_GAINED:
+	case SDL_WINDOWEVENT_RESIZED:
+		onResize();
+		break;
 	case SDL_WINDOWEVENT_FOCUS_LOST:
 		break;
 	case SDL_WINDOWEVENT_CLOSE:

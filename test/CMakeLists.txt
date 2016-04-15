@@ -18,18 +18,20 @@
 ##
 
 
-add_custom_target(test)
+add_custom_target(runtest)
 
-find_package(GTest REQUIRED)
+find_package(GTest)
 
-include_directories(
-	"${PROJECT_SOURCE_DIR}/include"
-	${GTEST_INCLUDE_DIRS}
-)
+if(${GTEST_FOUND})
+	include_directories(
+		"${PROJECT_SOURCE_DIR}/include"
+		${GTEST_INCLUDE_DIRS}
+	)
 
-include_directories(
-)
+	include_directories(
+	)
 
-add_subdirectory(core)
-add_subdirectory(utils)
-add_subdirectory(ec)
+	add_subdirectory(core)
+	add_subdirectory(utils)
+	add_subdirectory(ec)
+endif()

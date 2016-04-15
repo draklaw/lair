@@ -32,9 +32,8 @@ namespace lair
 {
 
 
-ImageLoader::ImageLoader(LoaderManager* manager, const std::string& path)
-    : Loader(manager, path),
-      _image() {
+ImageLoader::ImageLoader(LoaderManager* manager, AspectSP aspect)
+    : Loader(manager, aspect) {
 }
 
 
@@ -42,32 +41,35 @@ ImageLoader::~ImageLoader() {
 }
 
 
-void ImageLoader::loadSync(Logger& log) {
-	Loader::loadSync(log);
-
-	Image img;
-
-	auto surf = make_unique(IMG_Load(path().c_str()), SDL_FreeSurface);
+void ImageLoader::loadSyncImpl(Logger& log) {
+	auto surf = make_unique(IMG_Load(realPath().utf8CStr()), SDL_FreeSurface);
 	if(surf) {
 		Image::Format format;
 		switch(surf->format->format) {
+		case SDL_PIXELFORMAT_RGB24:
+			format = Image::Format::FormatRGB8;
+			break;
 		case SDL_PIXELFORMAT_ABGR8888:
 			format = Image::Format::FormatRGBA8;
 			break;
+		case SDL_PIXELFORMAT_ARGB8888:
+			surf = make_unique(SDL_ConvertSurfaceFormat(surf.get(), SDL_PIXELFORMAT_ABGR8888, 0), SDL_FreeSurface);
+			format = Image::Format::FormatRGBA8;
+			break;
 		default:
-			log.error("Unable to load image \"", _file, "\": unsupported format ",
+			log.error("Unable to load image \"", asset()->logicPath(), "\" (", realPath(),"): unsupported format ",
 			          SDL_GetPixelFormatName(surf->format->format));
-			format = Image::Format::FormatInvalid;
+			return;
 		}
 
-		if(format != Image::Format::FormatInvalid) {
-			_image = Image(surf->w, surf->h, format, surf->pixels);
-		}
+		ImageAspectSP aspect = std::static_pointer_cast<ImageAspect>(_aspect);
+		aspect->_set(std::make_shared<Image>(surf->w, surf->h, format, surf->pixels));
+
+		_success();
 	} else {
-		log.error("Unable to load image \"", _file, "\": ", IMG_GetError());
+		log.error("Failed to load image \"", asset()->logicPath(), "\" (", realPath(),
+		          "): ", IMG_GetError());
 	}
-
-	_done(log, _image.sizeInBytes());
 }
 
 

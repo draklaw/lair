@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -18,18 +18,20 @@
  *
  */
 
-#define lowp
-#define mediump
-#define highp
 
-uniform highp mat4 viewMatrix;
+#include <cstdlib>
 
-attribute highp vec4 vx_position;
-attribute mediump vec2 vx_texCoord;
+#include "game.h"
+#include "main_state.h"
 
-varying mediump vec2 texCoord;
 
-void main() {
-	gl_Position = viewMatrix * vx_position;
-	texCoord    = vx_texCoord;
+int main(int argc, char** argv) {
+	Game game(argc, argv);
+	game.initialize();
+
+	game.setNextState(game.mainState());
+	game.run();
+
+	game.shutdown();
+	return EXIT_SUCCESS;
 }

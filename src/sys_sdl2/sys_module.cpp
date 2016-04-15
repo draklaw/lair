@@ -19,7 +19,11 @@
  */
 
 
+#include <chrono>
+#include <thread>
+
 #include <SDL.h>
+#include <SDL_filesystem.h>
 #include <SDL_image.h>
 
 #include <lair/core/lair.h>
@@ -38,7 +42,7 @@ SysModule::SysModule(MasterLogger* logger, LogLevel level)
       _log("sys_sdl2", logger, level),
       _initialized(false),
       _windowMap(),
-      _loader(0, 1, _log) {
+      _basePath() {
 }
 
 
@@ -83,12 +87,17 @@ bool SysModule::initialize() {
 		return false;
 	}
 
-	int imgErr = IMG_Init(IMG_INIT_PNG);
+	int imgErr = IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
 	if(imgErr < 0) {
 		log().error("SDL image initialization failed: ", IMG_GetError());
 		return false;
 	}
 
+	{
+		auto basePath = make_unique(SDL_GetBasePath(), SDL_free);
+		_basePath = Path(basePath.get());
+	}
+	log().info("System base path: ", _basePath.utf8String());
 
 	_initialized = true;
 
@@ -152,16 +161,16 @@ Window* SysModule::createWindow(const char* utf8Title, int width, int height) {
 	lairAssert(_initialized);
 
 	log().log("Create window: \"", utf8Title, "\", ", width, "x", height);
-	Window* window = new Window(this);
+	WindowPtr window(new Window(this));
 	SDL_Window* sdlWindow = window->_create(utf8Title, width, height);
 	if(!sdlWindow) {
-		delete window;
 		return 0;
 	}
 
-	_windowMap.insert(std::make_pair(window->_windowID(), window));
+	Window* ptr = window.get();
+	_windowMap.emplace(window->_windowID(), std::move(window));
 
-	return window;
+	return ptr;
 }
 
 
@@ -196,16 +205,41 @@ uint8 SysModule::getKeyState(unsigned scancode) {
 }
 
 
+const Path& SysModule::basePath() {
+	return _basePath;
+}
+
+
+const Path SysModule::getPrefPath(const char* org, const char* app) {
+	Path p;
+	{
+		auto path = make_unique(SDL_GetPrefPath(org, app), SDL_free);
+		_basePath = Path(path.get());
+	}
+	log().info("Preference path (", org, ", ", app, "): ", p);
+	return p;
+}
+
+
 uint64 SysModule::getTimeNs() const {
-	return SDL_GetPerformanceCounter() * 1000000000
-	     / SDL_GetPerformanceFrequency();
+//	return double(SDL_GetPerformanceCounter())
+//	     / double(SDL_GetPerformanceFrequency())
+//	     * 1e9;
+//	return SDL_GetTicks() * 1000000;
+	uint64 time = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+	            std::chrono::high_resolution_clock::now()).time_since_epoch().count();
+	static uint64 start = time;
+	return time - start;
 }
 
 
 void SysModule::waitNs(uint64 ns) const {
 	if(ns == 0) return;
 	// integer division rounded up.
-	SDL_Delay((ns-1) / 1000000000 + 1);
+//	SDL_Delay((ns-1) / 1000000000 + 1);
+//	SDL_Delay(double(ns) / 1.6);
+//	SDL_Delay((ns-1) / 1000000 + 1);
+	std::this_thread::sleep_for(std::chrono::nanoseconds(ns));
 }
 
 
@@ -354,7 +388,7 @@ void SysModule::_dispatchSystemEvent(const SDL_Event& event)
 Window* SysModule::_windowFromID(unsigned windowID) {
 	auto it = _windowMap.find(windowID);
 	if(it != _windowMap.end())
-		return it->second;
+		return it->second.get();
 	else
 		return 0;
 }

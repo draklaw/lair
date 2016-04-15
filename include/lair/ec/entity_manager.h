@@ -30,6 +30,9 @@
 #include <string>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
+#include <lair/core/path.h>
+#include <lair/core/loader.h>
 
 #include <lair/ec/entity.h>
 
@@ -38,14 +41,16 @@ namespace lair
 {
 
 
-class Component;
+class OrthographicCamera;
+class Renderer;
 
-class SpriteComponentManager;
+class Component;
+class ComponentManagerInterface;
 
 
 class EntityManager {
 public:
-	EntityManager(size_t entityBlockSize = 1024);
+	EntityManager(Logger& logger, size_t entityBlockSize = 1024);
 	EntityManager(const EntityManager&) = delete;
 	EntityManager(EntityManager&&)      = delete;
 	~EntityManager();
@@ -55,11 +60,16 @@ public:
 
 	inline size_t    nEntities()       const { return _nEntities; }
 	inline size_t    nZombieEntities() const { return _nZombieEntities; }
-	inline EntityRef root()            const { return EntityRef(_root); }
+	inline EntityRef root()            const { return _root; }
+
+	void registerComponentManager(ComponentManagerInterface* cmi);
 
 	size_t entityCapacity() const;
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
+	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
+	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr);
+
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
 	void destroyEntity(EntityRef entity);
@@ -67,15 +77,14 @@ public:
 
 	void moveEntity(EntityRef& entity, EntityRef& newParent);
 
-	void addSpriteComponent(EntityRef& entity);
-	void removeSpriteComponent(EntityRef& entity);
-
 	void updateWorldTransform();
-	void render();
+
+	Logger& log() { return _logger; }
 
 protected:
-	typedef std::vector<_Entity>   EntityBlock;
+	typedef std::vector<_Entity, Eigen::aligned_allocator<_Entity>>   EntityBlock;
 	typedef std::list<EntityBlock> EntityBlockList;
+	typedef std::unordered_map<std::string, ComponentManagerInterface*> CompManagerMap;
 
 protected:
 	void _addEntityBlock();
@@ -85,14 +94,16 @@ protected:
 	void _updateWorldTransformHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:
-	_Entity*         _root;
-	_Entity*         _firstFree;
+	Logger          _logger;
+
+	CompManagerMap  _compManagers;
+
+	EntityRef       _root;
+	_Entity*        _firstFree;
 	size_t          _entityBlockSize;
 	size_t          _nEntities;
 	size_t          _nZombieEntities;
 	EntityBlockList _entities;
-
-	std::unique_ptr<SpriteComponentManager> _spriteManager;
 };
 
 

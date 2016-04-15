@@ -19,28 +19,28 @@
  */
 
 
+#ifndef _LAIR_CORE_JSON_H
+#define _LAIR_CORE_JSON_H
+
+
+#include <istream>
+
+#include <json/json.h>
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-
-#include "lair/sys_sdl2/sys_loader.h"
-
-
-namespace lair
-{
+#include <lair/core/path.h>
 
 
-SysLoader::SysLoader(size_t maxCacheSize, unsigned nThread, Logger& logger)
-    : LoaderManager(maxCacheSize, nThread, logger) {
-}
+namespace lair {
 
 
-SysLoader::~SysLoader() {
-}
+bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log);
+bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, Logger& log);
 
-
-SysLoader::ImageLoaderPtr SysLoader::loadImage(const std::string file) {
-	return load<ImageLoader>(file);
-}
+Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);
 
 
 }
+
+#endif

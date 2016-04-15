@@ -28,6 +28,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/asset_manager.h>
+
+#include <lair/render_gl2/context.h>
 
 
 namespace lair
@@ -41,7 +44,8 @@ class Renderer;
 
 class RenderModule {
 public:
-	RenderModule(SysModule* sys, MasterLogger* logger = nullptr,
+	RenderModule(SysModule* sys, AssetManager* assetManager,
+	             MasterLogger* logger = nullptr,
 	             LogLevel level = LogLevel::Log);
 	RenderModule(const RenderModule&) = delete;
 	RenderModule(RenderModule&&)      = delete;
@@ -54,6 +58,10 @@ public:
 	void shutdown();
 
 	Renderer* createRenderer();
+
+	Context* context() {
+		return &_context;
+	}
 
 	SysModule* sys() {
 		return _sys;
@@ -68,11 +76,13 @@ protected:
 	typedef std::vector<RendererPtr> RendererList;
 
 protected:
-	Logger       _log;
-	bool         _initialized;
-	SysModule*   _sys;
+	Logger        _log;
+	bool          _initialized;
+	SysModule*    _sys;
+	AssetManager* _assetManager;
 
-	RendererList _renderers;
+	Context       _context;
+	RendererList  _renderers;
 };
 
 

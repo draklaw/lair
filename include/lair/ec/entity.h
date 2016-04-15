@@ -28,6 +28,8 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/ec/component.h>
+
 
 namespace lair
 {
@@ -38,7 +40,7 @@ class EntityManager;
 class SpriteComponent;
 
 
-struct _Entity {
+class _Entity {
 public:
 	enum {
 		Alive = 0x01
@@ -70,6 +72,9 @@ public:
 		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
 	}
 
+	void _addComponent(Component* comp);
+	void _removeComponent(Component* comp);
+
 public:
 	uint32         weakRefCount;
 	EntityManager* manager;
@@ -84,8 +89,12 @@ public:
 	// TODO: make homogenous arrays for these (managed by EntityManager)
 	Transform      transform;
 	Transform      worldTransform;
+	Transform      prevWorldTransform;
 //	Transform*     transform;
 //	Transform*     worldTransform;
+
+	// Components form a single linked list for efficient iteration.
+	Component*     firstComponent;
 
 	/* Components here ! */
 	SpriteComponent* sprite;
@@ -94,7 +103,11 @@ public:
 
 class EntityRef {
 public:
-	explicit inline EntityRef(_Entity* entity = nullptr)
+	inline EntityRef()
+	    : _entity(nullptr) {
+	}
+
+	explicit inline EntityRef(_Entity* entity)
 	    : _entity(entity) {
 		if(_entity) {
 			++_entity->weakRefCount;
@@ -172,11 +185,32 @@ public:
 		return /* * */_entity->worldTransform;
 	}
 
-	inline void setTransform(const Transform& transform) {
+	inline Transform computeWorldTransform() const {
+		if(parent().isValid()) {
+			return parent().computeWorldTransform() * _entity->transform;
+		} else {
+			return _entity->transform;
+		}
+	}
+
+	inline void place(const Transform& transform) {
+		lairAssert(isValid());
+//		lairAssert(_entity->transform);
+		/* * */_entity->transform = transform;
+		_entity->worldTransform = computeWorldTransform();
+	}
+
+	inline void place(const Vector3& pos) {
+		place(Transform(Translation(pos)));
+	}
+
+	inline void move(const Transform& transform) {
 		lairAssert(isValid());
 //		lairAssert(_entity->transform);
 		/* * */_entity->transform = transform;
 	}
+
+	EntityRef clone(EntityRef newParent, const char* newName = nullptr);
 
 	inline SpriteComponent* sprite() {
 		return _entity->sprite;

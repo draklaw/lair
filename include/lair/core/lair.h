@@ -31,6 +31,8 @@
 
 #include <Eigen/Geometry>
 
+#include <json/json-forwards.h>
+
 
 namespace lair {
 
@@ -51,17 +53,17 @@ private:
 };
 
 
-inline void lairAssert(bool result, const char* testCode, const char* file, int line) {
+inline void _lairAssert(bool result, const char* testCode, const char* file, int line) {
 	if(!result) {
 		throw AssertionFailedError(testCode, file, line);
 	}
 }
 
-#define lairAssert(_test) lair::lairAssert(_test, #_test, __FILE__, __LINE__)
+#define lairAssert(_test) lair::_lairAssert(_test, #_test, __FILE__, __LINE__)
 
 
-typedef std::size_t    size_t;
-typedef std::ptrdiff_t ptrdiff_t;
+typedef std::size_t    Size;
+typedef std::ptrdiff_t PtrDiff;
 
 typedef std::uint8_t   Byte;
 typedef std::uint8_t   uint8;
@@ -80,6 +82,10 @@ typedef Eigen::Matrix<Scalar, 2, 1>      Vector2;
 typedef Eigen::Matrix<Scalar, 3, 1>      Vector3;
 typedef Eigen::Matrix<Scalar, 4, 1>      Vector4;
 
+typedef Eigen::Matrix<int, 2, 1>         Vector2i;
+typedef Eigen::Matrix<int, 3, 1>         Vector3i;
+typedef Eigen::Matrix<int, 4, 1>         Vector4i;
+
 typedef Eigen::Matrix<Scalar, 2, 2>      Matrix2;
 typedef Eigen::Matrix<Scalar, 3, 3>      Matrix3;
 typedef Eigen::Matrix<Scalar, 4, 4>      Matrix4;
@@ -90,18 +96,34 @@ typedef Eigen::Quaternion<Scalar>        Quaternion;
 typedef Eigen::AngleAxis<Scalar>         AngleAxis;
 typedef Eigen::Translation<Scalar, 3>    Translation;
 
+typedef Eigen::AlignedBox2f Box2;
+typedef Eigen::AlignedBox3f Box3;
+typedef Eigen::AlignedBox2i Box2i;
+typedef Eigen::AlignedBox3i Box3i;
+
 typedef unsigned ScanCode;
 
-// TODO: update this
-typedef unsigned JsonNode;
+class Path;
 
 
 // Make a unique_ptr that will be destroyed with the deleter D.
 // Useful when using C APIs that provide "destructor" functions.
-template<typename T, typename D>
+template < typename T, typename D >
 inline std::unique_ptr<T, D> make_unique(T* ptr, D deleter) {
 	return std::unique_ptr<T, D>(ptr, deleter);
 }
+
+template < typename T >
+inline std::unique_ptr<T> make_unique(T* ptr) {
+	return std::unique_ptr<T>(ptr);
+}
+
+
+template < typename S, typename T >
+T lerp(S x, const T& v0, const T& v1) {
+	return (1-x) * v0 + x * v1;
+}
+
 
 }
 

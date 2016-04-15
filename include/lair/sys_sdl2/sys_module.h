@@ -24,11 +24,11 @@
 
 
 #include <unordered_map>
+#include <functional>
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-
-#include <lair/sys_sdl2/sys_loader.h>
+#include <lair/core/path.h>
 
 
 extern "C" {
@@ -50,7 +50,7 @@ class Window;
  */
 class SysModule {
 public:
-	typedef bool (*QuitCallback)();
+	typedef std::function<void()> QuitCallback;
 
 public:
 	/// \{
@@ -108,9 +108,8 @@ public:
 	/// \{
 	/// \name File loading
 
-	inline SysLoader& loader() {
-		return _loader;
-	}
+	const Path& basePath();
+	const Path getPrefPath(const char* org, const char* app);
 
 	/// \}
 
@@ -146,20 +145,21 @@ public:
 
 
 private:
-	typedef std::pair<unsigned, Window*> WindowPair;
-	typedef std::unordered_map<unsigned, Window*> WindowMap;
+	typedef std::unique_ptr<Window> WindowPtr;
+	typedef std::pair<unsigned, WindowPtr> WindowPair;
+	typedef std::unordered_map<unsigned, WindowPtr> WindowMap;
 
 
 private:
 	Window* _windowFromID(unsigned windowID);
 
 private:
-	Logger _log;
+	Logger              _log;
 
-	bool _initialized;
-	WindowMap _windowMap;
+	bool                _initialized;
+	WindowMap           _windowMap;
 
-	SysLoader _loader;
+	Path                _basePath;
 };
 
 

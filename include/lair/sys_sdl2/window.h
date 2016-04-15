@@ -29,6 +29,8 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/core/signal.h>
+
 
 namespace lair
 {
@@ -75,6 +77,7 @@ public:
 
 	Logger& log();
 
+	Signal<> onResize;
 
 private:
 	SysModule* _sys;

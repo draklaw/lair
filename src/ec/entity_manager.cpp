@@ -23,9 +23,11 @@
 #include <cmath>
 
 #include <lair/core/lair.h>
+#include <lair/core/json.h>
 #include <lair/core/log.h>
 
-#include <lair/ec/sprite_component.h>
+#include <lair/ec/component.h>
+#include <lair/ec/component_manager.h>
 
 #include "lair/ec/entity_manager.h"
 
@@ -34,19 +36,25 @@ namespace lair
 {
 
 
-EntityManager::EntityManager(size_t entityBlockSize)
-    : _root           (nullptr),
+EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
+    : _logger(&logger),
+      _root           (nullptr),
       _firstFree      (nullptr),
       _entityBlockSize(entityBlockSize),
       _nEntities      (0),
       _nZombieEntities(0),
-      _entities       (),
-      _spriteManager  (new SpriteComponentManager()){
-	_root = _createDetachedEntity("__root__");
+      _entities       () {
+	_root = createEntity(EntityRef(), "__root__");
 }
 
 
 EntityManager::~EntityManager() {
+	_root.release();
+}
+
+
+void EntityManager::registerComponentManager(ComponentManagerInterface* cmi) {
+	_compManagers[cmi->name()] = cmi;
 }
 
 
@@ -60,22 +68,53 @@ size_t EntityManager::entityCapacity() const {
 
 
 EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
-	lairAssert(parent.isValid());
 	_Entity* entity = _createDetachedEntity(name);
-	_addChild(parent._get(), entity);
+	if(parent.isValid()) {
+		_addChild(parent._get(), entity);
+	}
 	return EntityRef(entity);
 }
 
+
+EntityRef EntityManager::createEntityFromJson(EntityRef parent,
+                                              const Json::Value& json,
+                                              const Path& cd) {
+	EntityRef entity = createEntity(parent, json.get("name", "").asString().c_str());
+	if(json.isMember("transform")) {
+		entity.place(Transform(parseMatrix4(json["transform"])));
+	}
+	for(const std::string key: json.getMemberNames()) {
+		auto it = _compManagers.find(key);
+		if(it != _compManagers.end()) {
+			it->second->addComponentFromJson(entity, json[key], cd);
+		}
+	}
+	return entity;
+}
+
+
+EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name) {
+	EntityRef entity = createEntity(newParent, name? name: base.name());
+	entity.place(base.transform());
+	return entity;
+}
+
+
 void EntityManager::destroyEntity(EntityRef entity) {
-	lairAssert(entity.isValid() && entity._get() != _root);
+	lairAssert(entity.isValid() && entity != _root);
 
 	while(entity.firstChild().isValid()) {
 		destroyEntity(entity.firstChild());
 	}
 
-	if(entity.sprite()) {
-		removeSpriteComponent(entity);
-	}
+	Component* cmp = entity._get()->firstComponent;
+	while(cmp) {
+		Component* tmp = cmp;
+		cmp = cmp->_nextComponent;
+		//if (tmp->_alive)
+			tmp->destroy();
+	} //FIXME
+	//entity._get()->firstComponent = nullptr;
 
 	_detach(entity._get());
 	entity._get()->reset();
@@ -84,8 +123,10 @@ void EntityManager::destroyEntity(EntityRef entity) {
 }
 
 void EntityManager::_releaseEntity(_Entity* entity) {
-	entity->nextSibling = _firstFree;
-	_firstFree = entity;
+//FIXME: Pretty please.
+// 	entity->nextSibling = _firstFree;
+	entity->flags = 0;
+// 	_firstFree = entity;
 	--_nZombieEntities;
 }
 
@@ -97,28 +138,11 @@ void EntityManager::moveEntity(EntityRef& entity, EntityRef& newParent) {
 }
 
 
-void EntityManager::addSpriteComponent(EntityRef& entity) {
-	lairAssert(entity.isValid());
-	_spriteManager->addComponent(entity._get());
-}
-
-
-void EntityManager::removeSpriteComponent(EntityRef& entity) {
-	lairAssert(entity.isValid());
-	_spriteManager->removeComponent(entity._get());
-}
-
-
 void EntityManager::updateWorldTransform() {
 	// TODO: Update this algorithm when using homogenous arrays to make it
 	// more cache-firendly.
 
-	_updateWorldTransformHelper(_root, Transform::Identity());
-}
-
-
-void EntityManager::render() {
-	_spriteManager->render();
+	_updateWorldTransformHelper(_root._get(), Transform::Identity());
 }
 
 
@@ -136,10 +160,11 @@ void EntityManager::_addEntityBlock() {
 _Entity* EntityManager::_createDetachedEntity(const char* name) {
 	// Do this first so there is no side effect in case of bad_alloc.
 	std::unique_ptr<char> ownedName;
-	if(name) {
-		ownedName.reset(new char[std::strlen(name) + 1]);
-		std::strcpy(ownedName.get(), name);
+	if(!name) {
+		name = "";
 	}
+	ownedName.reset(new char[std::strlen(name) + 1]);
+	std::strcpy(ownedName.get(), name);
 
 	if(!_firstFree) {
 		_addEntityBlock();
@@ -193,6 +218,7 @@ void EntityManager::_detach(_Entity* child) {
 
 void EntityManager::_updateWorldTransformHelper(
         _Entity* entity, const Transform& parentTransform) {
+	entity->prevWorldTransform = entity->worldTransform;
 	entity->worldTransform = parentTransform * entity->transform;
 
 	_Entity* child = entity->firstChild;

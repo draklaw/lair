@@ -31,17 +31,21 @@
 namespace lair {
 
 
+class Context;
+class Renderer;
 class ShaderObject;
+
 
 class ProgramObject {
 public:
-	ProgramObject();
+	ProgramObject(Renderer* renderer=nullptr);
 	ProgramObject(const ProgramObject&) = delete;
 	ProgramObject(ProgramObject&& other);
 	~ProgramObject();
 
-	ProgramObject& operator=(ProgramObject);
+	ProgramObject& operator=(ProgramObject other);
 
+	bool isValid() const;
 	bool isGenerated() const;
 	bool isLinked() const;
 
@@ -67,14 +71,16 @@ public:
 	GLint getAttributeLocation(const GLchar* name) const;
 	GLint getUniformLocation(const GLchar* name) const;
 
-	void dumpLog(std::ostream& out) const;
+	void getLog(std::string& out) const;
 	void dumpInfo(std::ostream& out) const;
 
 	friend void swap(ProgramObject& p0, ProgramObject& p1);
 
 private:
-	GLuint _id;
-	GLint _link_status;
+	Context*  _context;
+	Renderer* _renderer;
+	GLuint    _id;
+	GLint     _link_status;
 };
 
 

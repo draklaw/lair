@@ -30,14 +30,46 @@ namespace lair
 {
 
 
+void _Entity::_addComponent(Component* comp) {
+	comp->_nextComponent = firstComponent;
+	firstComponent = comp;
+}
+
+
+void _Entity::_removeComponent(Component* comp) {
+	lairAssert(comp);
+	if(firstComponent == comp) {
+		firstComponent = comp->_nextComponent;
+	} else {
+		Component* prev = firstComponent;
+		while(prev && prev->_nextComponent != comp) prev = prev->_nextComponent;
+		lairAssert(prev);
+		prev->_nextComponent = prev->_nextComponent->_nextComponent;
+	}
+}
+
+
 void EntityRef::release() {
 	if(_entity) {
 		--_entity->weakRefCount;
-		if(!_entity->isAlive() && _entity->weakRefCount == 0) {
+		if((!_entity->isAlive() || !_entity->parent)
+		&& _entity->weakRefCount == 0) {
 			_entity->manager->_releaseEntity(_entity);
 		}
 		_entity = nullptr;
 	}
+}
+
+
+EntityRef EntityRef::clone(EntityRef newParent, const char* newName) {
+	lairAssert(isValid());
+	EntityRef entity = _entity->manager->cloneEntity(*this, newParent, newName);
+	Component* comp = _entity->firstComponent;
+	while(comp) {
+		comp->clone(entity);
+		comp = comp->_nextComponent;
+	}
+	return entity;
 }
 
 

@@ -27,4 +27,4 @@ target_link_libraries(test_ec
 	pthread # Seems required by GTest
 	lair
 )
-add_dependencies(test test_ec)
+add_dependencies(runtest test_ec)

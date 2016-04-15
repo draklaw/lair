@@ -28,6 +28,7 @@ namespace lair {
 unsigned Image::formatByteSize(Format format) {
 	switch(format) {
 	case FormatInvalid: return 0;
+	case FormatRGB8 :   return 3;
 	case FormatRGBA8:   return 4;
 	}
 	return 0;

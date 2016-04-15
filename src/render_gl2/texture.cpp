@@ -23,6 +23,9 @@
 #include <lair/core/log.h>
 #include <lair/core/image.h>
 
+#include <lair/render_gl2/context.h>
+#include <lair/render_gl2/renderer.h>
+
 #include "lair/render_gl2/texture.h"
 
 
@@ -30,26 +33,29 @@ namespace lair
 {
 
 
-Texture::Texture()
-    : _id(0),
-      _flags(0),
-      _width(0),
-      _height(0),
-      _loader() {
+Texture::Texture(Renderer* renderer)
+	: _context (renderer? renderer->context(): nullptr),
+	  _renderer(renderer),
+	  _id      (0),
+	  _flags   (0),
+	  _width   (0),
+	  _height  (0) {
 }
 
 
 Texture::Texture(Texture&& other)
-    : _id(other._id),
-      _flags(other._flags),
-      _width(other._width),
-      _height(other._height),
-      _loader() {
-	other._id = 0;
-	other._flags = 0;
-	other._width = 0;
-	other._height = 0;
-	other._loader.reset();
+	: _context (other._context),
+	  _renderer(other._renderer),
+	  _id      (other._id),
+	  _flags   (other._flags),
+	  _width   (other._width),
+	  _height  (other._height) {
+	other._context  = nullptr;
+	other._renderer = nullptr;
+	other._id       = 0;
+	other._flags    = 0;
+	other._width    = 0;
+	other._height   = 0;
 }
 
 
@@ -64,31 +70,9 @@ Texture& Texture::operator=(Texture other) {
 }
 
 
-void Texture::_load(ImageLoaderPtr loader) {
-	lairAssert(!isValid() && !_loader);
-	_loader = loader;
-}
-
-
-bool Texture::_uploadNow() {
-	if(isValid()) {
-		// Valid textures should not hold a reference to a loader.
-		lairAssert(!_loader);
-		return true;
-	}
-	if(!_loader) {
-		// We likely failed loading previously.
-		return false;
-	}
-
-	_loader->wait();
-	bool ok = false;
-	if(_loader->getImage().isValid()) {
-		ok = _upload(_loader->getImage());
-	}
-	_loader.reset();
-
-	return ok;
+void Texture::bind() const {
+	lairAssert(_id);
+	_context->bindTexture(gl::TEXTURE_2D, _id);
 }
 
 
@@ -96,14 +80,28 @@ bool Texture::_upload(const Image& image) {
 	lairAssert(image.isValid());
 
 	if(!_id) {
-		glGenTextures(1, &_id);
+		_context->genTextures(1, &_id);
 	}
 
-	glBindTexture(GL_TEXTURE_2D, _id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0,
-	             GL_RGBA, GL_UNSIGNED_BYTE, image.data());
-	glGenerateMipmap(GL_TEXTURE_2D);
-	LAIR_THROW_IF_OPENGL_ERROR();
+	GLenum iformat;
+	GLenum format;
+	switch(image.format()) {
+	case Image::FormatRGB8:
+		iformat = gl::RGB;
+		format  = gl::RGB;
+		break;
+	case Image::FormatRGBA8:
+		iformat = gl::RGBA;
+		format  = gl::RGBA;
+		break;
+	default:
+		return false;
+	}
+
+	_context->bindTexture(gl::TEXTURE_2D, _id);
+	_context->texImage2D(gl::TEXTURE_2D, 0, iformat, image.width(), image.height(), 0,
+	                     format, gl::UNSIGNED_BYTE, image.data());
+	_context->generateMipmap(gl::TEXTURE_2D);
 
 	_width  = image.width();
 	_height = image.height();
@@ -113,11 +111,12 @@ bool Texture::_upload(const Image& image) {
 
 
 void swap(Texture& t0, Texture& t1) {
-	std::swap(t0._id,     t1._id);
-	std::swap(t0._flags,  t1._flags);
-	std::swap(t0._width,  t1._width);
-	std::swap(t0._height, t1._height);
-	std::swap(t0._loader, t1._loader);
+	std::swap(t0._context,  t1._context);
+	std::swap(t0._renderer, t1._renderer);
+	std::swap(t0._id,       t1._id);
+	std::swap(t0._flags,    t1._flags);
+	std::swap(t0._width,    t1._width);
+	std::swap(t0._height,   t1._height);
 }
 
 
@@ -126,47 +125,45 @@ void Texture::_setFlags(uint32 flags) {
 
 	GLenum mag;
 	switch(magFilter()) {
-	case MAG_NEAREST: mag = GL_NEAREST;
-	case MAG_LINEAR:  mag = GL_LINEAR;
+	case MAG_NEAREST: mag = gl::NEAREST; break;
+	case MAG_LINEAR:  mag = gl::LINEAR; break;
 	}
 
 	GLenum min;
 	switch(minFilter() | mipmapMode()) {
-	case MIN_NEAREST | MIPMAP_NONE:    min = GL_NEAREST;
-	case MIN_LINEAR  | MIPMAP_NONE:    min = GL_LINEAR;
-	case MIN_NEAREST | MIPMAP_NEAREST: min = GL_NEAREST_MIPMAP_NEAREST;
-	case MIN_LINEAR  | MIPMAP_NEAREST: min = GL_LINEAR_MIPMAP_NEAREST;
-	case MIN_NEAREST | MIPMAP_LINEAR:  min = GL_NEAREST_MIPMAP_LINEAR;
-	case MIN_LINEAR  | MIPMAP_LINEAR:  min = GL_LINEAR_MIPMAP_LINEAR;
+	case MIN_NEAREST | MIPMAP_NONE:    min = gl::NEAREST; break;
+	case MIN_LINEAR  | MIPMAP_NONE:    min = gl::LINEAR; break;
+	case MIN_NEAREST | MIPMAP_NEAREST: min = gl::NEAREST_MIPMAP_NEAREST; break;
+	case MIN_LINEAR  | MIPMAP_NEAREST: min = gl::LINEAR_MIPMAP_NEAREST; break;
+	case MIN_NEAREST | MIPMAP_LINEAR:  min = gl::NEAREST_MIPMAP_LINEAR; break;
+	case MIN_LINEAR  | MIPMAP_LINEAR:  min = gl::LINEAR_MIPMAP_LINEAR; break;
 	}
 
 	GLenum wraps;
 	switch(wrapS()) {
-	case REPEAT_S: wraps = GL_REPEAT;
-	case CLAMP_S:  wraps = GL_CLAMP_TO_EDGE;
-	case MIRROR_S: wraps = GL_MIRRORED_REPEAT;
+	case REPEAT_S: wraps = gl::REPEAT; break;
+	case CLAMP_S:  wraps = gl::CLAMP_TO_EDGE; break;
+	case MIRROR_S: wraps = gl::MIRRORED_REPEAT; break;
 	}
 
 	GLenum wrapt;
 	switch(wrapT()) {
-	case REPEAT_T: wrapt = GL_REPEAT;
-	case CLAMP_T:  wrapt = GL_CLAMP_TO_EDGE;
-	case MIRROR_T: wrapt = GL_MIRRORED_REPEAT;
+	case REPEAT_T: wrapt = gl::REPEAT; break;
+	case CLAMP_T:  wrapt = gl::CLAMP_TO_EDGE; break;
+	case MIRROR_T: wrapt = gl::MIRRORED_REPEAT; break;
 	}
 
-	glBindTexture(GL_TEXTURE_2D, _id);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     wraps);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     wrapt);
-
-	LAIR_THROW_IF_OPENGL_ERROR();
+	_context->bindTexture(gl::TEXTURE_2D, _id);
+	_context->texParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, mag);
+	_context->texParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, min);
+	_context->texParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S,     wraps);
+	_context->texParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T,     wrapt);
 }
 
 
 void Texture::_release() {
 	if(isValid()) {
-		glDeleteTextures(1, &_id);
+		_context->deleteTextures(1, &_id);
 	}
 }
 

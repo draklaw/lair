@@ -48,13 +48,13 @@ GLOutOfMemory::GLOutOfMemory()
 
 const char* glErrorString(GLenum error) {
 	switch(error) {
-	case GL_NO_ERROR:          return "no error";
-	case GL_INVALID_ENUM:      return "invalid enum";
-	case GL_INVALID_FRAMEBUFFER_OPERATION:
+	case gl::NO_ERROR:          return "no error";
+	case gl::INVALID_ENUM:      return "invalid enum";
+	case gl::INVALID_FRAMEBUFFER_OPERATION:
 		return "invalid framebuffer operation";
-	case GL_INVALID_VALUE:     return "invalid value";
-	case GL_INVALID_OPERATION: return "invalid operation";
-	case GL_OUT_OF_MEMORY:     return "out of memory";
+	case gl::INVALID_VALUE:     return "invalid value";
+	case gl::INVALID_OPERATION: return "invalid operation";
+	case gl::OUT_OF_MEMORY:     return "out of memory";
 	}
 	return "unknown error";
 }

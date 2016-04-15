@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2016 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,22 +19,37 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
-
-#include "lair/ec/component.h"
+#ifndef _LAIR_DEMO_TEMPLATE_GAME_H
+#define _LAIR_DEMO_TEMPLATE_GAME_H
 
 
-namespace lair
-{
+#include <lair/utils/game_base.h>
 
 
-Component::Component() {
-}
+using namespace lair;
 
 
-Component::~Component() {
-}
+class MainState;
 
 
-}
+class Game : public GameBase {
+public:
+	Game(int argc, char** argv);
+	Game(const Game&)  = delete;
+	Game(      Game&&) = delete;
+	~Game();
+
+	Game& operator=(const Game&)  = delete;
+	Game& operator=(      Game&&) = delete;
+
+	void initialize();
+	void shutdown();
+
+	MainState* mainState();
+
+protected:
+	std::unique_ptr<MainState> _mainState;
+};
+
+
+#endif

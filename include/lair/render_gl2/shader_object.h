@@ -25,7 +25,6 @@
 
 #include <string>
 #include <istream>
-#include <ostream>
 
 #include <lair/render_gl2/gl.h>
 
@@ -33,17 +32,21 @@
 namespace lair {
 
 
+class Context;
+class Renderer;
 class GlslSource;
+
 
 class ShaderObject {
 public:
-	ShaderObject(GLenum type=0);
+	ShaderObject(Renderer* renderer=nullptr, GLenum type=0);
 	ShaderObject(const ShaderObject&) = delete;
 	ShaderObject(ShaderObject&& other);
 	~ShaderObject();
 
 	ShaderObject& operator=(ShaderObject other);
 
+	bool isValid() const;
 	bool isGenerated() const;
 	bool isCompiled() const;
 
@@ -56,14 +59,16 @@ public:
 	bool compileFromFile(const std::string& filename);
 	bool compileFromStream(std::istream& in);
 
-	void dumpLog(std::ostream& out) const;
+	void getLog(std::string& out) const;
 
 	friend void swap(ShaderObject& s0, ShaderObject& s1);
 
 private:
-	GLenum _type;
-	GLuint _id;
-	GLint _compile_status;
+	Context*  _context;
+	Renderer* _renderer;
+	GLenum    _type;
+	GLuint    _id;
+	GLint     _compile_status;
 };
 
 

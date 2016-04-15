@@ -31,9 +31,9 @@ core = SourceFileLoader('core', join(dirname(__file__), '..', 'core', 'core.py')
 
 entity_ref_class = AutoClass('EntityRef', is_value = True)
 
-entity_manager_class = AutoClass('EntityManager',
-								 [ OPTIONAL_PARAM,
-								   (auto_size_t, 'entity_block_size', '1024') ])
+#entity_manager_class = AutoClass('EntityManager',
+#								 [ OPTIONAL_PARAM,
+#								   (auto_size_t, 'entity_block_size', '1024') ])
 
 (entity_ref_class
  .add_method('isValid', auto_bool)
@@ -43,25 +43,25 @@ entity_manager_class = AutoClass('EntityManager',
  .add_method('nextSibling', entity_ref_class)
 )
 
-(entity_manager_class
- .add_method('nEntities',             auto_size_t)
- .add_method('nZombieEntities',       auto_size_t)
- .add_method('root',                  entity_ref_class)
- .add_method('entityCapacity',        auto_size_t)
- .add_method('createEntity',          entity_ref_class,
-			 [ (entity_ref_class, 'parent'),
-	           OPTIONAL_PARAM,
-			   (auto_string,      'name', 'NULL')])
- .add_method('destroyEntity',         None,
-			 [ (entity_ref_class, 'entity') ])
- .add_method('moveEntity',            None,
-			 [ (entity_ref_class, 'entity'),
-			   (entity_ref_class, 'new_parent') ])
- .add_method('addSpriteComponent',    None,
-			 [ (entity_ref_class, 'entity') ])
- .add_method('removeSpriteComponent', None,
-			 [ (entity_ref_class, 'entity') ])
-)
+#(entity_manager_class
+# .add_method('nEntities',             auto_size_t)
+# .add_method('nZombieEntities',       auto_size_t)
+# .add_method('root',                  entity_ref_class)
+# .add_method('entityCapacity',        auto_size_t)
+# .add_method('createEntity',          entity_ref_class,
+#			 [ (entity_ref_class, 'parent'),
+#	           OPTIONAL_PARAM,
+#			   (auto_string,      'name', 'NULL')])
+# .add_method('destroyEntity',         None,
+#			 [ (entity_ref_class, 'entity') ])
+# .add_method('moveEntity',            None,
+#			 [ (entity_ref_class, 'entity'),
+#			   (entity_ref_class, 'new_parent') ])
+# .add_method('addSpriteComponent',    None,
+#			 [ (entity_ref_class, 'entity') ])
+# .add_method('removeSpriteComponent', None,
+#			 [ (entity_ref_class, 'entity') ])
+#)
 
 ec_module = (
 	AutoModule('ec')
@@ -70,7 +70,7 @@ ec_module = (
 		.add_include('lair/ec/entity_manager.h')
 		.add_use_namespace('lair')
 		.add_class(entity_ref_class)
-		.add_class(entity_manager_class)
+#		.add_class(entity_manager_class)
 )
 
 if __name__ == '__main__':

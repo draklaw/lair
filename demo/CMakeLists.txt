@@ -25,3 +25,4 @@ include_directories(
 )
 
 add_subdirectory(simple_window)
+add_subdirectory(template)
