@@ -102,22 +102,18 @@ set(lair_SOURCES
 
 	sys_sdl2/window.cpp
 	sys_sdl2/image_loader.cpp
-#	sys_sdl2/json_loader.cpp
 	sys_sdl2/sys_module.cpp
 	sys_sdl2/audio_module.cpp
 
 	render_gl2/gl.cpp
 	render_gl2/context.cpp
 	render_gl2/orthographic_camera.cpp
-	render_gl2/render_pass.cpp
 	render_gl2/vertex_format.cpp
 	render_gl2/vertex_buffer.cpp
 	render_gl2/glsl_source.cpp
 	render_gl2/shader_object.cpp
 	render_gl2/program_object.cpp
 	render_gl2/texture.cpp
-#	render_gl2/sprite.cpp
-	render_gl2/batch.cpp
 	render_gl2/renderer.cpp
 	render_gl2/render_module.cpp
 

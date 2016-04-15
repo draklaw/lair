@@ -28,6 +28,7 @@
 #include <lair/render_gl2/gl.h>
 #include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/vertex_buffer.h>
 
 
 namespace lair

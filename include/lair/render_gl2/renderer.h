@@ -38,8 +38,6 @@
 #include <lair/render_gl2/shader_object.h>
 #include <lair/render_gl2/program_object.h>
 #include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/batch.h>
-#include <lair/render_gl2/render_pass.h>
 
 
 namespace lair
@@ -62,15 +60,6 @@ public:
 	Renderer& operator=(Renderer&&)      = delete;
 
 	Context* context();
-
-	PassStates* currentPassStates();
-
-	inline bool passStatesDirty() const {
-		return _passStatesDirty;
-	}
-	inline void setPassStatesDirty(bool dirty = true) {
-		_passStatesDirty = dirty;
-	}
 
 	ShaderObject compileShader(const char* name, GLenum type,
 	                           const GlslSource& source);
@@ -100,9 +89,6 @@ protected:
 	AssetManager* _assetManager;
 
 	Context*      _context;
-
-	PassStates    _currentPassStates;
-	bool          _passStatesDirty;
 
 	TextureList   _pendingTextures;
 	Texture       _defaultTexture;

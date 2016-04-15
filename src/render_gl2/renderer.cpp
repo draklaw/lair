@@ -41,7 +41,6 @@ Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
     : _module(module),
       _assetManager(assetManager),
       _context(module? module->context(): nullptr),
-      _passStatesDirty(true),
       _defaultTexture() {
 	lairAssert(_module);
 	lairAssert(_assetManager);
@@ -56,11 +55,6 @@ Renderer::~Renderer() {
 
 Context* Renderer::context() {
 	return _context;
-}
-
-
-PassStates* Renderer::currentPassStates() {
-	return &_currentPassStates;
 }
 
 
