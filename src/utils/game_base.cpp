@@ -158,6 +158,8 @@ void GameBase::initialize() {
 
 
 void GameBase::shutdown() {
+	_assets->releaseAll();
+
 	_audio->shutdown();
 
 	_renderModule->shutdown();

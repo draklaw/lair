@@ -95,4 +95,10 @@ void AssetManager::setAspect(AssetSP asset, AspectSP aspect) {
 }
 
 
+void AssetManager::releaseAll() {
+	_aspects.clear();
+	_assetMap.clear();
+}
+
+
 }

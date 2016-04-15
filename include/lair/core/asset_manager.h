@@ -185,6 +185,8 @@ public:
 	template<typename _Aspect>
 	std::shared_ptr<_Aspect> createAspect(AssetSP asset);
 
+	void releaseAll();
+
 private:
 	typedef std::unordered_map<Path,            AssetSP, boost::hash<Path>>
 	                                                            AssetPathMap;
