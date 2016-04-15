@@ -25,5 +25,19 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(src)
 
+find_package(Doxygen)
+
+if (DOXYGEN_FOUND)
+	set(DOC_NAME    "Lair Engine")
+	set(DOC_BRIEF   "Lair Game Engine")
+	set(DOC_VERSION "0.227")
+	set(DOC_DEST    "${PROJECT_BINARY_DIR}/docs")
+	set(DOC_SOURCES "${PROJECT_SOURCE_DIR}/include/lair")
+	
+	configure_file(Doxyfile.in Doxyfile)
+	
+	add_custom_target(docs doxygen)
+endif()
+
 add_subdirectory(demo EXCLUDE_FROM_ALL)
 add_subdirectory(test EXCLUDE_FROM_ALL)
