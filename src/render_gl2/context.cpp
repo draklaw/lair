@@ -21,7 +21,6 @@
 
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
-#  include <OpenGL/glext.h>
 #else
 #  define GLEW_NO_GLU
 #  include <GL/glew.h>
