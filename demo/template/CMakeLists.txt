@@ -39,9 +39,5 @@ add_executable(template
 
 target_link_libraries(template
 	lair
-#	GLEW
-	GL
-#	/usr/lib/x86_64-linux-gnu/libGLESv2.so.2
-	${SDL2_LIBRARY}
 )
 add_dependencies(demo template)

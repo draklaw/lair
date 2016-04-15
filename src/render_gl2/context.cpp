@@ -19,7 +19,13 @@
  */
 
 
-#include <GL/glew.h>
+#ifdef __APPLE__
+#  include <OpenGL/gl.h>
+#  include <OpenGL/glext.h>
+#else
+#  define GLEW_NO_GLU
+#  include <GL/glew.h>
+#endif
 
 #include "lair/render_gl2/gl.h"
 
@@ -46,6 +52,7 @@ Context::Context(Logger* logger)
 
 
 bool Context::initialize() {
+#ifndef __APPLE__
 	GLenum err = glewInit();
 	if(err != GLEW_OK) {
 		log().error("GLEW initialization failed: ", glewGetErrorString(err), ".");
@@ -56,6 +63,7 @@ bool Context::initialize() {
 		log().error("OpenGL 2.1 is not supported.");
 		return false;
 	}
+#endif
 
 	log().info("OpenGL version: ",      getString(GL_VERSION));
 	log().info("OpenGL GLSL version: ", getString(GL_SHADING_LANGUAGE_VERSION));
@@ -253,11 +261,11 @@ void Context::getBufferParameteriv(GLenum  target, GLenum  pname, GLint* params)
 	LAIR_GL2_CHECK_GL_CALL();
 }
 
-void Context::depthRangef(GLfloat  n, GLfloat  f) {
-	LAIR_GL2_LOG_CALL("glDepthRangef(", n, ", ", f, ")");
-	::glDepthRangef(n, f);
-	LAIR_GL2_CHECK_GL_CALL();
-}
+//void Context::depthRangef(GLfloat  n, GLfloat  f) {
+//	LAIR_GL2_LOG_CALL("glDepthRangef(", n, ", ", f, ")");
+//	::glDepthRangef(n, f);
+//	LAIR_GL2_CHECK_GL_CALL();
+//}
 void Context::viewport(GLint  x, GLint  y, GLsizei  width, GLsizei  height) {
 	LAIR_GL2_LOG_CALL("glViewport(", x, ", ", y, ", ", width, ", ", height, ")");
 	::glViewport(x, y, width, height);
@@ -471,21 +479,21 @@ void Context::compileShader(GLuint  shader) {
 	::glCompileShader(shader);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::releaseShaderCompiler() {
-	LAIR_GL2_LOG_CALL("glReleaseShaderCompiler()");
-	::glReleaseShaderCompiler();
-	LAIR_GL2_CHECK_GL_CALL();
-}
+//void Context::releaseShaderCompiler() {
+//	LAIR_GL2_LOG_CALL("glReleaseShaderCompiler()");
+//	::glReleaseShaderCompiler();
+//	LAIR_GL2_CHECK_GL_CALL();
+//}
 void Context::deleteShader(GLuint  shader) {
 	LAIR_GL2_LOG_CALL("glDeleteShader(", shader, ")");
 	::glDeleteShader(shader);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::shaderBinary(GLsizei  count, GLuint* shaders, GLenum  binaryformat, const void* binary, GLsizei  length) {
-	LAIR_GL2_LOG_CALL("glShaderBinary(", count, ", ", shaders, ", ", binaryformat, ", ", binary, ", ", length, ")");
-	::glShaderBinary(count, shaders, binaryformat, binary, length);
-	LAIR_GL2_CHECK_GL_CALL();
-}
+//void Context::shaderBinary(GLsizei  count, GLuint* shaders, GLenum  binaryformat, const void* binary, GLsizei  length) {
+//	LAIR_GL2_LOG_CALL("glShaderBinary(", count, ", ", shaders, ", ", binaryformat, ", ", binary, ", ", length, ")");
+//	::glShaderBinary(count, shaders, binaryformat, binary, length);
+//	LAIR_GL2_CHECK_GL_CALL();
+//}
 GLuint Context::createProgram() {
 	LAIR_GL2_LOG_CALL("glCreateProgram()");
 	GLuint ret = ::glCreateProgram();
@@ -670,11 +678,11 @@ void Context::getShaderSource(GLuint  shader, GLsizei  bufSize, GLsizei* length,
 	::glGetShaderSource(shader, bufSize, length, source);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::getShaderPrecisionFormat(GLenum  shadertype, GLenum  precisiontype, GLint* range, GLint* precision) {
-	LAIR_GL2_LOG_CALL("glGetShaderPrecisionFormat(", shadertype, ", ", precisiontype, ", ", range, ", ", precision, ")");
-	::glGetShaderPrecisionFormat(shadertype, precisiontype, range, precision);
-	LAIR_GL2_CHECK_GL_CALL();
-}
+//void Context::getShaderPrecisionFormat(GLenum  shadertype, GLenum  precisiontype, GLint* range, GLint* precision) {
+//	LAIR_GL2_LOG_CALL("glGetShaderPrecisionFormat(", shadertype, ", ", precisiontype, ", ", range, ", ", precision, ")");
+//	::glGetShaderPrecisionFormat(shadertype, precisiontype, range, precision);
+//	LAIR_GL2_CHECK_GL_CALL();
+//}
 void Context::getVertexAttribfv(GLuint  index, GLenum  pname, GLfloat* params) {
 	LAIR_GL2_LOG_CALL("glGetVertexAttribfv(", index, ", ", pname, ", ", params, ")");
 	::glGetVertexAttribfv(index, pname, params);
@@ -808,11 +816,11 @@ void Context::clearColor(GLfloat  red, GLfloat  green, GLfloat  blue, GLfloat  a
 	::glClearColor(red, green, blue, alpha);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::clearDepthf(GLfloat  d) {
-	LAIR_GL2_LOG_CALL("glClearDepthf(", d, ")");
-	::glClearDepthf(d);
-	LAIR_GL2_CHECK_GL_CALL();
-}
+//void Context::clearDepthf(GLfloat  d) {
+//	LAIR_GL2_LOG_CALL("glClearDepthf(", d, ")");
+//	::glClearDepthf(d);
+//	LAIR_GL2_CHECK_GL_CALL();
+//}
 void Context::clearStencil(GLint  s) {
 	LAIR_GL2_LOG_CALL("glClearStencil(", s, ")");
 	::glClearStencil(s);

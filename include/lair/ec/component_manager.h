@@ -237,7 +237,7 @@ public:
 	}
 
 protected:
-	typedef std::vector<Component*, Eigen::aligned_allocator<Component>>   ComponentList;
+	typedef std::vector<Component*, Eigen::aligned_allocator<Component*>>   ComponentList;
 
 protected:
 	std::string      _name;
@@ -253,9 +253,9 @@ public:
 	typedef _Component Component;
 
 protected:
-	typedef std::unordered_map<_Entity*, Component,
-			std::hash<_Entity*>, std::equal_to<_Entity*>,
-			Eigen::aligned_allocator<std::pair<_Entity*, Component>>> ComponentMap;
+	typedef std::unordered_map<_Entity const* const, Component,
+	        boost::hash<_Entity const* const>, std::equal_to<_Entity const* const>,
+	        Eigen::aligned_allocator<std::pair<_Entity const* const, Component>>> ComponentMap;
 
 public:
 	typedef typename ComponentMap::iterator Iterator;

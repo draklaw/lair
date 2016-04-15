@@ -33,9 +33,5 @@ add_definitions(-D "'SIMPLE_WINDOW_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"'")
 
 target_link_libraries(simple_window
 	lair
-#	GLEW
-	GL
-#	/usr/lib/x86_64-linux-gnu/libGLESv2.so.2
-	${SDL2_LIBRARY}
 )
 add_dependencies(demo simple_window)

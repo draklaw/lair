@@ -104,15 +104,4 @@ inline std::ostream& operator<<(std::ostream& out, const Path& path) {
 }
 
 
-namespace std {
-template <>
-class hash<lair::Path> {
-public:
-	inline size_t operator()(const lair::Path& path) const {
-		return hash<string>()(path.utf8String());
-	}
-};
-}
-
-
 #endif

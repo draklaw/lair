@@ -52,6 +52,10 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 		case SDL_PIXELFORMAT_ABGR8888:
 			format = Image::Format::FormatRGBA8;
 			break;
+		case SDL_PIXELFORMAT_ARGB8888:
+			surf = make_unique(SDL_ConvertSurfaceFormat(surf.get(), SDL_PIXELFORMAT_ABGR8888, 0), SDL_FreeSurface);
+			format = Image::Format::FormatRGBA8;
+			break;
 		default:
 			log.error("Unable to load image \"", asset()->logicPath(), "\" (", realPath(),"): unsupported format ",
 			          SDL_GetPixelFormatName(surf->format->format));

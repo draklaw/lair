@@ -98,7 +98,7 @@ public:
 	GenericAspect& operator=(const GenericAspect&)  = delete;
 	GenericAspect& operator=(      GenericAspect&&) = delete;
 
-	const DataSP get() {
+	const DataSP get() const {
 		std::lock_guard<std::mutex> lock(_lock);
 		return _data;
 	}
@@ -186,7 +186,8 @@ public:
 	std::shared_ptr<_Aspect> createAspect(AssetSP asset);
 
 private:
-	typedef std::unordered_map<Path,            AssetSP>        AssetPathMap;
+	typedef std::unordered_map<Path,            AssetSP, boost::hash<Path>>
+	                                                            AssetPathMap;
 	typedef std::unordered_map<const Asset*,    AspectSP>       AssetAspectMap;
 	typedef std::unordered_map<std::type_index, AssetAspectMap> AspectMap;
 

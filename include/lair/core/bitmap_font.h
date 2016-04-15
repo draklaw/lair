@@ -100,7 +100,7 @@ public:
 
 protected:
 	typedef std::unordered_map<int, Glyph, std::hash<int>, std::equal_to<int>,
-	                           Eigen::aligned_allocator<std::pair<int, Glyph>>> GlyphMap;
+	                           Eigen::aligned_allocator<std::pair<const int, Glyph>>> GlyphMap;
 	typedef std::pair<int, int> CharPair;
 	typedef std::unordered_map<CharPair, int, boost::hash<CharPair>> KerningMap;
 

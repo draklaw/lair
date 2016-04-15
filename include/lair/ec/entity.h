@@ -40,7 +40,7 @@ class EntityManager;
 class SpriteComponent;
 
 
-struct _Entity {
+class _Entity {
 public:
 	enum {
 		Alive = 0x01

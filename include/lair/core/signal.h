@@ -75,7 +75,8 @@ private:
 };
 
 
-struct _Connection {
+class _Connection {
+public:
 	inline _Connection()
 	    : function(),
 	      refCount(0),
