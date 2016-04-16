@@ -98,8 +98,8 @@ void BitmapTextComponent::setFont(AssetSP font) {
 
 
 void BitmapTextComponent::setFont(const Path& logicPath) {
-	auto loader = _manager->loader()->load<BitmapFontLoader>(logicPath);
-	setFont(loader->asset());
+	AssetSP asset = _manager->loader()->loadAsset<BitmapFontLoader>(logicPath);
+	setFont(asset);
 }
 
 

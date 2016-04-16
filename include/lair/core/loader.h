@@ -164,6 +164,17 @@ public:
 		return load<L>(asset, std::forward<Args>(args)...);
 	}
 
+	/// Same as above, but return the Asset.
+	template < typename L, typename... Args >
+	AssetSP loadAsset(const Path& logicPath, Args&&... args) {
+		AssetSP asset = _assets->getAsset(logicPath);
+		if(!asset) {
+			asset = _assets->createAsset(logicPath);
+		}
+		load<L>(asset, std::forward<Args>(args)...);
+		return asset;
+	}
+
 	template < typename L, typename... Args >
 	void loadSync(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
 		log().log("Loading \"", aspect->asset()->logicPath(), "\" from thread ",
