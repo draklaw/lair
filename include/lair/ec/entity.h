@@ -179,7 +179,19 @@ public:
 		return /* * */_entity->transform;
 	}
 
+	inline       Transform& transform() {
+		lairAssert(isValid());
+//		lairAssert(_entity->transform);
+		return /* * */_entity->transform;
+	}
+
 	inline const Transform& worldTransform() const {
+		lairAssert(isValid());
+//		lairAssert(_entity->worldTransform);
+		return /* * */_entity->worldTransform;
+	}
+
+	inline       Transform& worldTransform() {
 		lairAssert(isValid());
 //		lairAssert(_entity->worldTransform);
 		return /* * */_entity->worldTransform;
