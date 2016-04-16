@@ -216,10 +216,14 @@ public:
 		place(Transform(Translation(pos)));
 	}
 
-	inline void move(const Transform& transform) {
+	inline void moveTo(const Transform& transform) {
 		lairAssert(isValid());
 //		lairAssert(_entity->transform);
 		/* * */_entity->transform = transform;
+	}
+
+	inline void moveTo(const Vector3& pos) {
+		moveTo(Transform(Translation(pos)));
 	}
 
 	EntityRef clone(EntityRef newParent, const char* newName = nullptr);
