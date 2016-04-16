@@ -70,8 +70,8 @@ void SpriteComponent::setTexture(AssetSP texture) {
 
 
 void SpriteComponent::setTexture(const Path& logicPath) {
-	auto loader = _manager->loader()->load<ImageLoader>(logicPath);
-	setTexture(loader->asset());
+	AssetSP asset = _manager->loader()->loadAsset<ImageLoader>(logicPath);
+	setTexture(asset);
 }
 
 
