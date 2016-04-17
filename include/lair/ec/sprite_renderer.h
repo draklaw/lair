@@ -91,7 +91,16 @@ public:
 	SpriteRenderer& operator=(const SpriteRenderer&) = delete;
 	SpriteRenderer& operator=(SpriteRenderer&&)      = delete;
 
+	unsigned vertexCount() const;
+	unsigned indexCount()  const;
+
 	void beginFrame();
+	void setDrawCall(TextureSP texture, unsigned texFlags,
+	                 BlendingMode blendingMode);
+	void addVertex(const Matrix4& trans, const Vector2& pos,
+	              const Vector4& color, const Vector2& texCoord);
+	void addIndex(unsigned index);
+	void endSprite();
 	void addSprite(const Matrix4& trans, const Box2& coords,
 	               const Vector4& color, const Box2& texCoords,
 	               TextureSP texture, unsigned texFlags,

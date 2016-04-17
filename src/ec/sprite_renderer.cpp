@@ -76,7 +76,7 @@ const char* _spriteFragGlsl =
 
 	"void main() {\n"
 	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
-	"	if(fcolor.a < .5){\n"
+	"	if(fcolor.a < .01){\n"
 	"		discard;\n"
 	"	}\n"
 	"	gl_FragColor = fcolor;\n"
@@ -155,42 +155,69 @@ void SpriteRenderer::beginFrame() {
 }
 
 
+unsigned SpriteRenderer::vertexCount() const {
+	return _buffer.vertexCount();
+}
+
+
+unsigned SpriteRenderer::indexCount()  const {
+	return _buffer.indexSize();
+}
+
+
+void SpriteRenderer::setDrawCall(TextureSP texture, unsigned texFlags,
+                                 BlendingMode blendingMode) {
+	if(_drawCalls.empty()
+	|| _drawCalls.back().tex.lock()   != texture
+	|| _drawCalls.back().texFlags     != texFlags
+	|| _drawCalls.back().blendingMode != blendingMode) {
+		_drawCalls.emplace_back(DrawCall{ texture, texFlags, blendingMode,
+		                                  indexCount(), 0 });
+	}
+}
+
+
+void SpriteRenderer::addVertex(const Matrix4& trans, const Vector2& pos,
+                               const Vector4& color, const Vector2& texCoord) {
+	Vector4 p;
+	p << pos, _spriteDepth, 1;
+	_buffer.addVertex(SpriteVertex{ trans * p, color, texCoord });
+}
+
+
+void SpriteRenderer::addIndex(unsigned index) {
+	_buffer.addIndex(index);
+	++_drawCalls.back().count;
+}
+
+
+void SpriteRenderer::endSprite() {
+	++_spriteDepth;
+}
+
+
 void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
                                const Vector4& color, const Box2& texCoords,
                                TextureSP texture, unsigned texFlags,
                                BlendingMode blendingMode) {
-	GLuint index = _buffer.vertexCount();
+	GLuint index = vertexCount();
+
+	setDrawCall(texture, texFlags, blendingMode);
 
 	for(int corner = 0; corner < 4; ++corner) {
 		int tcCorner = corner ^ 0x02; // texCoords are bottom-up.
-		Vector4 p;
-		p << coords.corner(Box2::CornerType(corner)), _spriteDepth, 1;
-		_buffer.addVertex(SpriteVertex{
-			trans * p,
-			color,
-			texCoords.corner(Box2::CornerType(tcCorner))
-		});
+		Vector2 p = coords.corner(Box2::CornerType(corner));
+		addVertex(trans, p, color, texCoords.corner(Box2::CornerType(tcCorner)));
 	}
 
-	_buffer.addIndex(index + 0);
-	_buffer.addIndex(index + 1);
-	_buffer.addIndex(index + 2);
-	_buffer.addIndex(index + 2);
-	_buffer.addIndex(index + 1);
-	_buffer.addIndex(index + 3);
+	addIndex(index + 0);
+	addIndex(index + 1);
+	addIndex(index + 2);
+	addIndex(index + 2);
+	addIndex(index + 1);
+	addIndex(index + 3);
 
-	++_spriteDepth;
-
-	if(!_drawCalls.empty()
-	&&  _drawCalls.back().tex.lock()   == texture
-	&&  _drawCalls.back().texFlags     == texFlags
-	&&  _drawCalls.back().blendingMode == blendingMode) {
-		_drawCalls.back().count += 6;
-	}
-	else {
-		_drawCalls.emplace_back(DrawCall{ texture, texFlags, blendingMode,
-		                                  _buffer.indexSize() - 6, 6 });
-	}
+	endSprite();
 }
 
 
