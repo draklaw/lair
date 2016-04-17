@@ -81,6 +81,12 @@ public:
 	inline const Vector4& color() const { return _color; }
 	inline void setColor(const Vector4& color) { _color = color; }
 
+	inline const Vector2i& size() const { return _size; }
+	inline void setSize(const Vector2i& size) { _size = size; }
+
+	inline const Vector2& anchor() const { return _anchor; }
+	inline void setAnchor(const Vector2& anchor) { _anchor = anchor; }
+
 public:
 	BitmapTextComponentManager* _manager;
 
@@ -88,6 +94,8 @@ public:
 	TextureAspectWP    _texture;
 	std::string        _text;
 	Vector4            _color;
+	Vector2i           _size;
+	Vector2            _anchor;
 };
 
 

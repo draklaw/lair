@@ -54,14 +54,18 @@ public:
 	unsigned nGlyphs() const { return _glyphs.size(); }
 	const PlacedGlyph& glyph(unsigned i) const { return _glyphs.at(i); }
 
+	const Box2 box() const { return _box; }
+
 	void clear();
 	void addGlyph(unsigned codepoint, const Vector2& pos);
+	void grow(const Vector2& p);
 
 private:
 	typedef std::vector<PlacedGlyph> GlyphVector;
 
 private:
 	GlyphVector _glyphs;
+	Box2        _box;
 };
 
 
@@ -110,9 +114,9 @@ protected:
 protected:
 	AssetSP    _image;
 
-	unsigned   _fontSize;
-	unsigned   _height;
-	unsigned   _baselineToTop;
+	int        _fontSize;
+	int        _height;
+	int        _baselineToTop;
 
 	GlyphMap   _glyphMap;
 	KerningMap _kerning;

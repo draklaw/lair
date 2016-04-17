@@ -73,7 +73,9 @@ BitmapTextComponent::BitmapTextComponent(_Entity* entity,
       _font(),
       _texture(),
       _text(),
-      _color(1, 1, 1, 1) {
+      _color(1, 1, 1, 1),
+      _size(0, 0),
+      _anchor(0, 0) {
 }
 
 
@@ -138,6 +140,22 @@ void BitmapTextComponentManager::addComponentFromJson(
 			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
 		}*/
 	}
+	if(json.isMember("size")) {
+		Json::Value size = json["size"];
+		if(size.isArray() || size.size() == 2) {
+			comp->setSize(Vector2i(size[0].asInt(), size[1].asInt()));
+		} /*else {
+			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
+		}*/
+	}
+	if(json.isMember("anchor")) {
+		Json::Value anchor = json["color"];
+		if(anchor.isArray() || anchor.size() == 2) {
+			comp->setAnchor(Vector2(anchor[0].asFloat(), anchor[1].asFloat()));
+		} /*else {
+			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
+		}*/
+	}
 }
 
 
@@ -170,7 +188,8 @@ void BitmapTextComponentManager::render(float interp) {
 						  comp._entity()->prevWorldTransform.matrix(),
 						  comp._entity()->worldTransform.matrix());
 
-		TextLayout layout = font->layoutText(comp.text());
+		int width = (comp.size()(0) > 0)? comp.size()(0): 999999;
+		TextLayout layout = font->layoutText(comp.text(), width);
 		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
 			unsigned cp = layout.glyph(i).codepoint;
 			Vector2 pos = layout.glyph(i).pos;
@@ -179,7 +198,9 @@ void BitmapTextComponentManager::render(float interp) {
 			Vector2 size = glyph.size;
 
 			pos(0) += glyph.offset(0);
-			pos(1) += font->height() - size(1) - glyph.offset(1);
+			pos(1) += font->height() - size(1) - glyph.offset(1)
+			        + layout.box().sizes()(1);
+			pos -= layout.box().sizes().cwiseProduct(comp.anchor());
 			Box2 coords(pos, pos + size);
 
 			TextureSP tex = comp.texture()->_get();

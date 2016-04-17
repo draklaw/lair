@@ -32,17 +32,24 @@
 namespace lair {
 
 
-TextLayout::TextLayout() {
+TextLayout::TextLayout()
+	: 	_box(Vector2(0, 0), Vector2(0, 0)) {
 }
 
 
 void TextLayout::clear() {
 	_glyphs.clear();
+	_box = Box2(Vector2(0, 0), Vector2(0, 0));
 }
 
 
 void TextLayout::addGlyph(unsigned codepoint, const Vector2& pos) {
 	_glyphs.emplace_back(PlacedGlyph{ codepoint, pos });
+}
+
+
+void TextLayout::grow(const Vector2& p) {
+	_box.extend(p);
 }
 
 
@@ -144,21 +151,22 @@ TextLayout BitmapFont::layoutText(const std::string& msg, unsigned maxWidth) con
 			ww += glyph(msg[i]).advance;
 			++i;
 		}
-		if(y + ww > int(maxWidth)) {
+		if(x + ww > int(maxWidth)) {
 			x = 0;
 			y += _height;
 		}
 		i = wstart;
 		while(i < msg.size() && !std::isspace(msg[i])) {
-			layout.addGlyph(msg[i], Vector2(x, -y));
-			x += glyph(msg[i]).advance;
 			x += (i? kerning(msg[i-1], msg[i]): 0);
+			layout.addGlyph(msg[i], Vector2(x, y - int(_baselineToTop)));
+			x += glyph(msg[i]).advance;
+			layout.grow(Vector2(x, y - int(_height)));
 			++i;
 		}
 		if(i < msg.size()) {
 			if(msg[i] == '\n') {
 				x = 0;
-				y += _height;
+				y -= _height;
 			}
 			else {
 				layout.addGlyph(msg[i], Vector2(x, -y));
