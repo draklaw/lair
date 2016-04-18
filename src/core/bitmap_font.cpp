@@ -153,7 +153,7 @@ TextLayout BitmapFont::layoutText(const std::string& msg, unsigned maxWidth) con
 		}
 		if(x + ww > int(maxWidth)) {
 			x = 0;
-			y += _height;
+			y -= _height;
 		}
 		i = wstart;
 		while(i < msg.size() && !std::isspace(msg[i])) {
