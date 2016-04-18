@@ -77,8 +77,8 @@ public:
 	void initialize();
 	void shutdown();
 
-	int  playSound(AssetSP sound, int loops = 0);
-	int  playSound(SoundSP sound, int loops = 0);
+	int  playSound(AssetSP sound, int loops = 0, int channel = -1);
+	int  playSound(SoundSP sound, int loops = 0, int channel = -1);
 	void stopSound(int channel);
 
 	void playMusic(AssetSP music);

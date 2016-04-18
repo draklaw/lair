@@ -99,18 +99,18 @@ void AudioModule::shutdown() {
 }
 
 
-int AudioModule::playSound(AssetSP sound, int loops) {
+int AudioModule::playSound(AssetSP sound, int loops, int channel) {
 	auto aspect = sound->aspect<SoundAspect>();
 	if(aspect && aspect->get()) {
-		return playSound(aspect->get(), loops);
+		return playSound(aspect->get(), loops, channel);
 	}
 	return -1;
 }
 
 
-int AudioModule::playSound(SoundSP sound, int loops) {
+int AudioModule::playSound(SoundSP sound, int loops, int channel) {
 	if(sound->chunk()) {
-		return Mix_PlayChannel(-1, sound->chunk(), loops);
+		return Mix_PlayChannel(channel, sound->chunk(), loops);
 	}
 	return -1;
 }
