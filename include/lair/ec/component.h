@@ -25,40 +25,39 @@
 
 #include <lair/core/lair.h>
 
-
 namespace lair
 {
 
 
 class _Entity;
 class EntityRef;
+class ComponentManager;
 
 
 class Component {
 public:
-	explicit inline Component(_Entity* entity)
-	    : _alive(true), _entityPtr(entity) {
-	}
+	explicit Component(ComponentManager* manager, _Entity* entity);
 	Component(const Component&) = delete;
 	Component(Component&&)      = default;
-	inline virtual ~Component() {
-	}
+	virtual ~Component();
 
 	Component& operator=(const Component&) = delete;
 	Component& operator=(Component&&)      = default;
 
-	virtual void destroy() = 0;
-	virtual void clone(EntityRef& target) = 0;
+	bool isAlive() const { return _alive; }
+	ComponentManager* manager() { return _manager; }
+
+	void destroy();
 
 	inline _Entity* _entity() const { return _entityPtr; }
 
-	bool _alive;
-
-protected:
-	_Entity*   _entityPtr;
-
 public:
+	ComponentManager* _manager;
+	_Entity*   _entityPtr;
 	Component* _nextComponent;
+
+	// FIXME: This should be used only by dense component. Move it ?
+	bool _alive;
 };
 
 

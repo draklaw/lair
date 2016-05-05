@@ -44,13 +44,50 @@ void _Entity::_removeComponent(Component* comp) {
 		Component* prev = firstComponent;
 		while(prev && prev->_nextComponent != comp) prev = prev->_nextComponent;
 		lairAssert(prev);
-		prev->_nextComponent = prev->_nextComponent->_nextComponent;
+		prev->_nextComponent = comp->_nextComponent;
+		comp->_nextComponent = nullptr;
 	}
+}
+
+
+void _Entity::_updateComponent(Component* from, Component* to) {
+	lairAssert(from && to);
+	if(firstComponent == from) {
+		firstComponent = to;
+	} else {
+		Component* prev = firstComponent;
+		while(prev && prev->_nextComponent != from) prev = prev->_nextComponent;
+		lairAssert(prev);
+		prev->_nextComponent = to;
+	}
+}
+
+
+size_t _Entity::_countComponents() const {
+	size_t count = 0;
+	Component* comp = firstComponent;
+	while(comp) {
+		++count;
+		comp = comp->_nextComponent;
+	}
+	return count;
+}
+
+
+bool _Entity::_hasComponent(Component* target) const {
+	Component* comp = firstComponent;
+	while(comp) {
+		if(comp == target)
+			return true;
+		comp = comp->_nextComponent;
+	}
+	return false;
 }
 
 
 void EntityRef::release() {
 	if(_entity) {
+		lairAssert(_entity->weakRefCount != 0);
 		--_entity->weakRefCount;
 		if((!_entity->isAlive() || !_entity->parent)
 		&& _entity->weakRefCount == 0) {
@@ -61,14 +98,17 @@ void EntityRef::release() {
 }
 
 
-EntityRef EntityRef::clone(EntityRef newParent, const char* newName) {
+void EntityRef::destroy() {
+	if(isValid()) {
+		_entity->manager->destroyEntity(*this);
+	}
+	release();
+}
+
+
+EntityRef EntityRef::clone(EntityRef newParent, const char* newName) const {
 	lairAssert(isValid());
 	EntityRef entity = _entity->manager->cloneEntity(*this, newParent, newName);
-	Component* comp = _entity->firstComponent;
-	while(comp) {
-		comp->clone(entity);
-		comp = comp->_nextComponent;
-	}
 	return entity;
 }
 

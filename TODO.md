@@ -1,42 +1,35 @@
 # Todo-list
 
-- ~~Object binding~~
-- ~~Copyright notice~~
+- Convert `assert` to `lairAssert`
 - ~File system abstraction ?
 - Renderer module
-  - ~~Tilemap~~
-  - ~Text
+  - ~Tilemap
   - Use big buffers per batch, fill them after components sort ?
-  - Write a class that combines Shader + uniforms values
+  - Write a class that combines Shader + uniforms values ?
   - Culling
-  - React on windows resize (viewport)
-- Config file(s) JsonCpp
-- ~~Game loop~~
-- ~Game state
+  - Shape rendering ?
 - ec
-  - ~~Clonning~~
-  - ~Load from json
-  - Go template ?
-  - ~~Sparse components~~
-  - ~~ComponentManager~~
+  - Insert entity
+  - Only use DenseComponentManager and let EntityManager deal with the mapping ?
+    - Access component by index. Indices < MAX_DENSE_COMPONENT are accessed directly,
+      others are accessed through a hash map.
+    - The current implementation is somewhat dangerous: adding sparse component
+      _might_ trigger a realloc and change pointer values.
 - Audio module (OpenAL ?)
-- ec meta-code (python ?)
+- ec meta-code (Property system / method call) (python ?)
 - Python
   - lair binding
-    - ~~Signal/slot~~ + python
   - Re-implement test-window
   - ~Investigate packaging
-- ~~Loader~~
-  - make preload / get functions.
-  - ~~ImageLoader~~
+- Assets / Loader
   - Auto-remove cached objects when max size is exceded
-  - ~~Move to utils ?~~
-  - Track files for auto-reload
-- ~~Move Image in core~~
-- Make Input part of sys (with support for events) ?
+  - Asset group for easy asset management / progress monitoring
+  - Track files for auto-reload / Reload all function
+- Support mouse / gamepads
 - Collision module (Based on Box2D ? Bullet ?)
 - Geometric shapes ?
 - UI elements
+- Include third-party package and try to link statically ?
 
 
 - Move to Python coding convention ? (Closer to stdc++ & same conventions for python and C)

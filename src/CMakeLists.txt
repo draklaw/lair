@@ -122,6 +122,7 @@ set(lair_SOURCES
 
 	ec/entity.cpp
 	ec/entity_manager.cpp
+	ec/component.cpp
 	ec/sprite_renderer.cpp
 	ec/sprite_component.cpp
 	ec/bitmap_text_component.cpp

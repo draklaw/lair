@@ -19,39 +19,35 @@
  */
 
 
-#ifndef _LAIR_EC_COMPONENT_MANAGER_H
-#define _LAIR_EC_COMPONENT_MANAGER_H
-
-
-#include <memory>
-#include <vector>
-#include <unordered_map>
-
 #include <lair/core/lair.h>
-#include <lair/core/path.h>
+#include <lair/core/log.h>
 
-#include <lair/ec/entity.h>
+#include "lair/ec/component_manager.h"
+
+#include "lair/ec/component.h"
 
 
 namespace lair
 {
 
 
-class Component;
-
-
-class ComponentManager {
-public:
-	virtual const std::string& name() const = 0;
-
-	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                  const Path& cd=Path()) = 0;
-	virtual Component* cloneComponent(EntityRef base, EntityRef entity) = 0;
-	virtual void removeComponent(EntityRef entity) = 0;
-};
-
-
+Component::Component(ComponentManager* manager, _Entity* entity)
+    : _manager(manager),
+      _entityPtr(entity),
+      _nextComponent(nullptr),
+      _alive(true) {
 }
 
 
-#endif
+Component::~Component() {
+}
+
+
+void Component::destroy() {
+	lairAssert(_entityPtr);
+	_entityPtr->_removeComponent(this);
+	_alive = false;
+}
+
+
+}

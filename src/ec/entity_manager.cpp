@@ -37,33 +37,27 @@ namespace lair
 
 
 EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
-    : _logger(&logger),
-      _root           (nullptr),
-      _firstFree      (nullptr),
-      _entityBlockSize(entityBlockSize),
-      _nEntities      (0),
-      _nZombieEntities(0),
-      _entities       () {
+    : _logger             (&logger),
+      _compManagers       (),
+      _nEntities          (0),
+      _nZombieEntities    (0),
+      _entities           (entityBlockSize),
+      _firstFree          (nullptr),
+      _root               (nullptr) {
 	_root = createEntity(EntityRef(), "__root__");
 }
 
 
 EntityManager::~EntityManager() {
 	_root.release();
+//	for(auto nameComp: _compManagers) {
+//		nameComp->second->clear();
+//	}
 }
 
 
-void EntityManager::registerComponentManager(ComponentManagerInterface* cmi) {
+void EntityManager::registerComponentManager(ComponentManager* cmi) {
 	_compManagers[cmi->name()] = cmi;
-}
-
-
-size_t EntityManager::entityCapacity() const {
-	size_t cap = 0;
-	for(const EntityBlock& block: _entities) {
-		cap += block.size();
-	}
-	return cap;
 }
 
 
@@ -79,11 +73,11 @@ EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
 EntityRef EntityManager::createEntityFromJson(EntityRef parent,
                                               const Json::Value& json,
                                               const Path& cd) {
-	EntityRef entity = createEntity(parent, json.get("name", "").asString().c_str());
+	EntityRef entity = createEntity(parent, json.get("name", "").asCString());
 	if(json.isMember("transform")) {
 		entity.place(Transform(parseMatrix4(json["transform"])));
 	}
-	for(const std::string key: json.getMemberNames()) {
+	for(const std::string& key: json.getMemberNames()) {
 		auto it = _compManagers.find(key);
 		if(it != _compManagers.end()) {
 			it->second->addComponentFromJson(entity, json[key], cd);
@@ -96,6 +90,13 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
 EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name) {
 	EntityRef entity = createEntity(newParent, name? name: base.name());
 	entity.place(base.transform());
+
+	Component* comp = base._get()->firstComponent;
+	while(comp) {
+		comp->manager()->cloneComponent(base, entity);
+		comp = comp->_nextComponent;
+	}
+
 	return entity;
 }
 
@@ -107,28 +108,30 @@ void EntityManager::destroyEntity(EntityRef entity) {
 		destroyEntity(entity.firstChild());
 	}
 
-	Component* cmp = entity._get()->firstComponent;
-	while(cmp) {
-		Component* tmp = cmp;
-		cmp = cmp->_nextComponent;
-		//if (tmp->_alive)
-			tmp->destroy();
-	} //FIXME
-	//entity._get()->firstComponent = nullptr;
+	while(entity._get()->firstComponent) {
+		lairAssert(entity._get()->firstComponent->manager());
+		entity._get()->firstComponent->manager()->removeComponent(entity);
+	}
 
 	_detach(entity._get());
+	delete[] entity._get()->name;
 	entity._get()->reset();
 	--_nEntities;
 	++_nZombieEntities;
+
+	if(entity._get()->weakRefCount == 0) {
+		_releaseEntity(entity._get());
+	}
 }
 
+
 void EntityManager::_releaseEntity(_Entity* entity) {
-//FIXME: Pretty please.
-// 	entity->nextSibling = _firstFree;
-	entity->flags = 0;
-// 	_firstFree = entity;
+	lairAssert(entity->weakRefCount == 0);
+	entity->nextSibling = _firstFree;
+	_firstFree = entity;
 	--_nZombieEntities;
 }
+
 
 void EntityManager::moveEntity(EntityRef& entity, EntityRef& newParent) {
 	lairAssert(entity.isValid() && newParent.isValid());
@@ -146,28 +149,22 @@ void EntityManager::updateWorldTransform() {
 }
 
 
-void EntityManager::_addEntityBlock() {
-	_entities.emplace_back(_entityBlockSize);
-	EntityBlock& block = _entities.back();
-	std::memset(block.data(), 0, sizeof(_Entity) * block.size());
-	for(_Entity& e: block) {
-		e.nextSibling = &e + 1;
-	}
-	block.back().nextSibling = _firstFree;
-	_firstFree = &block.front();
-}
-
 _Entity* EntityManager::_createDetachedEntity(const char* name) {
 	// Do this first so there is no side effect in case of bad_alloc.
 	std::unique_ptr<char> ownedName;
 	if(!name) {
 		name = "";
 	}
-	ownedName.reset(new char[std::strlen(name) + 1]);
-	std::strcpy(ownedName.get(), name);
+	size_t nameLen = std::strlen(name) + 1;
+	ownedName.reset(new char[nameLen]);
+	std::memcpy(ownedName.get(), name, nameLen);
 
 	if(!_firstFree) {
-		_addEntityBlock();
+		_entities.emplace_back();
+		_firstFree = &_entities.back();
+		_firstFree->reset();
+		_firstFree->manager = this;
+		_firstFree->weakRefCount = 0;
 	}
 
 	_Entity* entity = _firstFree;
@@ -175,8 +172,7 @@ _Entity* EntityManager::_createDetachedEntity(const char* name) {
 	_firstFree = entity->nextSibling;
 	entity->nextSibling = nullptr;
 
-	entity->manager = this;
-	entity->setAlive();
+	entity->setAlive(true);
 	++_nEntities;
 	entity->transform.setIdentity();
 
@@ -190,8 +186,13 @@ _Entity* EntityManager::_createDetachedEntity(const char* name) {
 void EntityManager::_addChild(_Entity* parent, _Entity* child) {
 	lairAssert(!child->parent && !child->nextSibling);
 	child->parent = parent;
-	child->nextSibling = parent->firstChild;
-	parent->firstChild = child;
+	if(parent->firstChild) {
+		parent->lastChild->nextSibling = child;
+	}
+	else {
+		parent->firstChild = child;
+	}
+	parent->lastChild = child;
 }
 
 void EntityManager::_detach(_Entity* child) {
@@ -207,7 +208,10 @@ void EntityManager::_detach(_Entity* child) {
 	}
 
 	if(prevSibling) {
-		prevSibling->nextSibling  = child->nextSibling;
+		prevSibling->nextSibling = child->nextSibling;
+		if(!prevSibling->nextSibling) {
+			child->parent->lastChild = prevSibling;
+		}
 	} else {
 		child->parent->firstChild = child->nextSibling;
 	}

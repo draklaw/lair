@@ -19,7 +19,9 @@
 
 
 add_executable(test_ec
+	test_dense_array.cpp
 	test_entity_manager.cpp
+	test_dense_component_manager.cpp
 )
 
 target_link_libraries(test_ec
@@ -27,4 +29,4 @@ target_link_libraries(test_ec
 	pthread # Seems required by GTest
 	lair
 )
-add_dependencies(runtest test_ec)
+add_dependencies(buildtests test_ec)

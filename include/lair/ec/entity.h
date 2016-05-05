@@ -27,8 +27,14 @@
 #include <memory>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
 
 #include <lair/ec/component.h>
+
+
+#ifndef LAIR_EC_MAX_DENSE_COMPONENTS
+#define LAIR_EC_MAX_DENSE_COMPONENTS 8
+#endif
 
 
 namespace lair
@@ -40,6 +46,14 @@ class EntityManager;
 class SpriteComponent;
 
 
+constexpr size_t MAX_DENSE_COMPONENTS = LAIR_EC_MAX_DENSE_COMPONENTS;
+
+enum {
+	SPRITE,
+
+	USER_COMPONENT_INDEX,
+};
+
 class _Entity {
 public:
 	enum {
@@ -47,12 +61,11 @@ public:
 	};
 
 public:
-	inline _Entity() {}
+	// Constructor and destructor do nothing: EntityManager deal with it.
+	inline _Entity() = default;
 	_Entity(const _Entity&) = delete;
 	_Entity(_Entity&&)      = delete;
-	~_Entity() {
-		delete[] name;
-	}
+	~_Entity()              = default;
 
 	_Entity& operator=(const _Entity&) = delete;
 	_Entity& operator==(_Entity&&)     = delete;
@@ -61,27 +74,36 @@ public:
 		return flags & Alive;
 	}
 
-	inline void setAlive() {
-		flags |= Alive;
+	inline void setAlive(bool alive) {
+		if(alive) {
+			flags |= Alive;
+		} else {
+			flags &= ~uint32(Alive);
+		}
 	}
 
 	inline void reset() {
-		delete[] name;
-		// Erase everything from the field flag
+		// Erase everything from the field flags
 		std::memset(&flags, 0,
 		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
 	}
 
 	void _addComponent(Component* comp);
 	void _removeComponent(Component* comp);
+	void _updateComponent(Component* from, Component* to);
+
+	// For testing and debugging
+	size_t _countComponents() const;
+	bool _hasComponent(Component* target) const;
 
 public:
-	uint32         weakRefCount;
 	EntityManager* manager;
+	uint32         weakRefCount;
 	uint32         flags;
 
 	_Entity*       parent;
 	_Entity*       firstChild;
+	_Entity*       lastChild;
 	_Entity*       nextSibling;
 
 	char*          name;
@@ -97,7 +119,7 @@ public:
 	Component*     firstComponent;
 
 	/* Components here ! */
-	SpriteComponent* sprite;
+	Component*     components[MAX_DENSE_COMPONENTS];
 };
 
 
@@ -148,6 +170,7 @@ public:
 	}
 
 	void release();
+	void destroy();
 
 	inline friend void swap(EntityRef& er0, EntityRef& er1) {
 		std::swap(er0._entity, er1._entity);
@@ -166,6 +189,11 @@ public:
 	inline       EntityRef  firstChild()     const {
 		lairAssert(isValid());
 		return EntityRef(_entity->firstChild);
+	}
+
+	inline       EntityRef  lastChild()     const {
+		lairAssert(isValid());
+		return EntityRef(_entity->lastChild);
 	}
 
 	inline       EntityRef  nextSibling()    const {
@@ -226,10 +254,11 @@ public:
 		moveTo(Transform(Translation(pos)));
 	}
 
-	EntityRef clone(EntityRef newParent, const char* newName = nullptr);
+	EntityRef clone(EntityRef newParent, const char* newName = nullptr) const;
 
 	inline SpriteComponent* sprite() {
-		return _entity->sprite;
+		// FIXME: Isn't this dangerous ?
+		return reinterpret_cast<SpriteComponent*>(_entity->components[SPRITE]);
 	}
 
 	inline _Entity* _get() {

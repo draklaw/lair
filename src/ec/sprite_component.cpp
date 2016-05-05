@@ -36,10 +36,8 @@ namespace lair
 {
 
 
-SpriteComponent::SpriteComponent(_Entity* entity,
-                                 ComponentManager<SpriteComponent>* manager)
-    : Component(entity),
-      _manager(static_cast<SpriteComponentManager*>(manager)),
+SpriteComponent::SpriteComponent(Manager* manager,_Entity* entity)
+    : Component(manager, entity),
       _texture(),
       _anchor(0, 0),
       _color(1, 1, 1, 1),
@@ -55,11 +53,16 @@ SpriteComponent::~SpriteComponent() {
 }
 
 
+SpriteComponent::Manager* SpriteComponent::manager() {
+	return static_cast<Manager*>(_manager);
+}
+
+
 void SpriteComponent::setTexture(AssetSP texture) {
 	if(texture) {
 		TextureAspectSP ta = texture->aspect<TextureAspect>();
 		if(!ta) {
-			ta = _manager->spriteRenderer()->createTexture(texture);
+			ta = manager()->spriteRenderer()->createTexture(texture);
 		}
 		setTexture(ta);
 	}
@@ -70,7 +73,7 @@ void SpriteComponent::setTexture(AssetSP texture) {
 
 
 void SpriteComponent::setTexture(const Path& logicPath) {
-	AssetSP asset = _manager->loader()->loadAsset<ImageLoader>(logicPath);
+	AssetSP asset = manager()->loader()->loadAsset<ImageLoader>(logicPath);
 	setTexture(asset);
 }
 
@@ -87,15 +90,6 @@ Box2 SpriteComponent::_texCoords() const {
 	            vmin + _view.max().cwiseProduct(vmax - vmin));
 }
 
-
-void SpriteComponent::destroy() {
-	_manager->_removeComponent(_entity());
-}
-
-void SpriteComponent::clone(EntityRef& target) {
-	_manager->cloneComponent(EntityRef(_entity()), target);
-}
-
 //---------------------------------------------------------------------------//
 
 
@@ -103,7 +97,7 @@ SpriteComponentManager::SpriteComponentManager(AssetManager* assetManager,
                                                LoaderManager* loaderManager,
                                                SpriteRenderer* spriteRenderer,
                                                size_t componentBlockSize)
-    : ComponentManager("sprite", componentBlockSize),
+    : DenseComponentManager("sprite", componentBlockSize),
       _assets(assetManager),
       _loader(loaderManager),
       _spriteRenderer(spriteRenderer) {
@@ -117,10 +111,9 @@ SpriteComponentManager::~SpriteComponentManager() {
 }
 
 
-void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json,
+SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json,
                                                   const Path& cd) {
-	addComponent(entity);
-	SpriteComponent* comp = entity.sprite();
+	SpriteComponent* comp = addComponent(entity);
 	if(json.isMember("sprite")) {
 		comp->setTexture(make_absolute(cd, json["sprite"].asString()));
 	}
@@ -180,13 +173,13 @@ void SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::
 			comp->setTextureFlags(Texture::TRILINEAR | Texture::REPEAT);
 		}
 	}
+	return comp;
 }
 
 
-void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	addComponent(entity);
+SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	SpriteComponent* baseComp = base.sprite();
-	SpriteComponent* comp = entity.sprite();
+	SpriteComponent* comp = addComponent(entity);
 	comp->setTexture(     baseComp->texture());
 	comp->setAnchor(      baseComp->anchor());
 	comp->setColor(       baseComp->color());
@@ -195,12 +188,14 @@ void SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	comp->setView(        baseComp->view());
 	comp->setBlendingMode(baseComp->blendingMode());
 	comp->setTextureFlags(baseComp->textureFlags());
+	return comp;
 }
 
 
 void SpriteComponentManager::render(float interp, const OrthographicCamera& /*camera*/) {
+	compactArray();
 	for(SpriteComponent& sc: *this) {
-		if(!sc._entity() || !sc.texture() || !sc.texture()->get()
+		if(!sc._alive || !sc._entity() || !sc.texture() || !sc.texture()->get()
 		        || !sc.texture()->get()->isValid()) {
 			continue;
 		}
@@ -217,8 +212,8 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& /*ca
 		               -h * sc.anchor().y());
 		Box2 coords(offset, Vector2(w, h) + offset);
 
-		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords,
-		                           tex, sc.textureFlags(), sc.blendingMode());
+		_spriteRenderer->setDrawCall(tex, sc.textureFlags(), sc.blendingMode());
+		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords);
 	}
 }
 

@@ -66,10 +66,8 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 //---------------------------------------------------------------------------//
 
 
-BitmapTextComponent::BitmapTextComponent(_Entity* entity,
-                             SparseComponentManager<BitmapTextComponent>* manager)
-    : Component(entity),
-      _manager(static_cast<BitmapTextComponentManager*>(manager)),
+BitmapTextComponent::BitmapTextComponent(Manager* manager, _Entity* entity)
+    : Component(manager, entity),
       _font(),
       _texture(),
       _text(),
@@ -79,13 +77,8 @@ BitmapTextComponent::BitmapTextComponent(_Entity* entity,
 }
 
 
-void BitmapTextComponent::destroy() {
-	_manager->removeComponent(EntityRef(_entity()));
-}
-
-
-void BitmapTextComponent::clone(EntityRef& target) {
-	_manager->cloneComponent(EntityRef(_entity()), target);
+BitmapTextComponent::Manager* BitmapTextComponent::manager() {
+	return static_cast<Manager*>(_manager);
 }
 
 
@@ -100,7 +93,7 @@ void BitmapTextComponent::setFont(AssetSP font) {
 
 
 void BitmapTextComponent::setFont(const Path& logicPath) {
-	AssetSP asset = _manager->loader()->loadAsset<BitmapFontLoader>(logicPath);
+	AssetSP asset = manager()->loader()->loadAsset<BitmapFontLoader>(logicPath);
 	setFont(asset);
 }
 
@@ -121,10 +114,9 @@ BitmapTextComponentManager::~BitmapTextComponentManager() {
 }
 
 
-void BitmapTextComponentManager::addComponentFromJson(
+BitmapTextComponent* BitmapTextComponentManager::addComponentFromJson(
         EntityRef entity, const Json::Value& json, const Path& cd) {
-	addComponent(entity);
-	BitmapTextComponent* comp = get(entity);
+	BitmapTextComponent* comp = addComponent(entity);
 	if(json.isMember("font")) {
 		comp->setFont(make_absolute(cd, json["font"].asString()));
 	}
@@ -156,16 +148,17 @@ void BitmapTextComponentManager::addComponentFromJson(
 			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
 		}*/
 	}
+	return comp;
 }
 
 
-void BitmapTextComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	addComponent(entity);
+BitmapTextComponent* BitmapTextComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	BitmapTextComponent* baseComp = get(base);
-	BitmapTextComponent* comp = get(entity);
+	BitmapTextComponent* comp = addComponent(entity);
 	comp->setFont( baseComp->font());
 	comp->setText( baseComp->text());
 	comp->setColor(baseComp->color());
+	return comp;
 }
 
 
@@ -188,6 +181,9 @@ void BitmapTextComponentManager::render(float interp) {
 						  comp._entity()->prevWorldTransform.matrix(),
 						  comp._entity()->worldTransform.matrix());
 
+		TextureSP tex = comp.texture()->_get();
+		_spriteRenderer->setDrawCall(tex, Texture::NEAREST | Texture::CLAMP, BLEND_ALPHA);
+
 		int width = (comp.size()(0) > 0)? comp.size()(0): 999999;
 		TextLayout layout = font->layoutText(comp.text(), width);
 		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
@@ -203,11 +199,7 @@ void BitmapTextComponentManager::render(float interp) {
 			pos -= layout.box().sizes().cwiseProduct(comp.anchor());
 			Box2 coords(pos, pos + size);
 
-			TextureSP tex = comp.texture()->_get();
-			_spriteRenderer->addSprite(wt, coords, comp.color(), glyph.region,
-									   tex,
-									   Texture::NEAREST | Texture::CLAMP,
-									   BLEND_ALPHA);
+			_spriteRenderer->addSprite(wt, coords, comp.color(), glyph.region);
 		}
 	}
 }
