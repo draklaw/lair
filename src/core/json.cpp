@@ -37,9 +37,8 @@ bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logg
 	return false;
 }
 
-
 bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, Logger& log) {
-	std::ifstream in(realPath.native().c_str());
+	Path::IStream in(realPath.native().c_str());
 	if(!in.good()) {
 		log.error("Unable to read \"", localPath, "\".");
 		return false;

@@ -19,6 +19,10 @@
  */
 
 
+#if defined(_WIN32) && !defined(_MSC_VER)
+#include <cstdio>
+#endif
+
 #ifdef _WIN32
 #include <locale>
 #include <codecvt>
@@ -30,18 +34,32 @@
 namespace lair {
 
 
-//#ifdef _WIN32
-#if 0
-std::wstring utf16FromUtf8(const std::string& utf8) {
-	typedef std::codecvt<wchar_t, char, std::mbstate_t> codecvt;
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf16conv;
+#if defined(_WIN32) && !defined(_MSC_VER)
+
+WinFStream::WinFStream(const wchar_t* filename)
+	: std::istream(),
+	  _buf(_wfopen(filename, L"r"), std::ios_base::in),
+	  _orig(basic_ios::rdbuf(&_buf)){
+}
+
+
+WinFStream::~WinFStream() {
+	basic_ios::rdbuf(_orig);
+	_buf.close();
+}
+
+#endif
+
+
+#ifdef _WIN32
+std::wstring utf16LEFromUtf8(const std::string& utf8) {
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t, 0x10ffff, std::little_endian>, wchar_t> utf16conv;
 	return utf16conv.from_bytes(utf8);
 }
 #endif
 
 
-//#ifndef _WIN32
-#if 1
+#ifndef _WIN32
 char Path::directory_separator = '/';
 #else
 char Path::directory_separator = '\\';
@@ -77,29 +95,28 @@ const char* Path::utf8CStr() const {
 }
 
 
-//#ifndef _WIN32
-#if 1
+#ifndef _WIN32
 const std::string& Path::native() const {
 	return _path;
 }
 #else
-const std::wstring Path::native() const {
-	return utf16FromUtf8(_path);
+std::wstring Path::native() const {
+	return utf16LEFromUtf8(_path);
 }
 #endif
 
 
 bool Path::isAbsolute() const {
-	return !empty() && _path[0] == '/';
+	return !empty() && isDirectorySeparator(_path[0]);
 }
 
 
 Path& Path::operator/=(const Path& path) {
 	if(!path.empty()) {
-		bool needSep = (!empty() && _path.back() != '/');
+		bool needSep = (!empty() && !isDirectorySeparator(_path.back()));
 		_path.reserve(_path.size() + needSep + path.size());
 		if(needSep) {
-			_path.push_back('/');
+			_path.push_back(directory_separator);
 		}
 		_path.append(path._path);
 	}
@@ -107,17 +124,28 @@ Path& Path::operator/=(const Path& path) {
 }
 
 
+void Path::makePreferred() {
+#ifdef _WIN32
+	for(char& c: _path) {
+		if(isDirectorySeparator(c)) {
+			c = directory_separator;
+		}
+	}
+#endif
+}
+
+
 void Path::removeTrailingSeparators() {
 	int end = size() - 1;
-	while(end > 0 && _path[end] == '/') --end;
+	while(end > 0 && isDirectorySeparator(_path[end])) --end;
 	_path.resize(end + 1);
 }
 
 
 void Path::removeFilename() {
 	int end = size() - 1;
-	while(end > 0 && _path[end] != '/') --end;
-	while(end > 1 && _path[end-1] == '/') --end; // If there is several slashes...
+	while(end > 0 && !isDirectorySeparator(_path[end])) --end;
+	while(end > 1 && isDirectorySeparator(_path[end-1])) --end; // If there is several slashes...
 	_path.resize(end);
 }
 
@@ -159,5 +187,13 @@ Path make_absolute(const Path& cd, const Path& path) {
 	return cd / path;
 }
 
+
+bool Path::isDirectorySeparator(char c) {
+#ifndef _WIN32
+	return c == '/';
+#else
+	return (c == '/') || (c == '\\');
+#endif
+}
 
 }

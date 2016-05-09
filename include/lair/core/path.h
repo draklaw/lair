@@ -25,6 +25,11 @@
 
 #include <functional>
 #include <ostream>
+#include <istream>
+
+#if defined(_WIN32) && !defined(_MSC_VER)
+#include <ext/stdio_filebuf.h>
+#endif
 
 #include <boost/functional/hash.hpp>
 
@@ -35,8 +40,27 @@ namespace lair
 {
 
 
+#if defined(_WIN32) && !defined(_MSC_VER)
+class WinFStream : public std::istream {
+public:
+	WinFStream(const wchar_t* filename);
+	~WinFStream();
+
+private:
+	__gnu_cxx::stdio_filebuf<char> _buf;
+	std::streambuf*                _orig;
+};
+#endif
+
+
 class Path {
 public:
+#if defined(_WIN32) && !defined(_MSC_VER)
+	typedef WinFStream    IStream;
+#else
+	typedef std::ifstream IStream;
+#endif
+
 	static char directory_separator;
 
 public:
@@ -55,11 +79,10 @@ public:
 
 	const std::string& utf8String() const;
 	const char* utf8CStr() const;
-//#ifndef _WIN32
-#if 1
+#ifndef _WIN32
 	const std::string& native() const;
 #else
-	const std::wstring native() const;
+	std::wstring native() const;
 #endif
 
 	bool isAbsolute() const;
@@ -73,12 +96,15 @@ public:
 
 	Path& operator/=(const Path& path);
 
+	void makePreferred();
 	void removeTrailingSeparators();
 	void removeFilename();
 	void replaceExtension(const std::string& newExt);
 
 	Path dir() const;
 	Path withExtension(const std::string& newExt) const;
+
+	static bool isDirectorySeparator(char c);
 
 private:
 	std::string _path;

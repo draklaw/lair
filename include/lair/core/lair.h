@@ -29,6 +29,8 @@
 #include <stdexcept>
 #include <sstream>
 
+// FIXME: Enable vectorization
+#define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Geometry>
 
 #include <json/json-forwards.h>
