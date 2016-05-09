@@ -97,14 +97,11 @@ public:
 	void beginFrame();
 	void setDrawCall(TextureSP texture, unsigned texFlags,
 	                 BlendingMode blendingMode);
-	void addVertex(const Matrix4& trans, const Vector2& pos,
-	              const Vector4& color, const Vector2& texCoord);
+	void addVertex(const Vector4& pos, const Vector4& color, const Vector2& texCoord);
+	void addVertex(const Vector3& pos, const Vector4& color, const Vector2& texCoord);
 	void addIndex(unsigned index);
-	void endSprite();
 	void addSprite(const Matrix4& trans, const Box2& coords,
-	               const Vector4& color, const Box2& texCoords,
-	               TextureSP texture, unsigned texFlags,
-	               BlendingMode blendModes);
+	               const Vector4& color, const Box2& texCoords);
 	void endFrame(Matrix4 viewTransform);
 
 	TextureAspectSP createTexture(AssetSP asset);
@@ -128,8 +125,6 @@ protected:
 
 	VertexBuffer     _buffer;
 	DrawCallVector   _drawCalls;
-
-	int _spriteDepth;
 };
 
 

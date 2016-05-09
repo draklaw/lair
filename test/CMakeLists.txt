@@ -18,7 +18,7 @@
 ##
 
 
-add_custom_target(runtest)
+add_custom_target(buildtests)
 
 find_package(GTest)
 

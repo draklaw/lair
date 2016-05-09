@@ -38,6 +38,7 @@
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
+#include <lair/ec/dense_component_manager.h>
 #include <lair/ec/sprite_renderer.h>
 
 
@@ -56,13 +57,22 @@ class SpriteComponentManager;
 
 class SpriteComponent : public Component {
 public:
-	SpriteComponent(_Entity* entity, ComponentManager<SpriteComponent>* manager);
+	typedef SpriteComponentManager Manager;
+
+	enum {
+		INDEX = SPRITE
+	};
+
+public:
+	SpriteComponent(Manager* manager, _Entity* entity);
 	SpriteComponent(const SpriteComponent&) = delete;
 	SpriteComponent(SpriteComponent&&)      = default;
 	~SpriteComponent();
 
 	SpriteComponent& operator=(const SpriteComponent&) = delete;
 	SpriteComponent& operator=(SpriteComponent&&)      = default;
+
+	Manager* manager();
 
 	inline TextureAspectSP texture() const { return _texture.lock(); }
 	inline void setTexture(TextureAspectSP texture) {
@@ -92,17 +102,9 @@ public:
 	inline unsigned textureFlags() const { return _textureFlags; }
 	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
 
-	virtual void destroy();
-	virtual void clone(EntityRef& target);
-
 	Box2 _texCoords() const;
 
-	static inline SpriteComponent*& _getEntityComponent(_Entity* entity) {
-		return entity->sprite;
-	}
-
 protected:
-	SpriteComponentManager* _manager;
 	TextureAspectWP _texture;
 	Vector2         _anchor;
 	Vector4         _color;
@@ -114,7 +116,7 @@ protected:
 };
 
 
-class SpriteComponentManager : public ComponentManager<SpriteComponent> {
+class SpriteComponentManager : public DenseComponentManager<SpriteComponent> {
 public:
 	SpriteComponentManager(AssetManager* assetManager,
 	                       LoaderManager* loaderManager,
@@ -127,9 +129,9 @@ public:
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
 
-	virtual void addComponentFromJson(EntityRef entity, const Json::Value& json,
+	virtual SpriteComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path());
-	virtual void cloneComponent(EntityRef base, EntityRef entity);
+	virtual SpriteComponent* cloneComponent(EntityRef base, EntityRef entity);
 
 	void render(float interp, const OrthographicCamera& camera);
 

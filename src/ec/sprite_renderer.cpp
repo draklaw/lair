@@ -151,7 +151,6 @@ SpriteRenderer::~SpriteRenderer() {
 void SpriteRenderer::beginFrame() {
 	_buffer.clear();
 	_drawCalls.clear();
-	_spriteDepth = 0;
 }
 
 
@@ -177,11 +176,13 @@ void SpriteRenderer::setDrawCall(TextureSP texture, unsigned texFlags,
 }
 
 
-void SpriteRenderer::addVertex(const Matrix4& trans, const Vector2& pos,
-                               const Vector4& color, const Vector2& texCoord) {
-	Vector4 p;
-	p << pos, _spriteDepth, 1;
-	_buffer.addVertex(SpriteVertex{ trans * p, color, texCoord });
+void SpriteRenderer::addVertex(const Vector4& pos, const Vector4& color, const Vector2& texCoord) {
+	_buffer.addVertex(SpriteVertex{ pos, color, texCoord });
+}
+
+
+void SpriteRenderer::addVertex(const Vector3& pos, const Vector4& color, const Vector2& texCoord) {
+	addVertex((Vector4() << pos, 1).finished(), color, texCoord);
 }
 
 
@@ -191,23 +192,16 @@ void SpriteRenderer::addIndex(unsigned index) {
 }
 
 
-void SpriteRenderer::endSprite() {
-	++_spriteDepth;
-}
-
-
 void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
-                               const Vector4& color, const Box2& texCoords,
-                               TextureSP texture, unsigned texFlags,
-                               BlendingMode blendingMode) {
+                               const Vector4& color, const Box2& texCoords) {
 	GLuint index = vertexCount();
-
-	setDrawCall(texture, texFlags, blendingMode);
 
 	for(int corner = 0; corner < 4; ++corner) {
 		int tcCorner = corner ^ 0x02; // texCoords are bottom-up.
-		Vector2 p = coords.corner(Box2::CornerType(corner));
-		addVertex(trans, p, color, texCoords.corner(Box2::CornerType(tcCorner)));
+		Vector4 p;
+		p << coords.corner(Box2::CornerType(corner)), 0, 1;
+		p = trans * p;
+		addVertex(p, color, texCoords.corner(Box2::CornerType(tcCorner)));
 	}
 
 	addIndex(index + 0);
@@ -216,8 +210,6 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 	addIndex(index + 2);
 	addIndex(index + 1);
 	addIndex(index + 3);
-
-	endSprite();
 }
 
 
@@ -230,8 +222,6 @@ void SpriteRenderer::endFrame(Matrix4 viewTransform) {
 	_spriteFormat.setup(glc);
 
 	_defaultShader.use();
-	viewTransform(2, 2) = 1.f / float(_spriteDepth);
-	viewTransform(2, 3) = 0;
 	SpriteShaderParams params(viewTransform);
 	_defaultShader.setParams(glc, params);
 	glc->activeTexture(gl::TEXTURE0);

@@ -34,6 +34,9 @@
 #include <lair/core/path.h>
 #include <lair/core/loader.h>
 
+#include <lair/ec/dense_array.h>
+#include <lair/ec/component_manager.h>
+
 #include <lair/ec/entity.h>
 
 
@@ -45,7 +48,7 @@ class OrthographicCamera;
 class Renderer;
 
 class Component;
-class ComponentManagerInterface;
+class ComponentManager;
 
 
 class EntityManager {
@@ -59,12 +62,11 @@ public:
 	EntityManager& operator=(EntityManager&&)      = delete;
 
 	inline size_t    nEntities()       const { return _nEntities; }
+	inline size_t    entityCapacity()  const { return _entities.capacity(); }
 	inline size_t    nZombieEntities() const { return _nZombieEntities; }
 	inline EntityRef root()            const { return _root; }
 
-	void registerComponentManager(ComponentManagerInterface* cmi);
-
-	size_t entityCapacity() const;
+	void registerComponentManager(ComponentManager* cmi);
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
 	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
@@ -82,12 +84,10 @@ public:
 	Logger& log() { return _logger; }
 
 protected:
-	typedef std::vector<_Entity, Eigen::aligned_allocator<_Entity>>   EntityBlock;
-	typedef std::list<EntityBlock> EntityBlockList;
-	typedef std::unordered_map<std::string, ComponentManagerInterface*> CompManagerMap;
+	typedef DenseArray<_Entity> EntityArray;
+	typedef std::unordered_map<std::string, ComponentManager*> CompManagerMap;
 
 protected:
-	void _addEntityBlock();
 	_Entity* _createDetachedEntity(const char* name);
 	void _addChild(_Entity* parent, _Entity* child);
 	void _detach(_Entity* child);
@@ -98,12 +98,12 @@ protected:
 
 	CompManagerMap  _compManagers;
 
-	EntityRef       _root;
-	_Entity*        _firstFree;
-	size_t          _entityBlockSize;
 	size_t          _nEntities;
 	size_t          _nZombieEntities;
-	EntityBlockList _entities;
+	EntityArray     _entities;
+	_Entity*        _firstFree;
+
+	EntityRef       _root;
 };
 
 

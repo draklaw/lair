@@ -33,6 +33,7 @@
 
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
+#include <lair/ec/sparse_component_manager.h>
 
 
 namespace lair {
@@ -62,10 +63,12 @@ protected:
 
 class BitmapTextComponent : public Component {
 public:
-	BitmapTextComponent(_Entity* entity, SparseComponentManager<BitmapTextComponent>* manager);
+	typedef BitmapTextComponentManager Manager;
 
-	virtual void destroy();
-	virtual void clone(EntityRef& target);
+public:
+	BitmapTextComponent(Manager* manager, _Entity* entity);
+
+	Manager* manager();
 
 	inline BitmapFontAspectSP font() const { return _font.lock(); }
 	void setFont(BitmapFontAspectSP font);
@@ -88,8 +91,6 @@ public:
 	inline void setAnchor(const Vector2& anchor) { _anchor = anchor; }
 
 public:
-	BitmapTextComponentManager* _manager;
-
 	BitmapFontAspectWP _font;
 	TextureAspectWP    _texture;
 	std::string        _text;
@@ -105,9 +106,9 @@ public:
 	                           SpriteRenderer* spriteRenderer);
 	virtual ~BitmapTextComponentManager();
 
-	virtual void addComponentFromJson(EntityRef entity, const Json::Value& json,
+	virtual BitmapTextComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path());
-	virtual void cloneComponent(EntityRef base, EntityRef entity);
+	virtual BitmapTextComponent* cloneComponent(EntityRef base, EntityRef entity);
 
 	void render(float interp);
 
