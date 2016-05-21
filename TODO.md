@@ -25,6 +25,7 @@
       _might_ trigger a realloc and change pointer values.
   - Support multiple renderPass (with a mask ? or a list of Renderer ?) for
     sprite / text.
+  - Parameter to set the name of an entity on load.
 - Audio module (OpenAL ?)
 - ec meta-code (Property system / method call) (python ?)
 - Python
