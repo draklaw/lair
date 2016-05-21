@@ -29,8 +29,6 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include <lair/ec/component.h>
-
 
 #ifndef LAIR_EC_MAX_DENSE_COMPONENTS
 #define LAIR_EC_MAX_DENSE_COMPONENTS 8
@@ -41,6 +39,7 @@ namespace lair
 {
 
 
+class Component;
 class EntityManager;
 
 class SpriteComponent;

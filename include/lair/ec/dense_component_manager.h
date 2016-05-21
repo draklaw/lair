@@ -37,9 +37,72 @@ template < typename _Component >
 class DenseComponentManager : public ComponentManager {
 public:
 	typedef _Component Component;
+	typedef DenseComponentManager<Component> Self;
 
 	typedef DenseArray<Component> ComponentArray;
-	typedef typename ComponentArray::Iterator Iterator;
+	typedef std::vector<size_t> SortBuffer;
+
+	class Iterator {
+	public:
+		typedef ptrdiff_t                 difference_type;
+		typedef Component&                value_type;
+		typedef Component*                pointer_type;
+		typedef Component&                reference_type;
+		typedef std::forward_iterator_tag iterator_category;
+
+	public:
+		inline Iterator(Self* self, size_t index)
+			: _self(self), _index(index) {
+			_skipDestroyed();
+		}
+
+		inline bool operator==(Iterator other) const {
+			return _self == other._self && _index == other._index;
+		}
+		inline bool operator!=(Iterator other) const {
+			return !(*this == other);
+		}
+
+		Iterator& operator++() {
+			if(_index < _self->_components.size()) {
+				++_index;
+				_skipDestroyed();
+			}
+			return *this;
+		}
+		Iterator operator++(int) {
+			Iterator tmp(*this);
+			++(*this);
+			return tmp;
+		}
+
+		const Component& operator*() const {
+			return _self->_components.at(_index);
+		}
+		Component& operator*() {
+			return _self->_components.at(_index);
+		}
+
+		const Component* operator->() const {
+			return &_self->_components.at(_index);
+		}
+		Component* operator->() {
+			return &_self->_components.at(_index);
+		}
+
+	private:
+		void _skipDestroyed() {
+			while(_index < _self->_components.size()
+			   && !_self->_components[_index]._alive) {
+				++_index;
+			}
+		}
+
+		Self*  _self;
+		size_t _index;
+	};
+
+	friend class Iterator;
 
 public:
 	DenseComponentManager(const std::string& name, size_t componentBlockSize)
@@ -61,8 +124,8 @@ public:
 	size_t nZombies()    const { return _components.size() - _nComponents; }
 	size_t capacity()    const { return _components.capacity(); }
 
-	Iterator begin() { return _components.begin(); }
-	Iterator end()   { return _components.end(); }
+	Iterator begin() { return Iterator(this, 0); }
+	Iterator end()   { return Iterator(this, _components.size()); }
 
 	virtual const std::string& name() const { return _name; }
 
@@ -89,6 +152,7 @@ public:
 	void removeComponent(EntityRef entity) {
 		lairAssert(entity.isValid());
 		Component* comp = getComponent(entity);
+		lairAssert(comp->_alive);
 		comp->destroy();
 		_setComponent(entity._get(), nullptr);
 		--_nComponents;
@@ -110,10 +174,67 @@ public:
 		_components.resize(size);
 	}
 
+	template < typename Cmp >
+	void sortArray(const Cmp& cmp = Cmp()) {
+		size_t size = _components.size();
+		_sortBuffer.resize(size);
+		for(size_t i = 0; i < size; ++i)
+			_sortBuffer[i] = i;
+
+		CmpAdapter<Cmp> cmpAdapter(this, cmp);
+		std::sort(_sortBuffer.begin(), _sortBuffer.end(), cmpAdapter);
+
+		size_t lastAlive = 0;
+		for(size_t i0 = 0; i0 < size-1; ++i0) {
+			size_t i1 = _sortBuffer[i0];
+			if(i1 < i0) {
+				i1 = _sortBuffer[i1];
+				_sortBuffer[i0] = i1;
+			}
+			i1 = (i1 < i0)? _sortBuffer[i1]: i1;
+
+			Component* c0 = &_components[i0];
+			Component* c1 = &_components[i1];
+
+			std::swap(*c0, *c1);
+			if(c0->_alive) {
+				_setComponent(c0->_entity(), c0);
+				c0->_entity()->_updateComponent(c1, c0);
+				lastAlive = i0;
+			}
+			if(c1->_alive) {
+				_setComponent(c1->_entity(), c1);
+				c1->_entity()->_updateComponent(c0, c1);
+			}
+		}
+		while(lastAlive < size && _components[lastAlive]._alive) ++lastAlive;
+		_components.resize(lastAlive);
+	}
+
+protected:
+	friend struct CmpAdapter;
+
+	template < typename Cmp >
+	struct CmpAdapter {
+		inline CmpAdapter(Self* self, const Cmp& cmp) : self(self), cmp(cmp) {}
+		inline bool operator()(size_t i0, size_t i1) const {
+			Component* c0 = &self->_components[i0];
+			Component* c1 = &self->_components[i1];
+			if(c0->_alive && c1->_alive) {
+				return cmp(&self->_components[i0], &self->_components[i1]);
+			}
+			return c0->_alive;
+		}
+
+		Self*      self;
+		const Cmp& cmp;
+	};
+
 protected:
 	std::string      _name;
 	size_t           _nComponents;
 	ComponentArray   _components;
+	SortBuffer       _sortBuffer;
 };
 
 

@@ -90,16 +90,26 @@ Box2 SpriteComponent::_texCoords() const {
 	            vmin + _view.max().cwiseProduct(vmax - vmin));
 }
 
+inline bool SpriteComponent::_renderCompare(SpriteComponent* c0, SpriteComponent* c1) {
+	return c0->_blendingMode <  c1->_blendingMode
+	   || (c0->_blendingMode == c1->_blendingMode
+	       && (     c0->_texture.owner_before(c1->_texture)
+	           || (!c1->_texture.owner_before(c0->_texture)
+	               && c0->_textureFlags < c1->_textureFlags)));
+}
+
 //---------------------------------------------------------------------------//
 
 
 SpriteComponentManager::SpriteComponentManager(AssetManager* assetManager,
                                                LoaderManager* loaderManager,
+                                               RenderPass *renderPass,
                                                SpriteRenderer* spriteRenderer,
                                                size_t componentBlockSize)
     : DenseComponentManager("sprite", componentBlockSize),
       _assets(assetManager),
       _loader(loaderManager),
+      _renderPass(renderPass),
       _spriteRenderer(spriteRenderer) {
 	lairAssert(_assets);
 	lairAssert(_loader);
@@ -192,11 +202,21 @@ SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRe
 }
 
 
-void SpriteComponentManager::render(float interp, const OrthographicCamera& /*camera*/) {
-	compactArray();
+void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
+	sortArray(SpriteComponent::_renderCompare);
+
+	RenderPass::DrawStates states;
+	states.shader = _spriteRenderer->shader().shader;
+	states.buffer = _spriteRenderer->buffer();
+	states.format = _spriteRenderer->format();
+
+	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+	            _spriteRenderer->shader(), camera.transform(), 0);
+
 	for(SpriteComponent& sc: *this) {
-		if(!sc._alive || !sc._entity() || !sc.texture() || !sc.texture()->get()
-		        || !sc.texture()->get()->isValid()) {
+		// TODO: culling
+		if(!sc._alive || !sc._entity()
+		|| !sc.texture() || !sc.texture()->get() || !sc.texture()->get()->isValid()) {
 			continue;
 		}
 		TextureSP tex = sc.texture()->_get();
@@ -212,8 +232,19 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& /*ca
 		               -h * sc.anchor().y());
 		Box2 coords(offset, Vector2(w, h) + offset);
 
-		_spriteRenderer->setDrawCall(tex, sc.textureFlags(), sc.blendingMode());
+		unsigned index = _spriteRenderer->indexCount();
 		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords);
+		unsigned count = _spriteRenderer->indexCount() - index;
+
+		if(count) {
+			states.texture      = tex;
+			states.textureFlags = sc.textureFlags();
+			states.blendingMode = sc.blendingMode();
+
+			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
+			                                        camera.viewBox().max()(2));
+			_renderPass->addDrawCall(states, params, depth, index, count);
+		}
 	}
 }
 

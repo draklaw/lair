@@ -22,8 +22,10 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/ec/entity.h"
+#include "lair/ec/component.h"
 #include "lair/ec/entity_manager.h"
+
+#include "lair/ec/entity.h"
 
 
 namespace lair

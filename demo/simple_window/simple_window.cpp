@@ -218,7 +218,7 @@ int main(int /*argc*/, char** argv) {
 
 			renderer->context()->clear(lair::gl::COLOR_BUFFER_BIT | lair::gl::DEPTH_BUFFER_BIT);
 
-			spriteRenderer.beginFrame();
+			spriteRenderer.clear();
 
 //			map.render(renderer);
 			spriteManager.render(loop.frameInterp(), camera);

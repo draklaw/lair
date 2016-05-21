@@ -88,9 +88,10 @@ const char* _spriteFragGlsl =
 //---------------------------------------------------------------------------//
 
 
-SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, unsigned texUnit)
+SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, int texUnit)
 	: viewMatrix(viewMatrix),
 	  texUnit(texUnit) {
+	params[0].index = -1;
 }
 
 
@@ -98,27 +99,16 @@ SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, unsigned texUn
 
 
 SpriteShader::SpriteShader()
-    : _shader       (nullptr),
-      _viewMatrixLoc(-1),
-      _textureLoc   (-1) {
+    : shader       (nullptr),
+      viewMatrixLoc(-1),
+      textureLoc   (-1) {
 }
 
 
-SpriteShader::SpriteShader(const ProgramObject* shader)
-    : _shader       (shader),
-      _viewMatrixLoc(shader->getUniformLocation("viewMatrix")),
-      _textureLoc   (shader->getUniformLocation("texture")) {
-}
-
-
-void SpriteShader::setParams(Context* glc, const SpriteShaderParams& params) {
-	if(_viewMatrixLoc >= 0) {
-		glc->uniformMatrix4fv(_viewMatrixLoc, 1, false,
-							  const_cast<float*>(params.viewMatrix.data()));
-	}
-	if(_textureLoc >= 0) {
-		glc->uniform1i(_textureLoc, params.texUnit);
-	}
+SpriteShader::SpriteShader(ProgramObject* shader)
+    : shader       (shader),
+      viewMatrixLoc(shader->getUniformLocation("viewMatrix")),
+      textureLoc   (shader->getUniformLocation("texture")) {
 }
 
 
@@ -148,9 +138,9 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 
-void SpriteRenderer::beginFrame() {
+void SpriteRenderer::clear() {
 	_buffer.clear();
-	_drawCalls.clear();
+	_shaderParams.clear();
 }
 
 
@@ -164,15 +154,18 @@ unsigned SpriteRenderer::indexCount()  const {
 }
 
 
-void SpriteRenderer::setDrawCall(TextureSP texture, unsigned texFlags,
-                                 BlendingMode blendingMode) {
-	if(_drawCalls.empty()
-	|| _drawCalls.back().tex.lock()   != texture
-	|| _drawCalls.back().texFlags     != texFlags
-	|| _drawCalls.back().blendingMode != blendingMode) {
-		_drawCalls.emplace_back(DrawCall{ texture, texFlags, blendingMode,
-		                                  indexCount(), 0 });
-	}
+SpriteShader& SpriteRenderer::shader() {
+	return _defaultShader;
+}
+
+
+VertexFormat* SpriteRenderer::format() {
+	return &_spriteFormat;
+}
+
+
+VertexBuffer* SpriteRenderer::buffer() {
+	return &_buffer;
 }
 
 
@@ -188,7 +181,6 @@ void SpriteRenderer::addVertex(const Vector3& pos, const Vector4& color, const V
 
 void SpriteRenderer::addIndex(unsigned index) {
 	_buffer.addIndex(index);
-	++_drawCalls.back().count;
 }
 
 
@@ -213,57 +205,31 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 }
 
 
-void SpriteRenderer::endFrame(Matrix4 viewTransform) {
-	Context* glc = _renderer->context();
+const ShaderParameter* SpriteRenderer::addShaderParameters(
+        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit) {
+	_shaderParams.emplace_back(viewTransform, texUnit);
+	SpriteShaderParams& sp = _shaderParams.back();
+	ShaderParameter* params = sp.params;
 
-	_renderer->uploadPendingTextures();
-
-	_buffer.bindAndUpload(glc);
-	_spriteFormat.setup(glc);
-
-	_defaultShader.use();
-	SpriteShaderParams params(viewTransform);
-	_defaultShader.setParams(glc, params);
-	glc->activeTexture(gl::TEXTURE0);
-
-	for(const DrawCall& dc: _drawCalls) {
-		TextureSP tex = dc.tex.lock();
-		if(!tex || !tex->isValid()) {
-			continue;
-		}
-
-		tex->bind();
-		tex->_setFlags(dc.texFlags);
-
-		switch(dc.blendingMode) {
-		case BLEND_NONE:
-			glc->disable(gl::BLEND);
-			break;
-		case BLEND_ALPHA:
-			glc->enable(gl::BLEND);
-			glc->blendEquation(gl::FUNC_ADD);
-			glc->blendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-			break;
-		case BLEND_ADD:
-			glc->enable(gl::BLEND);
-			glc->blendEquation(gl::FUNC_ADD);
-			glc->blendFunc(gl::ONE, gl::ONE);
-			break;
-		case BLEND_MULTIPLY:
-			glc->enable(gl::BLEND);
-			glc->blendEquation(gl::FUNC_ADD);
-			glc->blendFunc(gl::DST_COLOR, gl::ZERO);
-			break;
-		}
-
-		glc->drawElements(gl::TRIANGLES, dc.count, gl::UNSIGNED_INT,
-		                  reinterpret_cast<void*>(dc.start*sizeof(unsigned)));
+	if(shader.viewMatrixLoc >= 0) {
+		*(params++) = makeShaderParameter(shader.viewMatrixLoc, sp.viewMatrix);
 	}
+	if(shader.textureLoc >= 0) {
+		*(params++) = makeShaderParameter(shader.textureLoc, &sp.texUnit);
+	}
+	params->index = -1;
+
+	return sp.params;
 }
 
 
 TextureAspectSP SpriteRenderer::createTexture(AssetSP asset) {
 	return _renderer->createTexture(asset);
+}
+
+
+Renderer* SpriteRenderer::renderer() {
+	return _renderer;
 }
 
 

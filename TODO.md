@@ -4,8 +4,16 @@
 - ~File system abstraction ?
 - Renderer module
   - ~Tilemap
-  - Use big buffers per batch, fill them after components sort ?
-  - Write a class that combines Shader + uniforms values ?
+  - Move SpriteRenderer to the renderer module
+  - Implement draw call sorting
+    * Mostly done
+    - Create a VertexArray class that combines VertexFormat and VertexBuffer ?
+    - Find a wise way to assing indices to object (VertexArray, others ?) to
+      avoid using hashes (and collisions that comes with them).
+    - Take shader parameters into account to generate Indices ?
+    - Add support for custom shader parameters (Move shaderParam list to
+      RenderPass, takes unique_ptr).
+    - Combine Texture and flags into an indexed class to save bits in Index.
   - Culling
   - Shape rendering ?
 - ec
@@ -15,6 +23,8 @@
       others are accessed through a hash map.
     - The current implementation is somewhat dangerous: adding sparse component
       _might_ trigger a realloc and change pointer values.
+  - Support multiple renderPass (with a mask ? or a list of Renderer ?) for
+    sprite / text.
 - Audio module (OpenAL ?)
 - ec meta-code (Property system / method call) (python ?)
 - Python
@@ -27,7 +37,7 @@
   - Track files for auto-reload / Reload all function
 - Support mouse / gamepads
 - Collision module (Based on Box2D ? Bullet ?)
-- Geometric shapes ?
+- Geometric shapes ? (Collisions + rendering)
 - UI elements
 - Include third-party package and try to link statically ?
 

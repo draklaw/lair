@@ -556,7 +556,7 @@ void Context::uniform1f(GLint  location, GLfloat  v0) {
 	::glUniform1f(location, v0);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform1fv(GLint  location, GLsizei  count, GLfloat* value) {
+void Context::uniform1fv(GLint  location, GLsizei  count, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniform1fv(", location, ", ", count, ", ", value, ")");
 	::glUniform1fv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -566,7 +566,7 @@ void Context::uniform1i(GLint  location, GLint  v0) {
 	::glUniform1i(location, v0);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform1iv(GLint  location, GLsizei  count, GLint* value) {
+void Context::uniform1iv(GLint  location, GLsizei  count, const GLint* value) {
 	LAIR_GL2_LOG_CALL("glUniform1iv(", location, ", ", count, ", ", value, ")");
 	::glUniform1iv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -576,7 +576,7 @@ void Context::uniform2f(GLint  location, GLfloat  v0, GLfloat  v1) {
 	::glUniform2f(location, v0, v1);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform2fv(GLint  location, GLsizei  count, GLfloat* value) {
+void Context::uniform2fv(GLint  location, GLsizei  count, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniform2fv(", location, ", ", count, ", ", value, ")");
 	::glUniform2fv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -586,7 +586,7 @@ void Context::uniform2i(GLint  location, GLint  v0, GLint  v1) {
 	::glUniform2i(location, v0, v1);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform2iv(GLint  location, GLsizei  count, GLint* value) {
+void Context::uniform2iv(GLint  location, GLsizei  count, const GLint* value) {
 	LAIR_GL2_LOG_CALL("glUniform2iv(", location, ", ", count, ", ", value, ")");
 	::glUniform2iv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -596,7 +596,7 @@ void Context::uniform3f(GLint  location, GLfloat  v0, GLfloat  v1, GLfloat  v2) 
 	::glUniform3f(location, v0, v1, v2);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform3fv(GLint  location, GLsizei  count, GLfloat* value) {
+void Context::uniform3fv(GLint  location, GLsizei  count, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniform3fv(", location, ", ", count, ", ", value, ")");
 	::glUniform3fv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -606,7 +606,7 @@ void Context::uniform3i(GLint  location, GLint  v0, GLint  v1, GLint  v2) {
 	::glUniform3i(location, v0, v1, v2);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform3iv(GLint  location, GLsizei  count, GLint* value) {
+void Context::uniform3iv(GLint  location, GLsizei  count, const GLint* value) {
 	LAIR_GL2_LOG_CALL("glUniform3iv(", location, ", ", count, ", ", value, ")");
 	::glUniform3iv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -616,7 +616,7 @@ void Context::uniform4f(GLint  location, GLfloat  v0, GLfloat  v1, GLfloat  v2, 
 	::glUniform4f(location, v0, v1, v2, v3);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform4fv(GLint  location, GLsizei  count, GLfloat* value) {
+void Context::uniform4fv(GLint  location, GLsizei  count, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniform4fv(", location, ", ", count, ", ", value, ")");
 	::glUniform4fv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
@@ -626,22 +626,22 @@ void Context::uniform4i(GLint  location, GLint  v0, GLint  v1, GLint  v2, GLint 
 	::glUniform4i(location, v0, v1, v2, v3);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniform4iv(GLint  location, GLsizei  count, GLint* value) {
+void Context::uniform4iv(GLint  location, GLsizei  count, const GLint* value) {
 	LAIR_GL2_LOG_CALL("glUniform4iv(", location, ", ", count, ", ", value, ")");
 	::glUniform4iv(location, count, value);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniformMatrix2fv(GLint  location, GLsizei  count, GLboolean  transpose, GLfloat* value) {
+void Context::uniformMatrix2fv(GLint  location, GLsizei  count, GLboolean  transpose, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniformMatrix2fv(", location, ", ", count, ", ", transpose, ", ", value, ")");
 	::glUniformMatrix2fv(location, count, transpose, value);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniformMatrix3fv(GLint  location, GLsizei  count, GLboolean  transpose, GLfloat* value) {
+void Context::uniformMatrix3fv(GLint  location, GLsizei  count, GLboolean  transpose, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniformMatrix3fv(", location, ", ", count, ", ", transpose, ", ", value, ")");
 	::glUniformMatrix3fv(location, count, transpose, value);
 	LAIR_GL2_CHECK_GL_CALL();
 }
-void Context::uniformMatrix4fv(GLint  location, GLsizei  count, GLboolean  transpose, GLfloat* value) {
+void Context::uniformMatrix4fv(GLint  location, GLsizei  count, GLboolean  transpose, const GLfloat* value) {
 	LAIR_GL2_LOG_CALL("glUniformMatrix4fv(", location, ", ", count, ", ", transpose, ", ", value, ")");
 	::glUniformMatrix4fv(location, count, transpose, value);
 	LAIR_GL2_CHECK_GL_CALL();
