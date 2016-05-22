@@ -26,9 +26,10 @@
 #include <lair/core/lair.h>
 
 #include <lair/render_gl2/gl.h>
-#include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/texture.h>
 #include <lair/render_gl2/vertex_buffer.h>
+#include <lair/render_gl2/render_pass.h>
+#include <lair/render_gl2/renderer.h>
 
 
 namespace lair
@@ -49,35 +50,22 @@ struct SpriteVertex {
 
 struct SpriteShaderParams {
 	SpriteShaderParams(const Matrix4& viewMatrix = Matrix4::Identity(),
-	                   unsigned texUnit = 0);
+	                   int texUnit = 0);
 
-	Matrix4  viewMatrix;
-	unsigned texUnit;
+	ShaderParameter params[3];
+	Matrix4         viewMatrix;
+	int             texUnit;
 };
 
 class SpriteShader {
 public:
 	SpriteShader();
-	SpriteShader(const ProgramObject* shader);
+	SpriteShader(ProgramObject* shader);
 
-	inline const ProgramObject* program() const { return _shader; }
-	inline void use() const { if(_shader) _shader->use(); }
-
-	void setParams(Context* glc, const SpriteShaderParams& params);
-
-private:
-	const ProgramObject* _shader;
-	GLint                _viewMatrixLoc;
-	GLint                _textureLoc;
-	SpriteShaderParams   _params;
-};
-
-
-enum BlendingMode {
-	BLEND_NONE,
-	BLEND_ALPHA,
-	BLEND_ADD,
-	BLEND_MULTIPLY
+public:
+	ProgramObject* shader;
+	GLint          viewMatrixLoc;
+	GLint          textureLoc;
 };
 
 
@@ -94,27 +82,27 @@ public:
 	unsigned vertexCount() const;
 	unsigned indexCount()  const;
 
-	void beginFrame();
-	void setDrawCall(TextureSP texture, unsigned texFlags,
-	                 BlendingMode blendingMode);
+	SpriteShader& shader();
+	VertexFormat* format();
+	VertexBuffer* buffer();
+
+	void clear();
+
 	void addVertex(const Vector4& pos, const Vector4& color, const Vector2& texCoord);
 	void addVertex(const Vector3& pos, const Vector4& color, const Vector2& texCoord);
 	void addIndex(unsigned index);
 	void addSprite(const Matrix4& trans, const Box2& coords,
 	               const Vector4& color, const Box2& texCoords);
-	void endFrame(Matrix4 viewTransform);
+
+	const ShaderParameter* addShaderParameters(
+	        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit);
 
 	TextureAspectSP createTexture(AssetSP asset);
 
+	Renderer* renderer();
+
 protected:
-	struct DrawCall {
-		TextureWP    tex;
-		unsigned     texFlags;
-		BlendingMode blendingMode;
-		size_t       start;
-		size_t       count;
-	};
-	typedef std::vector<DrawCall> DrawCallVector;
+	typedef std::list<SpriteShaderParams> ShaderParamList;
 
 protected:
 	Renderer*        _renderer;
@@ -124,7 +112,7 @@ protected:
 	SpriteShader     _defaultShader;
 
 	VertexBuffer     _buffer;
-	DrawCallVector   _drawCalls;
+	ShaderParamList  _shaderParams;
 };
 
 

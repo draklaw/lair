@@ -99,6 +99,10 @@ typedef TestComponent<TEST1> Component1;
 typedef TestComponentManager<Component0> Manager0;
 typedef TestComponentManager<Component1> Manager1;
 
+bool cmpComponent(Component1* c0, Component1* c1) {
+	return c0->value < c1->value;
+}
+
 class DenseComponentManagerTest : public ::testing::Test {
 public:
 	EntityManager* em;
@@ -319,4 +323,94 @@ TEST_F(DenseComponentManagerTest, CompactArray) {
 	ASSERT_EQ(42, manager1->getComponent(root)->value);
 	ASSERT_EQ(5,  manager1->getComponent(c)   ->value);
 	ASSERT_EQ(7,  manager1->getComponent(f)   ->value);
+}
+
+TEST_F(DenseComponentManagerTest, Iterator) {
+	buildTree();
+	addComponents();
+
+	Manager1::Iterator it  = manager1->begin();
+	Manager1::Iterator end = manager1->end();
+
+	ASSERT_EQ(42, (*it).value);
+	++it;
+	ASSERT_EQ(4,  it->value);
+	ASSERT_EQ(5,  (++it)->value);
+	it++;
+	ASSERT_EQ(6,  (*(it++)).value);
+	ASSERT_EQ(7,  (it++)->value);
+	ASSERT_EQ(end, it);
+
+	manager1->removeComponent(root);
+	manager1->removeComponent(c);
+	manager1->removeComponent(f);
+
+	it  = manager1->begin();
+	end = manager1->end();
+
+	ASSERT_EQ(4,  (it++)->value);
+	ASSERT_EQ(6,  (it++)->value);
+	ASSERT_EQ(end, it);
+}
+
+TEST_F(DenseComponentManagerTest, SortArray) {
+	buildTree();
+	addComponents();
+
+	int perm0[] = { 1, 2, 3, 4, 0 };
+	int perm1[] = { 4, 0, 1, 2, 3 };
+	int perm2[] = { 1, 4, 3, 2, 0 };
+
+	int i = 0;
+	for(Component1& comp: *manager1) {
+		comp.value = perm0[i++];
+	}
+	manager1->sortArray(cmpComponent);
+	i = 0;
+	for(Component1& comp: *manager1) {
+		ASSERT_EQ(i++, comp.value);
+	}
+
+	i = 0;
+	for(Component1& comp: *manager1) {
+		comp.value = perm1[i++];
+	}
+	manager1->sortArray(cmpComponent);
+	i = 0;
+	for(Component1& comp: *manager1) {
+		ASSERT_EQ(i++, comp.value);
+	}
+
+	i = 0;
+	for(Component1& comp: *manager1) {
+		comp.value = perm2[i++];
+	}
+	manager1->sortArray(cmpComponent);
+	i = 0;
+	for(Component1& comp: *manager1) {
+		ASSERT_EQ(i++, comp.value);
+	}
+
+	i = 0;
+	for(Component1& comp: *manager1) {
+		comp.value = perm2[i++];
+		if((i % 2) == 1) {
+			manager1->removeComponent(comp.entity());
+		}
+	}
+	ASSERT_EQ(2, manager1->nComponents());
+	ASSERT_EQ(3, manager1->nZombies());
+	ASSERT_EQ(8, manager1->capacity());
+
+	manager1->sortArray(cmpComponent);
+
+	ASSERT_EQ(2, manager1->nComponents());
+	ASSERT_EQ(0, manager1->nZombies());
+	ASSERT_EQ(8, manager1->capacity());
+
+	Manager1::Iterator it  = manager1->begin();
+	Manager1::Iterator end = manager1->end();
+	ASSERT_EQ(2, (it++)->value);
+	ASSERT_EQ(4, (it++)->value);
+	ASSERT_EQ(end, it);
 }

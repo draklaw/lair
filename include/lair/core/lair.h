@@ -122,10 +122,26 @@ inline std::unique_ptr<T> make_unique(T* ptr) {
 
 
 template < typename S, typename T >
-T lerp(S x, const T& v0, const T& v1) {
+inline T lerp(S x, const T& v0, const T& v1) {
 	return (1-x) * v0 + x * v1;
 }
 
+template < typename T >
+inline T clamp(const T& value, const T& min, const T& max) {
+	return (value < min)? min:
+	       (value > max)? max:
+	                      value;
+}
+
+template < typename T >
+inline T normalize(T f, T fmin, T fmax) {
+	return (f - fmin) / (fmax - fmin);
+}
+
+template < typename I, typename F >
+inline I intFromFloat(F f, F fmin, F fmax, I imin, I imax) {
+	return clamp(I(normalize(f, fmin, fmax) * (imax - imin)) + imin, imin, imax);
+}
 
 }
 

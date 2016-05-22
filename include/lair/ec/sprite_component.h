@@ -32,8 +32,9 @@
 #include <lair/sys_sdl2/image_loader.h>
 
 #include <lair/render_gl2/gl.h>
-#include <lair/render_gl2/renderer.h>
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/render_pass.h>
+#include <lair/render_gl2/renderer.h>
 
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>
@@ -104,6 +105,8 @@ public:
 
 	Box2 _texCoords() const;
 
+	static bool _renderCompare(SpriteComponent* c0, SpriteComponent* c1);
+
 protected:
 	TextureAspectWP _texture;
 	Vector2         _anchor;
@@ -120,6 +123,7 @@ class SpriteComponentManager : public DenseComponentManager<SpriteComponent> {
 public:
 	SpriteComponentManager(AssetManager* assetManager,
 	                       LoaderManager* loaderManager,
+	                       RenderPass* renderPass,
 	                       SpriteRenderer* spriteRenderer,
 	                       size_t componentBlockSize = 1024);
 	SpriteComponentManager(const SpriteComponentManager&) = delete;
@@ -143,6 +147,7 @@ protected:
 	AssetManager*    _assets;
 	LoaderManager*   _loader;
 	SpriteRenderer*  _spriteRenderer;
+	RenderPass*      _renderPass;
 };
 
 

@@ -162,7 +162,7 @@ void MainState::updateFrame() {
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
-	_spriteRenderer.beginFrame();
+	_spriteRenderer.clear();
 
 	_sprites.render(_loop.frameInterp(), _camera);
 	_texts.render(_loop.frameInterp());

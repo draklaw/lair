@@ -29,7 +29,9 @@
 #include <lair/core/loader.h>
 #include <lair/core/bitmap_font.h>
 
+#include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/texture.h>
+#include <lair/render_gl2/render_pass.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
@@ -103,6 +105,7 @@ public:
 class BitmapTextComponentManager : public SparseComponentManager<BitmapTextComponent> {
 public:
 	BitmapTextComponentManager(LoaderManager* loaderManager,
+	                           RenderPass* renderPass,
 	                           SpriteRenderer* spriteRenderer);
 	virtual ~BitmapTextComponentManager();
 
@@ -110,13 +113,14 @@ public:
 	                                  const Path& cd=Path());
 	virtual BitmapTextComponent* cloneComponent(EntityRef base, EntityRef entity);
 
-	void render(float interp);
+	void render(float interp, const OrthographicCamera& camera);
 
 	LoaderManager* loader();
 	SpriteRenderer* spriteRenderer() const;
 
 private:
 	LoaderManager*  _loader;
+	RenderPass*     _renderPass;
 	SpriteRenderer* _spriteRenderer;
 };
 

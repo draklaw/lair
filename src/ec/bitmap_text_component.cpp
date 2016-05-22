@@ -103,9 +103,11 @@ void BitmapTextComponent::setFont(const Path& logicPath) {
 
 BitmapTextComponentManager::BitmapTextComponentManager(
         LoaderManager* loaderManager,
+        RenderPass* renderPass,
         SpriteRenderer* spriteRenderer)
 	: SparseComponentManager("text"),
       _loader(loaderManager),
+      _renderPass(renderPass),
       _spriteRenderer(spriteRenderer) {
 }
 
@@ -162,30 +164,43 @@ BitmapTextComponent* BitmapTextComponentManager::cloneComponent(EntityRef base, 
 }
 
 
-void BitmapTextComponentManager::render(float interp) {
+void BitmapTextComponentManager::render(float interp, const OrthographicCamera& camera) {
 	_collectGarbages();
+
+	RenderPass::DrawStates states;
+	states.shader = _spriteRenderer->shader().shader;
+	states.buffer = _spriteRenderer->buffer();
+	states.format = _spriteRenderer->format();
+	states.textureFlags = Texture::NEAREST | Texture::CLAMP;
+	states.blendingMode = BLEND_ALPHA;
+
+	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+	            _spriteRenderer->shader(), camera.transform(), 0);
+
 	for(auto& entityComp: *this) {
 		BitmapTextComponent& comp = entityComp.second;
 
-		if(!comp._alive
-		|| !comp.font() || !comp.font()->get() || !comp.font()->get()->isValid()) {
+		if(!comp._alive || !comp._entity()
+		|| !comp.font()    || !comp.font()   ->get() || !comp.font()   ->get()->isValid()
+		/*|| !comp.texture() || !comp.texture()->get() || !comp.texture()->get()->isValid()*/) {
 			continue;
 		}
 		BitmapFontSP font = comp.font()->get();
-
-		if(!comp.texture()) {
-			comp._setTexture(_spriteRenderer->createTexture(font->image()));
-		}
 
 		Matrix4 wt = lerp(interp,
 						  comp._entity()->prevWorldTransform.matrix(),
 						  comp._entity()->worldTransform.matrix());
 
+		// FIXME: Find a way to get rid of this - we should not upload stuff here.
+		if(!comp.texture()) {
+			comp._setTexture(_spriteRenderer->createTexture(font->image()));
+			_spriteRenderer->renderer()->uploadPendingTextures();
+		}
 		TextureSP tex = comp.texture()->_get();
-		_spriteRenderer->setDrawCall(tex, Texture::NEAREST | Texture::CLAMP, BLEND_ALPHA);
 
 		int width = (comp.size()(0) > 0)? comp.size()(0): 999999;
 		TextLayout layout = font->layoutText(comp.text(), width);
+		unsigned index = _spriteRenderer->indexCount();
 		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
 			unsigned cp = layout.glyph(i).codepoint;
 			Vector2 pos = layout.glyph(i).pos;
@@ -200,6 +215,15 @@ void BitmapTextComponentManager::render(float interp) {
 			Box2 coords(pos, pos + size);
 
 			_spriteRenderer->addSprite(wt, coords, comp.color(), glyph.region);
+		}
+		unsigned count = _spriteRenderer->indexCount() - index;
+
+		if(count) {
+			states.texture      = tex;
+
+			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
+			                                        camera.viewBox().max()(2));
+			_renderPass->addDrawCall(states, params, depth, index, count);
 		}
 	}
 }

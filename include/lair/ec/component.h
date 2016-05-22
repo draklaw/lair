@@ -25,6 +25,9 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/ec/entity.h>
+
+
 namespace lair
 {
 
@@ -46,6 +49,7 @@ public:
 
 	bool isAlive() const { return _alive; }
 	ComponentManager* manager() { return _manager; }
+	EntityRef entity() { return EntityRef(_entityPtr); }
 
 	void destroy();
 

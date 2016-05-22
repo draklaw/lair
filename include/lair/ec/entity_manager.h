@@ -36,8 +36,8 @@
 
 #include <lair/ec/dense_array.h>
 #include <lair/ec/component_manager.h>
-
 #include <lair/ec/entity.h>
+#include <lair/ec/component.h>
 
 
 namespace lair
