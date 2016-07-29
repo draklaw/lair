@@ -95,6 +95,7 @@ set(lair_SOURCES
 	core/signal.cpp
 	core/asset_manager.cpp
 	core/loader.cpp
+	core/text.cpp
 	core/bitmap_font.cpp
 
 	utils/input.cpp

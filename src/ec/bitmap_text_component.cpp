@@ -143,7 +143,7 @@ BitmapTextComponent* BitmapTextComponentManager::addComponentFromJson(
 		}*/
 	}
 	if(json.isMember("anchor")) {
-		Json::Value anchor = json["color"];
+		Json::Value anchor = json["anchor"];
 		if(anchor.isArray() || anchor.size() == 2) {
 			comp->setAnchor(Vector2(anchor[0].asFloat(), anchor[1].asFloat()));
 		} /*else {

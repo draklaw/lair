@@ -23,8 +23,7 @@
 
 #include <lair/core/json.h>
 #include <lair/core/image.h>
-
-#include <lair/render_gl2/renderer.h>
+#include <lair/core/text.h>
 
 #include "lair/core/bitmap_font.h"
 
@@ -139,41 +138,39 @@ unsigned BitmapFont::textWidth(const std::string& msg) const {
 
 
 TextLayout BitmapFont::layoutText(const std::string& msg, unsigned maxWidth) const {
-	// TODO: Use local to support UTF-8
 	TextLayout layout;
-	int x = 0;
-	int y = 0;
-	unsigned i = 0;
-	while(i < msg.size()) {
-		int wstart = i;
+	int      x = 0;
+	int      y = 0;
+	Utf8CodepointIterator cpIt(msg);
+	Codepoint cp  = -1;
+	while(cpIt.hasNext()) {
+		Utf8CodepointIterator cpIt2(cpIt);
 		int ww = 0;
-		while(i < msg.size() && !std::isspace(msg[i])) {
-			ww += glyph(msg[i]).advance;
-			++i;
+		while(cpIt2.hasNext() && !std::isspace(cp = cpIt2.next())) {
+			ww += glyph(cp).advance;
 		}
 		if(x + ww > int(maxWidth)) {
 			x = 0;
 			y -= _height;
 		}
-		i = wstart;
-		while(i < msg.size() && !std::isspace(msg[i])) {
-			x += (i? kerning(msg[i-1], msg[i]): 0);
-			layout.addGlyph(msg[i], Vector2(x, y - int(_baselineToTop)));
-			x += glyph(msg[i]).advance;
+		Codepoint pcp = -1;
+		while(cpIt.hasNext() && !std::isspace(cp = cpIt.next())) {
+			x += kerning(pcp, cp);
+			layout.addGlyph(cp, Vector2(x, y - int(_baselineToTop)));
+			x += glyph(cp).advance;
 			layout.grow(Vector2(x, y - int(_height)));
-			++i;
+			pcp = cp;
 		}
-		if(i < msg.size()) {
-			if(msg[i] == '\n') {
+		if(std::isspace(cp)) {
+			if(cp == '\n') {
 				x = 0;
 				y -= _height;
 			}
 			else {
-				layout.addGlyph(msg[i], Vector2(x, -y));
-				x += glyph(msg[i]).advance;
+				layout.addGlyph(cp, Vector2(x, -y));
+				x += glyph(cp).advance;
 			}
 		}
-		++i;
 	}
 	return layout;
 }
