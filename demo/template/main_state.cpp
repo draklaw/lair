@@ -34,10 +34,12 @@
 MainState::MainState(Game* game)
 	: GameState(game),
 
+      _mainPass(renderer()),
+
       _entities(log()),
       _spriteRenderer(renderer()),
-      _sprites(assets(), loader(), &_spriteRenderer),
-      _texts(loader(), &_spriteRenderer),
+      _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
+      _texts(loader(), &_mainPass, &_spriteRenderer),
 
       _inputs(sys(), &log()),
 
@@ -162,12 +164,13 @@ void MainState::updateFrame() {
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
+	_mainPass.clear();
 	_spriteRenderer.clear();
 
 	_sprites.render(_loop.frameInterp(), _camera);
-	_texts.render(_loop.frameInterp());
+	_texts.render(_loop.frameInterp(), _camera);
 
-	_spriteRenderer.endFrame(_camera.transform());
+	_mainPass.render();
 
 	window()->swapBuffers();
 	glc->setLogCalls(false);
