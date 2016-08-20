@@ -50,9 +50,6 @@ EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
 
 EntityManager::~EntityManager() {
 	_root.release();
-//	for(auto nameComp: _compManagers) {
-//		nameComp->second->clear();
-//	}
 }
 
 
@@ -64,10 +61,10 @@ int EntityManager::registerComponentManager(ComponentManager* cmi) {
 }
 
 
-EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
+EntityRef EntityManager::createEntity(EntityRef parent, const char* name, int index) {
 	_Entity* entity = _createDetachedEntity(name);
 	if(parent.isValid()) {
-		_addChild(parent._get(), entity);
+		parent._get()->insertChild(entity, index);
 	}
 	return EntityRef(entity);
 }
@@ -76,7 +73,7 @@ EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
 EntityRef EntityManager::createEntityFromJson(EntityRef parent,
                                               const Json::Value& json,
                                               const Path& cd) {
-	return createEntityFromJson(parent, json.get("name", "").asCString(), json, cd);
+	return createEntityFromJson(parent, json.get("name", "").asCString(), -1, json, cd);
 }
 
 
@@ -84,7 +81,24 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
                                               const char* name,
                                               const Json::Value& json,
                                               const Path& cd) {
-	EntityRef entity = createEntity(parent, name);
+	return createEntityFromJson(parent, json.get("name", "").asCString(), -1, json, cd);
+}
+
+
+EntityRef EntityManager::createEntityFromJson(EntityRef parent,
+                                              int index,
+                                              const Json::Value& json,
+                                              const Path& cd) {
+	return createEntityFromJson(parent, json.get("name", "").asCString(), index, json, cd);
+}
+
+
+EntityRef EntityManager::createEntityFromJson(EntityRef parent,
+                                              const char* name,
+                                              int index,
+                                              const Json::Value& json,
+                                              const Path& cd) {
+	EntityRef entity = createEntity(parent, name, index);
 	if(json.isMember("transform")) {
 		entity.place(Transform(parseMatrix4(json["transform"])));
 	}
@@ -98,8 +112,8 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
 }
 
 
-EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name) {
-	EntityRef entity = createEntity(newParent, name? name: base.name());
+EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name, int index) {
+	EntityRef entity = createEntity(newParent, name? name: base.name(), index);
 	entity.place(base.transform());
 
 	Component* comp = base._get()->firstComponent;
@@ -124,7 +138,7 @@ void EntityManager::destroyEntity(EntityRef entity) {
 		entity._get()->firstComponent->manager()->removeComponent(entity);
 	}
 
-	_detach(entity._get());
+	entity._get()->parent->removeChild(entity._get());
 	delete[] entity._get()->name;
 	entity._get()->reset();
 	--_nEntities;
@@ -144,11 +158,11 @@ void EntityManager::_releaseEntity(_Entity* entity) {
 }
 
 
-void EntityManager::moveEntity(EntityRef& entity, EntityRef& newParent) {
+void EntityManager::moveEntity(EntityRef& entity, EntityRef& newParent, int index) {
 	lairAssert(entity.isValid() && newParent.isValid());
 
-	_detach(entity._get());
-	_addChild(newParent._get(), entity._get());
+	entity._get()->parent->removeChild(entity._get());
+	newParent._get()->insertChild(entity._get(), index);
 }
 
 
@@ -194,42 +208,6 @@ _Entity* EntityManager::_createDetachedEntity(const char* name) {
 	return entity;
 }
 
-void EntityManager::_addChild(_Entity* parent, _Entity* child) {
-	lairAssert(!child->parent && !child->nextSibling);
-	child->parent = parent;
-	if(parent->firstChild) {
-		parent->lastChild->nextSibling = child;
-	}
-	else {
-		parent->firstChild = child;
-	}
-	parent->lastChild = child;
-}
-
-void EntityManager::_detach(_Entity* child) {
-	lairAssert(child->parent);
-
-	_Entity* prevSibling = nullptr;
-	_Entity* e = child->parent->firstChild;
-	lairAssert(e);
-	while(e != child) {
-		prevSibling = e;
-		e = e->nextSibling;
-		lairAssert(e);
-	}
-
-	if(prevSibling) {
-		prevSibling->nextSibling = child->nextSibling;
-		if(!prevSibling->nextSibling) {
-			child->parent->lastChild = prevSibling;
-		}
-	} else {
-		child->parent->firstChild = child->nextSibling;
-	}
-
-	child->parent = nullptr;
-	child->nextSibling = nullptr;
-}
 
 void EntityManager::_updateWorldTransformHelper(
         _Entity* entity, const Transform& parentTransform) {

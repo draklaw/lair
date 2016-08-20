@@ -17,7 +17,6 @@
   - Culling
   - Shape rendering ?
 - ec
-  - Insert entity
   - Support multiple renderPass (with a mask ? or a list of Renderer ?) for
     sprite / text.
 - Audio module (OpenAL ?)

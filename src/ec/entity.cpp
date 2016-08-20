@@ -32,6 +32,68 @@ namespace lair
 {
 
 
+void _Entity::insertChild(_Entity* child, int index) {
+	lairAssert(!child->parent && !child->nextSibling);
+	lairAssert(index <= int(nChildren));
+
+	child->parent = this;
+
+	if(!firstChild) {
+		firstChild = child;
+		lastChild  = child;
+	}
+	else if(index == 0) {
+		child->nextSibling = firstChild;
+		firstChild         = child;
+	}
+	else if(index < 0 || index == nChildren) {
+		lastChild->nextSibling = child;
+		lastChild              = child;
+	}
+	else {
+		_Entity* prev = firstChild;
+		for(int i = 1; i < index; ++i) {
+			lairAssert(prev);
+			prev = prev->nextSibling;
+		}
+		lairAssert(prev && prev != lastChild);
+
+		child->nextSibling = prev->nextSibling;
+		prev->nextSibling  = child;
+	}
+
+	++nChildren;
+}
+
+
+void _Entity::removeChild(_Entity* child) {
+	lairAssert(child->parent == this);
+
+	--nChildren;
+
+	_Entity* prev = nullptr;
+	_Entity* e    = child->parent->firstChild;
+	lairAssert(e);
+	while(e != child) {
+		prev = e;
+		e    = e->nextSibling;
+		lairAssert(e);
+	}
+
+	if(prev) {
+		prev->nextSibling = child->nextSibling;
+		if(!prev->nextSibling) {
+			lastChild = prev;
+		}
+	} else {
+		firstChild = child->nextSibling;
+	}
+
+	child->parent      = nullptr;
+	child->nextSibling = nullptr;
+}
+
+
 void _Entity::_addComponent(Component* comp) {
 	comp->_nextComponent = firstComponent;
 	firstComponent = comp;

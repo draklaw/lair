@@ -68,18 +68,22 @@ public:
 
 	int registerComponentManager(ComponentManager* cmi);
 
-	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
+	EntityRef createEntity(EntityRef parent, const char* name = nullptr, int index = -1);
 	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
 	EntityRef createEntityFromJson(EntityRef parent, const char* name, const Json::Value& json,
 	                               const Path& cd=Path());
-	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr);
+	EntityRef createEntityFromJson(EntityRef parent, int index, const Json::Value& json,
+	                               const Path& cd=Path());
+	EntityRef createEntityFromJson(EntityRef parent, const char* name, int index,
+	                               const Json::Value& json, const Path& cd=Path());
+	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr, int index = -1);
 
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
 	void destroyEntity(EntityRef entity);
 	void _releaseEntity(_Entity* entity);
 
-	void moveEntity(EntityRef& entity, EntityRef& newParent);
+	void moveEntity(EntityRef& entity, EntityRef& newParent, int index = -1);
 
 	void updateWorldTransform();
 
@@ -92,8 +96,6 @@ protected:
 
 protected:
 	_Entity* _createDetachedEntity(const char* name);
-	void _addChild(_Entity* parent, _Entity* child);
-	void _detach(_Entity* child);
 	void _updateWorldTransformHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:

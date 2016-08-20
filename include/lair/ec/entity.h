@@ -81,6 +81,9 @@ public:
 		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
 	}
 
+	void insertChild(_Entity* child, int index);
+	void removeChild(_Entity* child);
+
 	void _addComponent(Component* comp);
 	void _removeComponent(Component* comp);
 	void _updateComponent(Component* from, Component* to);
@@ -94,6 +97,7 @@ public:
 	uint32         weakRefCount;
 	uint32         flags;
 
+	unsigned       nChildren;
 	_Entity*       parent;
 	_Entity*       firstChild;
 	_Entity*       lastChild;

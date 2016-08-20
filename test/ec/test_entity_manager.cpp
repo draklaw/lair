@@ -63,9 +63,9 @@ public:
 		a = em->createEntity(root, "a");
 		b = em->createEntity(a,    "b");
 		c = em->createEntity(root, "c");
-		d = em->createEntity(a,    "d");
-		e = em->createEntity(d,    "e");
-		f = em->createEntity(a,    "f");
+		f = em->createEntity(a,    "f", 1);
+		d = em->createEntity(a,    "d", 1);
+		e = em->createEntity(d,    "e", 0);
 	}
 };
 
