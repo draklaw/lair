@@ -70,6 +70,8 @@ public:
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
 	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
+	EntityRef createEntityFromJson(EntityRef parent, const char* name, const Json::Value& json,
+	                               const Path& cd=Path());
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr);
 
 	// Operates in linear time wrt the number of siblings

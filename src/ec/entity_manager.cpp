@@ -76,7 +76,15 @@ EntityRef EntityManager::createEntity(EntityRef parent, const char* name) {
 EntityRef EntityManager::createEntityFromJson(EntityRef parent,
                                               const Json::Value& json,
                                               const Path& cd) {
-	EntityRef entity = createEntity(parent, json.get("name", "").asCString());
+	return createEntityFromJson(parent, json.get("name", "").asCString(), json, cd);
+}
+
+
+EntityRef EntityManager::createEntityFromJson(EntityRef parent,
+                                              const char* name,
+                                              const Json::Value& json,
+                                              const Path& cd) {
+	EntityRef entity = createEntity(parent, name);
 	if(json.isMember("transform")) {
 		entity.place(Transform(parseMatrix4(json["transform"])));
 	}
