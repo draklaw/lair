@@ -31,7 +31,7 @@
 
 
 #ifndef LAIR_EC_MAX_DENSE_COMPONENTS
-#define LAIR_EC_MAX_DENSE_COMPONENTS 8
+#define LAIR_EC_MAX_DENSE_COMPONENTS 4
 #endif
 
 
@@ -46,12 +46,6 @@ class SpriteComponent;
 
 
 constexpr size_t MAX_DENSE_COMPONENTS = LAIR_EC_MAX_DENSE_COMPONENTS;
-
-enum {
-	SPRITE,
-
-	USER_COMPONENT_INDEX,
-};
 
 class _Entity {
 public:
@@ -254,11 +248,6 @@ public:
 	}
 
 	EntityRef clone(EntityRef newParent, const char* newName = nullptr) const;
-
-	inline SpriteComponent* sprite() {
-		// FIXME: Isn't this dangerous ?
-		return reinterpret_cast<SpriteComponent*>(_entity->components[SPRITE]);
-	}
 
 	inline _Entity* _get() {
 		return _entity;

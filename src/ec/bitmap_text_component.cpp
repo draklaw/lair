@@ -104,11 +104,15 @@ void BitmapTextComponent::setFont(const Path& logicPath) {
 BitmapTextComponentManager::BitmapTextComponentManager(
         LoaderManager* loaderManager,
         RenderPass* renderPass,
-        SpriteRenderer* spriteRenderer)
-	: SparseComponentManager("text"),
+        SpriteRenderer* spriteRenderer,
+        size_t componentBlockSize)
+	: DenseComponentManager("text", componentBlockSize),
       _loader(loaderManager),
       _renderPass(renderPass),
       _spriteRenderer(spriteRenderer) {
+	lairAssert(_loader);
+	lairAssert(_renderPass);
+	lairAssert(_spriteRenderer);
 }
 
 
@@ -165,7 +169,8 @@ BitmapTextComponent* BitmapTextComponentManager::cloneComponent(EntityRef base, 
 
 
 void BitmapTextComponentManager::render(float interp, const OrthographicCamera& camera) {
-	_collectGarbages();
+	compactArray();
+	//sortArray(TODO);
 
 	RenderPass::DrawStates states;
 	states.shader = _spriteRenderer->shader().shader;
@@ -178,7 +183,7 @@ void BitmapTextComponentManager::render(float interp, const OrthographicCamera& 
 	            _spriteRenderer->shader(), camera.transform(), 0);
 
 	for(auto& entityComp: *this) {
-		BitmapTextComponent& comp = entityComp.second;
+		BitmapTextComponent& comp = entityComp;
 
 		if(!comp._alive || !comp._entity()
 		|| !comp.font()    || !comp.font()   ->get() || !comp.font()   ->get()->isValid()

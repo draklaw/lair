@@ -83,8 +83,8 @@ public:
 			array().emplace_back(values[i]);
 	}
 };
-const int DenseArrayTest::count;
-const int DenseArrayTest::values[DenseArrayTest::count];
+constexpr int DenseArrayTest::count;
+constexpr int DenseArrayTest::values[DenseArrayTest::count];
 
 TEST_F(DenseArrayTest, Constructor) {
 	ASSERT_EQ(0, array().size());

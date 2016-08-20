@@ -19,6 +19,8 @@
  */
 
 
+#define LAIR_EC_MAX_DENSE_COMPONENTS 1
+
 #include <gtest/gtest.h>
 
 #include <lair/core/json.h>
@@ -44,7 +46,7 @@ template<typename Component>
 class TestComponentManager;
 
 enum {
-	TEST0 = USER_COMPONENT_INDEX,
+	TEST0,
 	TEST1,
 };
 
@@ -52,10 +54,6 @@ template<int _Index>
 class TestComponent : public Component {
 public:
 	typedef TestComponentManager<TestComponent<_Index>> Manager;
-
-	enum {
-		INDEX = _Index,
-	};
 
 public:
 	TestComponent(Manager* manager, _Entity* entity);
@@ -82,7 +80,7 @@ public:
 
 	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
 		Component* comp = Base::addComponent(entity);
-		comp->value = Base::getComponent(entity)->value;
+		comp->value = Base::get(entity)->value;
 		return comp;
 	}
 };
@@ -135,6 +133,9 @@ public:
 		manager1 = new Manager1("test1", 4);
 
 		em->registerComponentManager(manager0);
+		em->registerComponentManager(manager1);
+
+		ASSERT_EQ(1, MAX_DENSE_COMPONENTS);
 	}
 
 	virtual void TearDown() {
@@ -197,21 +198,21 @@ TEST_F(DenseComponentManagerTest, AddComponent) {
 	ASSERT_EQ(0, manager1->nZombies());
 	ASSERT_EQ(8, manager1->capacity());
 
-	ASSERT_EQ(nullptr, manager0->getComponent(root));
-	ASSERT_EQ(nullptr, manager0->getComponent(a));
-	ASSERT_EQ(nullptr, manager0->getComponent(b));
-	ASSERT_EQ(compC0,  manager0->getComponent(c));
-	ASSERT_EQ(compD0,  manager0->getComponent(d));
-	ASSERT_EQ(compE0,  manager0->getComponent(e));
-	ASSERT_EQ(nullptr, manager0->getComponent(f));
+	ASSERT_EQ(nullptr, manager0->get(root));
+	ASSERT_EQ(nullptr, manager0->get(a));
+	ASSERT_EQ(nullptr, manager0->get(b));
+	ASSERT_EQ(compC0,  manager0->get(c));
+	ASSERT_EQ(compD0,  manager0->get(d));
+	ASSERT_EQ(compE0,  manager0->get(e));
+	ASSERT_EQ(nullptr, manager0->get(f));
 
-	ASSERT_EQ(compR1,  manager1->getComponent(root));
-	ASSERT_EQ(compA1,  manager1->getComponent(a));
-	ASSERT_EQ(nullptr, manager1->getComponent(b));
-	ASSERT_EQ(compC1,  manager1->getComponent(c));
-	ASSERT_EQ(compD1,  manager1->getComponent(d));
-	ASSERT_EQ(nullptr, manager1->getComponent(e));
-	ASSERT_EQ(compF1,  manager1->getComponent(f));
+	ASSERT_EQ(compR1,  manager1->get(root));
+	ASSERT_EQ(compA1,  manager1->get(a));
+	ASSERT_EQ(nullptr, manager1->get(b));
+	ASSERT_EQ(compC1,  manager1->get(c));
+	ASSERT_EQ(compD1,  manager1->get(d));
+	ASSERT_EQ(nullptr, manager1->get(e));
+	ASSERT_EQ(compF1,  manager1->get(f));
 
 	ASSERT_EQ(1, countComponents(root));
 	ASSERT_EQ(1, countComponents(a));
@@ -231,15 +232,15 @@ TEST_F(DenseComponentManagerTest, AddComponent) {
 	ASSERT_TRUE(hasComponent(e,    compE0));
 	ASSERT_TRUE(hasComponent(f,    compF1));
 
-	ASSERT_EQ(1, manager0->getComponent(c)->value);
-	ASSERT_EQ(2, manager0->getComponent(d)->value);
-	ASSERT_EQ(3, manager0->getComponent(e)->value);
+	ASSERT_EQ(1, manager0->get(c)->value);
+	ASSERT_EQ(2, manager0->get(d)->value);
+	ASSERT_EQ(3, manager0->get(e)->value);
 
-	ASSERT_EQ(42, manager1->getComponent(root)->value);
-	ASSERT_EQ(4,  manager1->getComponent(a)   ->value);
-	ASSERT_EQ(5,  manager1->getComponent(c)   ->value);
-	ASSERT_EQ(6,  manager1->getComponent(d)   ->value);
-	ASSERT_EQ(7,  manager1->getComponent(f)   ->value);
+	ASSERT_EQ(42, manager1->get(root)->value);
+	ASSERT_EQ(4,  manager1->get(a)   ->value);
+	ASSERT_EQ(5,  manager1->get(c)   ->value);
+	ASSERT_EQ(6,  manager1->get(d)   ->value);
+	ASSERT_EQ(7,  manager1->get(f)   ->value);
 }
 
 TEST_F(DenseComponentManagerTest, RemoveComponent) {
@@ -259,21 +260,21 @@ TEST_F(DenseComponentManagerTest, RemoveComponent) {
 	ASSERT_EQ(2, manager1->nZombies());
 	ASSERT_EQ(8, manager1->capacity());
 
-	ASSERT_EQ(nullptr, manager0->getComponent(root));
-	ASSERT_EQ(nullptr, manager0->getComponent(a));
-	ASSERT_EQ(nullptr, manager0->getComponent(b));
-	ASSERT_EQ(nullptr, manager0->getComponent(c));
-	ASSERT_EQ(compD0,  manager0->getComponent(d));
-	ASSERT_EQ(nullptr, manager0->getComponent(e));
-	ASSERT_EQ(nullptr, manager0->getComponent(f));
+	ASSERT_EQ(nullptr, manager0->get(root));
+	ASSERT_EQ(nullptr, manager0->get(a));
+	ASSERT_EQ(nullptr, manager0->get(b));
+	ASSERT_EQ(nullptr, manager0->get(c));
+	ASSERT_EQ(compD0,  manager0->get(d));
+	ASSERT_EQ(nullptr, manager0->get(e));
+	ASSERT_EQ(nullptr, manager0->get(f));
 
-	ASSERT_EQ(compR1,  manager1->getComponent(root));
-	ASSERT_EQ(nullptr, manager1->getComponent(a));
-	ASSERT_EQ(nullptr, manager1->getComponent(b));
-	ASSERT_EQ(compC1,  manager1->getComponent(c));
-	ASSERT_EQ(nullptr, manager1->getComponent(d));
-	ASSERT_EQ(nullptr, manager1->getComponent(e));
-	ASSERT_EQ(compF1,  manager1->getComponent(f));
+	ASSERT_EQ(compR1,  manager1->get(root));
+	ASSERT_EQ(nullptr, manager1->get(a));
+	ASSERT_EQ(nullptr, manager1->get(b));
+	ASSERT_EQ(compC1,  manager1->get(c));
+	ASSERT_EQ(nullptr, manager1->get(d));
+	ASSERT_EQ(nullptr, manager1->get(e));
+	ASSERT_EQ(compF1,  manager1->get(f));
 
 	ASSERT_EQ(1, countComponents(root));
 	ASSERT_EQ(0, countComponents(a));
@@ -291,11 +292,11 @@ TEST_F(DenseComponentManagerTest, RemoveComponent) {
 	ASSERT_EQ(nullptr, e._get()->firstComponent);
 	ASSERT_TRUE(hasComponent(f,    compF1));
 
-	ASSERT_EQ(2, manager0->getComponent(d)->value);
+	ASSERT_EQ(2, manager0->get(d)->value);
 
-	ASSERT_EQ(42, manager1->getComponent(root)->value);
-	ASSERT_EQ(5,  manager1->getComponent(c)   ->value);
-	ASSERT_EQ(7,  manager1->getComponent(f)   ->value);
+	ASSERT_EQ(42, manager1->get(root)->value);
+	ASSERT_EQ(5,  manager1->get(c)   ->value);
+	ASSERT_EQ(7,  manager1->get(f)   ->value);
 }
 
 TEST_F(DenseComponentManagerTest, CompactArray) {
@@ -318,11 +319,11 @@ TEST_F(DenseComponentManagerTest, CompactArray) {
 	ASSERT_EQ(0, manager1->nZombies());
 	ASSERT_EQ(8, manager1->capacity());
 
-	ASSERT_EQ(2, manager0->getComponent(d)->value);
+	ASSERT_EQ(2, manager0->get(d)->value);
 
-	ASSERT_EQ(42, manager1->getComponent(root)->value);
-	ASSERT_EQ(5,  manager1->getComponent(c)   ->value);
-	ASSERT_EQ(7,  manager1->getComponent(f)   ->value);
+	ASSERT_EQ(42, manager1->get(root)->value);
+	ASSERT_EQ(5,  manager1->get(c)   ->value);
+	ASSERT_EQ(7,  manager1->get(f)   ->value);
 }
 
 TEST_F(DenseComponentManagerTest, Iterator) {

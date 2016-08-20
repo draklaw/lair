@@ -38,7 +38,7 @@ namespace lair
 
 EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
     : _logger             (&logger),
-      _compManagers       (),
+      _compManagerMap     (),
       _nEntities          (0),
       _nZombieEntities    (0),
       _entities           (entityBlockSize),
@@ -56,8 +56,11 @@ EntityManager::~EntityManager() {
 }
 
 
-void EntityManager::registerComponentManager(ComponentManager* cmi) {
-	_compManagers[cmi->name()] = cmi;
+int EntityManager::registerComponentManager(ComponentManager* cmi) {
+	cmi->_setIndex(_compManagers.size());
+	_compManagers.push_back(cmi);
+	_compManagerMap[cmi->name()] = cmi;
+	return cmi->index();
 }
 
 
@@ -78,8 +81,8 @@ EntityRef EntityManager::createEntityFromJson(EntityRef parent,
 		entity.place(Transform(parseMatrix4(json["transform"])));
 	}
 	for(const std::string& key: json.getMemberNames()) {
-		auto it = _compManagers.find(key);
-		if(it != _compManagers.end()) {
+		auto it = _compManagerMap.find(key);
+		if(it != _compManagerMap.end()) {
 			it->second->addComponentFromJson(entity, json[key], cd);
 		}
 	}

@@ -188,7 +188,7 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
 
 
 SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	SpriteComponent* baseComp = base.sprite();
+	SpriteComponent* baseComp = get(base);
 	SpriteComponent* comp = addComponent(entity);
 	comp->setTexture(     baseComp->texture());
 	comp->setAnchor(      baseComp->anchor());

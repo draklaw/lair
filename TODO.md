@@ -18,11 +18,6 @@
   - Shape rendering ?
 - ec
   - Insert entity
-  - Only use DenseComponentManager and let EntityManager deal with the mapping ?
-    - Access component by index. Indices < MAX_DENSE_COMPONENT are accessed directly,
-      others are accessed through a hash map.
-    - The current implementation is somewhat dangerous: adding sparse component
-      _might_ trigger a realloc and change pointer values.
   - Support multiple renderPass (with a mask ? or a list of Renderer ?) for
     sprite / text.
   - Parameter to set the name of an entity on load.

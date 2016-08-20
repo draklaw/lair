@@ -60,10 +60,6 @@ class SpriteComponent : public Component {
 public:
 	typedef SpriteComponentManager Manager;
 
-	enum {
-		INDEX = SPRITE
-	};
-
 public:
 	SpriteComponent(Manager* manager, _Entity* entity);
 	SpriteComponent(const SpriteComponent&) = delete;
@@ -126,9 +122,11 @@ public:
 	                       RenderPass* renderPass,
 	                       SpriteRenderer* spriteRenderer,
 	                       size_t componentBlockSize = 1024);
+
 	SpriteComponentManager(const SpriteComponentManager&) = delete;
 	SpriteComponentManager(SpriteComponentManager&&)      = delete;
-	~SpriteComponentManager();
+
+	virtual ~SpriteComponentManager();
 
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;

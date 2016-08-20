@@ -66,7 +66,7 @@ public:
 	inline size_t    nZombieEntities() const { return _nZombieEntities; }
 	inline EntityRef root()            const { return _root; }
 
-	void registerComponentManager(ComponentManager* cmi);
+	int registerComponentManager(ComponentManager* cmi);
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr);
 	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
@@ -85,6 +85,7 @@ public:
 
 protected:
 	typedef DenseArray<_Entity> EntityArray;
+	typedef std::vector<ComponentManager*> CompManagerArray;
 	typedef std::unordered_map<std::string, ComponentManager*> CompManagerMap;
 
 protected:
@@ -94,16 +95,17 @@ protected:
 	void _updateWorldTransformHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:
-	Logger          _logger;
+	Logger           _logger;
 
-	CompManagerMap  _compManagers;
+	CompManagerArray _compManagers;
+	CompManagerMap   _compManagerMap;
 
-	size_t          _nEntities;
-	size_t          _nZombieEntities;
-	EntityArray     _entities;
-	_Entity*        _firstFree;
+	size_t           _nEntities;
+	size_t           _nZombieEntities;
+	EntityArray      _entities;
+	_Entity*         _firstFree;
 
-	EntityRef       _root;
+	EntityRef        _root;
 };
 
 

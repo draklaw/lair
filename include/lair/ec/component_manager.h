@@ -42,12 +42,37 @@ class Component;
 
 class ComponentManager {
 public:
-	virtual const std::string& name() const = 0;
+	inline ComponentManager(const std::string& name)
+		: _name (name)
+		, _index(-1) {
+	}
+
+	ComponentManager(const ComponentManager&) = delete;
+	ComponentManager(ComponentManager&&)      = delete;
+
+	ComponentManager& operator=(const ComponentManager&) = delete;
+	ComponentManager& operator=(ComponentManager&&)      = delete;
+
+	inline const std::string& name() const {
+		return _name;
+	}
+
+	inline unsigned index() const {
+		return _index;
+	}
+	inline void _setIndex(int index) {
+		lairAssert(_index < 0 && index >= 0);
+		_index = index;
+	}
 
 	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path()) = 0;
 	virtual Component* cloneComponent(EntityRef base, EntityRef entity) = 0;
 	virtual void removeComponent(EntityRef entity) = 0;
+
+protected:
+	std::string _name;
+	int         _index;
 };
 
 

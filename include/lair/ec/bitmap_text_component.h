@@ -35,7 +35,7 @@
 
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
-#include <lair/ec/sparse_component_manager.h>
+#include <lair/ec/dense_component_manager.h>
 
 
 namespace lair {
@@ -102,11 +102,16 @@ public:
 };
 
 
-class BitmapTextComponentManager : public SparseComponentManager<BitmapTextComponent> {
+class BitmapTextComponentManager : public DenseComponentManager<BitmapTextComponent> {
 public:
 	BitmapTextComponentManager(LoaderManager* loaderManager,
 	                           RenderPass* renderPass,
-	                           SpriteRenderer* spriteRenderer);
+	                           SpriteRenderer* spriteRenderer,
+	                           size_t componentBlockSize = 1024);
+
+	BitmapTextComponentManager(const BitmapTextComponentManager&) = delete;
+	BitmapTextComponentManager(BitmapTextComponentManager&&)      = delete;
+
 	virtual ~BitmapTextComponentManager();
 
 	virtual BitmapTextComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,

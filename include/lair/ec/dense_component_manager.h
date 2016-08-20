@@ -106,7 +106,7 @@ public:
 
 public:
 	DenseComponentManager(const std::string& name, size_t componentBlockSize)
-	    : _name(name),
+	    : ComponentManager(name),
 	      _nComponents(0),
 	      _components(componentBlockSize) {
 	}
@@ -129,16 +129,34 @@ public:
 
 	virtual const std::string& name() const { return _name; }
 
-	Component* getComponent(EntityRef entity) {
-		return reinterpret_cast<Component*>(entity._get()->components[Component::INDEX]);
+	Component* get(EntityRef entity) {
+		lairAssert(_index >= 0);
+
+		if(_index < LAIR_EC_MAX_DENSE_COMPONENTS) {
+			return reinterpret_cast<Component*>(entity._get()->components[_index]);
+		}
+
+		auto it = _componentMap.find(entity._get());
+		if(it == _componentMap.end()) {
+			return nullptr;
+		}
+		return it->second;
 	}
 	void _setComponent(_Entity* entity, Component* comp) {
-		entity->components[Component::INDEX] = comp;
+		lairAssert(_index >= 0);
+
+		if(_index < LAIR_EC_MAX_DENSE_COMPONENTS) {
+			entity->components[_index] = comp;
+		}
+		else {
+			_componentMap[entity] = comp;
+		}
 	}
 
 	Component* addComponent(EntityRef entity) {
+		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());
-		lairAssert(getComponent(entity) == nullptr);
+		lairAssert(get(entity) == nullptr);
 
 		_components.emplace_back(static_cast<typename Component::Manager*>(this), entity._get());
 		Component* comp = &_components.back();
@@ -150,8 +168,9 @@ public:
 	}
 
 	void removeComponent(EntityRef entity) {
+		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());
-		Component* comp = getComponent(entity);
+		Component* comp = get(entity);
 		lairAssert(comp->_alive);
 		comp->destroy();
 		_setComponent(entity._get(), nullptr);
@@ -230,11 +249,13 @@ protected:
 		const Cmp& cmp;
 	};
 
+	typedef std::unordered_map<_Entity const*, Component*> ComponentMap;
+
 protected:
-	std::string      _name;
 	size_t           _nComponents;
 	ComponentArray   _components;
 	SortBuffer       _sortBuffer;
+	ComponentMap     _componentMap;
 };
 
 
