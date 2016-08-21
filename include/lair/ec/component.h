@@ -38,6 +38,11 @@ class ComponentManager;
 
 
 class Component {
+	enum {
+		Alive   = 1 << 0,
+		Enabled = 1 << 1,
+	};
+
 public:
 	explicit Component(ComponentManager* manager, _Entity* entity);
 	Component(const Component&) = delete;
@@ -47,21 +52,33 @@ public:
 	Component& operator=(const Component&) = delete;
 	Component& operator=(Component&&)      = default;
 
-	bool isAlive() const { return _alive; }
-	ComponentManager* manager() { return _manager; }
-	EntityRef entity() { return EntityRef(_entityPtr); }
+	inline bool isAlive()   const { return bitsEnabled(_flags, Alive); }
+	inline bool isEnabled() const {
+		bool enabled = bitsEnabled(_flags, Alive | Enabled);
+		lairAssert(!enabled || _entityPtr);
+		return enabled && _entityPtr->isEnabled();
+	}
+
+	inline void setEnabled(bool enabled) {
+		_flags = setBits(_flags, Enabled, enabled);
+	}
+
+	inline ComponentManager* manager() { return _manager; }
+	inline EntityRef entity() { return EntityRef(_entityPtr); }
 
 	void destroy();
 
 	inline _Entity* _entity() const { return _entityPtr; }
 
-public:
+protected:
 	ComponentManager* _manager;
-	_Entity*   _entityPtr;
-	Component* _nextComponent;
+	_Entity*          _entityPtr;
 
-	// FIXME: This should be used only by dense component. Move it ?
-	bool _alive;
+public:
+	Component*        _nextComponent;
+
+protected:
+	uint32            _flags;
 };
 
 

@@ -50,7 +50,8 @@ constexpr size_t MAX_DENSE_COMPONENTS = LAIR_EC_MAX_DENSE_COMPONENTS;
 class _Entity {
 public:
 	enum {
-		Alive = 0x01
+		Alive   = 1 << 0,
+		Enabled = 1 << 1,
 	};
 
 public:
@@ -64,15 +65,19 @@ public:
 	_Entity& operator==(_Entity&&)     = delete;
 
 	inline bool isAlive() const {
-		return flags & Alive;
+		return bitsEnabled(flags, Alive);
 	}
 
 	inline void setAlive(bool alive) {
-		if(alive) {
-			flags |= Alive;
-		} else {
-			flags &= ~uint32(Alive);
-		}
+		flags = setBits(flags, Alive, alive);
+	}
+
+	inline bool isEnabled() const {
+		return bitsEnabled(flags, Alive | Enabled);
+	}
+
+	inline bool setEnabled(bool enabled) {
+		flags = setBits(flags, Enabled, enabled);
 	}
 
 	inline void reset() {

@@ -185,7 +185,7 @@ void BitmapTextComponentManager::render(float interp, const OrthographicCamera& 
 	for(auto& entityComp: *this) {
 		BitmapTextComponent& comp = entityComp;
 
-		if(!comp._alive || !comp._entity()
+		if(!comp.isEnabled()
 		|| !comp.font()    || !comp.font()   ->get() || !comp.font()   ->get()->isValid()
 		/*|| !comp.texture() || !comp.texture()->get() || !comp.texture()->get()->isValid()*/) {
 			continue;

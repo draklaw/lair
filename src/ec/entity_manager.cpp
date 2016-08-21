@@ -196,6 +196,7 @@ _Entity* EntityManager::_createDetachedEntity(const char* name) {
 	entity->nextSibling = nullptr;
 
 	entity->setAlive(true);
+	entity->setEnabled(true);
 	++_nEntities;
 	entity->transform.setIdentity();
 

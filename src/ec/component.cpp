@@ -35,7 +35,7 @@ Component::Component(ComponentManager* manager, _Entity* entity)
     : _manager(manager),
       _entityPtr(entity),
       _nextComponent(nullptr),
-      _alive(true) {
+      _flags(Alive | Enabled) {
 }
 
 
@@ -46,7 +46,7 @@ Component::~Component() {
 void Component::destroy() {
 	lairAssert(_entityPtr);
 	_entityPtr->_removeComponent(this);
-	_alive = false;
+	_flags = 0;
 }
 
 

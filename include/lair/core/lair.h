@@ -143,6 +143,19 @@ inline I intFromFloat(F f, F fmin, F fmax, I imin, I imax) {
 	return clamp(I(normalize(f, fmin, fmax) * (imax - imin)) + imin, imin, imax);
 }
 
+template < typename T, typename B >
+inline bool bitsEnabled(T flags, B bits) {
+	return (flags & T(bits)) == T(bits);
+}
+
+template < typename T, typename B >
+inline T setBits(T flags, B bits, bool enable) {
+	if(enable)
+		return flags | T(bits);
+	return flags & ~T(bits);
+}
+
+
 }
 
 #endif

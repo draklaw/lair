@@ -93,7 +93,7 @@ public:
 	private:
 		void _skipDestroyed() {
 			while(_index < _self->_components.size()
-			   && !_self->_components[_index]._alive) {
+			   && !_self->_components[_index].isAlive()) {
 				++_index;
 			}
 		}
@@ -171,7 +171,7 @@ public:
 		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());
 		Component* comp = get(entity);
-		lairAssert(comp->_alive);
+		lairAssert(comp->isAlive());
 		comp->destroy();
 		_setComponent(entity._get(), nullptr);
 		--_nComponents;
@@ -179,15 +179,15 @@ public:
 
 	void compactArray() {
 		size_t size = _components.size();
-		while(size > 0 && !_components[size - 1]._alive) --size;
+		while(size > 0 && !_components[size - 1].isAlive()) --size;
 		for(size_t i = 0; i < size; ++i) {
 			Component* comp = &_components[i];
-			if(!comp->_alive) {
+			if(!comp->isAlive()) {
 				--size;
 				std::swap(*comp, _components[size]);
 				_setComponent(comp->_entity(), comp);
 				comp->_entity()->_updateComponent(&_components[size], comp);
-				while(size > 0 && !_components[size - 1]._alive) --size;
+				while(size > 0 && !_components[size - 1].isAlive()) --size;
 			}
 		}
 		_components.resize(size);
@@ -216,17 +216,17 @@ public:
 			Component* c1 = &_components[i1];
 
 			std::swap(*c0, *c1);
-			if(c0->_alive) {
+			if(c0->isAlive()) {
 				_setComponent(c0->_entity(), c0);
 				c0->_entity()->_updateComponent(c1, c0);
 				lastAlive = i0;
 			}
-			if(c1->_alive) {
+			if(c1->isAlive()) {
 				_setComponent(c1->_entity(), c1);
 				c1->_entity()->_updateComponent(c0, c1);
 			}
 		}
-		while(lastAlive < size && _components[lastAlive]._alive) ++lastAlive;
+		while(lastAlive < size && _components[lastAlive].isAlive()) ++lastAlive;
 		_components.resize(lastAlive);
 	}
 
@@ -239,10 +239,10 @@ protected:
 		inline bool operator()(size_t i0, size_t i1) const {
 			Component* c0 = &self->_components[i0];
 			Component* c1 = &self->_components[i1];
-			if(c0->_alive && c1->_alive) {
+			if(c0->isAlive() && c1->isAlive()) {
 				return cmp(&self->_components[i0], &self->_components[i1]);
 			}
-			return c0->_alive;
+			return c0->isAlive();
 		}
 
 		Self*      self;

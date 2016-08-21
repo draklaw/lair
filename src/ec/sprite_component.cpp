@@ -215,10 +215,11 @@ void SpriteComponentManager::render(float interp, const OrthographicCamera& came
 
 	for(SpriteComponent& sc: *this) {
 		// TODO: culling
-		if(!sc._alive || !sc._entity()
+		if(!sc.isEnabled()
 		|| !sc.texture() || !sc.texture()->get() || !sc.texture()->get()->isValid()) {
 			continue;
 		}
+
 		TextureSP tex = sc.texture()->_get();
 
 		Matrix4 wt = lerp(interp,
