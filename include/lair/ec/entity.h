@@ -81,7 +81,10 @@ public:
 		            sizeof(_Entity) - ptrdiff_t(offsetof(_Entity, flags)));
 	}
 
+	_Entity* _childBefore(int index);
+
 	void insertChild(_Entity* child, int index);
+	void insertChild(_Entity* child, _Entity* previousSibling);
 	void removeChild(_Entity* child);
 
 	void _addComponent(Component* comp);

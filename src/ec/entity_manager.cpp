@@ -44,7 +44,7 @@ EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
       _entities           (entityBlockSize),
       _firstFree          (nullptr),
       _root               (nullptr) {
-	_root = createEntity(EntityRef(), "__root__");
+	_root = createEntity(EntityRef(), "__root__", EntityRef());
 }
 
 
@@ -62,58 +62,26 @@ int EntityManager::registerComponentManager(ComponentManager* cmi) {
 
 
 EntityRef EntityManager::createEntity(EntityRef parent, const char* name, int index) {
+	return createEntity(parent, name, EntityRef(parent._get()->_childBefore(index)));
+}
+
+
+EntityRef EntityManager::createEntity(EntityRef parent, const char* name, EntityRef insertAfter) {
 	_Entity* entity = _createDetachedEntity(name);
 	if(parent.isValid()) {
-		parent._get()->insertChild(entity, index);
+		parent._get()->insertChild(entity, insertAfter._get());
 	}
 	return EntityRef(entity);
 }
 
 
-EntityRef EntityManager::createEntityFromJson(EntityRef parent,
-                                              const Json::Value& json,
-                                              const Path& cd) {
-	return createEntityFromJson(parent, json.get("name", "").asCString(), -1, json, cd);
-}
-
-
-EntityRef EntityManager::createEntityFromJson(EntityRef parent,
-                                              const char* name,
-                                              const Json::Value& json,
-                                              const Path& cd) {
-	return createEntityFromJson(parent, json.get("name", "").asCString(), -1, json, cd);
-}
-
-
-EntityRef EntityManager::createEntityFromJson(EntityRef parent,
-                                              int index,
-                                              const Json::Value& json,
-                                              const Path& cd) {
-	return createEntityFromJson(parent, json.get("name", "").asCString(), index, json, cd);
-}
-
-
-EntityRef EntityManager::createEntityFromJson(EntityRef parent,
-                                              const char* name,
-                                              int index,
-                                              const Json::Value& json,
-                                              const Path& cd) {
-	EntityRef entity = createEntity(parent, name, index);
-	if(json.isMember("transform")) {
-		entity.place(Transform(parseMatrix4(json["transform"])));
-	}
-	for(const std::string& key: json.getMemberNames()) {
-		auto it = _compManagerMap.find(key);
-		if(it != _compManagerMap.end()) {
-			it->second->addComponentFromJson(entity, json[key], cd);
-		}
-	}
-	return entity;
-}
-
-
 EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name, int index) {
-	EntityRef entity = createEntity(newParent, name? name: base.name(), index);
+	return cloneEntity(base, newParent, name, EntityRef(newParent._get()->_childBefore(index)));
+}
+
+
+EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter) {
+	EntityRef entity = createEntity(newParent, name? name: base.name(), insertAfter);
 	entity.place(base.transform());
 
 	Component* comp = base._get()->firstComponent;
@@ -123,6 +91,36 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 	}
 
 	return entity;
+}
+
+
+void EntityManager::initializeFromJson(EntityRef entity,
+                                       const Json::Value& json,
+                                       const Path& cd) {
+	if(entity.name()[0] == '\0') {
+		std::string name = json.get("name", "<noname>").asString();
+		size_t nameLen = name.size() + 1;
+		std::unique_ptr<char> ownedName(new char[nameLen]);
+		std::memcpy(ownedName.get(), name.data(), nameLen);
+
+		delete[] entity._get()->name;
+		entity._get()->name = ownedName.release();
+	}
+
+	if(json.isMember("transform")) {
+		entity.place(Transform(parseMatrix4(json["transform"])));
+	}
+
+	while(entity._get()->firstComponent) {
+		lairAssert(entity._get()->firstComponent->manager());
+		entity._get()->firstComponent->manager()->removeComponent(entity);
+	}
+	for(const std::string& key: json.getMemberNames()) {
+		auto it = _compManagerMap.find(key);
+		if(it != _compManagerMap.end()) {
+			it->second->addComponentFromJson(entity, json[key], cd);
+		}
+	}
 }
 
 

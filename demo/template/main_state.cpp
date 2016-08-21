@@ -207,5 +207,8 @@ EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& 
 		parent = _modelRoot;
 	}
 
-	return _entities.createEntityFromJson(parent, json, localPath.dir());
+	EntityRef entity = _entities.createEntity(parent);
+	_entities.initializeFromJson(entity, json, localPath.dir());
+
+	return entity;
 }

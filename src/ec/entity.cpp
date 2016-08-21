@@ -32,34 +32,51 @@ namespace lair
 {
 
 
-void _Entity::insertChild(_Entity* child, int index) {
-	lairAssert(!child->parent && !child->nextSibling);
+_Entity* _Entity::_childBefore(int index) {
 	lairAssert(index <= int(nChildren));
+
+	if(index < 0 || index == nChildren) {
+		return lastChild;
+	}
+
+	_Entity* prev = nullptr;
+	_Entity* e    = firstChild;
+	for(int i = 0; i < index; ++i) {
+		lairAssert(e);
+		prev = e;
+		e    = e->nextSibling;
+	}
+	return prev;
+}
+
+
+void _Entity::insertChild(_Entity* child, int index) {
+	insertChild(child, _childBefore(index));
+}
+
+
+void _Entity::insertChild(_Entity* child, _Entity* previousSibling) {
+	lairAssert(!child->parent && !child->nextSibling);
+	lairAssert(!previousSibling || previousSibling->parent == this);
 
 	child->parent = this;
 
 	if(!firstChild) {
+		lairAssert(!previousSibling);
 		firstChild = child;
 		lastChild  = child;
 	}
-	else if(index == 0) {
+	else if(!previousSibling) {
 		child->nextSibling = firstChild;
 		firstChild         = child;
 	}
-	else if(index < 0 || index == nChildren) {
+	else if(!previousSibling->nextSibling) {
 		lastChild->nextSibling = child;
 		lastChild              = child;
 	}
 	else {
-		_Entity* prev = firstChild;
-		for(int i = 1; i < index; ++i) {
-			lairAssert(prev);
-			prev = prev->nextSibling;
-		}
-		lairAssert(prev && prev != lastChild);
-
-		child->nextSibling = prev->nextSibling;
-		prev->nextSibling  = child;
+		child->nextSibling           = previousSibling->nextSibling;
+		previousSibling->nextSibling = child;
 	}
 
 	++nChildren;
@@ -87,6 +104,8 @@ void _Entity::removeChild(_Entity* child) {
 		}
 	} else {
 		firstChild = child->nextSibling;
+		if(!firstChild)
+			lastChild = nullptr;
 	}
 
 	child->parent      = nullptr;

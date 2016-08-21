@@ -19,6 +19,9 @@
 - ec
   - Support multiple renderPass (with a mask ? or a list of Renderer ?) for
     sprite / text.
+  - Take a look at entities/component flags. Alive should be to tell an object
+    has not be destroyed - it can not be resurected if false. Enable should
+    allow to temporarily enable / disable an entity/component.
 - Audio module (OpenAL ?)
 - ec meta-code (Property system / method call) (python ?)
 - Python

@@ -69,14 +69,11 @@ public:
 	int registerComponentManager(ComponentManager* cmi);
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr, int index = -1);
-	EntityRef createEntityFromJson(EntityRef parent, const Json::Value& json, const Path& cd=Path());
-	EntityRef createEntityFromJson(EntityRef parent, const char* name, const Json::Value& json,
-	                               const Path& cd=Path());
-	EntityRef createEntityFromJson(EntityRef parent, int index, const Json::Value& json,
-	                               const Path& cd=Path());
-	EntityRef createEntityFromJson(EntityRef parent, const char* name, int index,
-	                               const Json::Value& json, const Path& cd=Path());
+	EntityRef createEntity(EntityRef parent, const char* name, EntityRef insertAfter);
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr, int index = -1);
+	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter);
+
+	void initializeFromJson(EntityRef entity, const Json::Value& json, const Path& cd=Path());
 
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
@@ -84,6 +81,7 @@ public:
 	void _releaseEntity(_Entity* entity);
 
 	void moveEntity(EntityRef& entity, EntityRef& newParent, int index = -1);
+	void moveEntity(EntityRef& entity, EntityRef& newParent, EntityRef insertAfter);
 
 	void updateWorldTransform();
 
