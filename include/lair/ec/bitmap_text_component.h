@@ -118,15 +118,22 @@ public:
 	                                  const Path& cd=Path());
 	virtual BitmapTextComponent* cloneComponent(EntityRef base, EntityRef entity);
 
-	void render(float interp, const OrthographicCamera& camera);
+//	void render(float interp, const OrthographicCamera& camera);
+	void render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 	LoaderManager* loader();
 	SpriteRenderer* spriteRenderer() const;
+
+protected:
+	void _render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 private:
 	LoaderManager*  _loader;
 	RenderPass*     _renderPass;
 	SpriteRenderer* _spriteRenderer;
+
+	RenderPass::DrawStates _states;
+	const ShaderParameter* _params;
 };
 
 

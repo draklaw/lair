@@ -167,8 +167,8 @@ void MainState::updateFrame() {
 	_mainPass.clear();
 	_spriteRenderer.clear();
 
-	_sprites.render(_loop.frameInterp(), _camera);
-	_texts.render(_loop.frameInterp(), _camera);
+	_sprites.render(_entities.root(), _loop.frameInterp(), _camera);
+	_texts.render(_entities.root(), _loop.frameInterp(), _camera);
 
 	_mainPass.render();
 

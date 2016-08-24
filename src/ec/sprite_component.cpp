@@ -110,7 +110,9 @@ SpriteComponentManager::SpriteComponentManager(AssetManager* assetManager,
       _assets(assetManager),
       _loader(loaderManager),
       _renderPass(renderPass),
-      _spriteRenderer(spriteRenderer) {
+      _spriteRenderer(spriteRenderer),
+      _states(),
+      _params(nullptr) {
 	lairAssert(_assets);
 	lairAssert(_loader);
 	lairAssert(_spriteRenderer);
@@ -189,7 +191,7 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
 
 SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
 	SpriteComponent* baseComp = get(base);
-	SpriteComponent* comp = addComponent(entity);
+	SpriteComponent* comp = _addComponent(entity, baseComp);
 	comp->setTexture(     baseComp->texture());
 	comp->setAnchor(      baseComp->anchor());
 	comp->setColor(       baseComp->color());
@@ -202,51 +204,67 @@ SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRe
 }
 
 
-void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
-	sortArray(SpriteComponent::_renderCompare);
+//void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
+//	sortArray(SpriteComponent::_renderCompare);
 
-	RenderPass::DrawStates states;
-	states.shader = _spriteRenderer->shader().shader;
-	states.buffer = _spriteRenderer->buffer();
-	states.format = _spriteRenderer->format();
+//	RenderPass::DrawStates states;
+//	states.shader = _spriteRenderer->shader().shader;
+//	states.buffer = _spriteRenderer->buffer();
+//	states.format = _spriteRenderer->format();
 
-	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+//	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+//	            _spriteRenderer->shader(), camera.transform(), 0);
+
+//	for(SpriteComponent& sc: *this) {
+//		// TODO: culling
+//		if(!sc.isEnabled()
+//		|| !sc.texture() || !sc.texture()->get() || !sc.texture()->get()->isValid()) {
+//			continue;
+//		}
+
+//		TextureSP tex = sc.texture()->_get();
+
+//		Matrix4 wt = lerp(interp,
+//		                  sc._entity()->prevWorldTransform.matrix(),
+//		                  sc._entity()->worldTransform.matrix());
+
+//		const Box2& texCoords = sc._texCoords();
+//		Scalar w = tex->width()  * texCoords.sizes()(0);
+//		Scalar h = tex->height() * texCoords.sizes()(1);
+//		Vector2 offset(-w * sc.anchor().x(),
+//		               -h * sc.anchor().y());
+//		Box2 coords(offset, Vector2(w, h) + offset);
+
+//		unsigned index = _spriteRenderer->indexCount();
+//		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords);
+//		unsigned count = _spriteRenderer->indexCount() - index;
+
+//		if(count) {
+//			states.texture      = tex;
+//			states.textureFlags = sc.textureFlags();
+//			states.blendingMode = sc.blendingMode();
+
+//			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
+//			                                        camera.viewBox().max()(2));
+//			_renderPass->addDrawCall(states, params, depth, index, count);
+//		}
+//	}
+//}
+
+
+void SpriteComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
+	compactArray();
+
+	_states.shader = _spriteRenderer->shader().shader;
+	_states.buffer = _spriteRenderer->buffer();
+	_states.format = _spriteRenderer->format();
+
+	_params = _spriteRenderer->addShaderParameters(
 	            _spriteRenderer->shader(), camera.transform(), 0);
 
-	for(SpriteComponent& sc: *this) {
-		// TODO: culling
-		if(!sc.isEnabled()
-		|| !sc.texture() || !sc.texture()->get() || !sc.texture()->get()->isValid()) {
-			continue;
-		}
+	_render(entity, interp, camera);
 
-		TextureSP tex = sc.texture()->_get();
-
-		Matrix4 wt = lerp(interp,
-		                  sc._entity()->prevWorldTransform.matrix(),
-		                  sc._entity()->worldTransform.matrix());
-
-		const Box2& texCoords = sc._texCoords();
-		Scalar w = tex->width()  * texCoords.sizes()(0);
-		Scalar h = tex->height() * texCoords.sizes()(1);
-		Vector2 offset(-w * sc.anchor().x(),
-		               -h * sc.anchor().y());
-		Box2 coords(offset, Vector2(w, h) + offset);
-
-		unsigned index = _spriteRenderer->indexCount();
-		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords);
-		unsigned count = _spriteRenderer->indexCount() - index;
-
-		if(count) {
-			states.texture      = tex;
-			states.textureFlags = sc.textureFlags();
-			states.blendingMode = sc.blendingMode();
-
-			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
-			                                        camera.viewBox().max()(2));
-			_renderPass->addDrawCall(states, params, depth, index, count);
-		}
-	}
+	_params = nullptr;
 }
 
 
@@ -262,6 +280,49 @@ LoaderManager* SpriteComponentManager::loader() {
 
 SpriteRenderer* SpriteComponentManager::spriteRenderer() {
 	return _spriteRenderer;
+}
+
+
+void SpriteComponentManager::_render(EntityRef entity, float interp, const OrthographicCamera& camera) {
+	if ( !entity.isEnabled() )
+		return;
+
+	SpriteComponent* sc = get(entity);
+	if(sc && sc->isEnabled()
+	&& sc->texture() && sc->texture()->get() && sc->texture()->get()->isValid()) {
+		TextureSP tex = sc->texture()->_get();
+
+		Matrix4 wt = lerp(interp,
+		                  sc->_entity()->prevWorldTransform.matrix(),
+		                  sc->_entity()->worldTransform.matrix());
+
+		const Box2& texCoords = sc->_texCoords();
+		Scalar w = tex->width()  * texCoords.sizes()(0);
+		Scalar h = tex->height() * texCoords.sizes()(1);
+		Vector2 offset(-w * sc->anchor().x(),
+		               -h * sc->anchor().y());
+		Box2 coords(offset, Vector2(w, h) + offset);
+
+		unsigned index = _spriteRenderer->indexCount();
+		_spriteRenderer->addSprite(wt, coords, sc->color(), texCoords);
+		unsigned count = _spriteRenderer->indexCount() - index;
+
+		if(count) {
+			_states.texture      = tex;
+			_states.textureFlags = sc->textureFlags();
+			_states.blendingMode = sc->blendingMode();
+
+			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
+			                                        camera.viewBox().max()(2));
+			_renderPass->addDrawCall(_states, _params, depth, index, count);
+		}
+	}
+
+	EntityRef child = entity.firstChild();
+	while(child.isValid()) {
+		render(child, interp, camera);
+		child = child.nextSibling();
+	}
 }
 
 

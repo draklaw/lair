@@ -32,6 +32,6 @@ if(${GTEST_FOUND})
 	)
 
 	add_subdirectory(core)
-	add_subdirectory(utils)
+#	add_subdirectory(utils)
 	add_subdirectory(ec)
 endif()

@@ -167,6 +167,12 @@ public:
 		return comp;
 	}
 
+	Component* _addComponent(EntityRef entity, Component* base) {
+		lairAssert(base && base->isAlive());
+		Component* comp = addComponent(entity);
+		comp->_flags = base->_flags;
+	}
+
 	void removeComponent(EntityRef entity) {
 		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());

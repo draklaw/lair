@@ -76,8 +76,6 @@ protected:
 
 public:
 	Component*        _nextComponent;
-
-protected:
 	uint32            _flags;
 };
 

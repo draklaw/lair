@@ -174,6 +174,11 @@ public:
 		return _entity && _entity->isAlive();
 	}
 
+	inline bool isEnabled() const {
+		lairAssert(isValid());
+		return _entity->isEnabled();
+	}
+
 	void release();
 	void destroy();
 

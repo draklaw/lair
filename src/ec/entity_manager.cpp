@@ -81,7 +81,10 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 
 
 EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter) {
+	lairAssert(base.isValid());
+
 	EntityRef entity = createEntity(newParent, name? name: base.name(), insertAfter);
+	entity._get()->flags = base._get()->flags;
 	entity.place(base.transform());
 
 	Component* comp = base._get()->firstComponent;
