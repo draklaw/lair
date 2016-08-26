@@ -203,6 +203,9 @@ public:
 	template < typename Cmp >
 	void sortArray(const Cmp& cmp = Cmp()) {
 		size_t size = _components.size();
+		if(size == 0)
+			return;
+
 		_sortBuffer.resize(size);
 		for(size_t i = 0; i < size; ++i)
 			_sortBuffer[i] = i;
