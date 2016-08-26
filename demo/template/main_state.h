@@ -28,6 +28,7 @@
 #include <lair/utils/game_state.h>
 #include <lair/utils/interp_loop.h>
 #include <lair/utils/input.h>
+#include <lair/utils/tile_map.h>
 
 #include <lair/render_gl2/orthographic_camera.h>
 #include <lair/render_gl2/render_pass.h>
@@ -36,6 +37,7 @@
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/sprite_component.h>
 #include <lair/ec/bitmap_text_component.h>
+#include <lair/ec/tile_layer_component.h>
 
 
 using namespace lair;
@@ -75,6 +77,7 @@ protected:
 	SpriteRenderer             _spriteRenderer;
 	SpriteComponentManager     _sprites;
 	BitmapTextComponentManager _texts;
+	TileLayerComponentManager  _tileLayers;
 //	AnimationComponentManager  _anims;
 	InputManager               _inputs;
 
@@ -90,7 +93,10 @@ protected:
 
 	Input*      _quitInput;
 
+	TileMapSP   _tileMap;
+
 	EntityRef   _modelRoot;
+	EntityRef   _tileLayer;
 };
 
 

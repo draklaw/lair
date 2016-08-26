@@ -100,7 +100,7 @@ set(lair_SOURCES
 
 	utils/input.cpp
 	utils/interp_loop.cpp
-	utils/tiled_map.cpp
+	utils/tile_map.cpp
 	utils/game_base.cpp
 	utils/game_state.cpp
 
@@ -128,6 +128,7 @@ set(lair_SOURCES
 	ec/sprite_renderer.cpp
 	ec/sprite_component.cpp
 	ec/bitmap_text_component.cpp
+	ec/tile_layer_component.cpp
 )
 
 set(lair_py_SOURCES

@@ -155,10 +155,6 @@ SoundLoader::SoundLoader(LoaderManager* manager, AspectSP aspect)
 }
 
 
-SoundLoader::~SoundLoader() {
-}
-
-
 void SoundLoader::loadSyncImpl(Logger& log) {
 	Mix_Chunk* chunk = Mix_LoadWAV(realPath().utf8CStr());
 	if(chunk) {
@@ -177,10 +173,6 @@ void SoundLoader::loadSyncImpl(Logger& log) {
 
 MusicLoader::MusicLoader(LoaderManager* manager, AspectSP aspect)
     : Loader(manager, aspect) {
-}
-
-
-MusicLoader::~MusicLoader() {
 }
 
 

@@ -79,15 +79,8 @@ void SpriteComponent::setTexture(const Path& logicPath) {
 
 
 Box2 SpriteComponent::_texCoords() const {
-	Vector2i size = _tileGridSize.cwiseMax(Vector2i(1, 1));
-	unsigned i = _tileIndex % size.prod();
-	std::div_t tile = std::div(i, size(0));
-	unsigned x = tile.rem;
-	unsigned y = tile.quot;
-	Vector2 vmin = Vector2i(x  , y  ).cast<Scalar>().cwiseQuotient(size.cast<Scalar>());
-	Vector2 vmax = Vector2i(x+1, y+1).cast<Scalar>().cwiseQuotient(size.cast<Scalar>());
-	return Box2(vmin + _view.min().cwiseProduct(vmax - vmin),
-	            vmin + _view.max().cwiseProduct(vmax - vmin));
+	Vector2i nTiles = _tileGridSize.cwiseMax(Vector2i(1, 1));
+	return boxView(tileBox(nTiles, _tileIndex), _view);
 }
 
 inline bool SpriteComponent::_renderCompare(SpriteComponent* c0, SpriteComponent* c1) {

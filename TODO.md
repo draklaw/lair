@@ -6,7 +6,7 @@
   placeholder when some ressource is not found.
 - Renderer module
   - ~Tilemap
-  - Move SpriteRenderer to the renderer module
+  - Move SpriteRenderer to the renderer module and rename it ?
   - Implement draw call sorting
     * Mostly done
     - Create a VertexArray class that combines VertexFormat and VertexBuffer ?

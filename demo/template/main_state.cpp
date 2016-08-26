@@ -40,6 +40,7 @@ MainState::MainState(Game* game)
       _spriteRenderer(renderer()),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
+      _tileLayers(&_mainPass, &_spriteRenderer),
 
       _inputs(sys(), &log()),
 
@@ -55,6 +56,7 @@ MainState::MainState(Game* game)
 
 	_entities.registerComponentManager(&_sprites);
 	_entities.registerComponentManager(&_texts);
+	_entities.registerComponentManager(&_tileLayers);
 }
 
 
@@ -78,6 +80,14 @@ void MainState::initialize() {
 	_modelRoot = _entities.createEntity(_entities.root(), "modelRoot");
 
 	// TODO: load stuff.
+	AssetSP tileMapAsset = loader()->loadSync<TileMapLoader>("map.json");
+	_tileMap = tileMapAsset->aspect<TileMapAspect>()->get();
+
+	_tileLayer = _entities.createEntity(_entities.root(), "tile_layer");
+	TileLayerComponent* tileLayerComp = _tileLayers.addComponent(_tileLayer);
+	tileLayerComp->setTileMap(_tileMap);
+//	_tileLayer.place(Vector3(120, 90, .5));
+
 	EntityRef sprite = loadEntity("sprite.json", _entities.root());
 	sprite.place(Vector3(120, 90, .5));
 
@@ -169,6 +179,7 @@ void MainState::updateFrame() {
 
 	_sprites.render(_entities.root(), _loop.frameInterp(), _camera);
 	_texts.render(_entities.root(), _loop.frameInterp(), _camera);
+	_tileLayers.render(_entities.root(), _loop.frameInterp(), _camera);
 
 	_mainPass.render();
 

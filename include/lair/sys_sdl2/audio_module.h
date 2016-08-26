@@ -109,7 +109,7 @@ public:
 
 public:
 	SoundLoader(LoaderManager* manager, AspectSP aspect);
-	virtual ~SoundLoader();
+	virtual ~SoundLoader() = default;
 
 protected:
 	virtual void loadSyncImpl(Logger& log);
@@ -121,7 +121,7 @@ public:
 
 public:
 	MusicLoader(LoaderManager* manager, AspectSP aspect);
-	virtual ~MusicLoader();
+	virtual ~MusicLoader() = default;
 
 protected:
 	virtual void loadSyncImpl(Logger& log);

@@ -69,6 +69,23 @@ public:
 };
 
 
+inline Box2 tileBox(const Vector2i& nTiles, const Vector2& tile) {
+	return Box2(Vector2i(tile(0)  , tile(1)  ).cast<Scalar>().cwiseQuotient(nTiles.cast<Scalar>()),
+	            Vector2i(tile(0)+1, tile(1)+1).cast<Scalar>().cwiseQuotient(nTiles.cast<Scalar>()));
+}
+
+inline Box2 tileBox(const Vector2i& nTiles, int tileIndex) {
+	std::div_t tile = std::div(tileIndex, nTiles(0));
+	return tileBox(nTiles, Vector2(tile.rem, tile.quot));
+}
+
+inline Box2 boxView(const Box2& box, const Box2& view) {
+	Vector2 sizes = box.sizes();
+	return Box2(box.min() + view.min().cwiseProduct(sizes),
+	            box.min() + view.max().cwiseProduct(sizes));
+}
+
+
 class SpriteRenderer {
 public:
 	SpriteRenderer(Renderer* renderer);

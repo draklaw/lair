@@ -42,7 +42,7 @@ public:
 	ImageLoader(LoaderManager* manager, AspectSP aspect);
 	ImageLoader(const ImageLoader&) = delete;
 	ImageLoader(ImageLoader&&)      = delete;
-	~ImageLoader();
+	virtual ~ImageLoader() = default;
 
 	ImageLoader& operator=(const ImageLoader&) = delete;
 	ImageLoader& operator=(ImageLoader&&)      = delete;

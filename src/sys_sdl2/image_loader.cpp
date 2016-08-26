@@ -37,10 +37,6 @@ ImageLoader::ImageLoader(LoaderManager* manager, AspectSP aspect)
 }
 
 
-ImageLoader::~ImageLoader() {
-}
-
-
 void ImageLoader::loadSyncImpl(Logger& log) {
 	auto surf = make_unique(IMG_Load(realPath().utf8CStr()), SDL_FreeSurface);
 	if(surf) {
