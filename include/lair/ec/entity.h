@@ -179,6 +179,8 @@ public:
 		return _entity->isEnabled();
 	}
 
+	bool isEnabledRec() const;
+
 	inline void setEnabled(bool enabled) {
 		lairAssert(isValid());
 		_entity->setEnabled(enabled);
@@ -234,12 +236,6 @@ public:
 		return /* * */_entity->worldTransform;
 	}
 
-	inline       Transform& worldTransform() {
-		lairAssert(isValid());
-//		lairAssert(_entity->worldTransform);
-		return /* * */_entity->worldTransform;
-	}
-
 	inline Matrix4 interpMatrix(float interp) const {
 		lairAssert(isValid());
 		return lerp(interp, _entity->prevWorldTransform.matrix(),
@@ -249,6 +245,14 @@ public:
 	inline Transform interpTransform(float interp) const {
 		lairAssert(isValid());
 		return Transform(interpMatrix(interp));
+	}
+
+	inline Vector2 translation2() const {
+		return transform().matrix().block<2, 1>(0, 3);
+	}
+
+	inline Eigen::Block<Matrix4, 2, 1> translation2() {
+		return transform().matrix().block<2, 1>(0, 3);
 	}
 
 	inline Transform computeWorldTransform() const {

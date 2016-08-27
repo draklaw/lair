@@ -168,6 +168,12 @@ bool _Entity::_hasComponent(Component* target) const {
 }
 
 
+
+bool EntityRef::isEnabledRec() const {
+	return isEnabled() && parent().isValid()? parent().isEnabled(): true;
+}
+
+
 void EntityRef::release() {
 	if(_entity) {
 		lairAssert(_entity->weakRefCount != 0);

@@ -68,6 +68,11 @@ void TileMap::setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile) {
 }
 
 
+const Json::Value& TileMap::properties() const {
+	return _properties;
+}
+
+
 unsigned TileMap::nObjectLayer() const {
 	return _objectLayers.size();
 }
@@ -118,6 +123,8 @@ bool TileMap::setFromJson(Logger& log, const Path& path, const Json::Value& valu
 	               / tilesets[0].get("tilewidth", 1).asInt();
 	_tileSetVTiles = tilesets[0].get("imageheight", 0).asInt()
 	               / tilesets[0].get("tileheight", 1).asInt();
+
+	_properties = value["properties"];
 
 	_layers.clear();
 	_objectLayers.clear();

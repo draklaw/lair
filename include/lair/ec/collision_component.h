@@ -57,9 +57,9 @@ class Shape {
 public:
 	Shape(ShapeType type = SHAPE_POLYGON, float radius = 0);
 
-	static ShapeSP createAlignedBox(const Box2& box);
-	static ShapeSP createCircle(const Vector2& center, float radius);
-	static ShapeSP createCircle(const Box2& box);
+	static ShapeSP newAlignedBox(const Box2& box);
+	static ShapeSP newCircle(const Vector2& center, float radius);
+	static ShapeSP newCircle(const Box2& box);
 
 	Shape(const Shape&)  = delete;
 	Shape(      Shape&&) = default;
@@ -103,16 +103,35 @@ public:
 	const ShapeSP shape() const  { return _shape; }
 	void setShape(ShapeSP shape) { _shape = shape; }
 
+	unsigned hitMask() const          { return _hitMask; }
+	void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
+
+	unsigned ignoreMask() const             { return _ignoreMask; }
+	void setIgnoreMask(unsigned ignoreMask) { _ignoreMask = ignoreMask; }
+
 	float penetration(Direction dir) const { return _penetration[dir]; }
 	void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }
 
+	Box2 worldAlignedBox() const;
+
 protected:
 	ShapeSP  _shape;
+	unsigned _hitMask;
+	unsigned _ignoreMask;
 	float    _penetration[N_DIRECTIONS];
 };
 
 
+class HitEvent {
+public:
+	EntityRef entities[2];
+	Box2      boxes[2];
+};
+typedef std::deque<HitEvent> HitEventQueue;
+
 class CollisionComponentManager : public DenseComponentManager<CollisionComponent> {
+public:
+
 public:
 	CollisionComponentManager(size_t componentBlockSize = 1024);
 	CollisionComponentManager(const CollisionComponentManager&)  = delete;
@@ -126,8 +145,10 @@ public:
 	                                                 const Path& cd=Path());
 	virtual CollisionComponent* cloneComponent(EntityRef base, EntityRef entity);
 
-private:
+	void findCollisions(HitEventQueue& hitQueue);
 
+	bool hitTest(std::deque<EntityRef>& hits, const Box2& box, unsigned hitMask = 0x01);
+	bool hitTest(std::deque<EntityRef>& hits, const Vector2& p, unsigned hitMask = 0x01);
 };
 
 

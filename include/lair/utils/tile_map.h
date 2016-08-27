@@ -53,6 +53,8 @@ public:
 	TileIndex tile(unsigned x, unsigned y, unsigned layer) const;
 	void setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile);
 
+	const Json::Value& properties() const;
+
 	unsigned nObjectLayer() const;
 	const Json::Value& objectLayer(unsigned layer) const;
 
@@ -76,6 +78,7 @@ protected:
 	unsigned  _height;
 	LayerList _layers;
 
+	Json::Value     _properties;
 	ObjectLayerList _objectLayers;
 
 	Path          _tileSetPath;
