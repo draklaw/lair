@@ -37,13 +37,13 @@ Utf8CodepointIterator::Utf8CodepointIterator()
 Utf8CodepointIterator::Utf8CodepointIterator(const char* begin, const char* end)
 	: _begin(begin)
 	, _end  (end) {
-	assert(_begin < _end);
+	assert(_begin <= _end);
 }
 
 Utf8CodepointIterator::Utf8CodepointIterator(const std::string& utf8String)
 	: _begin(utf8String.data())
 	, _end  (utf8String.data() + utf8String.size()) {
-	assert(_begin < _end);
+	assert(_begin <= _end);
 }
 
 

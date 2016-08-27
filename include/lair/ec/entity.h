@@ -263,6 +263,14 @@ public:
 		}
 	}
 
+	inline void updateWorldTransform() const {
+		_entity->worldTransform = computeWorldTransform();
+	}
+
+	inline void resetPrevWorldTransform() const {
+		_entity->prevWorldTransform = _entity->worldTransform;
+	}
+
 	inline void place(const Transform& transform) {
 		lairAssert(isValid());
 //		lairAssert(_entity->transform);

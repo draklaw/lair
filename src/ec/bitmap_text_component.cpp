@@ -242,7 +242,7 @@ void BitmapTextComponentManager::render(EntityRef entity, float interp, const Or
 	_states.shader = _spriteRenderer->shader().shader;
 	_states.buffer = _spriteRenderer->buffer();
 	_states.format = _spriteRenderer->format();
-	_states.textureFlags = Texture::NEAREST | Texture::CLAMP;
+	_states.textureFlags = Texture::TRILINEAR | Texture::CLAMP;
 	_states.blendingMode = BLEND_ALPHA;
 
 	_params = _spriteRenderer->addShaderParameters(
