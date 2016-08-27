@@ -179,6 +179,11 @@ public:
 		return _entity->isEnabled();
 	}
 
+	inline void setEnabled(bool enabled) {
+		lairAssert(isValid());
+		_entity->setEnabled(enabled);
+	}
+
 	void release();
 	void destroy();
 
@@ -235,6 +240,17 @@ public:
 		return /* * */_entity->worldTransform;
 	}
 
+	inline Matrix4 interpMatrix(float interp) const {
+		lairAssert(isValid());
+		return lerp(interp, _entity->prevWorldTransform.matrix(),
+		                    _entity->worldTransform    .matrix());
+	}
+
+	inline Transform interpTransform(float interp) const {
+		lairAssert(isValid());
+		return Transform(interpMatrix(interp));
+	}
+
 	inline Transform computeWorldTransform() const {
 		if(parent().isValid()) {
 			return parent().computeWorldTransform() * _entity->transform;
@@ -262,6 +278,20 @@ public:
 
 	inline void moveTo(const Vector3& pos) {
 		moveTo(Transform(Translation(pos)));
+	}
+
+	inline void translate(const Vector2& trans) {
+		Vector3 t2;
+		t2 << trans, 0;
+		translate(t2);
+	}
+
+	inline void translate(const Vector3& trans) {
+		transform().translate(trans);
+	}
+
+	inline void translate(float x, float y, float z = 0) {
+		translate(Vector3(x, y, z));
 	}
 
 	EntityRef clone(EntityRef newParent, const char* newName = nullptr) const;

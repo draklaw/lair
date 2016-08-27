@@ -120,8 +120,12 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 		unsigned first = _spriteRenderer->indexCount();
 		for(unsigned y = 0; y < height; ++y) {
 			for(unsigned x = 0; x < width; ++x) {
+				TileMap::TileIndex tile = tileMap->tile(x, y, layer);
+				if(tile == 0)
+					continue;
+
 				unsigned index = _spriteRenderer->vertexCount();
-				Box2 tc  = tileBox(nTiles, tileMap->tile(x, y, layer));
+				Box2 tc  = tileBox(nTiles, tile - 1);
 				for(unsigned vi = 0; vi < 4; ++vi) {
 					unsigned x2 = (vi & 0x01)? 1: 0;
 					unsigned y2 = (vi & 0x02)? 1: 0;

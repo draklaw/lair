@@ -21,6 +21,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/json.h>
 
 #include "lair/ec/collision_component.h"
 
@@ -72,14 +73,28 @@ CollisionComponentManager::CollisionComponentManager(size_t componentBlockSize)
 
 CollisionComponent* CollisionComponentManager::addComponentFromJson(
         EntityRef entity, const Json::Value& json, const Path& cd) {
-	lairAssert(false);
-	return nullptr;
+	CollisionComponent* comp = addComponent(entity);
+
+	if(json.isMember("abox")) {
+		Json::Value box = json["abox"];
+		if(box.isArray() || box.size() == 4) {
+			comp->setShape(Shape::createAlignedBox(Box2(
+			        Vector2(box[0].asFloat(), box[1].asFloat()),
+			        Vector2(box[2].asFloat(), box[3].asFloat()))));
+		} /*else {
+			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
+		}*/
+	}
+
+	return comp;
 }
 
 
 CollisionComponent* CollisionComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	lairAssert(false);
-	return nullptr;
+	CollisionComponent* baseComp = get(base);
+	CollisionComponent* comp = _addComponent(entity, baseComp);
+	comp->setShape(baseComp->shape());
+	return comp;
 }
 
 
