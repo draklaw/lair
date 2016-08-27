@@ -129,6 +129,7 @@ set(lair_SOURCES
 	ec/sprite_component.cpp
 	ec/bitmap_text_component.cpp
 	ec/tile_layer_component.cpp
+	ec/collision_component.cpp
 )
 
 set(lair_py_SOURCES
