@@ -167,11 +167,17 @@ void EntityManager::moveEntity(EntityRef& entity, EntityRef& newParent, int inde
 }
 
 
-void EntityManager::updateWorldTransform() {
+void EntityManager::setPrevWorldTransforms() {
+	for(_Entity& entity: _entities)
+		entity.prevWorldTransform = entity.worldTransform;
+}
+
+
+void EntityManager::updateWorldTransforms() {
 	// TODO: Update this algorithm when using homogenous arrays to make it
 	// more cache-firendly.
 
-	_updateWorldTransformHelper(_root._get(), Transform::Identity());
+	_updateWorldTransformsHelper(_root._get(), Transform::Identity());
 }
 
 
@@ -211,14 +217,13 @@ _Entity* EntityManager::_createDetachedEntity(const char* name) {
 }
 
 
-void EntityManager::_updateWorldTransformHelper(
+void EntityManager::_updateWorldTransformsHelper(
         _Entity* entity, const Transform& parentTransform) {
-	entity->prevWorldTransform = entity->worldTransform;
 	entity->worldTransform = parentTransform * entity->transform;
 
 	_Entity* child = entity->firstChild;
 	while(child) {
-		_updateWorldTransformHelper(child, entity->worldTransform);
+		_updateWorldTransformsHelper(child, entity->worldTransform);
 		child = child->nextSibling;
 	}
 }

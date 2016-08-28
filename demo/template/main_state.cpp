@@ -164,7 +164,7 @@ void MainState::updateTick() {
 
 	// TODO: Game update.
 
-	_entities.updateWorldTransform();
+	_entities.updateWorldTransforms();
 }
 
 

@@ -95,7 +95,7 @@ public:
 	CollisionComponent(Manager* manager, _Entity* entity, ShapeSP shape = ShapeSP());
 	CollisionComponent(const CollisionComponent&) = delete;
 	CollisionComponent(CollisionComponent&&)      = default;
-	virtual ~CollisionComponent() = default;
+	~CollisionComponent() = default;
 
 	CollisionComponent& operator=(const CollisionComponent&) = delete;
 	CollisionComponent& operator=(CollisionComponent&&)      = default;

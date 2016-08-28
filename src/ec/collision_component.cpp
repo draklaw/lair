@@ -68,7 +68,7 @@ CollisionComponent::CollisionComponent(Manager* manager, _Entity* entity, ShapeS
 
 Box2 CollisionComponent::worldAlignedBox() const {
 	lairAssert(_shape && _shape->type() == SHAPE_ALIGNED_BOX);
-	Vector2 pos = _entityPtr->worldTransform.translation().head<2>();
+	Vector2 pos = EntityRef(_entityPtr).computeWorldTransform().translation().head<2>();
 	return Box2(pos + _shape->point(0), pos + _shape->point(1));
 }
 

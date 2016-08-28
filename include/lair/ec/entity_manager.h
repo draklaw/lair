@@ -83,7 +83,8 @@ public:
 	void moveEntity(EntityRef& entity, EntityRef& newParent, int index = -1);
 	void moveEntity(EntityRef& entity, EntityRef& newParent, EntityRef insertAfter);
 
-	void updateWorldTransform();
+	void setPrevWorldTransforms();
+	void updateWorldTransforms();
 
 	Logger& log() { return _logger; }
 
@@ -94,7 +95,7 @@ protected:
 
 protected:
 	_Entity* _createDetachedEntity(const char* name);
-	void _updateWorldTransformHelper(_Entity* entity, const Transform& parentTransform);
+	void _updateWorldTransformsHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:
 	Logger           _logger;

@@ -208,7 +208,7 @@ int main(int /*argc*/, char** argv) {
 			if( down->isPressed()) trans.translate(lair::Vector3(0, -speed, 0));
 			testSprite.move(trans);
 
-			entityManager.updateWorldTransform();
+			entityManager.updateWorldTransforms();
 			break;
 		}
 		case lair::InterpLoop::Frame: {

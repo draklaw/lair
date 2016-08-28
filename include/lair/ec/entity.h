@@ -267,7 +267,7 @@ public:
 		_entity->worldTransform = computeWorldTransform();
 	}
 
-	inline void resetPrevWorldTransform() const {
+	inline void setPrevWorldTransform() const {
 		_entity->prevWorldTransform = _entity->worldTransform;
 	}
 

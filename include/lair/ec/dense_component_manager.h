@@ -240,6 +240,18 @@ public:
 		_components.resize(lastAlive);
 	}
 
+	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
+	                                  const Path& cd=Path()) {
+		lairAssert(false);
+		return nullptr;
+	}
+
+	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
+		lairAssert(false);
+		return nullptr;
+	}
+
+
 protected:
 	friend struct CmpAdapter;
 

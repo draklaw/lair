@@ -21,6 +21,8 @@
 - ec
   - Support multiple renderPass (with a mask ? or a list of Renderer ?) for
     sprite / text.
+  - Make camera part of the scene graph to allow different cameras for different
+    things (HUD, level, etc.)
 - Audio module (OpenAL ?)
 - ec meta-code (Property system / method call) (python ?)
 - Python
