@@ -61,7 +61,7 @@ inline void _lairAssert(bool result, const char* testCode, const char* file, int
 	}
 }
 
-#define lairAssert(_test) lair::_lairAssert(_test, #_test, __FILE__, __LINE__)
+#define lairAssert(_test) lair::_lairAssert(bool(_test), #_test, __FILE__, __LINE__)
 
 
 typedef std::size_t    Size;
