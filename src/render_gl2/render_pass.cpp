@@ -102,7 +102,7 @@ void RenderPass::render() {
 		}
 
 		const ShaderParameter* param = call.params;
-		while(param->index > 0) {
+		while(param->index >= 0) {
 			#define LAIR_UNIF_CASE(_glType, _suffix, _type) case _glType:\
 				glc->uniform##_suffix(param->index, 1, reinterpret_cast<const _type*>(param->value));\
 				break
