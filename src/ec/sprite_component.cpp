@@ -102,8 +102,8 @@ SpriteComponentManager::SpriteComponentManager(AssetManager* assetManager,
     : DenseComponentManager("sprite", componentBlockSize),
       _assets(assetManager),
       _loader(loaderManager),
-      _renderPass(renderPass),
       _spriteRenderer(spriteRenderer),
+	  _renderPass(renderPass),
       _states(),
       _params(nullptr) {
 	lairAssert(_assets);

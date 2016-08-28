@@ -172,6 +172,7 @@ public:
 		lairAssert(base && base->isAlive());
 		Component* comp = addComponent(entity);
 		comp->_flags = base->_flags;
+		return comp;
 	}
 
 	void removeComponent(EntityRef entity) {
@@ -240,13 +241,13 @@ public:
 		_components.resize(lastAlive);
 	}
 
-	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                  const Path& cd=Path()) {
+	virtual Component* addComponentFromJson(EntityRef /*entity*/, const Json::Value& /*json*/,
+									  const Path& /*cd*/=Path()) {
 		lairAssert(false);
 		return nullptr;
 	}
 
-	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
+	virtual Component* cloneComponent(EntityRef /*base*/, EntityRef /*entity*/) {
 		lairAssert(false);
 		return nullptr;
 	}

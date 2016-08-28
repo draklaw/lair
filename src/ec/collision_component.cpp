@@ -81,7 +81,7 @@ CollisionComponentManager::CollisionComponentManager(size_t componentBlockSize)
 
 
 CollisionComponent* CollisionComponentManager::addComponentFromJson(
-        EntityRef entity, const Json::Value& json, const Path& cd) {
+        EntityRef entity, const Json::Value& json, const Path& /*cd*/) {
 	CollisionComponent* comp = addComponent(entity);
 
 	if(json.isMember("abox")) {
@@ -123,18 +123,18 @@ void CollisionComponentManager::findCollisions(HitEventQueue& hitQueue) {
 	// TODO: Less brute-force approach.
 	// TODO: Support shapes other than aligned boxes
 	HitEvent hit;
-	for(int ci0 = 0; ci0 < nComponents(); ++ci0) {
+	for(int ci0 = 0; ci0 < int(nComponents()); ++ci0) {
 		CollisionComponent& c0 = _components[ci0];
 		if(!c0.entity().isEnabledRec() || !c0.isEnabled()
-		|| !c0.shape() || !c0.shape()->type() == SHAPE_ALIGNED_BOX)
+		|| !c0.shape() || c0.shape()->type() != SHAPE_ALIGNED_BOX)
 			continue;
 		hit.entities[0] = c0.entity();
 
-		for(int ci1 = ci0 + 1; ci1 < nComponents(); ++ci1) {
+		for(int ci1 = ci0 + 1; ci1 < int(nComponents()); ++ci1) {
 			CollisionComponent& c1 = _components[ci1];
 
 			if(!c1.entity().isEnabledRec() || !c1.isEnabled()
-			|| !c1.shape() || !c1.shape()->type() == SHAPE_ALIGNED_BOX
+			|| !c1.shape() || c1.shape()->type() != SHAPE_ALIGNED_BOX
 			|| (c0.hitMask() & c1.hitMask())    == 0
 			|| (c0.hitMask() & c1.ignoreMask()) != 0
 			|| (c1.hitMask() & c0.ignoreMask()) != 0)
@@ -153,10 +153,10 @@ void CollisionComponentManager::findCollisions(HitEventQueue& hitQueue) {
 
 bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const Box2& box, unsigned hitMask) {
 	bool found = false;
-	for(int ci = 0; ci < nComponents(); ++ci) {
+	for(int ci = 0; ci < int(nComponents()); ++ci) {
 		CollisionComponent& c = _components[ci];
 		if(!c.entity().isEnabledRec() || !c.isEnabled()
-		|| !c.shape() || !c.shape()->type() == SHAPE_ALIGNED_BOX
+		|| !c.shape() || c.shape()->type() != SHAPE_ALIGNED_BOX
 		|| (hitMask & c.hitMask())    == 0
 		|| (hitMask & c.ignoreMask()) != 0)
 			continue;

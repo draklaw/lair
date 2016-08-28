@@ -76,7 +76,7 @@ public:
 		return bitsEnabled(flags, Alive | Enabled);
 	}
 
-	inline bool setEnabled(bool enabled) {
+	inline void setEnabled(bool enabled) {
 		flags = setBits(flags, Enabled, enabled);
 	}
 

@@ -172,6 +172,8 @@ void MainState::updateFrame() {
 	// Rendering
 	Context* glc = renderer()->context();
 
+	renderer()->uploadPendingTextures();
+
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
 	_mainPass.clear();

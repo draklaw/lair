@@ -35,7 +35,7 @@ namespace lair
 _Entity* _Entity::_childBefore(int index) {
 	lairAssert(index <= int(nChildren));
 
-	if(index < 0 || index == nChildren) {
+	if(index < 0 || index == int(nChildren)) {
 		return lastChild;
 	}
 

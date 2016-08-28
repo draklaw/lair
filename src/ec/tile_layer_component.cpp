@@ -56,9 +56,10 @@ TileLayerComponentManager::TileLayerComponentManager(RenderPass* renderPass,
 }
 
 
-TileLayerComponent* TileLayerComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json,
-                                  const Path& cd) {
+TileLayerComponent* TileLayerComponentManager::addComponentFromJson(EntityRef /*entity*/, const Json::Value& /*json*/,
+                                  const Path& /*cd*/) {
 	lairAssert(false);
+  return nullptr;
 }
 
 
