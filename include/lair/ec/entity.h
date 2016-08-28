@@ -276,6 +276,7 @@ public:
 //		lairAssert(_entity->transform);
 		/* * */_entity->transform = transform;
 		_entity->worldTransform = computeWorldTransform();
+		_entity->prevWorldTransform = _entity->worldTransform;
 	}
 
 	inline void place(const Vector3& pos) {
