@@ -34,10 +34,10 @@ namespace lair
 
 
 enum Direction {
+	UP,
 	LEFT,
 	DOWN,
 	RIGHT,
-	UP,
 	N_DIRECTIONS,
 };
 
