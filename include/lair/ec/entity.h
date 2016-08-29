@@ -28,6 +28,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/json.h>
 
 
 #ifndef LAIR_EC_MAX_DENSE_COMPONENTS
@@ -112,6 +113,7 @@ public:
 	_Entity*       nextSibling;
 
 	char*          name;
+	Json::Value    extra;
 
 	// TODO: make homogenous arrays for these (managed by EntityManager)
 	Transform      transform;
@@ -305,6 +307,11 @@ public:
 
 	inline void translate(float x, float y, float z = 0) {
 		translate(Vector3(x, y, z));
+	}
+
+	Json::Value& extra() {
+		lairAssert(isValid());
+		return _entity->extra;
 	}
 
 	EntityRef clone(EntityRef newParent, const char* newName = nullptr) const;
