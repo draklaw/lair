@@ -40,7 +40,7 @@ TileLayerComponent::TileLayerComponent(Manager* manager, _Entity* entity)
 	, _tileMap()
 	, _layerIndex(0)
 	, _blendingMode(BLEND_NONE)
-	, _textureFlags(Texture::NEAREST | Texture::REPEAT)
+	, _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT)
 	, _buffer(new VertexBuffer(sizeof(SpriteVertex))) {
 }
 
@@ -99,14 +99,15 @@ void TileLayerComponentManager::_fillBuffer(VertexBuffer& buffer, const TileMapS
 				continue;
 
 			unsigned index = buffer.vertexCount();
-			Box2 tc  = tileBox(nTiles, tile - 1);
+			Box2 tc  = boxView(tileBox(nTiles, tile - 1),
+			                   Box2(Vector2(0.001, 0.001), Vector2(0.999, 0.999)));
 			for(unsigned vi = 0; vi < 4; ++vi) {
 				unsigned x2 = (vi & 0x01)? 1: 0;
 				unsigned y2 = (vi & 0x02)? 1: 0;
 				Vector4 pos = wt * Vector4((         x + x2) * tileWidth,
 				                           (height - y - y2) * tileHeight, 0, 1);
-				buffer.addVertex(SpriteVertex{pos, Vector4::Constant(1),
-				                              tc.corner(Box2::CornerType(x2 + y2*2))});
+				buffer.addVertex(SpriteVertex{ pos, Vector4::Constant(1),
+				                               tc.corner(Box2::CornerType(x2 + y2*2)) });
 			}
 
 			buffer.addIndex(index + 0);

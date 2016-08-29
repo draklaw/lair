@@ -174,7 +174,7 @@ void Renderer::_createDefaultTexture() {
 
 	Image img(size, size, Image::Format::FormatRGBA8, buffer.data());
 	_defaultTexture._upload(img);
-	_defaultTexture._setFlags(Texture::BILINEAR | Texture::REPEAT);
+	_defaultTexture._setFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT);
 }
 
 

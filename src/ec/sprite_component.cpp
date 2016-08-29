@@ -45,7 +45,7 @@ SpriteComponent::SpriteComponent(Manager* manager,_Entity* entity)
       _tileIndex(0),
       _view(Vector2(0, 0), Vector2(1, 1)),
       _blendingMode(BLEND_NONE),
-      _textureFlags(Texture::BILINEAR | Texture::REPEAT) {
+      _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT) {
 }
 
 
@@ -170,8 +170,11 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
 		if(flags == "nearest") {
 			comp->setTextureFlags(Texture::NEAREST | Texture::REPEAT);
 		}
-		if(flags == "bilinear") {
-			comp->setTextureFlags(Texture::BILINEAR | Texture::REPEAT);
+		if(flags == "bilinear_no_mipmap") {
+			comp->setTextureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT);
+		}
+		if(flags == "bilinear_mipmap") {
+			comp->setTextureFlags(Texture::BILINEAR_MIPMAP | Texture::REPEAT);
 		}
 		if(flags == "trilinear") {
 			comp->setTextureFlags(Texture::TRILINEAR | Texture::REPEAT);
@@ -283,12 +286,14 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		                  sc->_entity()->prevWorldTransform.matrix(),
 		                  sc->_entity()->worldTransform.matrix());
 
-		const Box2& texCoords = sc->_texCoords();
+		Box2 texCoords = sc->_texCoords();
 		Scalar w = tex->width()  * texCoords.sizes()(0);
 		Scalar h = tex->height() * texCoords.sizes()(1);
 		Vector2 offset(-w * sc->anchor().x(),
 		               -h * sc->anchor().y());
 		Box2 coords(offset, Vector2(w, h) + offset);
+
+		texCoords = boxView(texCoords, Box2(Vector2(0.001, 0.001), Vector2(0.999, 0.999)));
 
 		unsigned index = _spriteRenderer->indexCount();
 		_spriteRenderer->addSprite(wt, coords, sc->color(), texCoords);
