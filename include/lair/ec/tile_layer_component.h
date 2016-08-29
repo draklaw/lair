@@ -45,6 +45,7 @@ class SpriteRenderer;
 class TileLayerComponentManager;
 
 
+
 class TileLayerComponent : public Component {
 public:
 	typedef TileLayerComponentManager Manager;
@@ -59,10 +60,10 @@ public:
 	TileLayerComponent& operator=(TileLayerComponent&&)      = default;
 
 	inline TileMapSP tileMap() const { return _tileMap; }
-	inline void setTileMap(TileMapSP tileMap) { _tileMap = tileMap; }
+	inline void setTileMap(TileMapSP tileMap) { _tileMap = tileMap; _bufferDirty = true; }
 
 	inline unsigned layerIndex() const { return _layerIndex; }
-	inline void setLayerIndex(unsigned index) { _layerIndex = index; }
+	inline void setLayerIndex(unsigned index) { _layerIndex = index; _bufferDirty = true; }
 
 	inline BlendingMode blendingMode() const { return _blendingMode; }
 	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
@@ -75,6 +76,10 @@ protected:
 	unsigned     _layerIndex;
 	BlendingMode _blendingMode;
 	unsigned     _textureFlags;
+
+public:
+	bool         _bufferDirty;
+	std::unique_ptr<VertexBuffer> _buffer;
 };
 
 
@@ -99,6 +104,8 @@ public:
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 protected:
+	void _fillBuffer(VertexBuffer& buffer, const TileMapSP tileMap, unsigned layer,
+	                 float tileWidth, float tileHeight, const Matrix4& wt) const;
 	void _render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 protected:
@@ -106,7 +113,6 @@ protected:
 	RenderPass*      _renderPass;
 
 	RenderPass::DrawStates _states;
-	const ShaderParameter* _params;
 };
 
 

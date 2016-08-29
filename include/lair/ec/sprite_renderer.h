@@ -50,11 +50,12 @@ struct SpriteVertex {
 
 struct SpriteShaderParams {
 	SpriteShaderParams(const Matrix4& viewMatrix = Matrix4::Identity(),
-	                   int texUnit = 0);
+	                   int texUnit = 0, const Vector4i& tileInfo = Vector4i(1, 1, 65536, 65536));
 
-	ShaderParameter params[3];
+	ShaderParameter params[4];
 	Matrix4         viewMatrix;
 	int             texUnit;
+	Vector4         tileInfo;
 };
 
 class SpriteShader {
@@ -66,6 +67,7 @@ public:
 	ProgramObject* shader;
 	GLint          viewMatrixLoc;
 	GLint          textureLoc;
+	GLint          tileInfoLoc;
 };
 
 
@@ -112,7 +114,7 @@ public:
 	               const Vector4& color, const Box2& texCoords);
 
 	const ShaderParameter* addShaderParameters(
-	        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit);
+	        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo);
 
 	TextureAspectSP createTexture(AssetSP asset);
 

@@ -167,6 +167,8 @@ void RenderPass::render() {
 
 		glc->drawElements(gl::TRIANGLES, call.count, gl::UNSIGNED_INT,
 						  reinterpret_cast<void*>(call.index*sizeof(unsigned)));
+
+		prev = &call;
 	}
 }
 

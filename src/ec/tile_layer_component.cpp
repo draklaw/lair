@@ -40,7 +40,8 @@ TileLayerComponent::TileLayerComponent(Manager* manager, _Entity* entity)
 	, _tileMap()
 	, _layerIndex(0)
 	, _blendingMode(BLEND_NONE)
-	, _textureFlags(Texture::NEAREST | Texture::REPEAT) {
+	, _textureFlags(Texture::NEAREST | Texture::REPEAT)
+	, _buffer(new VertexBuffer(sizeof(SpriteVertex))) {
 }
 
 
@@ -51,8 +52,7 @@ TileLayerComponentManager::TileLayerComponentManager(RenderPass* renderPass,
 	: DenseComponentManager<TileLayerComponent>("tile_layer", componentBlockSize)
 	, _spriteRenderer(spriteRenderer)
 	, _renderPass(renderPass)
-	, _states()
-	, _params(nullptr) {
+	, _states() {
 }
 
 
@@ -81,12 +81,42 @@ void TileLayerComponentManager::render(EntityRef entity, float interp, const Ort
 	_states.buffer = _spriteRenderer->buffer();
 	_states.format = _spriteRenderer->format();
 
-	_params = _spriteRenderer->addShaderParameters(
-	            _spriteRenderer->shader(), camera.transform(), 0);
-
 	_render(entity, interp, camera);
+}
 
-	_params = nullptr;
+
+void TileLayerComponentManager::_fillBuffer(VertexBuffer& buffer, const TileMapSP tileMap, unsigned layer,
+                                            float tileWidth, float tileHeight, const Matrix4& wt) const {
+	buffer.clear();
+
+	unsigned width      = tileMap->width (layer);
+	unsigned height     = tileMap->height(layer);
+	Vector2i nTiles(tileMap->tileSetHTiles(), tileMap->tileSetVTiles());
+	for(unsigned y = 0; y < height; ++y) {
+		for(unsigned x = 0; x < width; ++x) {
+			TileMap::TileIndex tile = tileMap->tile(x, y, layer);
+			if(tile == 0)
+				continue;
+
+			unsigned index = buffer.vertexCount();
+			Box2 tc  = tileBox(nTiles, tile - 1);
+			for(unsigned vi = 0; vi < 4; ++vi) {
+				unsigned x2 = (vi & 0x01)? 1: 0;
+				unsigned y2 = (vi & 0x02)? 1: 0;
+				Vector4 pos = wt * Vector4((         x + x2) * tileWidth,
+				                           (height - y - y2) * tileHeight, 0, 1);
+				buffer.addVertex(SpriteVertex{pos, Vector4::Constant(1),
+				                              tc.corner(Box2::CornerType(x2 + y2*2))});
+			}
+
+			buffer.addIndex(index + 0);
+			buffer.addIndex(index + 1);
+			buffer.addIndex(index + 2);
+			buffer.addIndex(index + 2);
+			buffer.addIndex(index + 1);
+			buffer.addIndex(index + 3);
+		}
+	}
 }
 
 
@@ -109,51 +139,33 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 		}
 		TextureSP tex = texAspect->get();
 
+		// FIXME: wt should be applied as a shader parameter
 		Matrix4 wt = lerp(interp,
-		                  comp->_entity()->prevWorldTransform.matrix(),
-		                  comp->_entity()->worldTransform.matrix());
+						  comp->_entity()->prevWorldTransform.matrix(),
+						  comp->_entity()->worldTransform.matrix());
 
-		unsigned width      = tileMap->width (layer);
-		unsigned height     = tileMap->height(layer);
-		Vector2i nTiles(tileMap->tileSetHTiles(), tileMap->tileSetVTiles());
-		float    tileWidth  = float(tex->width())  / float(nTiles(0));
-		float    tileHeight = float(tex->height()) / float(nTiles(1));
-		unsigned first = _spriteRenderer->indexCount();
-		for(unsigned y = 0; y < height; ++y) {
-			for(unsigned x = 0; x < width; ++x) {
-				TileMap::TileIndex tile = tileMap->tile(x, y, layer);
-				if(tile == 0)
-					continue;
-
-				unsigned index = _spriteRenderer->vertexCount();
-				Box2 tc  = tileBox(nTiles, tile - 1);
-				for(unsigned vi = 0; vi < 4; ++vi) {
-					unsigned x2 = (vi & 0x01)? 1: 0;
-					unsigned y2 = (vi & 0x02)? 1: 0;
-					Vector4 pos = wt * Vector4((         x + x2) * tileWidth,
-					                           (height - y - y2) * tileHeight, 0, 1);
-					_spriteRenderer->addVertex(pos, Vector4::Constant(1),
-					                           tc.corner(Box2::CornerType(x2 + y2*2)));
-				}
-
-				_spriteRenderer->addIndex(index + 0);
-				_spriteRenderer->addIndex(index + 1);
-				_spriteRenderer->addIndex(index + 2);
-				_spriteRenderer->addIndex(index + 2);
-				_spriteRenderer->addIndex(index + 1);
-				_spriteRenderer->addIndex(index + 3);
-			}
+		if(comp->_bufferDirty) {
+			float tileWidth  = float(tex->width())  / float(tileMap->tileSetHTiles());
+			float tileHeight = float(tex->height()) / float(tileMap->tileSetVTiles());
+			_fillBuffer(*comp->_buffer, tileMap, layer, tileWidth, tileHeight, wt);
+			comp->_bufferDirty = false;
 		}
-		unsigned count = _spriteRenderer->indexCount() - first;
+		unsigned count = comp->_buffer->indexSize();
 
 		if(count) {
+			_states.buffer       = comp->_buffer.get();
 			_states.texture      = tex;
 			_states.textureFlags = comp->textureFlags();
 			_states.blendingMode = comp->blendingMode();
 
+			Vector4i tileInfo(tileMap->tileSetHTiles(), tileMap->tileSetVTiles(),
+			                  tex->width(), tex->height());
+			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+			            _spriteRenderer->shader(), camera.transform(), 0, tileInfo);
+
 			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
 			                                        camera.viewBox().max()(2));
-			_renderPass->addDrawCall(_states, _params, depth, first, count);
+			_renderPass->addDrawCall(_states, params, depth, 0, count);
 		}
 	}
 

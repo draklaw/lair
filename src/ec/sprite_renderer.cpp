@@ -69,12 +69,23 @@ const char* _spriteFragGlsl =
 	"#define highp\n"
 
 	"uniform sampler2D texture;\n"
+	"uniform vec4      tileInfo;\n"
 
 	"varying highp   vec4 position;\n"
 	"varying lowp    vec4 color;\n"
 	"varying mediump vec2 texCoord;\n"
 
 	"void main() {\n"
+	"	// Is this useful ?\n"
+	"	vec2 nTiles    = tileInfo.xy;\n"
+	"	vec2 texSize   = tileInfo.zw;\n"
+	"	texCoord      *= nTiles;\n"
+	"	vec2 margin    = nTiles / (2.0 * texSize);\n"
+	"	vec2 tileCoord = fract(texCoord);\n"
+	"	vec2 tile      = texCoord - tileCoord;\n"
+	"	tileCoord      = clamp(tileCoord, margin, vec2(1.0) - margin);\n"
+	"	texCoord       = (tile + tileCoord) / nTiles;\n"
+	"	\n"
 	"	vec4 fcolor = color * texture2D(texture, texCoord);\n"
 	"	if(fcolor.a < .01){\n"
 	"		discard;\n"
@@ -82,15 +93,17 @@ const char* _spriteFragGlsl =
 	"	gl_FragColor = fcolor;\n"
 	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
 	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
+	"//	gl_FragColor = vec4(tileCoord, 0., 1.);\n"
 	"}\n";
 
 
 //---------------------------------------------------------------------------//
 
 
-SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, int texUnit)
+SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, int texUnit, const Vector4i& tileInfo)
 	: viewMatrix(viewMatrix),
-	  texUnit(texUnit) {
+	  texUnit(texUnit),
+	  tileInfo(tileInfo.cast<float>()) {
 	params[0].index = -1;
 }
 
@@ -101,14 +114,16 @@ SpriteShaderParams::SpriteShaderParams(const Matrix4& viewMatrix, int texUnit)
 SpriteShader::SpriteShader()
     : shader       (nullptr),
       viewMatrixLoc(-1),
-      textureLoc   (-1) {
+      textureLoc   (-1),
+      tileInfoLoc (-1) {
 }
 
 
 SpriteShader::SpriteShader(ProgramObject* shader)
     : shader       (shader),
       viewMatrixLoc(shader->getUniformLocation("viewMatrix")),
-      textureLoc   (shader->getUniformLocation("texture")) {
+      textureLoc   (shader->getUniformLocation("texture")),
+      tileInfoLoc  (shader->getUniformLocation("tileInfo")) {
 }
 
 
@@ -206,8 +221,14 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 
 
 const ShaderParameter* SpriteRenderer::addShaderParameters(
-        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit) {
-	_shaderParams.emplace_back(viewTransform, texUnit);
+        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo) {
+	if(!_shaderParams.empty()) {
+		SpriteShaderParams& sp = _shaderParams.back();
+		if(sp.viewMatrix == viewTransform && sp.texUnit == texUnit && sp.tileInfo == tileInfo.cast<float>())
+			return sp.params;
+	}
+
+	_shaderParams.emplace_back(viewTransform, texUnit, tileInfo);
 	SpriteShaderParams& sp = _shaderParams.back();
 	ShaderParameter* params = sp.params;
 
@@ -216,6 +237,9 @@ const ShaderParameter* SpriteRenderer::addShaderParameters(
 	}
 	if(shader.textureLoc >= 0) {
 		*(params++) = makeShaderParameter(shader.textureLoc, &sp.texUnit);
+	}
+	if(shader.tileInfoLoc >= 0) {
+		*(params++) = makeShaderParameter(shader.tileInfoLoc, sp.tileInfo);
 	}
 	params->index = -1;
 

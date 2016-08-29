@@ -110,8 +110,7 @@ BitmapTextComponentManager::BitmapTextComponentManager(
       _loader(loaderManager),
       _renderPass(renderPass),
       _spriteRenderer(spriteRenderer),
-      _states(),
-      _params(nullptr) {
+      _states() {
 	lairAssert(_loader);
 	lairAssert(_renderPass);
 	lairAssert(_spriteRenderer);
@@ -245,12 +244,7 @@ void BitmapTextComponentManager::render(EntityRef entity, float interp, const Or
 	_states.textureFlags = Texture::TRILINEAR | Texture::CLAMP;
 	_states.blendingMode = BLEND_ALPHA;
 
-	_params = _spriteRenderer->addShaderParameters(
-	            _spriteRenderer->shader(), camera.transform(), 0);
-
 	_render(entity, interp, camera);
-
-	_params = nullptr;
 }
 
 
@@ -307,9 +301,12 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 		if(count) {
 			_states.texture      = tex;
 
+			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+			            _spriteRenderer->shader(), camera.transform(), 0, Vector4i(1, 1, 65536, 65536));
+
 			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
 			                                        camera.viewBox().max()(2));
-			_renderPass->addDrawCall(_states, _params, depth, index, count);
+			_renderPass->addDrawCall(_states, params, depth, index, count);
 		}
 	}
 

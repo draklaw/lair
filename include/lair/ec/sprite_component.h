@@ -152,7 +152,6 @@ protected:
 	RenderPass*      _renderPass;
 
 	RenderPass::DrawStates _states;
-	const ShaderParameter* _params;
 };
 
 

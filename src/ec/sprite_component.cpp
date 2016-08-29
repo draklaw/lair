@@ -104,8 +104,7 @@ SpriteComponentManager::SpriteComponentManager(AssetManager* assetManager,
       _loader(loaderManager),
       _spriteRenderer(spriteRenderer),
 	  _renderPass(renderPass),
-      _states(),
-      _params(nullptr) {
+      _states() {
 	lairAssert(_assets);
 	lairAssert(_loader);
 	lairAssert(_spriteRenderer);
@@ -252,12 +251,7 @@ void SpriteComponentManager::render(EntityRef entity, float interp, const Orthog
 	_states.buffer = _spriteRenderer->buffer();
 	_states.format = _spriteRenderer->format();
 
-	_params = _spriteRenderer->addShaderParameters(
-	            _spriteRenderer->shader(), camera.transform(), 0);
-
 	_render(entity, interp, camera);
-
-	_params = nullptr;
 }
 
 
@@ -305,9 +299,14 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 			_states.textureFlags = sc->textureFlags();
 			_states.blendingMode = sc->blendingMode();
 
+			Vector4i tileInfo;
+			tileInfo << sc->tileGridSize(), tex->width(), tex->height();
+			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
+			            _spriteRenderer->shader(), camera.transform(), 0, tileInfo);
+
 			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
 			                                        camera.viewBox().max()(2));
-			_renderPass->addDrawCall(_states, _params, depth, index, count);
+			_renderPass->addDrawCall(_states, params, depth, index, count);
 		}
 	}
 
