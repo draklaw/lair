@@ -259,7 +259,7 @@ LoaderSP LoaderManager::_popLoader() {
 LoaderSP LoaderManager::_getAnyPendingLoader() {
 	std::unique_lock<std::mutex> lk(_queueLock);
 	if(_queue.empty()) {
-		while(!_wipList.empty() && _wipList.back()->isLoaded()) {
+		while(!_wipList.empty() && _wipList.front()->isLoaded()) {
 			_wipList.pop_front();
 		}
 		return _wipList.empty()? LoaderSP(): _wipList.front();
