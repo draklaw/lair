@@ -199,54 +199,6 @@ SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRe
 }
 
 
-//void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
-//	sortArray(SpriteComponent::_renderCompare);
-
-//	RenderPass::DrawStates states;
-//	states.shader = _spriteRenderer->shader().shader;
-//	states.buffer = _spriteRenderer->buffer();
-//	states.format = _spriteRenderer->format();
-
-//	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
-//	            _spriteRenderer->shader(), camera.transform(), 0);
-
-//	for(SpriteComponent& sc: *this) {
-//		// TODO: culling
-//		if(!sc.isEnabled()
-//		|| !sc.texture() || !sc.texture()->get() || !sc.texture()->get()->isValid()) {
-//			continue;
-//		}
-
-//		TextureSP tex = sc.texture()->_get();
-
-//		Matrix4 wt = lerp(interp,
-//		                  sc._entity()->prevWorldTransform.matrix(),
-//		                  sc._entity()->worldTransform.matrix());
-
-//		const Box2& texCoords = sc._texCoords();
-//		Scalar w = tex->width()  * texCoords.sizes()(0);
-//		Scalar h = tex->height() * texCoords.sizes()(1);
-//		Vector2 offset(-w * sc.anchor().x(),
-//		               -h * sc.anchor().y());
-//		Box2 coords(offset, Vector2(w, h) + offset);
-
-//		unsigned index = _spriteRenderer->indexCount();
-//		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords);
-//		unsigned count = _spriteRenderer->indexCount() - index;
-
-//		if(count) {
-//			states.texture      = tex;
-//			states.textureFlags = sc.textureFlags();
-//			states.blendingMode = sc.blendingMode();
-
-//			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
-//			                                        camera.viewBox().max()(2));
-//			_renderPass->addDrawCall(states, params, depth, index, count);
-//		}
-//	}
-//}
-
-
 void SpriteComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
 	compactArray();
 

@@ -157,6 +157,7 @@ void MainState::startGame() {
 
 void MainState::updateTick() {
 	_inputs.sync();
+	_entities.setPrevWorldTransforms();
 
 	if(_quitInput->justPressed()) {
 		quit();
