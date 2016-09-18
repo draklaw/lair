@@ -126,6 +126,8 @@ inline std::ostream& operator<<(std::ostream& out, const Path& path) {
 	return out;
 }
 
+extern const Path emptyPath;
+
 
 }
 

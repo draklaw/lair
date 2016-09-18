@@ -45,6 +45,28 @@ TileLayerComponent::TileLayerComponent(Manager* manager, _Entity* entity)
 }
 
 
+const PropertyList& TileLayerComponent::properties() {
+	static PropertyList props;
+	if(props.nProperties() == 0) {
+		// TODO: tile_map property
+//		props.addProperty("tile_map",
+//		                  &TileLayerComponent::tileMapPath,
+//		                  &TileLayerComponent::setTileMap);
+		props.addProperty("layer_index",
+		                  &TileLayerComponent::layerIndex,
+		                  &TileLayerComponent::setLayerIndex);
+		props.addProperty("blend",
+		                  &TileLayerComponent::blendingMode,
+		                  &TileLayerComponent::setBlendingMode);
+		props.addProperty("texture_flags",
+		                  &TileLayerComponent::textureFlags,
+		                  &TileLayerComponent::setTextureFlags);
+	}
+	return props;
+}
+
+
+
 
 TileLayerComponentManager::TileLayerComponentManager(RenderPass* renderPass,
                           SpriteRenderer* spriteRenderer,

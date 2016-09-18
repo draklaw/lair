@@ -25,6 +25,7 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/ec/property.h>
 #include <lair/ec/entity.h>
 #include <lair/ec/component_manager.h>
 #include <lair/ec/dense_array.h>
@@ -247,9 +248,17 @@ public:
 		return nullptr;
 	}
 
-	virtual Component* cloneComponent(EntityRef /*base*/, EntityRef /*entity*/) {
-		lairAssert(false);
-		return nullptr;
+	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
+		Component* baseComp = get(base);
+		Component* comp = _addComponent(entity, baseComp);
+
+		const PropertyList& props = baseComp->properties();
+		for(unsigned pi = 0; pi < props.nProperties(); ++pi) {
+			const Property& prop = props.property(pi);
+			prop._setPtr(comp, prop._getPtr(baseComp));
+		}
+
+		return comp;
 	}
 
 

@@ -36,6 +36,7 @@
 #include <lair/render_gl2/render_pass.h>
 #include <lair/render_gl2/renderer.h>
 
+#include <lair/ec/property.h>
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
@@ -56,7 +57,7 @@ class EntityManager;
 class SpriteComponentManager;
 
 
-class SpriteComponent : public Component {
+class SpriteComponent : public Component, Properties<SpriteComponent> {
 public:
 	typedef SpriteComponentManager Manager;
 
@@ -72,6 +73,10 @@ public:
 	Manager* manager();
 
 	inline TextureAspectSP texture() const { return _texture.lock(); }
+	inline const Path& texturePath() const {
+		TextureAspectSP tex = texture();
+		return tex? tex->asset()->logicPath(): emptyPath;
+	}
 	inline void setTexture(TextureAspectSP texture) {
 		_texture = texture;
 	}
@@ -87,17 +92,19 @@ public:
 	inline const Vector2i& tileGridSize() const { return _tileGridSize; }
 	inline void setTileGridSize(const Vector2i& size) { _tileGridSize = size; }
 
-	inline unsigned tileIndex() const { return _tileIndex; }
-	inline void setTileIndex(unsigned index) { _tileIndex = index; }
+	inline const unsigned& tileIndex() const { return _tileIndex; }
+	inline void setTileIndex(const unsigned& index) { _tileIndex = index; }
 
 	inline const Box2& view() const { return _view; }
 	inline void setView(const Box2& view) { _view = view; }
 
-	inline BlendingMode blendingMode() const { return _blendingMode; }
-	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
+	inline const BlendingMode& blendingMode() const { return _blendingMode; }
+	inline void setBlendingMode(const BlendingMode& bm) { _blendingMode = bm; }
 
-	inline unsigned textureFlags() const { return _textureFlags; }
-	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
+	inline const unsigned& textureFlags() const { return _textureFlags; }
+	inline void setTextureFlags(const unsigned& flags) { _textureFlags = flags; }
+
+	static const PropertyList& properties();
 
 	Box2 _texCoords() const;
 
@@ -133,7 +140,6 @@ public:
 
 	virtual SpriteComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path());
-	virtual SpriteComponent* cloneComponent(EntityRef base, EntityRef entity);
 
 //	void render(float interp, const OrthographicCamera& camera);
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);

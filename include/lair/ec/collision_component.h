@@ -87,7 +87,7 @@ class CollisionComponent;
 class CollisionComponentManager;
 
 
-class CollisionComponent : public Component {
+class CollisionComponent : public Component, Properties<CollisionComponent> {
 public:
 	typedef CollisionComponentManager Manager;
 
@@ -100,19 +100,21 @@ public:
 	CollisionComponent& operator=(const CollisionComponent&) = delete;
 	CollisionComponent& operator=(CollisionComponent&&)      = default;
 
-	const ShapeSP shape() const  { return _shape; }
-	void setShape(ShapeSP shape) { _shape = shape; }
+	inline const ShapeSP shape() const  { return _shape; }
+	inline void setShape(ShapeSP shape) { _shape = shape; }
 
-	unsigned hitMask() const          { return _hitMask; }
-	void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
+	inline const unsigned& hitMask() const          { return _hitMask; }
+	inline void setHitMask(const unsigned& hitMask) { _hitMask = hitMask; }
 
-	unsigned ignoreMask() const             { return _ignoreMask; }
-	void setIgnoreMask(unsigned ignoreMask) { _ignoreMask = ignoreMask; }
+	inline const unsigned& ignoreMask() const             { return _ignoreMask; }
+	inline void setIgnoreMask(const unsigned& ignoreMask) { _ignoreMask = ignoreMask; }
 
-	float penetration(Direction dir) const { return _penetration[dir]; }
-	void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }
+	inline float penetration(Direction dir) const { return _penetration[dir]; }
+	inline void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }
 
 	Box2 worldAlignedBox() const;
+
+	static const PropertyList& properties();
 
 protected:
 	ShapeSP  _shape;

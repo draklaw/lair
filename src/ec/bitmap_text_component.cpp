@@ -98,6 +98,29 @@ void BitmapTextComponent::setFont(const Path& logicPath) {
 }
 
 
+const PropertyList& BitmapTextComponent::properties() {
+	static PropertyList props;
+	if(props.nProperties() == 0) {
+		props.addProperty("font",
+		                  &BitmapTextComponent::fontPath,
+		                  &BitmapTextComponent::setFont);
+		props.addProperty("text",
+		                  &BitmapTextComponent::text,
+		                  &BitmapTextComponent::setText);
+		props.addProperty("color",
+		                  &BitmapTextComponent::color,
+		                  &BitmapTextComponent::setColor);
+		props.addProperty("size",
+		                  &BitmapTextComponent::size,
+		                  &BitmapTextComponent::setSize);
+		props.addProperty("anchor",
+		                  &BitmapTextComponent::anchor,
+		                  &BitmapTextComponent::setAnchor);
+	}
+	return props;
+}
+
+
 //---------------------------------------------------------------------------//
 
 
@@ -155,16 +178,6 @@ BitmapTextComponent* BitmapTextComponentManager::addComponentFromJson(
 			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
 		}*/
 	}
-	return comp;
-}
-
-
-BitmapTextComponent* BitmapTextComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	BitmapTextComponent* baseComp = get(base);
-	BitmapTextComponent* comp = _addComponent(entity, baseComp);
-	comp->setFont( baseComp->font());
-	comp->setText( baseComp->text());
-	comp->setColor(baseComp->color());
 	return comp;
 }
 

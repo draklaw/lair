@@ -24,6 +24,7 @@
     - Combine Texture and flags into an indexed class to save bits in Index.
       Use this class instead of Texture in Sprite component and others, remove
       the texture flags from them.
+    - So: VertexArray (internal), Shader (vert+frag), TextureSet (Tex+flags*n), Sprite (TexSet+tiles)
   - Culling
   - Shape rendering ?
   - Write some shader building code. Might be useful to do tricky things, like
@@ -36,7 +37,8 @@
   - Make camera part of the scene graph to allow different cameras for different
     things (HUD, level, etc.)
   - Flag disabled entities to avoid walking the tree in components ? How to deal
-    with hierarchical stuff (might be used by rendering) ?
+    with hierarchical stuff (might be used by rendering) ? Idea: use an other
+    graph / tree.
   - Properties: load / save / clone, use accesser
   - Scripting: how to do the binding, which language ?
   - Replace grid tilling with custom tilling. Use it for text rendering. Need
@@ -49,6 +51,7 @@
     interpolating / non-interpolating transforms. Is this the right way to deal
     with it ?
   - How to deal with interpolation of other parameters (color...) ?
+  - Replace ComponentManager by DenseComponentManager, remove virtual functions.
 - Audio module (OpenAL ?)
 - Python
   - lair binding

@@ -78,6 +78,38 @@ void SpriteComponent::setTexture(const Path& logicPath) {
 }
 
 
+const PropertyList& SpriteComponent::properties() {
+	static PropertyList props;
+	if(props.nProperties() == 0) {
+		props.addProperty("texture",
+		                  &SpriteComponent::texturePath,
+		                  &SpriteComponent::setTexture);
+		props.addProperty("anchor",
+		                  &SpriteComponent::anchor,
+		                  &SpriteComponent::setAnchor);
+		props.addProperty("color",
+		                  &SpriteComponent::color,
+		                  &SpriteComponent::setColor);
+		props.addProperty("tile_grid",
+		                  &SpriteComponent::tileGridSize,
+		                  &SpriteComponent::setTileGridSize);
+		props.addProperty("tile_index",
+		                  &SpriteComponent::tileIndex,
+		                  &SpriteComponent::setTileIndex);
+		props.addProperty("view",
+		                  &SpriteComponent::view,
+		                  &SpriteComponent::setView);
+		props.addProperty("blend",
+		                  &SpriteComponent::blendingMode,
+		                  &SpriteComponent::setBlendingMode);
+		props.addProperty("texture_flags",
+		                  &SpriteComponent::textureFlags,
+		                  &SpriteComponent::setTextureFlags);
+	}
+	return props;
+}
+
+
 Box2 SpriteComponent::_texCoords() const {
 	Vector2i nTiles = _tileGridSize.cwiseMax(Vector2i(1, 1));
 	return boxView(tileBox(nTiles, _tileIndex), _view);
@@ -180,21 +212,6 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
 			comp->setTextureFlags(Texture::TRILINEAR | Texture::REPEAT);
 		}
 	}
-	return comp;
-}
-
-
-SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	SpriteComponent* baseComp = get(base);
-	SpriteComponent* comp = _addComponent(entity, baseComp);
-	comp->setTexture(     baseComp->texture());
-	comp->setAnchor(      baseComp->anchor());
-	comp->setColor(       baseComp->color());
-	comp->setTileGridSize(baseComp->tileGridSize());
-	comp->setTileIndex(   baseComp->tileIndex());
-	comp->setView(        baseComp->view());
-	comp->setBlendingMode(baseComp->blendingMode());
-	comp->setTextureFlags(baseComp->textureFlags());
 	return comp;
 }
 

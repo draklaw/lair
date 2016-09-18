@@ -43,8 +43,6 @@ namespace lair
 class Component;
 class EntityManager;
 
-class SpriteComponent;
-
 
 constexpr size_t MAX_DENSE_COMPONENTS = LAIR_EC_MAX_DENSE_COMPONENTS;
 

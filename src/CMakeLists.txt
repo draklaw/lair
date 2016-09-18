@@ -122,6 +122,7 @@ set(lair_SOURCES
 	render_gl2/renderer.cpp
 	render_gl2/render_module.cpp
 
+	ec/property.cpp
 	ec/entity.cpp
 	ec/entity_manager.cpp
 	ec/component.cpp

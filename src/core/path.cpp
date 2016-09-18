@@ -196,4 +196,7 @@ bool Path::isDirectorySeparator(char c) {
 #endif
 }
 
+
+const Path emptyPath;
+
 }

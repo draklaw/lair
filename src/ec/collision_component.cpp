@@ -66,6 +66,24 @@ CollisionComponent::CollisionComponent(Manager* manager, _Entity* entity, ShapeS
 }
 
 
+const PropertyList& CollisionComponent::properties() {
+	static PropertyList props;
+	if(props.nProperties() == 0) {
+		// TODO: Shape property
+//		props.addProperty("shape",
+//		                  &CollisionComponent::shape,
+//		                  &CollisionComponent::setShape);
+		props.addProperty("hit_mask",
+		                  &CollisionComponent::hitMask,
+		                  &CollisionComponent::setHitMask);
+		props.addProperty("ignore_mask",
+		                  &CollisionComponent::ignoreMask,
+		                  &CollisionComponent::setIgnoreMask);
+	}
+	return props;
+}
+
+
 Box2 CollisionComponent::worldAlignedBox() const {
 	lairAssert(_shape && _shape->type() == SHAPE_ALIGNED_BOX);
 	Vector2 pos = EntityRef(_entityPtr).computeWorldTransform().translation().head<2>();
