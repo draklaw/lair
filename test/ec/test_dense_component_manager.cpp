@@ -100,6 +100,7 @@ bool cmpComponent(Component1* c0, Component1* c1) {
 
 class DenseComponentManagerTest : public ::testing::Test {
 public:
+	LdlPropertySerializer serializer;
 	EntityManager* em;
 	Manager0* manager0;
 	Manager1* manager1;
@@ -125,7 +126,7 @@ public:
 	}
 
 	virtual void SetUp() {
-		em = new EntityManager(noopLogger, BLOCK_SIZE);
+		em = new EntityManager(noopLogger, serializer, BLOCK_SIZE);
 		manager0 = new Manager0("test0", 4);
 		manager1 = new Manager1("test1", 4);
 
