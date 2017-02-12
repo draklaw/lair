@@ -127,6 +127,7 @@ public:
 		, _name    ("test")
 		, _blend   (BLEND_NONE)
 		, _texFlags(BILINEAR_MIPMAP | REPEAT)
+		, member   (1, 2)
 	{
 	}
 
@@ -185,6 +186,7 @@ public:
 		P_NAME,
 		P_BLEND,
 		P_TEXFLAGS,
+		P_MEMBER,
 
 		N_PROPERTIES,
 	};
@@ -199,6 +201,7 @@ public:
 			                  &TestClass::getBlendingMode, &TestClass::setBlendingMode);
 			props.addProperty("texFlags", flagsInfo(),
 			                  &TestClass::getTexFlags, &TestClass::setTexFlags);
+			props.addProperty("member", &TestClass::member);
 		}
 		return props;
 	}
@@ -210,6 +213,8 @@ private:
 	std::string   _name;
 	BlendingMode  _blend;
 	unsigned      _texFlags;
+public:
+	lair::Vector2 member;
 };
 
 
@@ -270,6 +275,7 @@ TEST(PropertyTest, TestGetSet) {
 	ASSERT_EQ(TestClass::P_NAME,     obj.propertyIndex("name"));
 	ASSERT_EQ(TestClass::P_BLEND,    obj.propertyIndex("blendingMode"));
 	ASSERT_EQ(TestClass::P_TEXFLAGS, obj.propertyIndex("texFlags"));
+	ASSERT_EQ(TestClass::P_MEMBER,   obj.propertyIndex("member"));
 
 	int           count    = obj.getCount();
 	float         radius   = obj.getRadius();
@@ -277,6 +283,7 @@ TEST(PropertyTest, TestGetSet) {
 	std::string   name     = obj.getName();
 	BlendingMode  blend    = obj.getBlendingMode();
 	unsigned      texFlags = obj.getTexFlags();
+	lair::Vector2 member   = obj.member;
 
 	ASSERT_EQ(count,    obj.get<int>          (TestClass::P_COUNT));
 	ASSERT_EQ(count,    obj.get<int>          ("count"));
@@ -290,6 +297,8 @@ TEST(PropertyTest, TestGetSet) {
 	ASSERT_EQ(blend,    obj.get<BlendingMode> ("blendingMode"));
 	ASSERT_EQ(texFlags, obj.get<unsigned>     (TestClass::P_TEXFLAGS));
 	ASSERT_EQ(texFlags, obj.get<unsigned>     ("texFlags"));
+	ASSERT_EQ(member,   obj.get<lair::Vector2>(TestClass::P_MEMBER));
+	ASSERT_EQ(member,   obj.get<lair::Vector2>("member"));
 
 	count  = 123;
 	radius = -12.34;
@@ -297,13 +306,15 @@ TEST(PropertyTest, TestGetSet) {
 	name   = "aoeu";
 	blend  = BLEND_MULTIPLY;
 	texFlags = MIN_LINEAR | MAG_NEAREST | MIRROR;
+	member = lair::Vector2(-598, 7522);
 
-	obj.set<int>          (TestClass::P_COUNT, count);
-	obj.set<float>        ("radius",           radius);
-	obj.set<lair::Vector4>(TestClass::P_POS,   pos);
-	obj.set<std::string>  ("name",             name);
-	obj.set<BlendingMode> (TestClass::P_BLEND, blend);
-	obj.set<unsigned>     ("texFlags",         texFlags);
+	obj.set<int>          (TestClass::P_COUNT,  count);
+	obj.set<float>        ("radius",            radius);
+	obj.set<lair::Vector4>(TestClass::P_POS,    pos);
+	obj.set<std::string>  ("name",              name);
+	obj.set<BlendingMode> (TestClass::P_BLEND,  blend);
+	obj.set<unsigned>     ("texFlags",          texFlags);
+	obj.set<lair::Vector2>(TestClass::P_MEMBER, member);
 
 	ASSERT_EQ(count,    obj.getCount());
 	ASSERT_EQ(radius,   obj.getRadius());
@@ -311,6 +322,7 @@ TEST(PropertyTest, TestGetSet) {
 	ASSERT_EQ(name,     obj.getName());
 	ASSERT_EQ(blend,    obj.getBlendingMode());
 	ASSERT_EQ(texFlags, obj.getTexFlags());
+	ASSERT_EQ(member,   obj.member);
 
 	ASSERT_EQ(count,    obj.get<int>          (TestClass::P_COUNT));
 	ASSERT_EQ(count,    obj.get<int>          ("count"));
@@ -324,6 +336,8 @@ TEST(PropertyTest, TestGetSet) {
 	ASSERT_EQ(blend,    obj.get<BlendingMode> ("blendingMode"));
 	ASSERT_EQ(texFlags, obj.get<unsigned>     (TestClass::P_TEXFLAGS));
 	ASSERT_EQ(texFlags, obj.get<unsigned>     ("texFlags"));
+	ASSERT_EQ(member,   obj.get<lair::Vector2>(TestClass::P_MEMBER));
+	ASSERT_EQ(member,   obj.get<lair::Vector2>("member"));
 
 	ASSERT_THROW(obj.get<float>(TestClass::P_COUNT), lair::AssertionFailedError);
 	ASSERT_THROW(obj.set(TestClass::P_COUNT, 1.5f), lair::AssertionFailedError);
@@ -339,6 +353,7 @@ TEST(PropertyTest, TestIO) {
 	obj0.setName("Plop");
 	obj0.setBlendingMode(BLEND_ALPHA);
 	obj0.setTexFlags(BILINEAR_MIPMAP | MIRROR_S | CLAMP_T);
+	obj0.member = lair::Vector2(7778, -516);
 
 	std::stringstream stream;
 	lair::ErrorList errors;
@@ -361,6 +376,7 @@ TEST(PropertyTest, TestIO) {
 	ASSERT_EQ(obj0.getName(),         obj1.getName());
 	ASSERT_EQ(obj0.getBlendingMode(), obj1.getBlendingMode());
 	ASSERT_EQ(obj0.getTexFlags(),     obj1.getTexFlags());
+	ASSERT_EQ(obj0.member,            obj1.member);
 
 	std::cerr << stream.str() << "\n";
 }

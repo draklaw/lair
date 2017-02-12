@@ -36,25 +36,9 @@ namespace lair {
 
 
 GameConfigBase::GameConfigBase()
-    : _fullscreen(false)
-    , _vSync     (true)
+    : fullscreen(false)
+    , vSync     (true)
 {
-}
-
-bool GameConfigBase::fullscreen() const {
-	return _fullscreen;
-}
-
-void GameConfigBase::setFullscreen(bool enable) {
-	_fullscreen = enable;
-}
-
-bool GameConfigBase::vSync() const {
-	return _vSync;
-}
-
-void GameConfigBase::setVSync(bool enable) {
-	_vSync = enable;
 }
 
 void GameConfigBase::setFromArgs(int& argc, char** argv) {
@@ -62,16 +46,16 @@ void GameConfigBase::setFromArgs(int& argc, char** argv) {
 	for(int argi = 1; argi < argc; ++ argi) {
 		char* arg = argv[argi];
 		if(std::strcmp(arg, "--fullscreen") == 0) {
-			_fullscreen = true;
+			fullscreen = true;
 		}
 		else if(std::strcmp(arg, "--no-fullscreen") == 0) {
-			_fullscreen = false;
+			fullscreen = false;
 		}
 		else if(std::strcmp(arg, "--vsync") == 0) {
-			_vSync = true;
+			vSync = true;
 		}
 		else if(std::strcmp(arg, "--no-vsync") == 0) {
-			_vSync = false;
+			vSync = false;
 		}
 		else {
 			argv[last++] = arg;
@@ -89,11 +73,9 @@ const PropertyList& GameConfigBase::staticProperties() {
 	static PropertyList props;
 	if(!props.nProperties()) {
 		props.addProperty("fullscreen",
-		                  &GameConfigBase::fullscreen,
-		                  &GameConfigBase::setFullscreen);
+		                  &GameConfigBase::fullscreen);
 		props.addProperty("vsync",
-		                  &GameConfigBase::vSync,
-		                  &GameConfigBase::setVSync);
+		                  &GameConfigBase::vSync);
 	}
 	return props;
 }
@@ -243,8 +225,8 @@ void GameBase::initialize(GameConfigBase& config) {
 	// Window
 
 	_window = _sys->createWindow("Lair", 1280, 720);
-	_window->setFullscreen(config.fullscreen());
-	_sys->setVSyncEnabled(config.vSync());
+	_window->setFullscreen(config.fullscreen);
+	_sys->setVSyncEnabled(config.vSync);
 	log().info("VSync: ", _sys->isVSyncEnabled()? "on": "off");
 
 	// Render
