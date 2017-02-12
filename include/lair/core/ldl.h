@@ -179,36 +179,7 @@ private:
 
 	bool nextState();
 	void _next() {
-//		static const char* tokName[] = {
-//			"TOK_INVALID",
-//			"TOK_EOF",
-//			"TOK_NULL",
-//			"TOK_BOOL",
-//			"TOK_INT",
-//			"TOK_FLOAT",
-//			"TOK_STRING",
-//			"TOK_SEP",
-//			"TOK_LIST_OPEN",
-//			"TOK_LIST_CLOSE",
-//			"TOK_MAP_OPEN",
-//			"TOK_MAP_CLOSE",
-//			"TOK_ASSIGN",
-//		};
-
-//		static const char* stateName[] = {
-//			"ST_EXPECT_VALUE",
-//			"ST_EXPECT_SEP_END",
-//			"ST_EXPECT_KEY",
-//			"ST_EXPECT_ASSIGN",
-//			"ST_CHECK_IF_TYPE",
-//			"ST_END_NOW",
-//		};
-
-//		std::cerr << "Next: " << stateName[_state] << "\n";
-		while(!nextState()) {
-//			std::cerr << "  " << tokName[_token] << " -> " << stateName[_state] << "\n";
-		}
-//		std::cerr << "  " << tokName[_token] << " -> " << stateName[_state] << "\n";
+		while(!nextState());
 	}
 
 	// Errors:

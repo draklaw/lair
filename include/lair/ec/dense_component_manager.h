@@ -242,49 +242,6 @@ public:
 		_components.resize(lastAlive);
 	}
 
-//	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-//	                                        const JsonPropertySerializer& serializer,
-//	                                        const Path& /*cd*/=Path(), ErrorList* errors=0) {
-//		unsigned firstError = errors? errors->nErrors(): 0;
-
-//		Component* comp = addComponent(entity);
-
-//		if(!json.isObject()) {
-//			const PropertyList& props = Component::properties();
-//			for(const std::string& key: json.getMemberNames()) {
-//				int propIndex = props.propertyIndex(key);
-//				if(propIndex < 0) {
-//					if(errors) {
-//						errors->warning("unknown property \"", key, "\"");
-//					}
-//				}
-//				else {
-//					int firstPropError = errors? errors->nErrors(): 0;
-
-//					// Errors are logged, but we continue anyway. Property with
-//					// errors will have the default value.
-//					serializer.deserialize(comp, propIndex, json[key], errors);
-
-//					if(errors) {
-//						errors->prepend(firstPropError, "property ", key, ": ");
-//					}
-//				}
-//			}
-//		}
-//		else {
-//			if(errors) {
-//				errors->error("expected object, got ", jsonTypeName(json));
-//			}
-//			return comp;
-//		}
-
-//		if(errors) {
-//			errors->prepend(firstError, "component ", name(), ": ");
-//		}
-
-//		return comp;
-//	}
-
 	virtual const PropertyList& componentProperties() {
 		return Component::properties();
 	}

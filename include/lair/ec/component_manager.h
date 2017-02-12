@@ -68,9 +68,6 @@ public:
 	}
 
 	virtual Component* addComponent(EntityRef entity) = 0;
-//	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-//	                                        const JsonPropertySerializer& serializer,
-//	                                        const Path& cd=Path(), ErrorList* errors=0) = 0;
 	virtual const PropertyList& componentProperties() = 0;
 	virtual Component* cloneComponent(EntityRef base, EntityRef entity) = 0;
 	virtual void removeComponent(EntityRef entity) = 0;

@@ -105,13 +105,11 @@ FlagsInfo& FlagsInfo::add(unsigned flag, const String& label) {
 }
 
 FlagsInfo& FlagsInfo::add(unsigned flags, unsigned mask, const String& label) {
-//	lairAssert(_FlagSetFromFlags.count(flags) == 0);
 	lairAssert(_flagSetFromLabel.count(label) == 0);
 
 	_flagSets.emplace_back(new FlagSet{ flags, mask, label });
 
 	const FlagSet* flagSet = _flagSets.back().get();
-//	_FlagSetFromFlags.emplace(flags, flagSet);
 	_flagSetFromLabel.emplace(label, flagSet);
 
 	return *this;
@@ -124,11 +122,6 @@ const String& FlagsInfo::name() const {
 unsigned FlagsInfo::nFlagSet() const {
 	return _flagSets.size();
 }
-
-//const FlagsInfo::FlagSet* FlagsInfo::flagSet(unsigned flags) const {
-//	auto it = _FlagSetFromFlags.find(flags);
-//	return (it == _FlagSetFromFlags.end())? nullptr: it->second;
-//}
 
 const FlagsInfo::FlagSet* FlagsInfo::flagSet(const String& label) const {
 	auto it = _flagSetFromLabel.find(label);

@@ -33,27 +33,27 @@ public:
 	Test(const std::string& msg) {
 		size_t size = std::min(msg.size(), Size-1);
 		memcpy(data, msg.data(), size);
-		
+
 		size_t left = Size-1 - size;
 		if(left)
 			memset(data+size, '.', left);
-		
+
 		data[Size-1] = '\0';
 	}
 
 	Test(const Test<Size>& other) {
 		std::memcpy(data, other.data, Size);
 	}
-	
+
 	Test(Test<Size>&&) = delete;
-	
+
 	Test& operator=(const Test<Size>& other) {
 		std::memcpy(data, other.data, Size);
 		return *this;
 	}
-	
+
 	Test& operator=(Test<Size>&&) = delete;
-	
+
 	bool operator==(const Test<Size>& rhs) const {
 		return strcmp(data, rhs.data) == 0;
 	}
@@ -74,9 +74,9 @@ struct NoMethods {
 
 	NoMethods(const NoMethods& ) = delete;
 	NoMethods(      NoMethods&&) = delete;
-	
+
 	~NoMethods() = delete;
-	
+
 	NoMethods& operator=(const NoMethods& ) = delete;
 	NoMethods& operator=(      NoMethods&&) = delete;
 

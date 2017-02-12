@@ -230,44 +230,6 @@ bool _propertyFromJson(void* obj, const Property& property, const Json::Value& j
 	return result;
 }
 
-//class JsonPropertySerializer {
-//public:
-//	typedef bool (*Serialize)(Json::Value& json, const void* obj, const Property& property, ErrorList* errors);
-//	typedef bool (*Deserialize)(void* obj, const Property& property, const Json::Value& json, ErrorList* errors);
-
-//public:
-//	static JsonPropertySerializer createWithLairTypes();
-
-//	void _registerType(const MetaType* type, Serialize serialize, Deserialize deserialize);
-//	bool _serialize(Json::Value& json, const void* obj, const Property& property, ErrorList* errors) const;
-//	bool _deserialize(void* obj, const Property& property, const Json::Value& json, ErrorList* errors) const;
-
-//	template<typename T>
-//	void registerType() {
-//		_registerType(metaTypes.get<T>(), &_jsonFromProperty<T>, &_propertyFromJson<T>);
-//	}
-
-//	template < typename C >
-//	bool serialize(Json::Value& json, const C& obj, unsigned propertyIndex, ErrorList* errors = 0) const {
-//		return _serialize(json, &obj, obj.property(propertyIndex), errors);
-//	}
-
-//	template < typename C >
-//	bool deserialize(C& obj, unsigned propertyIndex, const Json::Value& json, ErrorList* errors = 0) const {
-//		return _deserialize(&obj, obj.property(propertyIndex), json, errors);
-//	}
-
-//private:
-//	struct Functions {
-//		Serialize   serialize;
-//		Deserialize deserialize;
-//	};
-
-//	typedef std::unordered_map<const MetaType*, Functions> FunctionMap;
-
-//public:
-//	FunctionMap _functions;
-//};
 
 class LdlPropertySerializer {
 public:

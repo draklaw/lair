@@ -24,7 +24,6 @@ LdlParser::LdlParser(std::istream* stream, const String& streamName, ErrorList* 
     , _contextStack()
     , _state       ((context == CTX_LIST)? ST_EXPECT_VALUE: ST_EXPECT_KEY)
     , _token       (TOK_INVALID)
-//    , _type        (TYPE_ERROR)
     , _type        ((context == CTX_LIST)? TYPE_LIST: TYPE_MAP)
     , _int         ()
     , _float       ()
@@ -32,8 +31,6 @@ LdlParser::LdlParser(std::istream* stream, const String& streamName, ErrorList* 
     , _key         ()
     , _valueType   ()
 {
-//	_contextStack.push_back(context);
-//	next();
 }
 
 void LdlParser::skip() {
@@ -584,7 +581,6 @@ LdlWriter::LdlWriter(std::ostream* out, const String& streamName, ErrorList* err
     , _state       (ST_START)
     , _contextStack()
 {
-//	_contextStack.push_back(CInfo{ context, format, '\n' });
 }
 
 void LdlWriter::_writeString(const String& str, StringFormat format) {

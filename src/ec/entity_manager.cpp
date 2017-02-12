@@ -124,36 +124,6 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 }
 
 
-//void EntityManager::initializeFromJson(EntityRef entity,
-//                                       const Json::Value& json,
-//                                       const Path& cd, ErrorList* errors) {
-//	if(entity.name()[0] == '\0') {
-//		std::string name = json.get("name", "<noname>").asString();
-//		size_t nameLen = name.size() + 1;
-//		std::unique_ptr<char> ownedName(new char[nameLen]);
-//		std::memcpy(ownedName.get(), name.data(), nameLen);
-
-//		delete[] entity._get()->name;
-//		entity._get()->name = ownedName.release();
-//	}
-
-//	if(json.isMember("transform")) {
-//		entity.place(Transform(parseMatrix4(json["transform"])));
-//	}
-
-//	while(entity._get()->firstComponent) {
-//		lairAssert(entity._get()->firstComponent->manager());
-//		entity._get()->firstComponent->manager()->removeComponent(entity);
-//	}
-//	for(const std::string& key: json.getMemberNames()) {
-//		auto it = _compManagerMap.find(key);
-//		if(it != _compManagerMap.end()) {
-//			it->second->addComponentFromJson(entity, json[key], _serializer, cd, errors);
-//		}
-//	}
-//}
-
-
 bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 	if(parser.valueType() != LdlParser::TYPE_MAP) {
 		parser.error("Expected entity (VarMap), got ", parser.valueTypeName());

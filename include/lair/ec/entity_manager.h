@@ -79,7 +79,6 @@ public:
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr, int index = -1);
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter);
 
-//	void initializeFromJson(EntityRef entity, const Json::Value& json, const Path& cd=Path(), ErrorList* errors=0);
 	bool initializeFromLdl(EntityRef entity, LdlParser& parser);
 	bool loadEntitiesFromLdl(LdlParser& parser, EntityRef parent);
 

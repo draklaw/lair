@@ -80,13 +80,6 @@ public:
 	    : DenseComponentManager<Component>(name, blockSize) {
 	}
 	virtual ~TestComponentManager() = default;
-
-//	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-//	                                                   const Path& cd=Path()) {
-//		Component* comp = Base::addComponent(entity);
-//		comp->setValue(json.get("value", 0).asInt());
-//		return comp;
-//	}
 };
 
 template<int _Index>

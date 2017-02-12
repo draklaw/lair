@@ -71,7 +71,7 @@ typedef void (*WriteReprFunc)(std::ostream& out, const void* obj);
 
 /**
  * \brief The meta-type structure: stores all information required by a meta-type.
- * 
+ *
  *  Note that functions pointers might be null, meaning that the type do not
  *  support the feature.
  */
@@ -372,7 +372,7 @@ public:
 	VarRef& operator=(      VarRef&& other) = delete;
 
 	inline VarRef& operator=(const ConstVarRef&  other);
-	
+
 	template<typename T>
 	inline VarRef& operator=(const T& value) {
 		lairAssert(metaTypes.get<T>() == _type);
@@ -439,7 +439,7 @@ public:
 private:
 	const MetaType* _type;
 	void*           _data;
-	
+
 	friend class ConstVarRef;
 	friend class Variant;
 };
@@ -521,7 +521,7 @@ public:
 private:
 	const MetaType* _type;
 	const void*     _data;
-	
+
 	friend class VarRef;
 	friend class Variant;
 };
@@ -673,7 +673,7 @@ public:
 				// Seriously, who would delete the destructor ???
 				if(_type->destroy)
 					_type->destroy(ptr);
-				
+
 				if(_type->size > VARIANT_DATA_SIZE) {
 					free(ptr);
 				}
@@ -683,10 +683,10 @@ public:
 			_clearData();
 		}
 	}
-	
+
 	void swap(Variant& other) noexcept {
 		std::swap(_type, other._type);
-		
+
 		std::uint8_t tmp[VARIANT_DATA_SIZE];
 		std::memcpy(tmp,        _data,        VARIANT_DATA_SIZE);
 		std::memcpy(_data,       other._data, VARIANT_DATA_SIZE);
@@ -727,7 +727,7 @@ private:
 			if(!_get<void*>())
 				throw std::bad_alloc();
 		}
-		
+
 		void* ptr = _getDataBlock();
 
 		lairAssert(_type->copyConstruct);
@@ -741,7 +741,7 @@ private:
 private:
 	const MetaType* _type;
 	std::uint8_t    _data[VARIANT_DATA_SIZE];
-	
+
 	friend class VarRef;
 	friend class ConstVarRef;
 };
@@ -848,7 +848,6 @@ public:
 
 	const String& name() const;
 	unsigned nFlagSet() const;
-//	const FlagSet* flagSet(unsigned flags) const;
 	const FlagSet* flagSet(const String& label) const;
 
 	unsigned parse(std::istream& in, ErrorList* errors = 0) const;
@@ -865,7 +864,6 @@ private:
 private:
 	String          _name;
 	FlagSetVector   _flagSets;
-//	FlagsFlagSetMap _FlagSetFromFlags;
 	LabelFlagSetMap _flagSetFromLabel;
 };
 
