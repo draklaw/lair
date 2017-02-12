@@ -111,7 +111,7 @@ public:
 	_Entity*       nextSibling;
 
 	char*          name;
-	Json::Value    extra;
+//	Json::Value    extra;
 
 	// TODO: make homogenous arrays for these (managed by EntityManager)
 	Transform      transform;
@@ -307,10 +307,10 @@ public:
 		translate(Vector3(x, y, z));
 	}
 
-	Json::Value& extra() {
-		lairAssert(isValid());
-		return _entity->extra;
-	}
+//	Json::Value& extra() {
+//		lairAssert(isValid());
+//		return _entity->extra;
+//	}
 
 	EntityRef clone(EntityRef newParent, const char* newName = nullptr) const;
 

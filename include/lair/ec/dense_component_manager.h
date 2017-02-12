@@ -24,8 +24,8 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/property.h>
 
-#include <lair/ec/property.h>
 #include <lair/ec/entity.h>
 #include <lair/ec/component_manager.h>
 #include <lair/ec/dense_array.h>
@@ -155,7 +155,7 @@ public:
 		}
 	}
 
-	Component* addComponent(EntityRef entity) {
+	virtual Component* addComponent(EntityRef entity) {
 		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());
 		lairAssert(get(entity) == nullptr);
@@ -242,10 +242,51 @@ public:
 		_components.resize(lastAlive);
 	}
 
-	virtual Component* addComponentFromJson(EntityRef /*entity*/, const Json::Value& /*json*/,
-									  const Path& /*cd*/=Path()) {
-		lairAssert(false);
-		return nullptr;
+//	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
+//	                                        const JsonPropertySerializer& serializer,
+//	                                        const Path& /*cd*/=Path(), ErrorList* errors=0) {
+//		unsigned firstError = errors? errors->nErrors(): 0;
+
+//		Component* comp = addComponent(entity);
+
+//		if(!json.isObject()) {
+//			const PropertyList& props = Component::properties();
+//			for(const std::string& key: json.getMemberNames()) {
+//				int propIndex = props.propertyIndex(key);
+//				if(propIndex < 0) {
+//					if(errors) {
+//						errors->warning("unknown property \"", key, "\"");
+//					}
+//				}
+//				else {
+//					int firstPropError = errors? errors->nErrors(): 0;
+
+//					// Errors are logged, but we continue anyway. Property with
+//					// errors will have the default value.
+//					serializer.deserialize(comp, propIndex, json[key], errors);
+
+//					if(errors) {
+//						errors->prepend(firstPropError, "property ", key, ": ");
+//					}
+//				}
+//			}
+//		}
+//		else {
+//			if(errors) {
+//				errors->error("expected object, got ", jsonTypeName(json));
+//			}
+//			return comp;
+//		}
+
+//		if(errors) {
+//			errors->prepend(firstError, "component ", name(), ": ");
+//		}
+
+//		return comp;
+//	}
+
+	virtual const PropertyList& componentProperties() {
+		return Component::properties();
 	}
 
 	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
@@ -255,7 +296,7 @@ public:
 		const PropertyList& props = baseComp->properties();
 		for(unsigned pi = 0; pi < props.nProperties(); ++pi) {
 			const Property& prop = props.property(pi);
-			prop._setPtr(comp, prop._getPtr(baseComp));
+			prop.setVar(comp, prop.getVar(baseComp));
 		}
 
 		return comp;

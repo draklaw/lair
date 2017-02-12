@@ -23,6 +23,7 @@
 #include <cmath>
 
 #include <lair/core/lair.h>
+#include <lair/core/ldl.h>
 #include <lair/core/json.h>
 #include <lair/core/log.h>
 
@@ -36,8 +37,9 @@ namespace lair
 {
 
 
-EntityManager::EntityManager(Logger& logger, size_t entityBlockSize)
+EntityManager::EntityManager(Logger& logger, LdlPropertySerializer& serializer, size_t entityBlockSize)
     : _logger             (&logger),
+      _serializer         (serializer),
       _compManagerMap     (),
       _nEntities          (0),
       _nZombieEntities    (0),
@@ -58,6 +60,31 @@ int EntityManager::registerComponentManager(ComponentManager* cmi) {
 	_compManagers.push_back(cmi);
 	_compManagerMap[cmi->name()] = cmi;
 	return cmi->index();
+}
+
+
+ComponentManager* EntityManager::componentManager(const String& name) const {
+	auto it = _compManagerMap.find(name);
+	return (it != _compManagerMap.end())? it->second: nullptr;
+}
+
+
+EntityRef EntityManager::findByName(const String& name, EntityRef from) const {
+	if(!from.isValid())
+		from = _root;
+
+	if(from.name() == name)
+		return from;
+
+	EntityRef child = from.firstChild();
+	while(child.isValid()) {
+		EntityRef entity = findByName(name, child);
+		if(entity.isValid())
+			return entity;
+		child = child.nextSibling();
+	}
+
+	return EntityRef();
 }
 
 
@@ -97,33 +124,114 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 }
 
 
-void EntityManager::initializeFromJson(EntityRef entity,
-                                       const Json::Value& json,
-                                       const Path& cd) {
-	if(entity.name()[0] == '\0') {
-		std::string name = json.get("name", "<noname>").asString();
-		size_t nameLen = name.size() + 1;
-		std::unique_ptr<char> ownedName(new char[nameLen]);
-		std::memcpy(ownedName.get(), name.data(), nameLen);
+//void EntityManager::initializeFromJson(EntityRef entity,
+//                                       const Json::Value& json,
+//                                       const Path& cd, ErrorList* errors) {
+//	if(entity.name()[0] == '\0') {
+//		std::string name = json.get("name", "<noname>").asString();
+//		size_t nameLen = name.size() + 1;
+//		std::unique_ptr<char> ownedName(new char[nameLen]);
+//		std::memcpy(ownedName.get(), name.data(), nameLen);
 
-		delete[] entity._get()->name;
-		entity._get()->name = ownedName.release();
+//		delete[] entity._get()->name;
+//		entity._get()->name = ownedName.release();
+//	}
+
+//	if(json.isMember("transform")) {
+//		entity.place(Transform(parseMatrix4(json["transform"])));
+//	}
+
+//	while(entity._get()->firstComponent) {
+//		lairAssert(entity._get()->firstComponent->manager());
+//		entity._get()->firstComponent->manager()->removeComponent(entity);
+//	}
+//	for(const std::string& key: json.getMemberNames()) {
+//		auto it = _compManagerMap.find(key);
+//		if(it != _compManagerMap.end()) {
+//			it->second->addComponentFromJson(entity, json[key], _serializer, cd, errors);
+//		}
+//	}
+//}
+
+
+bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected entity (VarMap), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
 	}
 
-	if(json.isMember("transform")) {
-		entity.place(Transform(parseMatrix4(json["transform"])));
-	}
+	bool success = true;
+	parser.enter();
+	while(parser.valueType() != LdlParser::TYPE_END) {
+		String key = parser.getKey();
 
-	while(entity._get()->firstComponent) {
-		lairAssert(entity._get()->firstComponent->manager());
-		entity._get()->firstComponent->manager()->removeComponent(entity);
-	}
-	for(const std::string& key: json.getMemberNames()) {
-		auto it = _compManagerMap.find(key);
-		if(it != _compManagerMap.end()) {
-			it->second->addComponentFromJson(entity, json[key], cd);
+		if(key == "name" && entity.name()[0] == '\0') {
+			if(parser.valueType() == LdlParser::TYPE_STRING) {
+				setEntityName(entity, parser.getString());
+				parser.next();
+			}
+			else {
+				parser.error("Entity name must be a String, got ", parser.valueTypeName());
+				parser.skip();
+				success = false;
+			}
+		}
+		else if(key == "transform") {
+			Transform transform;
+			if(ldlRead(parser, transform)) {
+				entity.place(transform);
+			}
+			else {
+				success = false;
+			}
+		}
+		else if(key == "children") {
+			success &= loadEntitiesFromLdl(parser, entity);
+		}
+		else {
+			ComponentManager* cm = componentManager(key);
+			if(cm) {
+				Component* cmp = cm->addComponent(entity);
+				_serializer._read(parser, cm->componentProperties(), cmp);
+			}
+			else {
+				parser.warning("Unknown component type \"", key, "\"");
+				parser.skip();
+			}
 		}
 	}
+	parser.leave();
+
+	return success;
+}
+
+
+bool EntityManager::loadEntitiesFromLdl(LdlParser& parser, EntityRef parent) {
+	if(parser.valueType() != LdlParser::TYPE_LIST && parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected entity list (VarList or VarMap), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool isList = parser.valueType() == LdlParser::TYPE_LIST;
+	parser.enter();
+	while(parser.valueType() != LdlParser::TYPE_END) {
+		if(parser.valueType() == LdlParser::TYPE_LIST
+		|| parser.valueType() == LdlParser::TYPE_MAP) {
+			if(parser.isValueTyped() && parser.getValueTypeName() != "Entity") {
+				parser.warning("Unexpected type annotation \"", parser.valueType(), "\" when reading an Entity");
+			}
+			EntityRef entity = createEntity(parent, isList? nullptr: parser.getKey().c_str());
+			initializeFromLdl(entity, parser);
+		}
+		else {
+			parser.error("Expected Entity (VarList or VarMap), got ", parser.valueTypeName());
+			parser.skip();
+		}
+	}
+	parser.leave();
+	return true;
 }
 
 
@@ -156,6 +264,16 @@ void EntityManager::_releaseEntity(_Entity* entity) {
 	entity->nextSibling = _firstFree;
 	_firstFree = entity;
 	--_nZombieEntities;
+}
+
+
+void EntityManager::setEntityName(EntityRef entity, const String& name) {
+	size_t nameLen = name.size() + 1;
+	std::unique_ptr<char> ownedName(new char[nameLen]);
+	std::memcpy(ownedName.get(), name.data(), nameLen);
+
+	delete[] entity._get()->name;
+	entity._get()->name = ownedName.release();
 }
 
 

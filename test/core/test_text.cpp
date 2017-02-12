@@ -26,7 +26,7 @@
 
 using namespace lair;
 
-TEST(TextTest, SimpleString) {
+TEST(TextTest, SimpleDecode) {
 	char msg[] = { char(0x24),
 	               char(0xc2), char(0xa2),
 	               char(0xe2), char(0x82), char(0xac),
@@ -63,4 +63,30 @@ TEST(TextTest, InvalidUtf8) {
 	ASSERT_TRUE(it.hasNext());
 	ASSERT_EQ(-1, it.next());
 	ASSERT_FALSE(it.hasNext());
+}
+
+TEST(TextTest, SimpleEncode) {
+	char char1[] = { char(0x24) };
+	char char2[] = { char(0xc2), char(0xa2) };
+	char char3[] = { char(0xe2), char(0x82), char(0xac) };
+	char char4[] = { char(0xf0), char(0x90), char(0x8d), char(0x88) };
+
+	char  tmp[4];
+	char* end;
+
+	end = utf8FromCodepoint(tmp, 0x24);
+	ASSERT_EQ(1, end - tmp);
+	ASSERT_EQ(0, strncmp(tmp, char1, 1));
+
+	end = utf8FromCodepoint(tmp, 0xa2);
+	ASSERT_EQ(2, end - tmp);
+	ASSERT_EQ(0, strncmp(tmp, char2, 2));
+
+	end = utf8FromCodepoint(tmp, 0x20ac);
+	ASSERT_EQ(3, end - tmp);
+	ASSERT_EQ(0, strncmp(tmp, char3, 3));
+
+	end = utf8FromCodepoint(tmp, 0x010348);
+	ASSERT_EQ(4, end - tmp);
+	ASSERT_EQ(0, strncmp(tmp, char4, 4));
 }

@@ -23,8 +23,6 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/core/json.h>
-
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/dense_component_manager.h>
 
@@ -51,7 +49,7 @@ enum {
 };
 
 template<int _Index>
-class TestComponent : public Component, Properties<TestComponent<_Index> > {
+class TestComponent : public Component, WithProperties<TestComponent<_Index> > {
 public:
 	typedef TestComponentManager<TestComponent<_Index>> Manager;
 
@@ -81,13 +79,14 @@ public:
 	TestComponentManager(const std::string& name, size_t blockSize)
 	    : DenseComponentManager<Component>(name, blockSize) {
 	}
+	virtual ~TestComponentManager() = default;
 
-	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                                   const Path& cd=Path()) {
-		Component* comp = Base::addComponent(entity);
-		comp->setValue(json.get("value", 0).asInt());
-		return comp;
-	}
+//	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
+//	                                                   const Path& cd=Path()) {
+//		Component* comp = Base::addComponent(entity);
+//		comp->setValue(json.get("value", 0).asInt());
+//		return comp;
+//	}
 };
 
 template<int _Index>

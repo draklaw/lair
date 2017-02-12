@@ -24,6 +24,7 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/ldl.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
@@ -69,7 +70,7 @@ public:
 	Shape& operator=(      Shape&&) = default;
 
 	ShapeType      type() const             { return _type; }
-	float          radius() const           { return _radius; }
+	Scalar         radius() const           { return _radius; }
 	unsigned       nPoints() const          { return _points.size(); }
 	const Vector2& point(unsigned pi) const { return _points[pi]; }
 
@@ -78,16 +79,94 @@ private:
 
 private:
 	ShapeType   _type;
-	float       _radius;
+	Scalar      _radius;
 	PointVector _points;
 };
+
+bool ldlRead(LdlParser& parser, ShapeSP& value);
+bool ldlWrite(LdlWriter& writer, const ShapeSP& value);
+
+
+//template <>
+//struct JsonTrait<ShapeSP> {
+//	static JsonError get(ShapeSP& value, const Json::Value& json) {
+//		if(!json.isObject())
+//			return JsonError::error("Invalid type while parsing a shape: expected object, got " + jsonTypeName(json));
+
+//		std::string type = json.get("type", "").asString();
+//		if(type == "box") {
+//			Vector2 min;
+//			Vector2 max;
+//			JsonError err;
+//			err = getFromJson(min, json.get("min", Json::Value()));
+//			if(err.type == JsonError::ERROR)
+//				return err;
+//			err = getFromJson(max, json.get("max", Json::Value()));
+//			if(err.type == JsonError::ERROR)
+//				return err;
+//			value = Shape::newAlignedBox(Box2(min, max));
+//		}
+//		else if(type == "circle") {
+//			Vector2 center;
+//			Scalar  radius;
+//			JsonError err;
+//			err = getFromJson(center, json.get("center", Json::Value()));
+//			if(err.type == JsonError::ERROR)
+//				return err;
+//			err = getFromJson(radius, json.get("radius", Json::Value()));
+//			if(err.type == JsonError::ERROR)
+//				return err;
+//			value = Shape::newCircle(center, radius);
+//		}
+//		else if(type == "polygon") {
+//			const Json::Value& points = json.get("points", Json::Value());
+//			if(!points.isArray())
+//				return JsonError::error("Invalid type for shape points: expected array, got " + jsonTypeName(points));
+//			for(const Json::Value& point: points) {
+//				Vector2 p;
+//				JsonError err = getFromJson(p, point);
+//				if(err.type == JsonError::ERROR)
+//					return err;
+//				// TODO
+//			}
+//		}
+//		else
+//			return JsonError::error("Invalid shape type");
+
+//		return JsonError::success();
+//	}
+
+//	static void set(Json::Value& json, const ShapeSP& value) {
+//		json = Json::Value(Json::objectValue);
+//		switch(value->type()) {
+//		case SHAPE_ALIGNED_BOX:
+//			json["type"] = "box";
+//			json["min"]  = toJson(value->point(0));
+//			json["max"]  = toJson(value->point(0));
+//			break;
+//		case SHAPE_CIRCLE:
+//			json["type"]   = "circle";
+//			json["center"] = toJson(value->point(0));
+//			json["radius"] = value->radius();
+//			break;
+//		case SHAPE_POLYGON: {
+//			json["type"] = "polygon";
+//			Json::Value points(Json::arrayValue);
+//			json["points"] = points;
+//			for(int i = 0; i < value->nPoints(); ++i)
+//				points.append(toJson(value->point(i)));
+//			break;
+//		}
+//		}
+//	}
+//};
 
 
 class CollisionComponent;
 class CollisionComponentManager;
 
 
-class CollisionComponent : public Component, Properties<CollisionComponent> {
+class CollisionComponent : public Component, WithProperties<CollisionComponent> {
 public:
 	typedef CollisionComponentManager Manager;
 
@@ -100,8 +179,8 @@ public:
 	CollisionComponent& operator=(const CollisionComponent&) = delete;
 	CollisionComponent& operator=(CollisionComponent&&)      = default;
 
-	inline const ShapeSP shape() const  { return _shape; }
-	inline void setShape(ShapeSP shape) { _shape = shape; }
+	inline const ShapeSP& shape() const  { return _shape; }
+	inline void setShape(const ShapeSP& shape) { _shape = shape; }
 
 	inline const unsigned& hitMask() const          { return _hitMask; }
 	inline void setHitMask(const unsigned& hitMask) { _hitMask = hitMask; }
@@ -154,8 +233,10 @@ public:
 };
 
 
-
 }
+
+
+LAIR_REGISTER_METATYPE(lair::ShapeSP, "Shape");
 
 
 #endif

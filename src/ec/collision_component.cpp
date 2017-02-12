@@ -53,6 +53,169 @@ ShapeSP Shape::newCircle(const Vector2& center, float radius) {
 }
 
 
+bool ldlRead(LdlParser& parser, ShapeSP& value) {
+	if(!parser.isValueTyped()) {
+		parser.error("Type annotation is required for Shape objects");
+		parser.skip();
+		return false;
+	}
+
+	const String& type = parser.getValueTypeName();
+
+	bool success = true;
+	if(type == "ABox") {
+		if(parser.valueType() != LdlParser::TYPE_MAP) {
+			parser.error("ABox shape must be of type VarMap, got ", parser.valueTypeName());
+			parser.skip();
+			return false;
+		}
+
+		Vector2 min;
+		Vector2 size;
+		bool hasMin = false;
+		bool hasSize = false;
+
+		parser.enter();
+		while(parser.valueType() != LdlParser::TYPE_END) {
+			const String& key = parser.getKey();
+			if(key == "min") {
+				if(hasMin) {
+					parser.warning("Duplicate key \"", key, "\": ignoring");
+				}
+				else {
+					hasMin = ldlRead(parser, min);
+					success &= hasMin;
+				}
+			}
+			else if(key == "size") {
+				if(hasSize) {
+					parser.warning("Duplicate key \"", key, "\": ignoring");
+				}
+				else {
+					hasSize = ldlRead(parser, size);
+					success &= hasSize;
+				}
+			}
+			else {
+				parser.warning("Unexpected key \"", key, "\": ignoring");
+			}
+		}
+
+		if(!hasMin) {
+			parser.error("Key \"min\" is required for ABox shapes");
+			success = false;
+		}
+		if(!hasSize) {
+			parser.error("Key \"size\" is required for ABox shapes");
+			success = false;
+		}
+
+		if(success) {
+			Box2 box(min, min + size);
+			value = Shape::newAlignedBox(box);
+		}
+
+		parser.leave();
+	}
+	else if(type == "Circle") {
+		if(parser.valueType() != LdlParser::TYPE_MAP) {
+			parser.error("Circle shapes must be of type VarMap, got ", parser.valueTypeName());
+			parser.skip();
+			return false;
+		}
+
+		Vector2 center;
+		float radius;
+		bool hasCenter = false;
+		bool hasRadius = false;
+
+		parser.enter();
+		while(parser.valueType() != LdlParser::TYPE_END) {
+			const String& key = parser.getKey();
+			if(key == "center") {
+				if(hasCenter) {
+					parser.warning("Duplicate key \"", key, "\": ignoring");
+				}
+				else {
+					hasCenter = ldlRead(parser, center);
+					success &= hasCenter;
+				}
+			}
+			else if(key == "radius") {
+				if(hasRadius) {
+					parser.warning("Duplicate key \"", key, "\": ignoring");
+				}
+				else {
+					hasRadius = ldlRead(parser, radius);
+					success &= hasRadius;
+				}
+			}
+			else {
+				parser.warning("Unexpected key \"", key, "\": ignoring");
+			}
+		}
+
+		if(!hasCenter) {
+			parser.error("Key \"center\" is required for Circle shapes");
+			success = false;
+		}
+		if(!hasRadius) {
+			parser.error("Key \"Radius\" is required for Circle shapes");
+			success = false;
+		}
+
+		if(success) {
+			value = Shape::newCircle(center, radius);
+		}
+
+		parser.leave();
+	}
+	else if(type == "Polygon") {
+		// TODO:
+		parser.error("Polygon shapes reader not implemented");
+		return false;
+	}
+
+	return success;
+}
+
+
+bool ldlWrite(LdlWriter& writer, const ShapeSP& value) {
+	bool success = true;
+
+	switch(value->type()) {
+	case SHAPE_ALIGNED_BOX: {
+		writer.openMap(LdlWriter::CF_SINGLE_LINE, "ABox");
+		writer.writeKey("min");
+		success &= ldlWrite(writer, value->point(0));
+		writer.writeKey("size");
+		Vector2 size = value->point(1) - value->point(0);
+		success &= ldlWrite(writer, size);
+		writer.close();
+		break;
+	}
+	case SHAPE_CIRCLE: {
+		writer.openMap(LdlWriter::CF_SINGLE_LINE, "Circle");
+		writer.writeKey("center");
+		success &= ldlWrite(writer, value->point(0));
+		writer.writeKey("radius");
+		success &= ldlWrite(writer, value->radius());
+		writer.close();
+		break;
+	}
+	case SHAPE_POLYGON: {
+		writer.openList(LdlWriter::CF_MULTI_LINE, "Polygon");
+		for(unsigned i = 0; i < value->nPoints(); ++i)
+			success &= ldlWrite(writer, value->point(i));
+		writer.close();
+		break;
+	}
+	}
+
+	return success;
+}
+
+
 
 CollisionComponent::CollisionComponent(Manager* manager, _Entity* entity, ShapeSP shape)
 	: Component   (manager, entity)
@@ -69,10 +232,9 @@ CollisionComponent::CollisionComponent(Manager* manager, _Entity* entity, ShapeS
 const PropertyList& CollisionComponent::properties() {
 	static PropertyList props;
 	if(props.nProperties() == 0) {
-		// TODO: Shape property
-//		props.addProperty("shape",
-//		                  &CollisionComponent::shape,
-//		                  &CollisionComponent::setShape);
+		props.addProperty("shape",
+		                  &CollisionComponent::shape,
+		                  &CollisionComponent::setShape);
 		props.addProperty("hit_mask",
 		                  &CollisionComponent::hitMask,
 		                  &CollisionComponent::setHitMask);

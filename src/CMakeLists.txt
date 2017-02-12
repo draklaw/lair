@@ -89,13 +89,17 @@ set(lair_SOURCES
 	jsoncpp.cpp
 
 	core/log.cpp
-	core/json.cpp
+	core/metatype.cpp
 	core/path.cpp
+	core/text.cpp
+	core/parse.cpp
+	core/ldl.cpp
+	core/property.cpp
+	core/json.cpp
 	core/image.cpp
 	core/signal.cpp
 	core/asset_manager.cpp
 	core/loader.cpp
-	core/text.cpp
 	core/bitmap_font.cpp
 
 	utils/input.cpp
@@ -122,7 +126,6 @@ set(lair_SOURCES
 	render_gl2/renderer.cpp
 	render_gl2/render_module.cpp
 
-	ec/property.cpp
 	ec/entity.cpp
 	ec/entity_manager.cpp
 	ec/component.cpp

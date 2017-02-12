@@ -168,4 +168,38 @@ void Texture::_release() {
 }
 
 
+const FlagsInfo* Texture::flagsInfo() {
+	static FlagsInfo info("TextureFlags");
+	if(!info.nFlagSet()) {
+		info.add(NEAREST,            FILTER_MASK, "nearest");
+		info.add(BILINEAR_NO_MIPMAP, FILTER_MASK, "bilinear_no_mipmap");
+		info.add(BILINEAR_MIPMAP,    FILTER_MASK, "bilinear_mipmap");
+		info.add(TRILINEAR,          FILTER_MASK, "trilinear");
+
+		info.add(REPEAT, WRAP_MASK, "repeat");
+		info.add(CLAMP,  WRAP_MASK, "clamp");
+		info.add(MIRROR, WRAP_MASK, "mirror");
+
+		info.add(MAG_NEAREST, MAG_MASK, "mag_nearest");
+		info.add(MAG_LINEAR,  MAG_MASK, "mag_linear");
+
+		info.add(MIN_NEAREST, MIN_MASK, "min_nearest");
+		info.add(MIN_LINEAR,  MIN_MASK, "min_linear");
+
+		// MIMAP_NONE do not need to be explicit.
+		info.add(MIPMAP_NEAREST, MIPMAP_MASK, "mipmap_nearest");
+		info.add(MIPMAP_LINEAR,  MIPMAP_MASK, "mipmap_linear");
+
+		info.add(REPEAT_S, WRAP_S_MASK, "repeat_s");
+		info.add(CLAMP_S,  WRAP_S_MASK, "clamp_s");
+		info.add(MIRROR_S, WRAP_S_MASK, "mirror_s");
+
+		info.add(REPEAT_T, WRAP_T_MASK, "repeat_t");
+		info.add(CLAMP_T,  WRAP_T_MASK, "clamp_t");
+		info.add(MIRROR_T, WRAP_T_MASK, "mirror_t");
+	}
+	return &info;
+}
+
+
 }

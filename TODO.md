@@ -10,7 +10,8 @@
   it should wait for it, I guess, and display an error message to tell the
   dev he should think to preload it.
 - Find a way to avoid uploading texture during component rendering. If texture
-  are accessed through TextureSet or similar, it should be easy ?2
+  are accessed through TextureSet or similar, it should be easy ?
+- Properties: allow attribute properties and non-reference accessors.
 - Renderer module
   - Move SpriteRenderer to the renderer module and rename it ?
   - Implement draw call sorting
@@ -39,20 +40,19 @@
   - Flag disabled entities to avoid walking the tree in components ? How to deal
     with hierarchical stuff (might be used by rendering) ? Idea: use an other
     graph / tree.
-  - Properties: load / save / clone, use accesser
   - Scripting: how to do the binding, which language ?
   - Replace grid tilling with custom tilling. Use it for text rendering. Need
     to update the shader to support this.
   - Write helper methods to deal with Entities tranforms. Make sure they accept
     Eigen types.
-  - What to do abount Entity::extra ?
+  - What to do about Entity::extra ?
   - prevTransform update is now performed by a first step at the beginning of
     a tick, then the world map is updated. It simplify dealing with
     interpolating / non-interpolating transforms. Is this the right way to deal
     with it ?
   - How to deal with interpolation of other parameters (color...) ?
-  - Replace ComponentManager by DenseComponentManager, remove virtual functions.
 - Audio module (OpenAL ?)
+  - Add sound level to config ?
 - Python
   - lair binding
   - Re-implement test-window

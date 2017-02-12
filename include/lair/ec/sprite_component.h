@@ -28,6 +28,7 @@
 #include <list>
 
 #include <lair/core/lair.h>
+#include <lair/core/property.h>
 
 #include <lair/sys_sdl2/image_loader.h>
 
@@ -36,7 +37,6 @@
 #include <lair/render_gl2/render_pass.h>
 #include <lair/render_gl2/renderer.h>
 
-#include <lair/ec/property.h>
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
@@ -57,7 +57,7 @@ class EntityManager;
 class SpriteComponentManager;
 
 
-class SpriteComponent : public Component, Properties<SpriteComponent> {
+class SpriteComponent : public Component, WithProperties<SpriteComponent> {
 public:
 	typedef SpriteComponentManager Manager;
 

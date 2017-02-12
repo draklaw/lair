@@ -65,8 +65,8 @@ public:
 
 	void resizeEvent();
 
-	EntityRef loadEntity(const Path& path, EntityRef parent = EntityRef(),
-	                     const Path& cd = Path());
+	bool loadEntities(const Path& path, EntityRef parent = EntityRef(),
+	                  const Path& cd = Path());
 
 protected:
 	// More or less system stuff

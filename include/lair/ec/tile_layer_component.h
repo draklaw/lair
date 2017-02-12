@@ -46,7 +46,7 @@ class TileLayerComponentManager;
 
 
 
-class TileLayerComponent : public Component, Properties<TileLayerComponent> {
+class TileLayerComponent : public Component, WithProperties<TileLayerComponent> {
 public:
 	typedef TileLayerComponentManager Manager;
 

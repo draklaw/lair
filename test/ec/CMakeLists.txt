@@ -19,7 +19,6 @@
 
 
 add_executable(test_ec
-	test_property.cpp
 	test_dense_array.cpp
 	test_entity_manager.cpp
 	test_dense_component_manager.cpp

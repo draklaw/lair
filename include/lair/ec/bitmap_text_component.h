@@ -63,7 +63,7 @@ protected:
 };
 
 
-class BitmapTextComponent : public Component, Properties<BitmapTextComponent> {
+class BitmapTextComponent : public Component, WithProperties<BitmapTextComponent> {
 public:
 	typedef BitmapTextComponentManager Manager;
 

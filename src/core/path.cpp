@@ -36,14 +36,26 @@ namespace lair {
 
 #if defined(_WIN32) && !defined(_MSC_VER)
 
-WinFStream::WinFStream(const wchar_t* filename)
+WinIFStream::WinIFStream(const wchar_t* filename)
 	: std::istream(),
 	  _buf(_wfopen(filename, L"r"), std::ios_base::in),
 	  _orig(basic_ios::rdbuf(&_buf)){
 }
 
 
-WinFStream::~WinFStream() {
+WinIFStream::~WinIFStream() {
+	basic_ios::rdbuf(_orig);
+	_buf.close();
+}
+
+WinOFStream::WinOFStream(const wchar_t* filename)
+	: std::istream(),
+	  _buf(_wfopen(filename, L"w"), std::ios_base::out),
+	  _orig(basic_ios::rdbuf(&_buf)){
+}
+
+
+WinOFStream::~WinOFStream() {
 	basic_ios::rdbuf(_orig);
 	_buf.close();
 }

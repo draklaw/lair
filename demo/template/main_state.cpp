@@ -36,7 +36,7 @@ MainState::MainState(Game* game)
 
       _mainPass(renderer()),
 
-      _entities(log()),
+      _entities(log(), _game->serializer()),
       _spriteRenderer(renderer()),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
@@ -88,11 +88,15 @@ void MainState::initialize() {
 	tileLayerComp->setTileMap(_tileMap);
 //	_tileLayer.place(Vector3(120, 90, .5));
 
-	EntityRef sprite = loadEntity("sprite.json", _entities.root());
-	sprite.place(Vector3(120, 90, .5));
+	loadEntities("entities.ldl", _entities.root());
 
-	EntityRef text = loadEntity("text.json", _entities.root());
-	text.place(Vector3(160, 90, .5));
+	EntityRef sprite = _entities.findByName("sprite");
+	EntityRef text   = _entities.findByName("text");
+
+	if(sprite.isValid())
+		log().info("Entity \"", sprite.name(), "\" found.");
+	if(text.isValid())
+		log().info("Entity \"", text.name(), "\" found.");
 
 	loader()->load<SoundLoader>("sound.ogg");
 	//loader()->load<MusicLoader>("music.ogg");
@@ -207,22 +211,22 @@ void MainState::resizeEvent() {
 }
 
 
-EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& cd) {
+bool MainState::loadEntities(const Path& path, EntityRef parent, const Path& cd) {
 	Path localPath = make_absolute(cd, path);
 	log().info("Load entity \"", localPath, "\"");
 
-	Json::Value json;
 	Path realPath = game()->dataPath() / localPath;
-	if(!parseJson(json, realPath, localPath, log())) {
-		return EntityRef();
+	Path::IStream in(realPath.native().c_str());
+	if(!in.good()) {
+		log().error("Unable to read \"", localPath, "\".");
+		return false;
 	}
+	ErrorList errors;
+	LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
 
-	if(!parent.isValid()) {
-		parent = _modelRoot;
-	}
+	bool success = _entities.loadEntitiesFromLdl(parser, parent);
 
-	EntityRef entity = _entities.createEntity(parent);
-	_entities.initializeFromJson(entity, json, localPath.dir());
+	errors.log(log());
 
-	return entity;
+	return success;
 }

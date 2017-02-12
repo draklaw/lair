@@ -32,6 +32,19 @@ using namespace lair;
 class MainState;
 
 
+class GameConfig : public GameConfigBase {
+public:
+	GameConfig();
+	~GameConfig() = default;
+
+	virtual void setFromArgs(int& argc, char** argv);
+	virtual const PropertyList& properties() const;
+
+	static const PropertyList& staticProperties();
+
+private:
+};
+
 class Game : public GameBase {
 public:
 	Game(int argc, char** argv);
@@ -45,9 +58,13 @@ public:
 	void initialize();
 	void shutdown();
 
+	GameConfig& config();
+
 	MainState* mainState();
 
 protected:
+	GameConfig _config;
+
 	std::unique_ptr<MainState> _mainState;
 };
 

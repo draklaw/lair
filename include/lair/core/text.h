@@ -96,6 +96,30 @@ protected:
 };
 
 
+inline char* utf8FromCodepoint(char* dst, Codepoint cp) {
+	if(cp < 0x00000080) {
+		*(dst++) = cp;
+	}
+	else if(cp < 0x00000800) {
+		*(dst++) = 0xc0 | (cp >> 6);
+		*(dst++) = 0x80 | (0x3f & cp);
+	}
+	else if(cp < 0x00010000) {
+		*(dst++) = 0xe0 | (cp >> 12);
+		*(dst++) = 0x80 | (0x3f & (cp >> 6));
+		*(dst++) = 0x80 | (0x3f & cp);
+	}
+	else if(cp < 0x00110000) {
+		*(dst++) = 0xf0 | (cp >> 18);
+		*(dst++) = 0x80 | (0x3f & (cp >> 12));
+		*(dst++) = 0x80 | (0x3f & (cp >> 6));
+		*(dst++) = 0x80 | (0x3f & cp);
+	}
+
+	return dst;
+}
+
+
 }
 
 

@@ -99,10 +99,10 @@ const PropertyList& SpriteComponent::properties() {
 		props.addProperty("view",
 		                  &SpriteComponent::view,
 		                  &SpriteComponent::setView);
-		props.addProperty("blend",
+		props.addProperty("blend", blendingModeInfo(),
 		                  &SpriteComponent::blendingMode,
 		                  &SpriteComponent::setBlendingMode);
-		props.addProperty("texture_flags",
+		props.addProperty("texture_flags", Texture::flagsInfo(),
 		                  &SpriteComponent::textureFlags,
 		                  &SpriteComponent::setTextureFlags);
 	}

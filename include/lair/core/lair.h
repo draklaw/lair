@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2015-2017 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -105,11 +105,35 @@ typedef Eigen::AlignedBox3i Box3i;
 
 typedef unsigned ScanCode;
 
+typedef std::string String;
 class Path;
 
+class ErrorList;
 
-// Make a unique_ptr that will be destroyed with the deleter D.
-// Useful when using C APIs that provide "destructor" functions.
+/// Functions to write a representation of `v` to `out`.
+inline void writeRepr(std::ostream& out,  int8  v) { out << int(v) << "i8"; }
+inline void writeRepr(std::ostream& out,  int16 v) { out << v << "i16"; }
+inline void writeRepr(std::ostream& out,  int32 v) { out << v << "i32"; }
+inline void writeRepr(std::ostream& out,  int64 v) { out << v << "i64"; }
+inline void writeRepr(std::ostream& out, uint8  v) { out << int(v) << "u8"; }
+inline void writeRepr(std::ostream& out, uint16 v) { out << v << "u16"; }
+inline void writeRepr(std::ostream& out, uint32 v) { out << v << "u32"; }
+inline void writeRepr(std::ostream& out, uint64 v) { out << v << "u64"; }
+inline void writeRepr(std::ostream& out, float         v) { out << v << "f"; }
+inline void writeRepr(std::ostream& out, double        v) { out << v << "d"; }
+inline void writeRepr(std::ostream& out, const String& v) { out << '"' << v << '"'; }
+
+/// Return a textual representation of `v`.
+template<typename T>
+std::string repr(const T& v) {
+	std::ostringstream out;
+	writeRepr(out, v);
+	return out.str();
+}
+
+
+/// Make a unique_ptr that will be destroyed with the deleter D.
+/// Useful when using C APIs that provide "destructor" functions.
 template < typename T, typename D >
 inline std::unique_ptr<T, D> make_unique(T* ptr, D deleter) {
 	return std::unique_ptr<T, D>(ptr, deleter);

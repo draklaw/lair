@@ -34,6 +34,7 @@
 #include <boost/functional/hash.hpp>
 
 #include <lair/core/lair.h>
+#include <lair/core/metatype.h>
 
 
 namespace lair
@@ -41,10 +42,19 @@ namespace lair
 
 
 #if defined(_WIN32) && !defined(_MSC_VER)
-class WinFStream : public std::istream {
+class WinIFStream : public std::istream {
 public:
-	WinFStream(const wchar_t* filename);
-	~WinFStream();
+	WinIFStream(const wchar_t* filename);
+	~WinIFStream();
+
+private:
+	__gnu_cxx::stdio_filebuf<char> _buf;
+	std::streambuf*                _orig;
+};
+class WinOFStream : public std::ostream {
+public:
+	WinOFStream(const wchar_t* filename);
+	~WinOFStream();
 
 private:
 	__gnu_cxx::stdio_filebuf<char> _buf;
@@ -56,9 +66,11 @@ private:
 class Path {
 public:
 #if defined(_WIN32) && !defined(_MSC_VER)
-	typedef WinFStream    IStream;
+	typedef WinIFStream   IStream;
+	typedef WinOFStream   OStream;
 #else
 	typedef std::ifstream IStream;
+	typedef std::ofstream OStream;
 #endif
 
 	static char directory_separator;
@@ -120,6 +132,10 @@ inline std::size_t hash_value(const Path& path) {
 Path operator/(const Path& lp, const Path& rp);
 Path make_absolute(const Path& cd, const Path& path);
 
+inline void writeRepr(std::ostream& out, const Path& path) {
+	out << "<Path \"" << path.utf8String() << "\">";
+}
+
 inline std::ostream& operator<<(std::ostream& out, const Path& path) {
 	// FIXME: assume that the output stream is utf-8.
 	out << path.utf8String();
@@ -128,8 +144,9 @@ inline std::ostream& operator<<(std::ostream& out, const Path& path) {
 
 extern const Path emptyPath;
 
-
 }
+
+LAIR_REGISTER_METATYPE(lair::Path, "Path");
 
 
 #endif

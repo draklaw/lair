@@ -145,7 +145,6 @@ TEST_F(DenseArrayTest, Iterator) {
 	fillArray();
 
 	TestDenseArray::Iterator it  = array().begin();
-	TestDenseArray::Iterator end = array().end();
 	for(int i = 0; i < count; ++i) {
 		ASSERT_EQ(TestObj(values[i]), *it);
 		ASSERT_EQ(TestObj(values[i]), array().begin()[i]);
