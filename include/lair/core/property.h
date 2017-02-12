@@ -83,9 +83,9 @@ protected:
  * calls the setter / getter method of the object.
  */
 template < typename C, typename T >
-class GenericProperty : public Property {
+class GenericPropertyRef : public Property {
 public:
-	GenericProperty(const std::string& name, const EnumInfo* enumInfo, const FlagsInfo* flagsInfo,
+	GenericPropertyRef(const std::string& name, const EnumInfo* enumInfo, const FlagsInfo* flagsInfo,
 	                const T& (C::*get)() const, void (C::*set)(const T&))
 		: Property(metaTypes.get<T>(), name, enumInfo, flagsInfo)
 		, _get(get)
@@ -93,12 +93,12 @@ public:
 	{
 	}
 
-	GenericProperty(const GenericProperty&)  = delete;
-	GenericProperty(      GenericProperty&&) = delete;
-	virtual ~GenericProperty() = default;
+	GenericPropertyRef(const GenericPropertyRef&)  = delete;
+	GenericPropertyRef(      GenericPropertyRef&&) = delete;
+	virtual ~GenericPropertyRef() = default;
 
-	GenericProperty& operator=(const GenericProperty&)  = delete;
-	GenericProperty& operator=(      GenericProperty&&) = delete;
+	GenericPropertyRef& operator=(const GenericPropertyRef&)  = delete;
+	GenericPropertyRef& operator=(      GenericPropertyRef&&) = delete;
 
 	virtual ConstVarRef getVar(const void* obj) const {
 		return (reinterpret_cast<const C*>(obj)->*_get)();
@@ -111,6 +111,48 @@ public:
 protected:
 	const T& (C::*_get)() const;
 	void (C::*_set)(const T&);
+};
+
+/// Same as GenericPropertyRef, but take accessor that work by-value instead of
+/// by-reference.
+template < typename C, typename T >
+class GenericPropertyValue : public Property {
+public:
+	GenericPropertyValue(const std::string& name, const EnumInfo* enumInfo, const FlagsInfo* flagsInfo,
+	                T (C::*get)() const, void (C::*set)(T))
+		: Property(metaTypes.get<T>(), name, enumInfo, flagsInfo)
+		, _get(get)
+		, _set(set)
+	{
+	}
+
+	GenericPropertyValue(const GenericPropertyValue&)  = delete;
+	GenericPropertyValue(      GenericPropertyValue&&) = delete;
+	virtual ~GenericPropertyValue() = default;
+
+	GenericPropertyValue& operator=(const GenericPropertyValue&)  = delete;
+	GenericPropertyValue& operator=(      GenericPropertyValue&&) = delete;
+
+	virtual ConstVarRef getVar(const void* obj) const {
+		// This is a dirty hack to avoid returning a reference to a temporary
+		// It would be better to return an object (Variant ?) that can wrap both
+		// a value and a reference transparently.
+		// Here, the main issue is that if a user store the reference then
+		// change the property's value, the reference will be updated only at
+		// the next call to getVar(). The user is not expected to store
+		// references though, so it should not be too much a problem.
+		_tmpValue = (reinterpret_cast<const C*>(obj)->*_get)();
+		return _tmpValue;
+	}
+
+	virtual void setVar(void* obj, const ConstVarRef& var) const {
+		(reinterpret_cast<C*>(obj)->*_set)(var.as<T>());
+	}
+
+protected:
+	mutable T _tmpValue;
+	T (C::*_get)() const;
+	void (C::*_set)(T);
 };
 
 
@@ -132,6 +174,7 @@ public:
 	int propertyIndex(const std::string& propertyName) const;
 	const Property& property(unsigned index) const;
 
+	// By reference
 	template < typename C, typename T >
 	void addProperty(const std::string& name, const T& (C::*get)() const, void (C::*set)(const T&)) {
 		_addProperty(name, nullptr, nullptr, get, set);
@@ -155,7 +198,34 @@ public:
 	                  const T& (C::*get)() const, void (C::*set)(const T&)) {
 		_propertyMap.emplace(name, nProperties());
 		_properties.emplace_back(
-		            new GenericProperty<C, T>(name, enumInfo, flagsInfo, get, set));
+		            new GenericPropertyRef<C, T>(name, enumInfo, flagsInfo, get, set));
+	}
+
+	// By value
+	template < typename C, typename T >
+	void addProperty(const std::string& name, T (C::*get)() const, void (C::*set)(T)) {
+		_addProperty(name, nullptr, nullptr, get, set);
+	}
+
+	template < typename C, typename T >
+	void addProperty(const std::string& name, const EnumInfo* enumInfo,
+	                 T (C::*get)() const, void (C::*set)(T)) {
+		_addProperty(name, enumInfo, nullptr, get, set);
+	}
+
+	template < typename C, typename T >
+	void addProperty(const std::string& name, const FlagsInfo* flagsInfo,
+	                 T (C::*get)() const, void (C::*set)(T)) {
+		_addProperty(name, nullptr, flagsInfo, get, set);
+	}
+
+	template < typename C, typename T >
+	void _addProperty(const std::string& name,
+	                  const EnumInfo* enumInfo, const FlagsInfo* flagsInfo,
+	                  T (C::*get)() const, void (C::*set)(T)) {
+		_propertyMap.emplace(name, nProperties());
+		_properties.emplace_back(
+		            new GenericPropertyValue<C, T>(name, enumInfo, flagsInfo, get, set));
 	}
 
 private:

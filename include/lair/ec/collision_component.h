@@ -107,11 +107,11 @@ public:
 	inline const ShapeSP& shape() const  { return _shape; }
 	inline void setShape(const ShapeSP& shape) { _shape = shape; }
 
-	inline const unsigned& hitMask() const          { return _hitMask; }
-	inline void setHitMask(const unsigned& hitMask) { _hitMask = hitMask; }
+	inline unsigned hitMask() const          { return _hitMask; }
+	inline void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
 
-	inline const unsigned& ignoreMask() const             { return _ignoreMask; }
-	inline void setIgnoreMask(const unsigned& ignoreMask) { _ignoreMask = ignoreMask; }
+	inline unsigned ignoreMask() const             { return _ignoreMask; }
+	inline void setIgnoreMask(unsigned ignoreMask) { _ignoreMask = ignoreMask; }
 
 	inline float penetration(Direction dir) const { return _penetration[dir]; }
 	inline void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }

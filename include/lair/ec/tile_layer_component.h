@@ -62,14 +62,14 @@ public:
 	inline TileMapSP tileMap() const { return _tileMap; }
 	inline void setTileMap(TileMapSP tileMap) { _tileMap = tileMap; _bufferDirty = true; }
 
-	inline const unsigned& layerIndex() const { return _layerIndex; }
-	inline void setLayerIndex(const unsigned& index) { _layerIndex = index; _bufferDirty = true; }
+	inline unsigned layerIndex() const { return _layerIndex; }
+	inline void setLayerIndex(unsigned index) { _layerIndex = index; _bufferDirty = true; }
 
-	inline const BlendingMode& blendingMode() const { return _blendingMode; }
-	inline void setBlendingMode(const BlendingMode& bm) { _blendingMode = bm; }
+	inline BlendingMode blendingMode() const { return _blendingMode; }
+	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
-	inline const unsigned& textureFlags() const { return _textureFlags; }
-	inline void setTextureFlags(const unsigned& flags) { _textureFlags = flags; }
+	inline unsigned textureFlags() const { return _textureFlags; }
+	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
 
 	static const PropertyList& properties();
 

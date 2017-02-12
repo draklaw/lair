@@ -55,11 +55,11 @@ public:
 	GameConfigBase();
 	~GameConfigBase() = default;
 
-	const bool& fullscreen() const;
-	void setFullscreen(const bool& enable);
+	bool fullscreen() const;
+	void setFullscreen(bool enable);
 
-	const bool& vSync() const;
-	void setVSync(const bool& enable);
+	bool vSync() const;
+	void setVSync(bool enable);
 
 	virtual void setFromArgs(int& argc, char** argv);
 	virtual const PropertyList& properties() const;

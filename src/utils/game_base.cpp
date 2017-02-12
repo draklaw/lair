@@ -41,19 +41,19 @@ GameConfigBase::GameConfigBase()
 {
 }
 
-const bool& GameConfigBase::fullscreen() const {
+bool GameConfigBase::fullscreen() const {
 	return _fullscreen;
 }
 
-void GameConfigBase::setFullscreen(const bool& enable) {
+void GameConfigBase::setFullscreen(bool enable) {
 	_fullscreen = enable;
 }
 
-const bool& GameConfigBase::vSync() const {
+bool GameConfigBase::vSync() const {
 	return _vSync;
 }
 
-void GameConfigBase::setVSync(const bool& enable) {
+void GameConfigBase::setVSync(bool enable) {
 	_vSync = enable;
 }
 

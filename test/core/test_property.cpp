@@ -162,19 +162,19 @@ public:
 		_name = name;
 	}
 
-	const BlendingMode& getBlendingMode() const {
+	BlendingMode getBlendingMode() const {
 		return _blend;
 	}
 
-	void setBlendingMode(const BlendingMode& bm) {
+	void setBlendingMode(BlendingMode bm) {
 		_blend = bm;
 	}
 
-	const unsigned& getTexFlags() const {
+	unsigned getTexFlags() const {
 		return _texFlags;
 	}
 
-	void setTexFlags(const unsigned& tf) {
+	void setTexFlags(unsigned tf) {
 		_texFlags = tf;
 	}
 

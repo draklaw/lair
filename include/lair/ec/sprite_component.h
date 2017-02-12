@@ -92,17 +92,17 @@ public:
 	inline const Vector2i& tileGridSize() const { return _tileGridSize; }
 	inline void setTileGridSize(const Vector2i& size) { _tileGridSize = size; }
 
-	inline const unsigned& tileIndex() const { return _tileIndex; }
-	inline void setTileIndex(const unsigned& index) { _tileIndex = index; }
+	inline unsigned tileIndex() const { return _tileIndex; }
+	inline void setTileIndex(unsigned index) { _tileIndex = index; }
 
 	inline const Box2& view() const { return _view; }
 	inline void setView(const Box2& view) { _view = view; }
 
-	inline const BlendingMode& blendingMode() const { return _blendingMode; }
-	inline void setBlendingMode(const BlendingMode& bm) { _blendingMode = bm; }
+	inline BlendingMode blendingMode() const { return _blendingMode; }
+	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
-	inline const unsigned& textureFlags() const { return _textureFlags; }
-	inline void setTextureFlags(const unsigned& flags) { _textureFlags = flags; }
+	inline unsigned textureFlags() const { return _textureFlags; }
+	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
 
 	static const PropertyList& properties();
 
