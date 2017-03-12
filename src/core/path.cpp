@@ -77,6 +77,9 @@ char Path::directory_separator = '/';
 char Path::directory_separator = '\\';
 #endif
 
+Path::Path() {
+}
+
 Path::Path(const char* utf8Path)
     : _path(utf8Path) {
 }

@@ -24,6 +24,8 @@
 
 
 #include <memory>
+#include <typeinfo>
+#include <typeindex>
 
 #include <deque>
 #include <unordered_map>

@@ -323,7 +323,7 @@ public:
 	template < typename T >
 	const T& get(unsigned index) const {
 		lairAssert(index < nProperties());
-		return property(index).get<T>(this);
+		return property(index).template get<T>(this);
 	}
 
 	template < typename T >
@@ -334,7 +334,7 @@ public:
 	template < typename T >
 	void set(unsigned index, const T& value) {
 		lairAssert(index < nProperties());
-		return property(index).set<T>(this, value);
+		return property(index).template set<T>(this, value);
 	}
 
 	template < typename T >

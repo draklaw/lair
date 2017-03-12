@@ -76,7 +76,7 @@ public:
 	static char directory_separator;
 
 public:
-	Path()                            = default;
+	Path();
 	Path(const char* utf8Path);
 	Path(const std::string& utf8Path);
 	Path(const Path& path)            = default;

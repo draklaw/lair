@@ -25,6 +25,7 @@
 
 #include <memory>
 #include <typeinfo>
+#include <typeindex>
 #include <unordered_map>
 #include <mutex>
 

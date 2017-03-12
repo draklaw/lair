@@ -123,13 +123,13 @@ void swap(Texture& t0, Texture& t1) {
 void Texture::_setFlags(uint32 flags) {
 	_flags = flags;
 
-	GLenum mag;
+	GLenum mag = gl::NEAREST;
 	switch(magFilter()) {
 	case MAG_NEAREST: mag = gl::NEAREST; break;
 	case MAG_LINEAR:  mag = gl::LINEAR; break;
 	}
 
-	GLenum min;
+	GLenum min = gl::NEAREST;
 	switch(minFilter() | mipmapMode()) {
 	case MIN_NEAREST | MIPMAP_NONE:    min = gl::NEAREST; break;
 	case MIN_LINEAR  | MIPMAP_NONE:    min = gl::LINEAR; break;
@@ -139,14 +139,14 @@ void Texture::_setFlags(uint32 flags) {
 	case MIN_LINEAR  | MIPMAP_LINEAR:  min = gl::LINEAR_MIPMAP_LINEAR; break;
 	}
 
-	GLenum wraps;
+	GLenum wraps = gl::REPEAT;
 	switch(wrapS()) {
 	case REPEAT_S: wraps = gl::REPEAT; break;
 	case CLAMP_S:  wraps = gl::CLAMP_TO_EDGE; break;
 	case MIRROR_S: wraps = gl::MIRRORED_REPEAT; break;
 	}
 
-	GLenum wrapt;
+	GLenum wrapt = gl::REPEAT;
 	switch(wrapT()) {
 	case REPEAT_T: wrapt = gl::REPEAT; break;
 	case CLAMP_T:  wrapt = gl::CLAMP_TO_EDGE; break;

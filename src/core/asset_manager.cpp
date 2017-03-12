@@ -80,7 +80,8 @@ void AssetManager::setAspect(AssetSP asset, AspectSP aspect) {
 
 	std::unique_lock<std::mutex> lock(_lock);
 
-	std::type_index index(typeid(*aspect));
+	Aspect& aspectRef = *aspect;
+	std::type_index index(typeid(aspectRef));
 	auto mapIt = _aspects.find(index);
 	if(mapIt == _aspects.end()) {
 		mapIt = _aspects.emplace(index, AssetAspectMap()).first;

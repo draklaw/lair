@@ -11,7 +11,9 @@
   dev he should think to preload it.
 - Find a way to avoid uploading texture during component rendering. If texture
   are accessed through TextureSet or similar, it should be easy ?
-- Properties: allow attribute properties and non-reference accessors.
+- Variant: merge Variant and ConstVarRef (and maybe VarRef) in a single class,
+  then update Property to return this instead of a ConstVarRef. That way we
+  don't need to store a temporary value in GenericPropertyValue.
 - Renderer module
   - Move SpriteRenderer to the renderer module and rename it ?
   - Implement draw call sorting
