@@ -149,8 +149,7 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 
 	TileLayerComponent* comp = get(entity);
 	if(comp && comp->isEnabled()
-	&& comp->tileMap() && comp->tileMap()->tileSet() && comp->tileMap()->tileSet().get()
-	&& comp->tileMap()->tileSet()->get()->isValid()) {
+	&& comp->tileMap() && comp->tileMap()->tileSet() && comp->tileMap()->tileSet()->isValid()) {
 		TileMapSP tileMap = comp->tileMap();
 		unsigned  layer   = comp->layerIndex();
 
@@ -160,7 +159,7 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 			texAspect = _spriteRenderer->createTexture(tileMap->tileSet()->asset());
 			_spriteRenderer->renderer()->uploadPendingTextures();
 		}
-		TextureSP tex = texAspect->get();
+		Texture* tex = texAspect->_get();
 
 		// FIXME: wt should be applied as a shader parameter
 		Matrix4 wt = lerp(interp,

@@ -30,7 +30,8 @@ namespace lair
 
 
 Aspect::Aspect(AssetSP asset)
-    : _asset(asset) {
+    : _asset(asset),
+      _isValid(false) {
 }
 
 

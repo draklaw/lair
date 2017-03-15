@@ -33,8 +33,7 @@ namespace lair
 
 Loader::Loader(LoaderManager* manager, AspectSP aspect)
     : _manager(manager),
-      _isLoaded(false),
-      _isSuccessful(false),
+      _depCount(aspect->isValid()? 0: 1),
       _aspect(aspect),
       _mutex(),
       _cv() {
@@ -47,12 +46,12 @@ Loader::~Loader() {
 
 bool Loader::isLoaded() {
 	std::unique_lock<std::mutex> lk(_mutex);
-	return _isLoaded;
+	return _depCount == 0;
 }
 
 
 bool Loader::isSuccessful() {
-	return _isSuccessful;
+	return _aspect->isValid();
 }
 
 
@@ -61,16 +60,21 @@ Path Loader::realPath() const {
 }
 
 
+void Loader::registerCallback(DoneCallback&& callback) {
+	_onDone.push_back(callback);
+}
+
+
 void Loader::wait() {
 	std::unique_lock<std::mutex> lk(_mutex);
-	if(!_isLoaded) {
-		_cv.wait(lk, [this]{ return _isLoaded; });
+	if(_depCount != 0) {
+		_cv.wait(lk, [this]{ return _depCount == 0; });
 	}
 }
 
 
 void Loader::loadSync(Logger& log) {
-	lairAssert(!_isLoaded);
+	lairAssert(!isLoaded());
 
 	// It is *very* important to catch exceptions here, or waiting threads
 	// could wait forever. Moreover, it would unexpectedly stop a worker
@@ -81,16 +85,34 @@ void Loader::loadSync(Logger& log) {
 		log.error("Exception caught while loading \"", asset()->logicPath(), "\": ", e.what());
 	}
 
+	_done(log);
+}
+
+
+void Loader::_done(Logger& log) {
+	bool finalize = false;
+
 	{
 		std::unique_lock<std::mutex> lk(_mutex);
-		_isLoaded = true;
+
+		if(_depCount > 0) {
+			log.warning(asset()->logicPath(), " done: ", _depCount, " -> ", _depCount - 1);
+			--_depCount;
+			finalize = (_depCount == 0);
+		}
 	}
-	_cv.notify_all();
+
+	if(finalize) {
+		for(auto& callback: _onDone) {
+			callback(_aspect, log);
+		}
+		_cv.notify_all();
+	}
 }
 
 
 void Loader::_success() {
-	_isSuccessful = true;
+	_aspect->_setValid(true);
 }
 
 

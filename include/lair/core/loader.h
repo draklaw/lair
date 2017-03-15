@@ -60,6 +60,9 @@ typedef std::shared_ptr<Loader> LoaderSP;
 
 class Loader {
 public:
+	typedef std::function<void(AspectSP, Logger&)> DoneCallback;
+
+public:
 	Loader(LoaderManager* manager, AspectSP aspect);
 	Loader(const Loader&) = delete;
 	Loader(Loader&&)      = delete;
@@ -74,19 +77,28 @@ public:
 	AspectSP           aspect()   const { return _aspect; }
 	Path               realPath() const;
 
+	void registerCallback(DoneCallback&& callback);
+
 	void wait();
 
 	void loadSync(Logger& log);
 
 protected:
+	typedef std::vector<DoneCallback> FunctionList;
+
+protected:
 	virtual void loadSyncImpl(Logger& log) = 0;
 
+	template <typename L>
+	LoaderSP _load(const Path& logicPath, DoneCallback callback);
+
+	void _done(Logger& log);
 	void _success();
 
 protected:
 	LoaderManager*          _manager;
-	bool                    _isLoaded;
-	bool                    _isSuccessful;
+	unsigned                _depCount;
+	FunctionList            _onDone;
 	AspectSP                _aspect;
 	std::mutex              _mutex;
 	std::condition_variable _cv;
@@ -138,10 +150,12 @@ public:
 	/// Load an aspect, even if already loaded.
 	template < typename L, typename... Args >
 	std::shared_ptr<L> load(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
-		log().info("Request \"", aspect->asset()->logicPath(), "\" loading...");
 		auto loader = std::make_shared<L>(this, aspect,
 										  std::forward<Args>(args)...);
-		_enqueueLoader(loader);
+		if(!loader->isLoaded()) {
+			log().info("Request \"", aspect->asset()->logicPath(), "\" loading...");
+			_enqueueLoader(loader);
+		}
 		return loader;
 	}
 
@@ -151,9 +165,8 @@ public:
 		auto aspect = asset->aspect<typename L::Aspect>();
 		if(!aspect) {
 			aspect = asset->createAspect<typename L::Aspect>();
-			return load<L>(aspect, std::forward<Args>(args)...);
 		}
-		return std::shared_ptr<L>();
+		return load<L>(aspect, std::forward<Args>(args)...);
 	}
 
 	/// Same as above, but create the Asset if necessary.
@@ -169,12 +182,7 @@ public:
 	/// Same as above, but return the Asset.
 	template < typename L, typename... Args >
 	AssetSP loadAsset(const Path& logicPath, Args&&... args) {
-		AssetSP asset = _assets->getAsset(logicPath);
-		if(!asset) {
-			asset = _assets->createAsset(logicPath);
-		}
-		load<L>(asset, std::forward<Args>(args)...);
-		return asset;
+		return load<L>(logicPath, std::forward<Args>(args)...)->asset();
 	}
 
 	template < typename L, typename... Args >
@@ -231,6 +239,21 @@ private:
 
 	Path          _basePath;
 };
+
+
+template <typename L>
+LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback) {
+	auto loader = _manager->load<L>(logicPath);
+	loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
+		callback(aspect, log);
+		_done(log);
+	});
+
+	std::unique_lock<std::mutex> lk(_mutex);
+	++_depCount;
+
+	return loader;
+}
 
 
 }

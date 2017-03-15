@@ -54,12 +54,21 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 	                                        asset()->logicPath().withExtension("png");
 	imgPath = make_absolute(asset()->logicPath().dir(), imgPath);
 
-	AssetSP imgAsset = _manager->loadSync<ImageLoader>(imgPath);
+	_load<ImageLoader>(imgPath, [this, json](AspectSP imgAspect, Logger& log) {
+		if(imgAspect->isValid()) {
+			BitmapFontAspectSP aspect = std::static_pointer_cast<BitmapFontAspect>(_aspect);
 
-	BitmapFontAspectSP aspect = std::static_pointer_cast<BitmapFontAspect>(_aspect);
-	aspect->_set(std::make_shared<BitmapFont>(json, imgAsset));
+			std::lock_guard<std::mutex> lock(aspect->_getLock());
+			BitmapFont* font = aspect->_get();
+			*font = std::move(BitmapFont(json, imgAspect->asset()));
 
-	_success();
+			_success();
+		}
+		else {
+			log.error("Error while loading BitmapFont \"", asset()->logicPath(),
+			          "\": failed to load image \"", imgAspect->asset()->logicPath(), "\".");
+		}
+	});
 }
 
 
@@ -210,9 +219,8 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 		return;
 
 	BitmapTextComponent* comp = get(entity);
-	if(comp && comp->isEnabled()
-	&& comp->font() && comp->font()->get() && comp->font()->get()->isValid()) {
-		BitmapFontSP font = comp->font()->get();
+	if(comp && comp->isEnabled() && comp->font() && comp->font()->isValid()) {
+		const BitmapFont* font = comp->font()->get();
 
 		Matrix4 wt = lerp(interp,
 						  comp->_entity()->prevWorldTransform.matrix(),
@@ -223,9 +231,9 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 			comp->_setTexture(_spriteRenderer->createTexture(font->image()));
 			_spriteRenderer->renderer()->uploadPendingTextures();
 		}
-		TextureSP tex = comp->texture()->_get();
+		Texture* tex = comp->texture()->_get();
 
-		int width = (comp->size()(0) > 0)? comp->size()(0): 999999;
+		unsigned width = (comp->size()(0) > 0)? comp->size()(0): 999999;
 		TextLayout layout = font->layoutText(comp->text(), width);
 		unsigned index = _spriteRenderer->indexCount();
 		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {

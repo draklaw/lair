@@ -173,22 +173,30 @@ void TileMapLoader::loadSyncImpl(Logger& log) {
 	if(!parseJson(json, realPath(), asset()->logicPath(), log))
 		return;
 
-	TileMapSP tileMap = std::make_shared<TileMap>();
+	TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
+
+	std::lock_guard<std::mutex> lock(_aspect->_getLock());
+	TileMap* tileMap = aspect->_get();
+
 	if(!tileMap->setFromJson(log, asset()->logicPath(), json))
 		return;
 
-	AssetSP tileSet = _manager->loadSync<ImageLoader>(tileMap->tileSetPath());
-	ImageAspectSP tileSetImg = tileSet->aspect<ImageAspect>();
-	if(!tileSetImg) {
-		log.error("Error while loading TileMap \"", asset()->logicPath(),
-		          "\": Failed to load tile set \"", tileMap->tileSetPath(), "\".");
-		return;
-	}
-	tileMap->_setTileSet(tileSetImg);
+	_load<ImageLoader>(tileMap->tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
+		TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
 
-	TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
-	aspect->_set(tileMap);
-	_success();
+		std::lock_guard<std::mutex> lock(_aspect->_getLock());
+		TileMap* tileMap = aspect->_get();
+
+		ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
+		if(!tileSetImg) {
+			log.error("Error while loading TileMap \"", asset()->logicPath(),
+			          "\": Failed to load tile set \"", tileMap->tileSetPath(), "\".");
+			return;
+		}
+		tileMap->_setTileSet(tileSetImg);
+
+		_success();
+	});
 }
 
 

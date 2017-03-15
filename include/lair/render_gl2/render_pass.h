@@ -153,7 +153,7 @@ public:
 		ProgramObject* shader;
 		VertexBuffer*  buffer;
 		VertexFormat*  format;
-		TextureSP      texture;
+		Texture*       texture;
 		unsigned       textureFlags;
 		BlendingMode   blendingMode;
 		// Box2i _viewport;

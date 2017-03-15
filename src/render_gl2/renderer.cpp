@@ -118,9 +118,13 @@ void Renderer::uploadPendingTextures() {
 		ImageAspectSP image = texture->asset()->aspect<ImageAspect>();
 		if(image && !texture->get()) {
 			log().info("Upload texture \"", texture->asset()->logicPath(), "\"...");
-			TextureSP tex = std::make_shared<Texture>(this);
+
+			std::lock_guard<std::mutex> lock(texture->_getLock());
+			Texture* tex = texture->_get();
+			*tex = std::move(Texture(this));
 			tex->_upload(*image->get());
-			texture->_set(tex);
+
+			texture->_setValid(true);
 		}
 	}
 

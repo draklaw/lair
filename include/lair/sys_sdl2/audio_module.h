@@ -78,11 +78,11 @@ public:
 	void shutdown();
 
 	int  playSound(AssetSP sound, int loops = 0, int channel = -1);
-	int  playSound(SoundSP sound, int loops = 0, int channel = -1);
+	int  playSound(const Sound* sound, int loops = 0, int channel = -1);
 	void stopSound(int channel);
 
 	void playMusic(AssetSP music);
-	void playMusic(MusicSP music);
+	void playMusic(const Music* music);
 	void stopMusic();
 	void setMusicVolume(float volume);
 

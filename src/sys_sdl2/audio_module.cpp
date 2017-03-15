@@ -101,14 +101,14 @@ void AudioModule::shutdown() {
 
 int AudioModule::playSound(AssetSP sound, int loops, int channel) {
 	auto aspect = sound->aspect<SoundAspect>();
-	if(aspect && aspect->get()) {
+	if(aspect && aspect->isValid()) {
 		return playSound(aspect->get(), loops, channel);
 	}
 	return -1;
 }
 
 
-int AudioModule::playSound(SoundSP sound, int loops, int channel) {
+int AudioModule::playSound(const Sound* sound, int loops, int channel) {
 	if(sound->chunk()) {
 		return Mix_PlayChannel(channel, sound->chunk(), loops);
 	}
@@ -125,13 +125,13 @@ void AudioModule::stopSound(int channel) {
 
 void AudioModule::playMusic(AssetSP music) {
 	auto aspect = music->aspect<MusicAspect>();
-	if(aspect && aspect->get()) {
+	if(aspect && aspect->isValid()) {
 		playMusic(aspect->get());
 	}
 }
 
 
-void AudioModule::playMusic(MusicSP music) {
+void AudioModule::playMusic(const Music* music) {
 	if(music->track()) {
 		Mix_PlayMusic(music->track(), -1);
 	}
@@ -159,7 +159,11 @@ void SoundLoader::loadSyncImpl(Logger& log) {
 	Mix_Chunk* chunk = Mix_LoadWAV(realPath().utf8CStr());
 	if(chunk) {
 		SoundAspectSP aspect = std::static_pointer_cast<SoundAspect>(_aspect);
-		aspect->_set(std::make_shared<Sound>(chunk));
+
+		std::lock_guard<std::mutex> lock(_aspect->_getLock());
+		Sound* sound = aspect->_get();
+		*sound = std::move(Sound(chunk));
+
 		_success();
 	}
 	else {
@@ -180,7 +184,11 @@ void MusicLoader::loadSyncImpl(Logger& log) {
 	Mix_Music* track = Mix_LoadMUS(realPath().utf8CStr());
 	if(track) {
 		MusicAspectSP aspect = std::static_pointer_cast<MusicAspect>(_aspect);
-		aspect->_set(std::make_shared<Music>(track));
+
+		std::lock_guard<std::mutex> lock(_aspect->_getLock());
+		Music* music = aspect->_get();
+		*music = std::move(Music(track));
+
 		_success();
 	}
 	else {

@@ -247,9 +247,8 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		return;
 
 	SpriteComponent* sc = get(entity);
-	if(sc && sc->isEnabled()
-	&& sc->texture() && sc->texture()->get() && sc->texture()->get()->isValid()) {
-		TextureSP tex = sc->texture()->_get();
+	if(sc && sc->isEnabled() && sc->texture() && sc->texture()->isValid()) {
+		Texture* tex = sc->texture()->_get();
 
 		Matrix4 wt = lerp(interp,
 		                  sc->_entity()->prevWorldTransform.matrix(),

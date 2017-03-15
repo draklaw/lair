@@ -57,24 +57,36 @@ public:
 	Aspect& operator=(const Aspect&)  = delete;
 	Aspect& operator=(      Aspect&&) = delete;
 
+	inline bool isValid() const {
+		std::lock_guard<std::mutex> lock(_lock);
+		return _isValid;
+	}
 //	virtual std::string aspectName() const = 0;
 
 //	virtual Size cpuMemory() const = 0;
 //	virtual Size gpuMemory() const = 0;
 
-	AssetSP asset() { return _asset; }
+	inline AssetSP asset() { return _asset; }
 
 //	inline const AspectWP nextAspect() const {
 //		return _nextAspect;
 //	}
 
 
+	void _setValid(bool valid) {
+		std::lock_guard<std::mutex> lock(_lock);
+		_isValid = valid;
+	}
+
 //	inline void _setNextAspect(const AspectWP& aspect) {
 //		_nextAspect = aspect;
 //	}
 
+	inline std::mutex& _getLock() { return _lock; }
+
 protected:
 	AssetSP    _asset;      // Asset must not be destroyed before its aspects.
+	bool       _isValid;
 //	AspectWP   _nextAspect;
 	mutable std::mutex _lock;
 };
@@ -84,7 +96,6 @@ template<typename T>
 class GenericAspect : public Aspect {
 public:
 	typedef T Data;
-	typedef std::shared_ptr<Data> DataSP;
 
 public:
 	GenericAspect(AssetSP asset)
@@ -99,23 +110,17 @@ public:
 	GenericAspect& operator=(const GenericAspect&)  = delete;
 	GenericAspect& operator=(      GenericAspect&&) = delete;
 
-	const DataSP get() const {
+	const Data* get() const {
 		std::lock_guard<std::mutex> lock(_lock);
-		return _data;
+		return _isValid? &_data: nullptr;
 	}
 
-	DataSP _get() {
-		std::lock_guard<std::mutex> lock(_lock);
-		return _data;
-	}
-
-	void _set(DataSP data){
-		std::lock_guard<std::mutex> lock(_lock);
-		_data = data;
+	Data* _get() {
+		return _isValid? &_data: nullptr;
 	}
 
 private:
-	DataSP _data;
+	Data _data;
 };
 
 

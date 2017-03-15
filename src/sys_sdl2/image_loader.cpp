@@ -55,7 +55,10 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 		}
 
 		ImageAspectSP aspect = std::static_pointer_cast<ImageAspect>(_aspect);
-		aspect->_set(std::make_shared<Image>(surf->w, surf->h, format, surf->pixels));
+
+		std::lock_guard<std::mutex> lock(_aspect->_getLock());
+		Image* image = aspect->_get();
+		*image = std::move(Image(surf->w, surf->h, format, surf->pixels));
 
 		_success();
 	} else {
