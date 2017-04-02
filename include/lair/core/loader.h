@@ -165,8 +165,11 @@ public:
 		}
 		else if(aspect->isValid()) {
 			loader = Loader::newLoaderDone(this, aspect);
-			std::unique_lock<std::mutex> lk(_queueLock);
-			_wipList.push_back(loader);
+			{
+				std::unique_lock<std::mutex> lk(_queueLock);
+				_wipList.push_back(loader);
+			}
+			_notifyReady();
 			return loader;
 		}
 		else {
