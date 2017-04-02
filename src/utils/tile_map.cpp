@@ -39,6 +39,11 @@ TileMap::~TileMap() {
 }
 
 
+bool TileMap::isValid() const {
+	return _layers.size();
+}
+
+
 unsigned TileMap::nLayers() const {
 	return _layers.size();
 }
@@ -118,7 +123,7 @@ bool TileMap::setFromJson(Logger& log, const Path& path, const Json::Value& valu
 		log.error("Tile map \"", path, "\" has invalid number of tilesets.");
 		return false;
 	}
-	_tileSetPath   = tilesets[0].get("image", "").asString();
+	_tileSetPath   = makeAbsolute(path.dir(), tilesets[0].get("image", "").asString());
 	_tileSetHTiles = tilesets[0].get("imagewidth", 0).asInt()
 	               / tilesets[0].get("tilewidth", 1).asInt();
 	_tileSetVTiles = tilesets[0].get("imageheight", 0).asInt()
@@ -168,34 +173,29 @@ TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect)
 }
 
 
+void TileMapLoader::commit() {
+	TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
+	aspect->_get() = std::move(_tileMap);
+	Loader::commit();
+}
+
+
 void TileMapLoader::loadSyncImpl(Logger& log) {
 	Json::Value json;
 	if(!parseJson(json, realPath(), asset()->logicPath(), log))
 		return;
 
-	TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
-
-	std::lock_guard<std::mutex> lock(_aspect->_getLock());
-	TileMap* tileMap = aspect->_get();
-
-	if(!tileMap->setFromJson(log, asset()->logicPath(), json))
+	if(!_tileMap.setFromJson(log, asset()->logicPath(), json))
 		return;
 
-	_load<ImageLoader>(tileMap->tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
-		TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
-
-		std::lock_guard<std::mutex> lock(_aspect->_getLock());
-		TileMap* tileMap = aspect->_get();
-
+	_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
 		ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
 		if(!tileSetImg) {
 			log.error("Error while loading TileMap \"", asset()->logicPath(),
-			          "\": Failed to load tile set \"", tileMap->tileSetPath(), "\".");
+			          "\": Failed to load tile set \"", _tileMap.tileSetPath(), "\".");
 			return;
 		}
-		tileMap->_setTileSet(tileSetImg);
-
-		_success();
+		_tileMap._setTileSet(tileSetImg);
 	});
 }
 

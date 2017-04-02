@@ -93,7 +93,7 @@ protected:
 
 	Input*      _quitInput;
 
-	TileMapSP   _tileMap;
+	TileMapAspectSP _tileMap;
 
 	EntityRef   _modelRoot;
 	EntityRef   _tileLayer;

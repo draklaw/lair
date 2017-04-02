@@ -58,8 +58,14 @@ public:
 	BitmapFontLoader& operator=(const BitmapFontLoader&) = delete;
 	BitmapFontLoader& operator=(BitmapFontLoader&&)      = delete;
 
+	virtual void commit();
+
 protected:
 	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	Json::Value _fontDesc;
+	BitmapFont  _font;
 };
 
 
@@ -122,6 +128,8 @@ public:
 
 	virtual BitmapTextComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path());
+
+	void createTextures();
 
 //	void render(float interp, const OrthographicCamera& camera);
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);

@@ -37,6 +37,13 @@ ImageLoader::ImageLoader(LoaderManager* manager, AspectSP aspect)
 }
 
 
+void ImageLoader::commit() {
+	ImageAspectSP aspect = std::static_pointer_cast<ImageAspect>(_aspect);
+	aspect->_get() = std::move(_image);
+	Loader::commit();
+}
+
+
 void ImageLoader::loadSyncImpl(Logger& log) {
 	auto surf = make_unique(IMG_Load(realPath().utf8CStr()), SDL_FreeSurface);
 	if(surf) {
@@ -54,13 +61,7 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 			break;
 		}
 
-		ImageAspectSP aspect = std::static_pointer_cast<ImageAspect>(_aspect);
-
-		std::lock_guard<std::mutex> lock(_aspect->_getLock());
-		Image* image = aspect->_get();
-		*image = std::move(Image(surf->w, surf->h, format, surf->pixels));
-
-		_success();
+		_image = std::move(Image(surf->w, surf->h, format, surf->pixels));
 	} else {
 		log.error("Failed to load image \"", asset()->logicPath(), "\" (", realPath(),
 		          "): ", IMG_GetError());

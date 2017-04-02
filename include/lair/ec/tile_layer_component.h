@@ -26,17 +26,17 @@
 #include <lair/core/lair.h>
 
 #include <lair/render_gl2/render_pass.h>
+#include <lair/render_gl2/texture.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
+
+#include <lair/utils/tile_map.h>
 
 
 namespace lair
 {
 
-
-class TileMap;
-typedef std::shared_ptr<TileMap> TileMapSP;
 
 class OrthographicCamera;
 
@@ -59,8 +59,18 @@ public:
 	TileLayerComponent& operator=(const TileLayerComponent&) = delete;
 	TileLayerComponent& operator=(TileLayerComponent&&)      = default;
 
-	inline TileMapSP tileMap() const { return _tileMap; }
-	inline void setTileMap(TileMapSP tileMap) { _tileMap = tileMap; _bufferDirty = true; }
+	Manager* manager();
+
+	inline TileMapAspectSP tileMap() const { return _tileMap; }
+	inline const Path& tileMapPath() const {
+		return tileMap()? tileMap()->asset()->logicPath(): emptyPath;
+	}
+	inline void setTileMap(TileMapAspectSP tileMap) { _tileMap = tileMap; _bufferDirty = true; }
+	void setTileMap(AssetSP tileMap);
+	void setTileMap(const Path& logicPath);
+
+	inline TextureAspectSP tileSet() const { return _tileSet.lock(); }
+	inline void _setTileSet(TextureAspectSP tileSet) { _tileSet = tileSet; }
 
 	inline unsigned layerIndex() const { return _layerIndex; }
 	inline void setLayerIndex(unsigned index) { _layerIndex = index; _bufferDirty = true; }
@@ -74,10 +84,11 @@ public:
 	static const PropertyList& properties();
 
 protected:
-	TileMapSP    _tileMap;
-	unsigned     _layerIndex;
-	BlendingMode _blendingMode;
-	unsigned     _textureFlags;
+	TileMapAspectSP _tileMap;
+	TextureAspectWP _tileSet;
+	unsigned        _layerIndex;
+	BlendingMode    _blendingMode;
+	unsigned        _textureFlags;
 
 public:
 	bool         _bufferDirty;
@@ -87,7 +98,8 @@ public:
 
 class TileLayerComponentManager : public DenseComponentManager<TileLayerComponent> {
 public:
-	TileLayerComponentManager(RenderPass* renderPass,
+	TileLayerComponentManager(LoaderManager* loaderManager,
+	                          RenderPass* renderPass,
 	                          SpriteRenderer* spriteRenderer,
 	                          size_t componentBlockSize = 16);
 
@@ -103,15 +115,20 @@ public:
 	                                  const Path& cd=Path());
 	virtual TileLayerComponent* cloneComponent(EntityRef base, EntityRef entity);
 
+	void createTextures();
+
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
+	LoaderManager* loader();
+
 protected:
-	void _fillBuffer(VertexBuffer& buffer, const TileMapSP tileMap, unsigned layer,
+	void _fillBuffer(VertexBuffer& buffer, const TileMap& tileMap, unsigned layer,
 	                 float tileWidth, float tileHeight, const Matrix4& wt) const;
 	void _render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 protected:
 	SpriteRenderer*  _spriteRenderer;
+	LoaderManager*   _loader;
 	RenderPass*      _renderPass;
 
 	RenderPass::DrawStates _states;

@@ -44,7 +44,7 @@
  "tilesets":[
         {
          "firstgid":1,
-         "image":"lair.png",
+         "image":"./lair.png",
          "imageheight":64,
          "imagewidth":96,
          "margin":0,

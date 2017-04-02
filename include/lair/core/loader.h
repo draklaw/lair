@@ -61,6 +61,14 @@ typedef std::shared_ptr<Loader> LoaderSP;
 class Loader {
 public:
 	typedef std::function<void(AspectSP, Logger&)> DoneCallback;
+	typedef std::list<DoneCallback> CallbackList;
+
+	enum State{
+		IN_QUEUE,
+		LOADING,
+		READY,
+		LOADED,
+	};
 
 public:
 	Loader(LoaderManager* manager, AspectSP aspect);
@@ -68,40 +76,40 @@ public:
 	Loader(Loader&&)      = delete;
 	virtual ~Loader();
 
+	static LoaderSP newLoaderDone(LoaderManager* manager, AspectSP aspect);
+
 	Loader& operator=(const Loader&) = delete;
 	Loader& operator=(Loader&&)      = delete;
 
-	bool               isLoaded();
+	State              state();
 	bool               isSuccessful();
 	AssetSP            asset()    const { return _aspect->asset(); }
 	AspectSP           aspect()   const { return _aspect; }
 	Path               realPath() const;
 
 	void registerCallback(DoneCallback&& callback);
+	void stealCallbacks(CallbackList& callbacks);
 
 	void wait();
 
 	void loadSync(Logger& log);
+	virtual void commit();
 
 protected:
-	typedef std::vector<DoneCallback> FunctionList;
-
-protected:
-	virtual void loadSyncImpl(Logger& log) = 0;
+	virtual void loadSyncImpl(Logger& log);
 
 	template <typename L>
 	LoaderSP _load(const Path& logicPath, DoneCallback callback);
 
-	void _done(Logger& log);
-	void _success();
+	void _done();
 
 protected:
 	LoaderManager*          _manager;
+	State                   _state;
 	unsigned                _depCount;
-	FunctionList            _onDone;
+	CallbackList            _onDone;
 	AspectSP                _aspect;
 	std::mutex              _mutex;
-	std::condition_variable _cv;
 };
 
 
@@ -149,33 +157,39 @@ public:
 
 	/// Load an aspect, even if already loaded.
 	template < typename L, typename... Args >
-	std::shared_ptr<L> load(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
-		auto loader = std::make_shared<L>(this, aspect,
-										  std::forward<Args>(args)...);
-		if(!loader->isLoaded()) {
+	LoaderSP load(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
+		LoaderSP loader;
+
+		if(aspect->_getLoader()) {
+			return aspect->_getLoader();
+		}
+		else if(aspect->isValid()) {
+			loader = Loader::newLoaderDone(this, aspect);
+			std::unique_lock<std::mutex> lk(_queueLock);
+			_wipList.push_back(loader);
+			return loader;
+		}
+		else {
+			loader = std::make_shared<L>(this, aspect,
+			                             std::forward<Args>(args)...);
 			log().info("Request \"", aspect->asset()->logicPath(), "\" loading...");
 			_enqueueLoader(loader);
 		}
+		aspect->_setLoader(loader);
 		return loader;
 	}
 
 	/// Load an aspect if it does not exist in the asset.
 	template < typename L, typename... Args >
-	std::shared_ptr<L> load(AssetSP asset, Args&&... args) {
-		auto aspect = asset->aspect<typename L::Aspect>();
-		if(!aspect) {
-			aspect = asset->createAspect<typename L::Aspect>();
-		}
+	LoaderSP load(AssetSP asset, Args&&... args) {
+		auto aspect = asset->getOrCreateAspect<typename L::Aspect>();
 		return load<L>(aspect, std::forward<Args>(args)...);
 	}
 
 	/// Same as above, but create the Asset if necessary.
 	template < typename L, typename... Args >
-	std::shared_ptr<L> load(const Path& logicPath, Args&&... args) {
-		AssetSP asset = _assets->getAsset(logicPath);
-		if(!asset) {
-			asset = _assets->createAsset(logicPath);
-		}
+	LoaderSP load(const Path& logicPath, Args&&... args) {
+		AssetSP asset = _assets->getOrCreateAsset(logicPath);
 		return load<L>(asset, std::forward<Args>(args)...);
 	}
 
@@ -212,17 +226,24 @@ public:
 		return asset;
 	}
 
+	void finalizePending();
 	void waitAll();
 
 	Logger& log() { return *_logger; }
 
 	void _enqueueLoader(LoaderSP loader);
 	LoaderSP _popLoader();
-	LoaderSP _getAnyPendingLoader();
+
+	void _notifyReady();
+	void _waitLoadEvent();
 
 private:
 	typedef std::deque<LoaderSP> Queue;
 	typedef std::list <LoaderSP> LoaderList;
+
+private:
+	void _finalize(LoaderList::iterator loaderIt);
+	void _finalizePending(LoaderList::iterator begin, LoaderList::iterator end);
 
 private:
 	Logger*       _logger;
@@ -233,6 +254,9 @@ private:
 	              _queueCv;
 	Queue         _queue;
 	LoaderList    _wipList;
+	std::condition_variable
+	              _loaderCv;
+	unsigned      _nReady;
 
 	unsigned      _nThread;
 	_LoaderThread _threadPool[MAX_LOADER_THREADS];
@@ -243,14 +267,16 @@ private:
 
 template <typename L>
 LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback) {
-	auto loader = _manager->load<L>(logicPath);
+	{
+		std::unique_lock<std::mutex> lk(_mutex);
+		++_depCount;
+	}
+
+	auto loader = _manager->load<L>(makeAbsolute(asset()->logicPath().dir(), logicPath));
 	loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
 		callback(aspect, log);
-		_done(log);
+		_done();
 	});
-
-	std::unique_lock<std::mutex> lk(_mutex);
-	++_depCount;
 
 	return loader;
 }

@@ -40,7 +40,7 @@ MainState::MainState(Game* game)
       _spriteRenderer(renderer()),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
-      _tileLayers(&_mainPass, &_spriteRenderer),
+      _tileLayers(loader(), &_mainPass, &_spriteRenderer),
 
       _inputs(sys(), &log()),
 
@@ -80,8 +80,8 @@ void MainState::initialize() {
 	_modelRoot = _entities.createEntity(_entities.root(), "modelRoot");
 
 	// TODO: load stuff.
-	AssetSP tileMapAsset = loader()->loadSync<TileMapLoader>("map.json");
-	_tileMap = tileMapAsset->aspect<TileMapAspect>()->get();
+	AssetSP tileMapAsset = loader()->load<TileMapLoader>("map.json")->asset();
+	_tileMap = tileMapAsset->aspect<TileMapAspect>();
 
 	_tileLayer = _entities.createEntity(_entities.root(), "tile_layer");
 	TileLayerComponent* tileLayerComp = _tileLayers.addComponent(_tileLayer);
@@ -160,6 +160,8 @@ void MainState::startGame() {
 
 
 void MainState::updateTick() {
+	loader()->finalizePending();
+
 	_inputs.sync();
 	_entities.setPrevWorldTransforms();
 
@@ -177,6 +179,8 @@ void MainState::updateFrame() {
 	// Rendering
 	Context* glc = renderer()->context();
 
+	_texts.createTextures();
+	_tileLayers.createTextures();
 	renderer()->uploadPendingTextures();
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
@@ -212,7 +216,7 @@ void MainState::resizeEvent() {
 
 
 bool MainState::loadEntities(const Path& path, EntityRef parent, const Path& cd) {
-	Path localPath = make_absolute(cd, path);
+	Path localPath = makeAbsolute(cd, path);
 	log().info("Load entity \"", localPath, "\"");
 
 	Path realPath = game()->dataPath() / localPath;

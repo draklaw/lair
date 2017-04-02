@@ -35,6 +35,12 @@
 namespace lair {
 
 
+Sound::Sound()
+    : _chunk(nullptr),
+      _volume(LAIR_AM_DEFAULT_VOLUME) {
+}
+
+
 Sound::Sound(Mix_Chunk* chunk)
     : _chunk(chunk),
       _volume(LAIR_AM_DEFAULT_VOLUME) {
@@ -42,10 +48,39 @@ Sound::Sound(Mix_Chunk* chunk)
 }
 
 
+Sound::Sound(Sound&& other)
+    : _chunk(other._chunk),
+      _volume(other._volume) {
+	other._chunk = nullptr;
+}
+
+
 Sound::~Sound() {
 	if(_chunk) {
 		Mix_FreeChunk(_chunk);
 	}
+}
+
+
+Sound& Sound::operator=(Sound&& other) {
+	swap(other);
+	return *this;
+}
+
+
+void Sound::set(Mix_Chunk* chunk) {
+	if(_chunk) {
+		Mix_FreeChunk(_chunk);
+	}
+
+	_chunk = chunk;
+	Mix_VolumeChunk(_chunk, _volume * MIX_MAX_VOLUME);
+}
+
+
+void Sound::swap(Sound& other) {
+	std::swap(_chunk,  other._chunk);
+	std::swap(_volume, other._volume);
 }
 
 
@@ -57,8 +92,19 @@ void Sound::setVolume(float volume) {
 //---------------------------------------------------------------------------//
 
 
+Music::Music()
+	: _track(nullptr) {
+}
+
+
 Music::Music(Mix_Music *track)
 	: _track(track) {
+}
+
+
+Music::Music(Music&& other)
+	: _track(other._track) {
+	other._track = nullptr;
 }
 
 
@@ -66,6 +112,26 @@ Music::~Music() {
 	if(_track) {
 		Mix_FreeMusic(_track);
 	}
+}
+
+
+Music& Music::operator=(Music&& other) {
+	swap(other);
+	return *this;
+}
+
+
+void Music::set(Mix_Music* music) {
+	if(_track) {
+		Mix_FreeMusic(_track);
+	}
+
+	_track = music;
+}
+
+
+void Music::swap(Music& other) {
+	std::swap(_track, other._track);
 }
 
 //---------------------------------------------------------------------------//
@@ -100,17 +166,24 @@ void AudioModule::shutdown() {
 
 
 int AudioModule::playSound(AssetSP sound, int loops, int channel) {
+	if(!sound)
+		return -1;
+
 	auto aspect = sound->aspect<SoundAspect>();
-	if(aspect && aspect->isValid()) {
-		return playSound(aspect->get(), loops, channel);
-	}
-	return -1;
+	if(!aspect)
+		return -1;
+
+	aspect->warnIfInvalid(log());
+	if(!aspect->isValid())
+		return -1;
+
+	return playSound(aspect->get(), loops, channel);
 }
 
 
-int AudioModule::playSound(const Sound* sound, int loops, int channel) {
-	if(sound->chunk()) {
-		return Mix_PlayChannel(channel, sound->chunk(), loops);
+int AudioModule::playSound(const Sound& sound, int loops, int channel) {
+	if(sound.isValid()) {
+		return Mix_PlayChannel(channel, sound.chunk(), loops);
 	}
 	return -1;
 }
@@ -124,16 +197,24 @@ void AudioModule::stopSound(int channel) {
 
 
 void AudioModule::playMusic(AssetSP music) {
+	if(!music)
+		return;
+
 	auto aspect = music->aspect<MusicAspect>();
-	if(aspect && aspect->isValid()) {
-		playMusic(aspect->get());
-	}
+	if(!aspect)
+		return;
+
+	aspect->warnIfInvalid(log());
+	if(!aspect->isValid())
+		return;
+
+	playMusic(aspect->get());
 }
 
 
-void AudioModule::playMusic(const Music* music) {
-	if(music->track()) {
-		Mix_PlayMusic(music->track(), -1);
+void AudioModule::playMusic(const Music& music) {
+	if(music.isValid()) {
+		Mix_PlayMusic(music.track(), -1);
 	}
 }
 
@@ -155,16 +236,17 @@ SoundLoader::SoundLoader(LoaderManager* manager, AspectSP aspect)
 }
 
 
+void SoundLoader::commit() {
+	SoundAspectSP aspect = std::static_pointer_cast<SoundAspect>(_aspect);
+	aspect->_get() = std::move(_sound);
+	Loader::commit();
+}
+
+
 void SoundLoader::loadSyncImpl(Logger& log) {
 	Mix_Chunk* chunk = Mix_LoadWAV(realPath().utf8CStr());
 	if(chunk) {
-		SoundAspectSP aspect = std::static_pointer_cast<SoundAspect>(_aspect);
-
-		std::lock_guard<std::mutex> lock(_aspect->_getLock());
-		Sound* sound = aspect->_get();
-		*sound = std::move(Sound(chunk));
-
-		_success();
+		_sound.set(chunk);
 	}
 	else {
 		log.error("Failed to load sound \"", asset()->logicPath(), "\" (",
@@ -180,16 +262,17 @@ MusicLoader::MusicLoader(LoaderManager* manager, AspectSP aspect)
 }
 
 
+void MusicLoader::commit() {
+	MusicAspectSP aspect = std::static_pointer_cast<MusicAspect>(_aspect);
+	aspect->_get() = std::move(_music);
+	Loader::commit();
+}
+
+
 void MusicLoader::loadSyncImpl(Logger& log) {
 	Mix_Music* track = Mix_LoadMUS(realPath().utf8CStr());
 	if(track) {
-		MusicAspectSP aspect = std::static_pointer_cast<MusicAspect>(_aspect);
-
-		std::lock_guard<std::mutex> lock(_aspect->_getLock());
-		Music* music = aspect->_get();
-		*music = std::move(Music(track));
-
-		_success();
+		_music.set(track);
 	}
 	else {
 		log.error("Failed to load music \"", asset()->logicPath(), "\" (",

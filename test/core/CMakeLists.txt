@@ -19,6 +19,7 @@
 
 
 add_executable(test_core
+	test_path.cpp
 	test_metatype.cpp
 	test_text.cpp
 	test_ldl.cpp

@@ -151,7 +151,7 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
                                                   const Path& cd) {
 	SpriteComponent* comp = addComponent(entity);
 	if(json.isMember("sprite")) {
-		comp->setTexture(make_absolute(cd, json["sprite"].asString()));
+		comp->setTexture(makeAbsolute(cd, json["sprite"].asString()));
 	}
 	if(json.isMember("anchor")) {
 		Json::Value anchor = json["anchor"];
@@ -247,16 +247,26 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		return;
 
 	SpriteComponent* sc = get(entity);
-	if(sc && sc->isEnabled() && sc->texture() && sc->texture()->isValid()) {
-		Texture* tex = sc->texture()->_get();
+	TextureAspectSP  texAspect;
+
+	if(sc && sc->isEnabled()) {
+		texAspect = sc->texture();
+		if(texAspect && !texAspect->isValid()) {
+			texAspect->warnIfInvalid(_loader->log());
+			texAspect.reset();
+		}
+	}
+
+	if(texAspect) {
+		const Texture& tex = texAspect->get();
 
 		Matrix4 wt = lerp(interp,
 		                  sc->_entity()->prevWorldTransform.matrix(),
 		                  sc->_entity()->worldTransform.matrix());
 
 		Box2 texCoords = sc->_texCoords();
-		Scalar w = tex->width()  * texCoords.sizes()(0);
-		Scalar h = tex->height() * texCoords.sizes()(1);
+		Scalar w = tex.width()  * texCoords.sizes()(0);
+		Scalar h = tex.height() * texCoords.sizes()(1);
 		Vector2 offset(-w * sc->anchor().x(),
 		               -h * sc->anchor().y());
 		Box2 coords(offset, Vector2(w, h) + offset);
@@ -268,12 +278,12 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		unsigned count = _spriteRenderer->indexCount() - index;
 
 		if(count) {
-			_states.texture      = tex;
+			_states.texture      = &texAspect->_get();
 			_states.textureFlags = sc->textureFlags();
 			_states.blendingMode = sc->blendingMode();
 
 			Vector4i tileInfo;
-			tileInfo << sc->tileGridSize(), tex->width(), tex->height();
+			tileInfo << sc->tileGridSize(), tex.width(), tex.height();
 			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
 			            _spriteRenderer->shader(), camera.transform(), 0, tileInfo);
 

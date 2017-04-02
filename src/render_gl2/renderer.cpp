@@ -116,20 +116,17 @@ void Renderer::enqueueToUpload(TextureAspectSP texture) {
 void Renderer::uploadPendingTextures() {
 	for(TextureAspectSP texture: _pendingTextures) {
 		ImageAspectSP image = texture->asset()->aspect<ImageAspect>();
-		if(image && !texture->get()) {
+		if(image && image->isValid() && !texture->isValid()) {
 			log().info("Upload texture \"", texture->asset()->logicPath(), "\"...");
 
-			std::lock_guard<std::mutex> lock(texture->_getLock());
-			Texture* tex = texture->_get();
-			*tex = std::move(Texture(this));
-			tex->_upload(*image->get());
-
-			texture->_setValid(true);
+			Texture& tex = texture->_get();
+			tex = std::move(Texture(this));
+			tex._upload(image->get());
 		}
 	}
 
 	auto end = std::remove_if(_pendingTextures.begin(), _pendingTextures.end(),
-	                          [](TextureAspectSP tex) { return bool(tex->get()); });
+	                          [](TextureAspectSP tex) { return bool(tex->isValid()); });
 	_pendingTextures.erase(end, _pendingTextures.end());
 }
 

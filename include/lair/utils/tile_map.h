@@ -41,12 +41,13 @@ public:
 public:
 	TileMap();
 	TileMap(const TileMap&) = delete;
-	TileMap(TileMap&&)      = delete;
+	TileMap(TileMap&&)      = default;
 	~TileMap();
 
 	TileMap& operator=(const TileMap&) = delete;
-	TileMap& operator=(TileMap&&)      = delete;
+	TileMap& operator=(TileMap&&)      = default;
 
+	bool isValid() const;
 	unsigned nLayers() const;
 	unsigned width(unsigned layer) const;
 	unsigned height(unsigned layer) const;
@@ -107,8 +108,13 @@ public:
 	TileMapLoader& operator=(const TileMapLoader&) = delete;
 	TileMapLoader& operator=(TileMapLoader&&)      = delete;
 
+	virtual void commit();
+
 protected:
 	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	TileMap _tileMap;
 };
 
 

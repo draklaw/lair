@@ -112,9 +112,11 @@ public:
 	void removeTrailingSeparators();
 	void removeFilename();
 	void replaceExtension(const std::string& newExt);
+	bool normalize();
 
 	Path dir() const;
 	Path withExtension(const std::string& newExt) const;
+	Path normalized() const;
 
 	static bool isDirectorySeparator(char c);
 
@@ -130,7 +132,7 @@ inline std::size_t hash_value(const Path& path) {
 
 
 Path operator/(const Path& lp, const Path& rp);
-Path make_absolute(const Path& cd, const Path& path);
+Path makeAbsolute(const Path& cd, const Path& path);
 
 inline void writeRepr(std::ostream& out, const Path& path) {
 	out << "<Path \"" << path.utf8String() << "\">";
