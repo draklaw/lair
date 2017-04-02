@@ -252,6 +252,11 @@ TextureAspectSP SpriteRenderer::createTexture(AssetSP asset) {
 }
 
 
+TextureAspectSP SpriteRenderer::defaultTexture() const {
+	return _renderer->defaultTexture();
+}
+
+
 Renderer* SpriteRenderer::renderer() {
 	return _renderer;
 }

@@ -242,7 +242,7 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 		texAspect = comp->texture();
 		if(texAspect && !texAspect->isValid()) {
 			texAspect->warnIfInvalid(_loader->log());
-			texAspect.reset();
+			texAspect = _spriteRenderer->defaultTexture();
 		}
 	}
 

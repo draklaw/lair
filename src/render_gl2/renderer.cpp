@@ -45,7 +45,7 @@ Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
 	lairAssert(_module);
 	lairAssert(_assetManager);
 
-//	_createDefaultTexture();
+	_createDefaultTexture();
 }
 
 
@@ -137,45 +137,30 @@ Logger& Renderer::log() {
 
 
 void Renderer::_createDefaultTexture() {
-	unsigned size = 32;
-	uint32 fillColor = 0xffffffff;
-	uint32 bordColor = 0xffff00ff;
-	uint32 lineColor = 0xff0000ff;
+	AssetSP texAsset = _assetManager->getOrCreateAsset("/__builtin__/placeholder_texture");
 
-	std::vector<Byte> buffer(size * size * 4);
-	uint32* pixels = reinterpret_cast<uint32*>(buffer.data());
-	for(unsigned y = 0; y < size; ++y) {
-		for(unsigned x = 0; x < size; ++x) {
-			pixels[y * size + x] = fillColor;
+	ImageAspectSP imgAspect = texAsset->getOrCreateAspect<ImageAspect>();
+	if(imgAspect && !imgAspect->isValid()) {
+		unsigned width      = 32;
+		unsigned height     = width;
+		unsigned stripWidth = 2;
+		std::vector<Byte> img(width * height * 3);
+		Byte colors[] = { 255,   0, 255,
+		                  0, 255,   0 };
+		for(unsigned y = 0; y < height; ++y) {
+			for(unsigned x = 0; x < width; ++x) {
+				Byte* pixel = img.data() + (y * width + x) * 3;
+				Byte* color = colors + (((x + y) / stripWidth) % 2) * 3;
+				for(unsigned c = 0; c < 3; ++c)
+					pixel[c] = color[c];
+			}
 		}
-	}
-	for(unsigned x = 0; x < size; ++x) {
-		if(x > 0) {
-			pixels[x * size + x - 1]    = lineColor;
-			pixels[x * size + size - x] = lineColor;
-		}
-		pixels[x * size + x]            = lineColor;
-		pixels[x * size + size - x - 1] = lineColor;
-		if(x < size - 1) {
-			pixels[x * size + x + 1]        = lineColor;
-			pixels[x * size + size - x - 2] = lineColor;
-		}
+
+		imgAspect->_get() = Image(width, height, Image::Format::FormatRGB8, img.data());
 	}
 
-	for(unsigned x = 0; x < size; ++x) {
-		pixels[x * size + 0] = bordColor;
-		pixels[x * size + 1] = bordColor;
-		pixels[x * size + size - 1] = bordColor;
-		pixels[x * size + size - 2] = bordColor;
-		pixels[(0) * size + x] = bordColor;
-		pixels[(1) * size + x] = bordColor;
-		pixels[(size - 1) * size + x] = bordColor;
-		pixels[(size - 2) * size + x] = bordColor;
-	}
+	_defaultTexture = createTexture(texAsset);
 
-	Image img(size, size, Image::Format::FormatRGBA8, buffer.data());
-	_defaultTexture._upload(img);
-	_defaultTexture._setFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT);
 }
 
 

@@ -4,12 +4,12 @@
 - ~File system abstraction ?
 - Make a ressource system and add a default built-in texture / font used as a
   placeholder when some ressource is not found.
-- Make the whole load / asset system more robust. Currently a missing asset or
+- ~Make the whole load / asset system more robust. Currently a missing asset or
   a file not found tend to crash (assert). It should be ignored when possible.
   If an asset is not loaded when it should be used (by rendering for instance),
   it should wait for it, I guess, and display an error message to tell the
   dev he should think to preload it.
-- Find a way to avoid uploading texture during component rendering. If texture
+- ~Find a way to avoid uploading texture during component rendering. If texture
   are accessed through TextureSet or similar, it should be easy ?
 - Variant: merge Variant and ConstVarRef (and maybe VarRef) in a single class,
   then update Property to return this instead of a ConstVarRef. That way we
