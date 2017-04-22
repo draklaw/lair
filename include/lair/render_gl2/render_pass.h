@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <lair/core/lair.h>
+#include <lair/core/metatype.h>
 
 #include <lair/render_gl2/context.h>
 
@@ -140,6 +141,7 @@ enum BlendingMode {
 	BLEND_ADD,
 	BLEND_MULTIPLY
 };
+const EnumInfo* blendingModeInfo();
 
 
 class RenderPass {
@@ -151,7 +153,7 @@ public:
 		ProgramObject* shader;
 		VertexBuffer*  buffer;
 		VertexFormat*  format;
-		TextureSP      texture;
+		Texture*       texture;
 		unsigned       textureFlags;
 		BlendingMode   blendingMode;
 		// Box2i _viewport;
@@ -217,6 +219,9 @@ protected:
 
 
 }
+
+
+LAIR_REGISTER_METATYPE(lair::BlendingMode, "BlendingMode");
 
 
 #endif

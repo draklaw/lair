@@ -30,7 +30,20 @@ namespace lair
 
 
 Aspect::Aspect(AssetSP asset)
-    : _asset(asset) {
+    : _asset(asset),
+      _flags(0) {
+}
+
+
+Aspect::~Aspect() {
+}
+
+
+void Aspect::warnIfInvalid(Logger& log) {
+	if(!isValid() && !(_flags & WARNED_INVALID)) {
+		log.warning("Try to use invalid asset \"", asset()->logicPath(), "\". Not loaded yet ?");
+		_flags |= WARNED_INVALID;
+	}
 }
 
 
@@ -45,6 +58,7 @@ AssetManager::AssetManager() {
 
 
 AssetSP AssetManager::createAsset(const Path& logicPath) {
+	std::unique_lock<std::mutex> lock(_lock);
 	assert(!_assetMap.count(logicPath));
 	auto it = _assetMap.emplace(logicPath, std::make_shared<Asset>(this, logicPath)).first;
 	return it->second;
@@ -52,9 +66,20 @@ AssetSP AssetManager::createAsset(const Path& logicPath) {
 
 
 AssetSP AssetManager::getAsset(const Path& logicPath) {
+	std::unique_lock<std::mutex> lock(_lock);
 	auto it = _assetMap.find(logicPath);
 	if(it == _assetMap.end()) {
 		return AssetSP();
+	}
+	return it->second;
+}
+
+
+AssetSP AssetManager::getOrCreateAsset(const Path& logicPath) {
+	std::unique_lock<std::mutex> lock(_lock);
+	auto it = _assetMap.find(logicPath);
+	if(it == _assetMap.end()) {
+		it = _assetMap.emplace(logicPath, std::make_shared<Asset>(this, logicPath)).first;
 	}
 	return it->second;
 }
@@ -80,7 +105,8 @@ void AssetManager::setAspect(AssetSP asset, AspectSP aspect) {
 
 	std::unique_lock<std::mutex> lock(_lock);
 
-	std::type_index index(typeid(*aspect));
+	Aspect& aspectRef = *aspect;
+	std::type_index index(typeid(aspectRef));
 	auto mapIt = _aspects.find(index);
 	if(mapIt == _aspects.end()) {
 		mapIt = _aspects.emplace(index, AssetAspectMap()).first;
@@ -92,6 +118,30 @@ void AssetManager::setAspect(AssetSP asset, AspectSP aspect) {
 
 //	aspect->_setNextAspect(asset->firstAspect());
 //	asset->_setFirstAspect(aspect);
+}
+
+
+AspectSP AssetManager::getOrSetAspect(AssetSP asset, AspectSP aspect) {
+	assert(asset);
+	assert(aspect);
+	assert(asset->manager() == this);
+
+	std::unique_lock<std::mutex> lock(_lock);
+
+	Aspect& aspectRef = *aspect;
+	std::type_index index(typeid(aspectRef));
+	auto mapIt = _aspects.find(index);
+	if(mapIt == _aspects.end()) {
+		mapIt = _aspects.emplace(index, AssetAspectMap()).first;
+	}
+	AssetAspectMap& assetMap = mapIt->second;
+
+	auto assetIt = assetMap.find(asset.get());
+	if(assetIt != assetMap.end())
+		return assetIt->second;
+
+	assetMap.emplace_hint(assetIt, asset.get(), aspect);
+	return aspect;
 }
 
 

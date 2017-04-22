@@ -33,11 +33,18 @@ namespace lair
 
 Loader::Loader(LoaderManager* manager, AspectSP aspect)
     : _manager(manager),
-      _isLoaded(false),
-      _isSuccessful(false),
+      _state(IN_QUEUE),
+      _depCount(1),
       _aspect(aspect),
-      _mutex(),
-      _cv() {
+      _mutex() {
+}
+
+
+LoaderSP Loader::newLoaderDone(LoaderManager* manager, AspectSP aspect) {
+	LoaderSP loader   = std::make_shared<Loader>(manager, aspect);
+	loader->_state    = READY;
+	loader->_depCount = 0;
+	return loader;
 }
 
 
@@ -45,14 +52,14 @@ Loader::~Loader() {
 }
 
 
-bool Loader::isLoaded() {
+Loader::State Loader::state() {
 	std::unique_lock<std::mutex> lk(_mutex);
-	return _isLoaded;
+	return _state;
 }
 
 
 bool Loader::isSuccessful() {
-	return _isSuccessful;
+	return _aspect->isValid();
 }
 
 
@@ -61,16 +68,35 @@ Path Loader::realPath() const {
 }
 
 
+void Loader::registerCallback(DoneCallback&& callback) {
+	lairAssert(state() != LOADED);
+	_onDone.emplace_back(callback);
+}
+
+
+void Loader::stealCallbacks(CallbackList& callbacks)
+{
+	_onDone.swap(callbacks);
+	_onDone.clear();
+}
+
+
 void Loader::wait() {
 	std::unique_lock<std::mutex> lk(_mutex);
-	if(!_isLoaded) {
-		_cv.wait(lk, [this]{ return _isLoaded; });
+	while(_state != LOADED) {
+		lk.unlock();
+		_manager->_waitLoadEvent();
+		lk.lock();
 	}
 }
 
 
 void Loader::loadSync(Logger& log) {
-	lairAssert(!_isLoaded);
+	{
+		std::unique_lock<std::mutex>(_mutex);
+		lairAssert(_state == IN_QUEUE);
+		_state = LOADING;
+	}
 
 	// It is *very* important to catch exceptions here, or waiting threads
 	// could wait forever. Moreover, it would unexpectedly stop a worker
@@ -81,16 +107,31 @@ void Loader::loadSync(Logger& log) {
 		log.error("Exception caught while loading \"", asset()->logicPath(), "\": ", e.what());
 	}
 
-	{
-		std::unique_lock<std::mutex> lk(_mutex);
-		_isLoaded = true;
-	}
-	_cv.notify_all();
+	_done();
 }
 
 
-void Loader::_success() {
-	_isSuccessful = true;
+void Loader::commit() {
+	std::unique_lock<std::mutex>(_mutex);
+	lairAssert(_state == READY);
+	_state = LOADED;
+}
+
+
+void Loader::loadSyncImpl(Logger&) {
+}
+
+
+void Loader::_done() {
+	std::unique_lock<std::mutex> lk(_mutex);
+
+	if(_depCount > 0) {
+		--_depCount;
+		if(_depCount == 0) {
+			_state = READY;
+			_manager->_notifyReady();
+		}
+	}
 }
 
 
@@ -172,6 +213,7 @@ LoaderManager::LoaderManager(AssetManager* assetManager, unsigned nThread, Logge
       _queueLock(),
       _queueCv(),
       _queue(),
+      _nReady(0),
       _nThread(0),
       _threadPool() {
 	for(int i = 0; i < MAX_LOADER_THREADS; ++i) {
@@ -224,9 +266,29 @@ Path LoaderManager::realFromLogic(const Path& path) const {
 }
 
 
+void LoaderManager::finalizePending() {
+	std::unique_lock<std::mutex> lk(_queueLock);
+
+	auto begin = _wipList.begin();
+	auto end   = _wipList.end();
+
+	lk.unlock();
+
+	_finalizePending(begin, end);
+}
+
+
 void LoaderManager::waitAll() {
-	while(LoaderSP loader = _getAnyPendingLoader()) {
-		loader->wait();
+	std::unique_lock<std::mutex> lk(_queueLock);
+	while(!_queue.empty() || !_wipList.empty()) {
+		_loaderCv.wait(lk, [this]{ return _nReady; });
+
+		auto begin = _wipList.begin();
+		auto end   = _wipList.end();
+
+		lk.unlock();
+		_finalizePending(begin, end);
+		lk.lock();
 	}
 }
 
@@ -256,15 +318,56 @@ LoaderSP LoaderManager::_popLoader() {
 }
 
 
-LoaderSP LoaderManager::_getAnyPendingLoader() {
+void LoaderManager::_notifyReady() {
 	std::unique_lock<std::mutex> lk(_queueLock);
-	if(_queue.empty()) {
-		while(!_wipList.empty() && _wipList.back()->isLoaded()) {
-			_wipList.pop_front();
-		}
-		return _wipList.empty()? LoaderSP(): _wipList.front();
+	++_nReady;
+	_loaderCv.notify_all();
+}
+
+
+void LoaderManager::_waitLoadEvent() {
+	{
+		std::unique_lock<std::mutex> lk(_queueLock);
+		_loaderCv.wait(lk);
 	}
-	return _queue.back();
+	finalizePending();
+}
+
+
+void LoaderManager::_finalize(LoaderList::iterator loaderIt) {
+	LoaderSP loader = *loaderIt;
+
+	log().info("Finalize \"", loader->asset()->logicPath(), "\"...");
+	loader->commit();
+
+	Loader::CallbackList callbacks;
+	loader->stealCallbacks(callbacks);
+
+	for(Loader::DoneCallback& callback: callbacks) {
+		callback(loader->aspect(), log());
+	}
+
+	loader->aspect()->_setLoader(LoaderSP());
+
+	{
+		std::unique_lock<std::mutex> lk(_queueLock);
+		--_nReady;
+		_wipList.erase(loaderIt);
+	}
+}
+
+
+void LoaderManager::_finalizePending(LoaderList::iterator begin, LoaderList::iterator end) {
+	while(begin != end) {
+		auto currentIt = begin;
+		++begin;
+
+		// Finalize will remove currentIf from _wipList, so we need to increment
+		// the iterator _before_ we call it.
+		LoaderSP& loader = *currentIt;
+		if(loader->state() == Loader::READY)
+			_finalize(currentIt);
+	}
 }
 
 

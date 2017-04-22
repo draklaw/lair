@@ -32,6 +32,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/path.h>
+#include <lair/core/property.h>
 #include <lair/core/loader.h>
 
 #include <lair/ec/dense_array.h>
@@ -44,6 +45,8 @@ namespace lair
 {
 
 
+class LdlParser;
+
 class OrthographicCamera;
 class Renderer;
 
@@ -53,7 +56,7 @@ class ComponentManager;
 
 class EntityManager {
 public:
-	EntityManager(Logger& logger, size_t entityBlockSize = 1024);
+	EntityManager(Logger& logger, LdlPropertySerializer& serializer, size_t entityBlockSize = 1024);
 	EntityManager(const EntityManager&) = delete;
 	EntityManager(EntityManager&&)      = delete;
 	~EntityManager();
@@ -67,18 +70,24 @@ public:
 	inline EntityRef root()            const { return _root; }
 
 	int registerComponentManager(ComponentManager* cmi);
+	ComponentManager* componentManager(const String& name) const;
+
+	EntityRef findByName(const String& name, EntityRef from = EntityRef()) const;
 
 	EntityRef createEntity(EntityRef parent, const char* name = nullptr, int index = -1);
 	EntityRef createEntity(EntityRef parent, const char* name, EntityRef insertAfter);
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr, int index = -1);
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter);
 
-	void initializeFromJson(EntityRef entity, const Json::Value& json, const Path& cd=Path());
+	bool initializeFromLdl(EntityRef entity, LdlParser& parser);
+	bool loadEntitiesFromLdl(LdlParser& parser, EntityRef parent);
 
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
 	void destroyEntity(EntityRef entity);
 	void _releaseEntity(_Entity* entity);
+
+	void setEntityName(EntityRef entity, const String& name);
 
 	void moveEntity(EntityRef& entity, EntityRef& newParent, int index = -1);
 	void moveEntity(EntityRef& entity, EntityRef& newParent, EntityRef insertAfter);
@@ -99,6 +108,8 @@ protected:
 
 protected:
 	Logger           _logger;
+
+	LdlPropertySerializer& _serializer;
 
 	CompManagerArray _compManagers;
 	CompManagerMap   _compManagerMap;

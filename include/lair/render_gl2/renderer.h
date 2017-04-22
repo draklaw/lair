@@ -72,8 +72,8 @@ public:
 	void enqueueToUpload(TextureAspectSP texture);
 	void uploadPendingTextures();
 
-	Texture* defaultTexture() {
-		return &_defaultTexture;
+	inline TextureAspectSP defaultTexture() {
+		return _defaultTexture;
 	}
 
 	Logger& log();
@@ -85,13 +85,13 @@ protected:
 	void _createDefaultTexture();
 
 protected:
-	RenderModule* _module;
-	AssetManager* _assetManager;
+	RenderModule*   _module;
+	AssetManager*   _assetManager;
 
-	Context*      _context;
+	Context*        _context;
 
-	TextureList   _pendingTextures;
-	Texture       _defaultTexture;
+	TextureList     _pendingTextures;
+	TextureAspectSP _defaultTexture;
 };
 
 

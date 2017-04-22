@@ -24,6 +24,7 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/ldl.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
@@ -69,7 +70,7 @@ public:
 	Shape& operator=(      Shape&&) = default;
 
 	ShapeType      type() const             { return _type; }
-	float          radius() const           { return _radius; }
+	Scalar         radius() const           { return _radius; }
 	unsigned       nPoints() const          { return _points.size(); }
 	const Vector2& point(unsigned pi) const { return _points[pi]; }
 
@@ -78,16 +79,19 @@ private:
 
 private:
 	ShapeType   _type;
-	float       _radius;
+	Scalar      _radius;
 	PointVector _points;
 };
+
+bool ldlRead(LdlParser& parser, ShapeSP& value);
+bool ldlWrite(LdlWriter& writer, const ShapeSP& value);
 
 
 class CollisionComponent;
 class CollisionComponentManager;
 
 
-class CollisionComponent : public Component {
+class CollisionComponent : public Component, WithProperties<CollisionComponent> {
 public:
 	typedef CollisionComponentManager Manager;
 
@@ -100,19 +104,21 @@ public:
 	CollisionComponent& operator=(const CollisionComponent&) = delete;
 	CollisionComponent& operator=(CollisionComponent&&)      = default;
 
-	const ShapeSP shape() const  { return _shape; }
-	void setShape(ShapeSP shape) { _shape = shape; }
+	inline const ShapeSP& shape() const  { return _shape; }
+	inline void setShape(const ShapeSP& shape) { _shape = shape; }
 
-	unsigned hitMask() const          { return _hitMask; }
-	void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
+	inline unsigned hitMask() const          { return _hitMask; }
+	inline void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
 
-	unsigned ignoreMask() const             { return _ignoreMask; }
-	void setIgnoreMask(unsigned ignoreMask) { _ignoreMask = ignoreMask; }
+	inline unsigned ignoreMask() const             { return _ignoreMask; }
+	inline void setIgnoreMask(unsigned ignoreMask) { _ignoreMask = ignoreMask; }
 
-	float penetration(Direction dir) const { return _penetration[dir]; }
-	void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }
+	inline float penetration(Direction dir) const { return _penetration[dir]; }
+	inline void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }
 
 	Box2 worldAlignedBox() const;
+
+	static const PropertyList& properties();
 
 protected:
 	ShapeSP  _shape;
@@ -152,8 +158,10 @@ public:
 };
 
 
-
 }
+
+
+LAIR_REGISTER_METATYPE(lair::ShapeSP, "Shape");
 
 
 #endif

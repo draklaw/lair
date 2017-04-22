@@ -35,7 +35,54 @@
 namespace lair {
 
 
-GameBase::GameBase(int /*argc*/, char** /*argv*/)
+GameConfigBase::GameConfigBase()
+    : fullscreen(false)
+    , vSync     (true)
+{
+}
+
+void GameConfigBase::setFromArgs(int& argc, char** argv) {
+	int last = 1;
+	for(int argi = 1; argi < argc; ++ argi) {
+		char* arg = argv[argi];
+		if(std::strcmp(arg, "--fullscreen") == 0) {
+			fullscreen = true;
+		}
+		else if(std::strcmp(arg, "--no-fullscreen") == 0) {
+			fullscreen = false;
+		}
+		else if(std::strcmp(arg, "--vsync") == 0) {
+			vSync = true;
+		}
+		else if(std::strcmp(arg, "--no-vsync") == 0) {
+			vSync = false;
+		}
+		else {
+			argv[last++] = arg;
+		}
+	}
+	argv[last] = 0;
+	argc = last;
+}
+
+const PropertyList& GameConfigBase::properties() const {
+	return GameConfigBase::staticProperties();
+}
+
+const PropertyList& GameConfigBase::staticProperties() {
+	static PropertyList props;
+	if(!props.nProperties()) {
+		props.addProperty("fullscreen",
+		                  &GameConfigBase::fullscreen);
+		props.addProperty("vsync",
+		                  &GameConfigBase::vSync);
+	}
+	return props;
+}
+
+
+
+GameBase::GameBase(int argc, char** argv)
     : _mlogger(),
       _logStream("log.txt"),
 //#ifndef _WIN32
@@ -43,6 +90,9 @@ GameBase::GameBase(int /*argc*/, char** /*argv*/)
 //#endif
       _fileBackend(_logStream, false),
       _logger("game", &_mlogger, DEFAULT_LOG_LEVEL),
+
+      _argc(argc),
+      _argv(argv),
 
       _dataPath(),
 
@@ -59,9 +109,6 @@ GameBase::GameBase(int /*argc*/, char** /*argv*/)
 
       _nextState(nullptr),
       _currentState(nullptr) {
-
-	// TODO: Parse arguments to override some config values.
-
 //#ifndef _WIN32
 	_mlogger.addBackend(&_stdlogBackend);
 //#endif
@@ -79,6 +126,11 @@ GameBase::~GameBase() {
 
 Path GameBase::dataPath() const {
 	return _dataPath;
+}
+
+
+LdlPropertySerializer& GameBase::serializer() {
+	return _serializer;
 }
 
 
@@ -117,39 +169,73 @@ AudioModule* GameBase::audio() {
 }
 
 
-void GameBase::initialize() {
+void GameBase::initialize(GameConfigBase& config) {
 	log().log("Starting game...");
 
 	_sys.reset(new SysModule(&_mlogger, LogLevel::Log));
 	_sys->initialize();
 	_sys->onQuit = std::bind(&GameBase::quit, this);
 
-	Path configLogicPath = "config.json";
+	// Config
+
+	Path configLogicPath = "config.ldl";
 	Path configRealPath = sys()->basePath() / configLogicPath;
-	parseJson(_config, configRealPath, configLogicPath, log());
+
+	Path::IStream in(configRealPath.native().c_str());
+	if(in.good()) {
+		log().info("Read config \"", configRealPath, "\"...");
+		ErrorList errors;
+		LdlParser parser(&in, configLogicPath.utf8String(), &errors, LdlParser::CTX_MAP);
+		_serializer.read(parser, config);
+		errors.log(log());
+	}
+	else {
+		log().info("Config not found, create one: \"", configLogicPath, "\"...");
+		ErrorList errors;
+		Path::OStream out(configRealPath.native().c_str());
+		if(out.good()) {
+			LdlWriter writer(&out, configLogicPath.utf8String(), &errors);
+			_serializer.write(writer, config);
+			errors.log(log());
+		}
+		else {
+			log().warning("Unable to create the config file \"", configRealPath, "\".");
+		}
+	}
+
+	// Command-line arguments override config files.
+	config.setFromArgs(_argc, _argv);
+
+	// Data path
 
 	const char* envPath = std::getenv("LAIR_DATA_DIR");
-	if (envPath) {
+	if(envPath) {
 		_dataPath = envPath;
 	} else {
 		_dataPath = _sys->basePath() / "assets";
 	}
 	log().log("Data directory: ", _dataPath);
 
+	// Assets
+
 	_assets = make_unique(new AssetManager);
 	_loader = make_unique(new LoaderManager(_assets.get(), 1, _logger));
 	_loader->setBasePath(dataPath());
 
+	// Window
+
 	_window = _sys->createWindow("Lair", 1280, 720);
-	if(_config.get("fullscreen", false).asBool()) {
-		_window->setFullscreen(true);
-	}
-	//_sys->setVSyncEnabled(false);
+	_window->setFullscreen(config.fullscreen);
+	_sys->setVSyncEnabled(config.vSync);
 	log().info("VSync: ", _sys->isVSyncEnabled()? "on": "off");
+
+	// Render
 
 	_renderModule.reset(new RenderModule(sys(), assets(), &_mlogger, DEFAULT_LOG_LEVEL));
 	_renderModule->initialize();
 	_renderer = _renderModule->createRenderer();
+
+	// Audio
 
 	_audio.reset(new AudioModule(&_mlogger));
 	_audio->initialize();

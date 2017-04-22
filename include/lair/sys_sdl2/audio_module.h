@@ -38,12 +38,22 @@ namespace lair {
 
 class Sound {
 public:
+	Sound();
 	Sound(Mix_Chunk* chunk);
+	Sound(const Sound&)  = delete;
+	Sound(      Sound&& other);
 	~Sound();
 
-	Mix_Chunk* chunk() const { return _chunk; }
+	Sound& operator=(const Sound&)  = delete;
+	Sound& operator=(      Sound&& other);
 
-	float volume() const { return _volume; }
+	void set(Mix_Chunk* chunk);
+	void swap(Sound& other);
+
+	inline bool isValid() const { return _chunk; }
+	inline Mix_Chunk* chunk() const { return _chunk; }
+
+	inline float volume() const { return _volume; }
 	void setVolume(float volume);
 
 private:
@@ -57,10 +67,20 @@ typedef std::weak_ptr  <Sound> SoundWP;
 
 class Music {
 public:
+	Music();
 	Music(Mix_Music* track);
+	Music(const Music&)  = delete;
+	Music(      Music&& other);
 	~Music();
 
-	Mix_Music* track() const { return _track; }
+	Music& operator=(const Music&)  = delete;
+	Music& operator=(      Music&& other);
+
+	void set(Mix_Music* music);
+	void swap(Music& other);
+
+	inline bool isValid() const { return _track; }
+	inline Mix_Music* track() const { return _track; }
 
 public:
 	Mix_Music* _track;
@@ -78,11 +98,11 @@ public:
 	void shutdown();
 
 	int  playSound(AssetSP sound, int loops = 0, int channel = -1);
-	int  playSound(SoundSP sound, int loops = 0, int channel = -1);
+	int  playSound(const Sound& sound, int loops = 0, int channel = -1);
 	void stopSound(int channel);
 
 	void playMusic(AssetSP music);
-	void playMusic(MusicSP music);
+	void playMusic(const Music& music);
 	void stopMusic();
 	void setMusicVolume(float volume);
 
@@ -111,13 +131,20 @@ public:
 	SoundLoader(LoaderManager* manager, AspectSP aspect);
 	virtual ~SoundLoader() = default;
 
+	virtual void commit();
+
 protected:
 	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	Sound _sound;
 };
 
 class MusicLoader : public Loader {
 public:
 	typedef MusicAspect Aspect;
+
+	virtual void commit();
 
 public:
 	MusicLoader(LoaderManager* manager, AspectSP aspect);
@@ -125,6 +152,9 @@ public:
 
 protected:
 	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	Music _music;
 };
 
 

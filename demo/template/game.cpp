@@ -24,6 +24,25 @@
 #include "game.h"
 
 
+GameConfig::GameConfig()
+	: GameConfigBase()
+{
+}
+
+void GameConfig::setFromArgs(int& argc, char** argv) {
+	GameConfigBase::setFromArgs(argc, argv);
+}
+
+const PropertyList& GameConfig::properties() const {
+	return GameConfig::staticProperties();
+}
+
+const PropertyList& GameConfig::staticProperties() {
+	return GameConfigBase::staticProperties();
+}
+
+
+
 Game::Game(int argc, char** argv)
     : GameBase(argc, argv),
       _mainState() {
@@ -35,7 +54,7 @@ Game::~Game() {
 
 
 void Game::initialize() {
-	GameBase::initialize();
+	GameBase::initialize(_config);
 
 #ifdef LAIR_DATA_DIR
 	_dataPath = LAIR_DATA_DIR;
@@ -54,6 +73,11 @@ void Game::shutdown() {
 	_mainState.reset();  // Required to ensure that everything is freed
 
 	GameBase::shutdown();
+}
+
+
+GameConfig& Game::config() {
+	return _config;
 }
 
 

@@ -65,8 +65,8 @@ public:
 
 	void resizeEvent();
 
-	EntityRef loadEntity(const Path& path, EntityRef parent = EntityRef(),
-	                     const Path& cd = Path());
+	bool loadEntities(const Path& path, EntityRef parent = EntityRef(),
+	                  const Path& cd = Path());
 
 protected:
 	// More or less system stuff
@@ -93,7 +93,7 @@ protected:
 
 	Input*      _quitInput;
 
-	TileMapSP   _tileMap;
+	TileMapAspectSP _tileMap;
 
 	EntityRef   _modelRoot;
 	EntityRef   _tileLayer;

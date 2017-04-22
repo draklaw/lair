@@ -28,6 +28,7 @@
 #include <list>
 
 #include <lair/core/lair.h>
+#include <lair/core/property.h>
 
 #include <lair/sys_sdl2/image_loader.h>
 
@@ -56,7 +57,7 @@ class EntityManager;
 class SpriteComponentManager;
 
 
-class SpriteComponent : public Component {
+class SpriteComponent : public Component, WithProperties<SpriteComponent> {
 public:
 	typedef SpriteComponentManager Manager;
 
@@ -72,6 +73,10 @@ public:
 	Manager* manager();
 
 	inline TextureAspectSP texture() const { return _texture.lock(); }
+	inline const Path& texturePath() const {
+		TextureAspectSP tex = texture();
+		return tex? tex->asset()->logicPath(): emptyPath;
+	}
 	inline void setTexture(TextureAspectSP texture) {
 		_texture = texture;
 	}
@@ -98,6 +103,8 @@ public:
 
 	inline unsigned textureFlags() const { return _textureFlags; }
 	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
+
+	static const PropertyList& properties();
 
 	Box2 _texCoords() const;
 
@@ -133,7 +140,6 @@ public:
 
 	virtual SpriteComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path());
-	virtual SpriteComponent* cloneComponent(EntityRef base, EntityRef entity);
 
 //	void render(float interp, const OrthographicCamera& camera);
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);

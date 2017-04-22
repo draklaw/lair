@@ -58,12 +58,18 @@ public:
 	BitmapFontLoader& operator=(const BitmapFontLoader&) = delete;
 	BitmapFontLoader& operator=(BitmapFontLoader&&)      = delete;
 
+	virtual void commit();
+
 protected:
 	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	Json::Value _fontDesc;
+	BitmapFont  _font;
 };
 
 
-class BitmapTextComponent : public Component {
+class BitmapTextComponent : public Component, WithProperties<BitmapTextComponent> {
 public:
 	typedef BitmapTextComponentManager Manager;
 
@@ -73,6 +79,10 @@ public:
 	Manager* manager();
 
 	inline BitmapFontAspectSP font() const { return _font.lock(); }
+	inline const Path& fontPath() const {
+		BitmapFontAspectSP aspect = font();
+		return aspect? aspect->asset()->logicPath(): emptyPath;
+	}
 	void setFont(BitmapFontAspectSP font);
 	void setFont(AssetSP font);
 	void setFont(const Path& logicPath);
@@ -91,6 +101,8 @@ public:
 
 	inline const Vector2& anchor() const { return _anchor; }
 	inline void setAnchor(const Vector2& anchor) { _anchor = anchor; }
+
+	static const PropertyList& properties();
 
 public:
 	BitmapFontAspectWP _font;
@@ -116,7 +128,8 @@ public:
 
 	virtual BitmapTextComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
 	                                  const Path& cd=Path());
-	virtual BitmapTextComponent* cloneComponent(EntityRef base, EntityRef entity);
+
+	void createTextures();
 
 //	void render(float interp, const OrthographicCamera& camera);
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);

@@ -99,7 +99,7 @@ void BitmapFont::setFromJson(const Json::Value& json) {
 	_height = json.get("height", 0).asInt();
 	_baselineToTop = json.get("base", _height / 2).asInt();
 
-	Vector2 texSize(aspect->get()->width(), aspect->get()->height());
+	Vector2 texSize(aspect->get().width(), aspect->get().height());
 	for(const Json::Value& c: json.get("chars", Json::nullValue)) {
 		unsigned cp = c[0].asInt();
 		Glyph g;

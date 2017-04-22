@@ -23,8 +23,6 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/core/json.h>
-
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/dense_component_manager.h>
 
@@ -51,15 +49,26 @@ enum {
 };
 
 template<int _Index>
-class TestComponent : public Component {
+class TestComponent : public Component, WithProperties<TestComponent<_Index> > {
 public:
 	typedef TestComponentManager<TestComponent<_Index>> Manager;
 
 public:
 	TestComponent(Manager* manager, _Entity* entity);
 
-public:
-	int value;
+	const int& value() const { return _value; }
+	void setValue(const int& value) { _value = value; }
+
+	static const PropertyList& properties() {
+		static PropertyList props;
+		if(props.nProperties() == 0) {
+			props.addProperty("value", &TestComponent<_Index>::value, &TestComponent<_Index>::setValue);
+		}
+		return props;
+	}
+
+private:
+	int _value;
 };
 
 template<typename Component>
@@ -70,25 +79,13 @@ public:
 	TestComponentManager(const std::string& name, size_t blockSize)
 	    : DenseComponentManager<Component>(name, blockSize) {
 	}
-
-	virtual Component* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                                   const Path& cd=Path()) {
-		Component* comp = Base::addComponent(entity);
-		comp->value = json.get("value", 0).asInt();
-		return comp;
-	}
-
-	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
-		Component* comp = Base::addComponent(entity);
-		comp->value = Base::get(entity)->value;
-		return comp;
-	}
+	virtual ~TestComponentManager() = default;
 };
 
 template<int _Index>
 TestComponent<_Index>::TestComponent(Manager* manager, _Entity* entity)
     : Component(manager, entity),
-      value(0) {
+      _value(0) {
 }
 
 typedef TestComponent<TEST0> Component0;
@@ -98,11 +95,12 @@ typedef TestComponentManager<Component0> Manager0;
 typedef TestComponentManager<Component1> Manager1;
 
 bool cmpComponent(Component1* c0, Component1* c1) {
-	return c0->value < c1->value;
+	return c0->value() < c1->value();
 }
 
 class DenseComponentManagerTest : public ::testing::Test {
 public:
+	LdlPropertySerializer serializer;
 	EntityManager* em;
 	Manager0* manager0;
 	Manager1* manager1;
@@ -128,7 +126,7 @@ public:
 	}
 
 	virtual void SetUp() {
-		em = new EntityManager(noopLogger, BLOCK_SIZE);
+		em = new EntityManager(noopLogger, serializer, BLOCK_SIZE);
 		manager0 = new Manager0("test0", 4);
 		manager1 = new Manager1("test1", 4);
 
@@ -171,14 +169,14 @@ public:
 		compD1 = manager1->addComponent(d);
 		compF1 = manager1->addComponent(f);
 
-		compC0->value = 1;
-		compD0->value = 2;
-		compE0->value = 3;
-		compR1->value = 42;
-		compA1->value = 4;
-		compC1->value = 5;
-		compD1->value = 6;
-		compF1->value = 7;
+		compC0->setValue(1);
+		compD0->setValue(2);
+		compE0->setValue(3);
+		compR1->setValue(42);
+		compA1->setValue(4);
+		compC1->setValue(5);
+		compD1->setValue(6);
+		compF1->setValue(7);
 	}
 };
 
@@ -232,15 +230,15 @@ TEST_F(DenseComponentManagerTest, AddComponent) {
 	ASSERT_TRUE(hasComponent(e,    compE0));
 	ASSERT_TRUE(hasComponent(f,    compF1));
 
-	ASSERT_EQ(1, manager0->get(c)->value);
-	ASSERT_EQ(2, manager0->get(d)->value);
-	ASSERT_EQ(3, manager0->get(e)->value);
+	ASSERT_EQ(1, manager0->get(c)->value());
+	ASSERT_EQ(2, manager0->get(d)->value());
+	ASSERT_EQ(3, manager0->get(e)->value());
 
-	ASSERT_EQ(42, manager1->get(root)->value);
-	ASSERT_EQ(4,  manager1->get(a)   ->value);
-	ASSERT_EQ(5,  manager1->get(c)   ->value);
-	ASSERT_EQ(6,  manager1->get(d)   ->value);
-	ASSERT_EQ(7,  manager1->get(f)   ->value);
+	ASSERT_EQ(42, manager1->get(root)->value());
+	ASSERT_EQ(4,  manager1->get(a)   ->value());
+	ASSERT_EQ(5,  manager1->get(c)   ->value());
+	ASSERT_EQ(6,  manager1->get(d)   ->value());
+	ASSERT_EQ(7,  manager1->get(f)   ->value());
 }
 
 TEST_F(DenseComponentManagerTest, RemoveComponent) {
@@ -292,11 +290,11 @@ TEST_F(DenseComponentManagerTest, RemoveComponent) {
 	ASSERT_EQ(nullptr, e._get()->firstComponent);
 	ASSERT_TRUE(hasComponent(f,    compF1));
 
-	ASSERT_EQ(2, manager0->get(d)->value);
+	ASSERT_EQ(2, manager0->get(d)->value());
 
-	ASSERT_EQ(42, manager1->get(root)->value);
-	ASSERT_EQ(5,  manager1->get(c)   ->value);
-	ASSERT_EQ(7,  manager1->get(f)   ->value);
+	ASSERT_EQ(42, manager1->get(root)->value());
+	ASSERT_EQ(5,  manager1->get(c)   ->value());
+	ASSERT_EQ(7,  manager1->get(f)   ->value());
 }
 
 TEST_F(DenseComponentManagerTest, CompactArray) {
@@ -319,11 +317,11 @@ TEST_F(DenseComponentManagerTest, CompactArray) {
 	ASSERT_EQ(0, manager1->nZombies());
 	ASSERT_EQ(8, manager1->capacity());
 
-	ASSERT_EQ(2, manager0->get(d)->value);
+	ASSERT_EQ(2, manager0->get(d)->value());
 
-	ASSERT_EQ(42, manager1->get(root)->value);
-	ASSERT_EQ(5,  manager1->get(c)   ->value);
-	ASSERT_EQ(7,  manager1->get(f)   ->value);
+	ASSERT_EQ(42, manager1->get(root)->value());
+	ASSERT_EQ(5,  manager1->get(c)   ->value());
+	ASSERT_EQ(7,  manager1->get(f)   ->value());
 }
 
 TEST_F(DenseComponentManagerTest, Iterator) {
@@ -333,13 +331,13 @@ TEST_F(DenseComponentManagerTest, Iterator) {
 	Manager1::Iterator it  = manager1->begin();
 	Manager1::Iterator end = manager1->end();
 
-	ASSERT_EQ(42, (*it).value);
+	ASSERT_EQ(42, (*it).value());
 	++it;
-	ASSERT_EQ(4,  it->value);
-	ASSERT_EQ(5,  (++it)->value);
+	ASSERT_EQ(4,  it->value());
+	ASSERT_EQ(5,  (++it)->value());
 	it++;
-	ASSERT_EQ(6,  (*(it++)).value);
-	ASSERT_EQ(7,  (it++)->value);
+	ASSERT_EQ(6,  (*(it++)).value());
+	ASSERT_EQ(7,  (it++)->value());
 	ASSERT_EQ(end, it);
 
 	manager1->removeComponent(root);
@@ -349,8 +347,8 @@ TEST_F(DenseComponentManagerTest, Iterator) {
 	it  = manager1->begin();
 	end = manager1->end();
 
-	ASSERT_EQ(4,  (it++)->value);
-	ASSERT_EQ(6,  (it++)->value);
+	ASSERT_EQ(4,  (it++)->value());
+	ASSERT_EQ(6,  (it++)->value());
 	ASSERT_EQ(end, it);
 }
 
@@ -364,37 +362,37 @@ TEST_F(DenseComponentManagerTest, SortArray) {
 
 	int i = 0;
 	for(Component1& comp: *manager1) {
-		comp.value = perm0[i++];
+		comp.setValue(perm0[i++]);
 	}
 	manager1->sortArray(cmpComponent);
 	i = 0;
 	for(Component1& comp: *manager1) {
-		ASSERT_EQ(i++, comp.value);
+		ASSERT_EQ(i++, comp.value());
 	}
 
 	i = 0;
 	for(Component1& comp: *manager1) {
-		comp.value = perm1[i++];
+		comp.setValue(perm1[i++]);
 	}
 	manager1->sortArray(cmpComponent);
 	i = 0;
 	for(Component1& comp: *manager1) {
-		ASSERT_EQ(i++, comp.value);
+		ASSERT_EQ(i++, comp.value());
 	}
 
 	i = 0;
 	for(Component1& comp: *manager1) {
-		comp.value = perm2[i++];
+		comp.setValue(perm2[i++]);
 	}
 	manager1->sortArray(cmpComponent);
 	i = 0;
 	for(Component1& comp: *manager1) {
-		ASSERT_EQ(i++, comp.value);
+		ASSERT_EQ(i++, comp.value());
 	}
 
 	i = 0;
 	for(Component1& comp: *manager1) {
-		comp.value = perm2[i++];
+		comp.setValue(perm2[i++]);
 		if((i % 2) == 1) {
 			manager1->removeComponent(comp.entity());
 		}
@@ -411,7 +409,19 @@ TEST_F(DenseComponentManagerTest, SortArray) {
 
 	Manager1::Iterator it  = manager1->begin();
 	Manager1::Iterator end = manager1->end();
-	ASSERT_EQ(2, (it++)->value);
-	ASSERT_EQ(4, (it++)->value);
+	ASSERT_EQ(2, (it++)->value());
+	ASSERT_EQ(4, (it++)->value());
 	ASSERT_EQ(end, it);
+}
+
+
+TEST_F(DenseComponentManagerTest, Clone) {
+	buildTree();
+
+	Component0* compA0 = manager0->addComponent(a);
+	compA0->setValue(42);
+
+	Component0* compB0 = manager0->cloneComponent(a, b);
+
+	ASSERT_EQ(42, compB0->value());
 }

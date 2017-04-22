@@ -214,7 +214,7 @@ const Path SysModule::getPrefPath(const char* org, const char* app) {
 	Path p;
 	{
 		auto path = make_unique(SDL_GetPrefPath(org, app), SDL_free);
-		_basePath = Path(path.get());
+		p = Path(path.get());
 	}
 	log().info("Preference path (", org, ", ", app, "): ", p);
 	return p;

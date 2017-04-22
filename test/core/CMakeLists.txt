@@ -19,8 +19,12 @@
 
 
 add_executable(test_core
-	test_signal.cpp
+	test_path.cpp
+	test_metatype.cpp
 	test_text.cpp
+	test_ldl.cpp
+	test_property.cpp
+	test_signal.cpp
 )
 
 target_link_libraries(test_core

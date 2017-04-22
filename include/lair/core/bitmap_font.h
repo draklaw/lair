@@ -49,7 +49,7 @@ public:
 	~TextLayout() = default;
 
 	TextLayout& operator=(const TextLayout&)  = delete;
-	TextLayout& operator=(      TextLayout&&) = delete;
+	TextLayout& operator=(      TextLayout&&) = default;
 
 	unsigned nGlyphs() const { return _glyphs.size(); }
 	const PlacedGlyph& glyph(unsigned i) const { return _glyphs.at(i); }
@@ -86,7 +86,7 @@ public:
 	~BitmapFont() = default;
 
 	BitmapFont& operator=(const BitmapFont&)  = delete;
-	BitmapFont& operator=(      BitmapFont&&) = delete;
+	BitmapFont& operator=(      BitmapFont&&) = default;
 
 	bool     isValid()  const { return bool(_image); }
 	unsigned fontSize() const { return _fontSize; }

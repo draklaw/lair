@@ -24,6 +24,7 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/property.h>
 
 #include <lair/ec/entity.h>
 #include <lair/ec/component_manager.h>
@@ -154,7 +155,7 @@ public:
 		}
 	}
 
-	Component* addComponent(EntityRef entity) {
+	virtual Component* addComponent(EntityRef entity) {
 		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());
 		lairAssert(get(entity) == nullptr);
@@ -241,15 +242,21 @@ public:
 		_components.resize(lastAlive);
 	}
 
-	virtual Component* addComponentFromJson(EntityRef /*entity*/, const Json::Value& /*json*/,
-									  const Path& /*cd*/=Path()) {
-		lairAssert(false);
-		return nullptr;
+	virtual const PropertyList& componentProperties() {
+		return Component::properties();
 	}
 
-	virtual Component* cloneComponent(EntityRef /*base*/, EntityRef /*entity*/) {
-		lairAssert(false);
-		return nullptr;
+	virtual Component* cloneComponent(EntityRef base, EntityRef entity) {
+		Component* baseComp = get(base);
+		Component* comp = _addComponent(entity, baseComp);
+
+		const PropertyList& props = baseComp->properties();
+		for(unsigned pi = 0; pi < props.nProperties(); ++pi) {
+			const Property& prop = props.property(pi);
+			prop.setVar(comp, prop.getVar(baseComp));
+		}
+
+		return comp;
 	}
 
 

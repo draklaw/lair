@@ -36,6 +36,18 @@ namespace lair
 {
 
 
+const EnumInfo* blendingModeInfo() {
+	static EnumInfo info("BlendingMode");
+	if(!info.nFields()) {
+		info.add(BLEND_NONE,     "none");
+		info.add(BLEND_ALPHA,    "alpha");
+		info.add(BLEND_ADD,      "add");
+		info.add(BLEND_MULTIPLY, "multiply");
+	}
+	return &info;
+}
+
+
 RenderPass::DrawCall::DrawCall(const DrawStates& states, const ShaderParameter* params,
                                unsigned depth, unsigned index, unsigned count)
     : states(states),
@@ -175,7 +187,7 @@ void RenderPass::render() {
 
 inline void RenderPass::setBits(Index& index, Index value, unsigned loBit, unsigned bitCount) {
 	lairAssert(loBit + bitCount <= (8 * sizeof(Index)));
-	lairAssert(value < (1 << bitCount));
+	lairAssert(value < (1u << bitCount));
 	(void)bitCount;
 	index |= value << loBit;
 }

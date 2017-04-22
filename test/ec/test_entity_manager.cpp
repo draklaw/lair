@@ -30,6 +30,7 @@ using namespace lair;
 
 class EntityManagerTest : public ::testing::Test {
 public:
+	LdlPropertySerializer serializer;
 	EntityManager* em;
 	EntityRef root;
 	EntityRef a;
@@ -44,7 +45,7 @@ public:
 	}
 
 	virtual void SetUp() {
-		em = new EntityManager(noopLogger, BLOCK_SIZE);
+		em = new EntityManager(noopLogger, serializer, BLOCK_SIZE);
 	}
 
 	virtual void TearDown() {

@@ -25,10 +25,12 @@
 
 #include <memory>
 #include <typeinfo>
+#include <typeindex>
 #include <unordered_map>
 #include <mutex>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
 #include <lair/core/path.h>
 
 
@@ -39,43 +41,58 @@ namespace lair
 class Aspect;
 class Asset;
 class AssetManager;
+class Loader;
 
 typedef std::shared_ptr<Aspect> AspectSP;
 typedef std::weak_ptr  <Aspect> AspectWP;
 typedef std::shared_ptr<Asset>  AssetSP;
 typedef std::weak_ptr  <Asset>  AssetWP;
+typedef std::shared_ptr<Loader> LoaderSP;
 
 
 class Aspect {
 public:
+	enum {
+		WARNED_INVALID = 0x01,
+	};
+
+public:
 	Aspect(AssetSP asset);
 	Aspect(const Aspect&)  = delete;
 	Aspect(      Aspect&&) = delete;
-	virtual ~Aspect() = default;
+	virtual ~Aspect();
 
 	Aspect& operator=(const Aspect&)  = delete;
 	Aspect& operator=(      Aspect&&) = delete;
+
+	virtual bool isValid() const = 0;
+	inline bool isLoading() const { return bool(_loader); }
+
+	void warnIfInvalid(Logger& log);
 
 //	virtual std::string aspectName() const = 0;
 
 //	virtual Size cpuMemory() const = 0;
 //	virtual Size gpuMemory() const = 0;
 
-	AssetSP asset() { return _asset; }
+	inline AssetSP asset() { return _asset; }
 
 //	inline const AspectWP nextAspect() const {
 //		return _nextAspect;
 //	}
 
-
 //	inline void _setNextAspect(const AspectWP& aspect) {
 //		_nextAspect = aspect;
 //	}
 
+	inline LoaderSP _getLoader() { return _loader; }
+	inline void _setLoader(LoaderSP loader) { _loader = loader; }
+
 protected:
 	AssetSP    _asset;      // Asset must not be destroyed before its aspects.
+	unsigned   _flags;
+	LoaderSP   _loader;
 //	AspectWP   _nextAspect;
-	mutable std::mutex _lock;
 };
 
 
@@ -83,7 +100,6 @@ template<typename T>
 class GenericAspect : public Aspect {
 public:
 	typedef T Data;
-	typedef std::shared_ptr<Data> DataSP;
 
 public:
 	GenericAspect(AssetSP asset)
@@ -93,28 +109,25 @@ public:
 
 	GenericAspect(const GenericAspect&)  = delete;
 	GenericAspect(      GenericAspect&&) = delete;
-	~GenericAspect() = default;
+	virtual ~GenericAspect() = default;
 
 	GenericAspect& operator=(const GenericAspect&)  = delete;
 	GenericAspect& operator=(      GenericAspect&&) = delete;
 
-	const DataSP get() const {
-		std::lock_guard<std::mutex> lock(_lock);
+	virtual bool isValid() const {
+		return _data.isValid();
+	}
+
+	const Data& get() const {
 		return _data;
 	}
 
-	DataSP _get() {
-		std::lock_guard<std::mutex> lock(_lock);
+	Data& _get() {
 		return _data;
-	}
-
-	void _set(DataSP data){
-		std::lock_guard<std::mutex> lock(_lock);
-		_data = data;
 	}
 
 private:
-	DataSP _data;
+	Data _data;
 };
 
 
@@ -140,6 +153,9 @@ public:
 
 	template<typename _Aspect, typename... Args>
 	std::shared_ptr<_Aspect> createAspect(Args&&... args);
+
+	template<typename _Aspect, typename... Args>
+	std::shared_ptr<_Aspect> getOrCreateAspect(Args&&... args);
 
 	inline AssetManager* manager() {
 		return _manager;
@@ -173,17 +189,22 @@ public:
 	AssetManager& operator=(const AssetManager&)  = delete;
 	AssetManager& operator=(      AssetManager&&) = delete;
 
-	AssetSP createAsset(const Path& logicPath);
-	AssetSP getAsset   (const Path& logicPath);
+	AssetSP createAsset     (const Path& logicPath);
+	AssetSP getAsset        (const Path& logicPath);
+	AssetSP getOrCreateAsset(const Path& logicPath);
 
 	AspectSP getAspect(const std::type_info& aspectTypeInfo, AssetSP asset);
 	void setAspect(AssetSP asset, AspectSP aspect);
+	AspectSP getOrSetAspect(AssetSP asset, AspectSP aspect);
 
 	template<typename _Aspect>
 	std::shared_ptr<_Aspect> getAspect(AssetSP asset);
 
-	template<typename _Aspect>
-	std::shared_ptr<_Aspect> createAspect(AssetSP asset);
+	template<typename _Aspect, typename... Args>
+	std::shared_ptr<_Aspect> createAspect(AssetSP asset, Args&&... args);
+
+	template<typename _Aspect, typename... Args>
+	std::shared_ptr<_Aspect> getOrCreateAspect(AssetSP asset, Args&&... args);
 
 	void releaseAll();
 
@@ -212,9 +233,14 @@ inline std::shared_ptr<_Aspect> Asset::aspect() {
 template<typename _Aspect, typename... Args>
 std::shared_ptr<_Aspect> Asset::createAspect(Args&&... args) {
 	AssetSP asset = shared_from_this();
-	auto aspect = std::make_shared<_Aspect>(asset, std::forward<Args>(args)...);
-	_manager->setAspect(asset, aspect);
-	return aspect;
+	return _manager->createAspect<_Aspect>(asset, std::forward<Args>(args)...);
+}
+
+
+template<typename _Aspect, typename... Args>
+std::shared_ptr<_Aspect> Asset::getOrCreateAspect(Args&&... args) {
+	AssetSP asset = shared_from_this();
+	return _manager->getOrCreateAspect<_Aspect>(asset, std::forward<Args>(args)...);
 }
 
 
@@ -222,6 +248,21 @@ std::shared_ptr<_Aspect> Asset::createAspect(Args&&... args) {
 template<typename _Aspect>
 inline std::shared_ptr<_Aspect> AssetManager::getAspect(AssetSP asset) {
 	return std::static_pointer_cast<_Aspect>(getAspect(typeid(_Aspect), asset));
+}
+
+
+template<typename _Aspect, typename... Args>
+inline std::shared_ptr<_Aspect> AssetManager::createAspect(AssetSP asset, Args&&... args) {
+	auto aspect = std::make_shared<_Aspect>(asset, std::forward<Args>(args)...);
+	setAspect(asset, aspect);
+	return aspect;
+}
+
+
+template<typename _Aspect, typename... Args>
+inline std::shared_ptr<_Aspect> AssetManager::getOrCreateAspect(AssetSP asset, Args&&... args) {
+	auto aspect = std::make_shared<_Aspect>(asset, std::forward<Args>(args)...);
+	return std::static_pointer_cast<_Aspect>(getOrSetAspect(asset, aspect));
 }
 
 

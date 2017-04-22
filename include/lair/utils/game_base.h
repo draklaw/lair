@@ -30,6 +30,7 @@
 #include <lair/core/log.h>
 #include <lair/core/json.h>
 #include <lair/core/path.h>
+#include <lair/core/property.h>
 #include <lair/core/asset_manager.h>
 #include <lair/core/loader.h>
 
@@ -49,6 +50,22 @@ namespace lair {
 class GameState;
 
 
+class GameConfigBase {
+public:
+	GameConfigBase();
+	~GameConfigBase() = default;
+
+	virtual void setFromArgs(int& argc, char** argv);
+	virtual const PropertyList& properties() const;
+
+	static const PropertyList& staticProperties();
+
+public:
+	bool fullscreen;
+	bool vSync;
+};
+
+
 class GameBase {
 public:
 	GameBase(int argc, char** argv);
@@ -61,6 +78,8 @@ public:
 
 	Path dataPath() const;
 
+	LdlPropertySerializer& serializer();
+
 	SysModule*     sys();
 	Window*        window();
 
@@ -72,7 +91,7 @@ public:
 
 	AudioModule*   audio();
 
-	void initialize();
+	void initialize(GameConfigBase& config);
 	void shutdown();
 
 	void setNextState(GameState* state);
@@ -91,9 +110,12 @@ protected:
 	OStreamLogger _fileBackend;
 	Logger        _logger;
 
+	int           _argc;
+	char**        _argv;
+
 	Path          _dataPath;
 
-	Json::Value   _config;
+	LdlPropertySerializer _serializer;
 
 	std::unique_ptr<SysModule>
 	              _sys;

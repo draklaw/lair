@@ -36,11 +36,11 @@ MainState::MainState(Game* game)
 
       _mainPass(renderer()),
 
-      _entities(log()),
+      _entities(log(), _game->serializer()),
       _spriteRenderer(renderer()),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
-      _tileLayers(&_mainPass, &_spriteRenderer),
+      _tileLayers(loader(), &_mainPass, &_spriteRenderer),
 
       _inputs(sys(), &log()),
 
@@ -80,19 +80,23 @@ void MainState::initialize() {
 	_modelRoot = _entities.createEntity(_entities.root(), "modelRoot");
 
 	// TODO: load stuff.
-	AssetSP tileMapAsset = loader()->loadSync<TileMapLoader>("map.json");
-	_tileMap = tileMapAsset->aspect<TileMapAspect>()->get();
+	AssetSP tileMapAsset = loader()->load<TileMapLoader>("map.json")->asset();
+	_tileMap = tileMapAsset->aspect<TileMapAspect>();
 
 	_tileLayer = _entities.createEntity(_entities.root(), "tile_layer");
 	TileLayerComponent* tileLayerComp = _tileLayers.addComponent(_tileLayer);
 	tileLayerComp->setTileMap(_tileMap);
 //	_tileLayer.place(Vector3(120, 90, .5));
 
-	EntityRef sprite = loadEntity("sprite.json", _entities.root());
-	sprite.place(Vector3(120, 90, .5));
+	loadEntities("entities.ldl", _entities.root());
 
-	EntityRef text = loadEntity("text.json", _entities.root());
-	text.place(Vector3(160, 90, .5));
+	EntityRef sprite = _entities.findByName("sprite");
+	EntityRef text   = _entities.findByName("text");
+
+	if(sprite.isValid())
+		log().info("Entity \"", sprite.name(), "\" found.");
+	if(text.isValid())
+		log().info("Entity \"", text.name(), "\" found.");
 
 	loader()->load<SoundLoader>("sound.ogg");
 	//loader()->load<MusicLoader>("music.ogg");
@@ -156,7 +160,10 @@ void MainState::startGame() {
 
 
 void MainState::updateTick() {
+	loader()->finalizePending();
+
 	_inputs.sync();
+	_entities.setPrevWorldTransforms();
 
 	if(_quitInput->justPressed()) {
 		quit();
@@ -172,6 +179,8 @@ void MainState::updateFrame() {
 	// Rendering
 	Context* glc = renderer()->context();
 
+	_texts.createTextures();
+	_tileLayers.createTextures();
 	renderer()->uploadPendingTextures();
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
@@ -206,22 +215,22 @@ void MainState::resizeEvent() {
 }
 
 
-EntityRef MainState::loadEntity(const Path& path, EntityRef parent, const Path& cd) {
-	Path localPath = make_absolute(cd, path);
+bool MainState::loadEntities(const Path& path, EntityRef parent, const Path& cd) {
+	Path localPath = makeAbsolute(cd, path);
 	log().info("Load entity \"", localPath, "\"");
 
-	Json::Value json;
 	Path realPath = game()->dataPath() / localPath;
-	if(!parseJson(json, realPath, localPath, log())) {
-		return EntityRef();
+	Path::IStream in(realPath.native().c_str());
+	if(!in.good()) {
+		log().error("Unable to read \"", localPath, "\".");
+		return false;
 	}
+	ErrorList errors;
+	LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
 
-	if(!parent.isValid()) {
-		parent = _modelRoot;
-	}
+	bool success = _entities.loadEntitiesFromLdl(parser, parent);
 
-	EntityRef entity = _entities.createEntity(parent);
-	_entities.initializeFromJson(entity, json, localPath.dir());
+	errors.log(log());
 
-	return entity;
+	return success;
 }

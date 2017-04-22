@@ -43,23 +43,31 @@ BitmapFontLoader::~BitmapFontLoader() {
 }
 
 
+void BitmapFontLoader::commit() {
+	BitmapFontAspectSP aspect = std::static_pointer_cast<BitmapFontAspect>(_aspect);
+	aspect->_get() = std::move(_font);
+	Loader::commit();
+}
+
+
 void BitmapFontLoader::loadSyncImpl(Logger& log) {
-	Json::Value json;
-	if(!parseJson(json, realPath(), asset()->logicPath(), log)) {
+	if(!parseJson(_fontDesc, realPath(), asset()->logicPath(), log)) {
 		return;
 	}
 
-	Json::Value imgPathValue = json.get("image", Json::nullValue);
+	Json::Value imgPathValue = _fontDesc.get("image", Json::nullValue);
 	Path imgPath = imgPathValue.isString()? imgPathValue.asString():
 	                                        asset()->logicPath().withExtension("png");
-	imgPath = make_absolute(asset()->logicPath().dir(), imgPath);
 
-	AssetSP imgAsset = _manager->loadSync<ImageLoader>(imgPath);
-
-	BitmapFontAspectSP aspect = std::static_pointer_cast<BitmapFontAspect>(_aspect);
-	aspect->_set(std::make_shared<BitmapFont>(json, imgAsset));
-
-	_success();
+	_load<ImageLoader>(imgPath, [this](AspectSP imgAspect, Logger& log) {
+		if(imgAspect->isValid()) {
+			_font = std::move(BitmapFont(_fontDesc, imgAspect->asset()));
+		}
+		else {
+			log.error("Error while loading BitmapFont \"", asset()->logicPath(),
+			          "\": failed to load image \"", imgAspect->asset()->logicPath(), "\".");
+		}
+	});
 }
 
 
@@ -98,6 +106,29 @@ void BitmapTextComponent::setFont(const Path& logicPath) {
 }
 
 
+const PropertyList& BitmapTextComponent::properties() {
+	static PropertyList props;
+	if(props.nProperties() == 0) {
+		props.addProperty("font",
+		                  &BitmapTextComponent::fontPath,
+		                  &BitmapTextComponent::setFont);
+		props.addProperty("text",
+		                  &BitmapTextComponent::text,
+		                  &BitmapTextComponent::setText);
+		props.addProperty("color",
+		                  &BitmapTextComponent::color,
+		                  &BitmapTextComponent::setColor);
+		props.addProperty("size",
+		                  &BitmapTextComponent::size,
+		                  &BitmapTextComponent::setSize);
+		props.addProperty("anchor",
+		                  &BitmapTextComponent::anchor,
+		                  &BitmapTextComponent::setAnchor);
+	}
+	return props;
+}
+
+
 //---------------------------------------------------------------------------//
 
 
@@ -125,7 +156,7 @@ BitmapTextComponent* BitmapTextComponentManager::addComponentFromJson(
         EntityRef entity, const Json::Value& json, const Path& cd) {
 	BitmapTextComponent* comp = addComponent(entity);
 	if(json.isMember("font")) {
-		comp->setFont(make_absolute(cd, json["font"].asString()));
+		comp->setFont(makeAbsolute(cd, json["font"].asString()));
 	}
 	if(json.isMember("text")) {
 		comp->setText(json["text"].asString());
@@ -159,80 +190,13 @@ BitmapTextComponent* BitmapTextComponentManager::addComponentFromJson(
 }
 
 
-BitmapTextComponent* BitmapTextComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	BitmapTextComponent* baseComp = get(base);
-	BitmapTextComponent* comp = _addComponent(entity, baseComp);
-	comp->setFont( baseComp->font());
-	comp->setText( baseComp->text());
-	comp->setColor(baseComp->color());
-	return comp;
+void BitmapTextComponentManager::createTextures() {
+	for(BitmapTextComponent& comp: *this) {
+		BitmapFontAspectSP font = comp.font();
+		if(font && !comp.texture() && font->isValid())
+			comp._setTexture(_spriteRenderer->createTexture(font->get().image()));
+	}
 }
-
-
-//void BitmapTextComponentManager::render(float interp, const OrthographicCamera& camera) {
-//	compactArray();
-//	//sortArray(TODO);
-
-//	RenderPass::DrawStates states;
-//	states.shader = _spriteRenderer->shader().shader;
-//	states.buffer = _spriteRenderer->buffer();
-//	states.format = _spriteRenderer->format();
-//	states.textureFlags = Texture::NEAREST | Texture::CLAMP;
-//	states.blendingMode = BLEND_ALPHA;
-
-//	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
-//	            _spriteRenderer->shader(), camera.transform(), 0);
-
-//	for(auto& entityComp: *this) {
-//		BitmapTextComponent& comp = entityComp;
-
-//		if(!comp.isEnabled()
-//		|| !comp.font()    || !comp.font()   ->get() || !comp.font()   ->get()->isValid()
-//		/*|| !comp.texture() || !comp.texture()->get() || !comp.texture()->get()->isValid()*/) {
-//			continue;
-//		}
-//		BitmapFontSP font = comp.font()->get();
-
-//		Matrix4 wt = lerp(interp,
-//						  comp._entity()->prevWorldTransform.matrix(),
-//						  comp._entity()->worldTransform.matrix());
-
-//		// FIXME: Find a way to get rid of this - we should not upload stuff here.
-//		if(!comp.texture()) {
-//			comp._setTexture(_spriteRenderer->createTexture(font->image()));
-//			_spriteRenderer->renderer()->uploadPendingTextures();
-//		}
-//		TextureSP tex = comp.texture()->_get();
-
-//		int width = (comp.size()(0) > 0)? comp.size()(0): 999999;
-//		TextLayout layout = font->layoutText(comp.text(), width);
-//		unsigned index = _spriteRenderer->indexCount();
-//		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
-//			unsigned cp = layout.glyph(i).codepoint;
-//			Vector2 pos = layout.glyph(i).pos;
-//			const BitmapFont::Glyph& glyph = font->glyph(cp);
-
-//			Vector2 size = glyph.size;
-
-//			pos(0) += glyph.offset(0);
-//			pos(1) += font->height() - size(1) - glyph.offset(1)
-//			        + layout.box().sizes()(1);
-//			pos -= layout.box().sizes().cwiseProduct(comp.anchor());
-//			Box2 coords(pos, pos + size);
-
-//			_spriteRenderer->addSprite(wt, coords, comp.color(), glyph.region);
-//		}
-//		unsigned count = _spriteRenderer->indexCount() - index;
-
-//		if(count) {
-//			states.texture      = tex;
-
-//			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
-//			                                        camera.viewBox().max()(2));
-//			_renderPass->addDrawCall(states, params, depth, index, count);
-//		}
-//	}
-//}
 
 
 void BitmapTextComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
@@ -259,37 +223,48 @@ SpriteRenderer* BitmapTextComponentManager::spriteRenderer() const {
 
 
 void BitmapTextComponentManager::_render(EntityRef entity, float interp, const OrthographicCamera& camera) {
-	if ( !entity.isEnabled() )
+	if(!entity.isEnabled())
 		return;
 
 	BitmapTextComponent* comp = get(entity);
-	if(comp && comp->isEnabled()
-	&& comp->font() && comp->font()->get() && comp->font()->get()->isValid()) {
-		BitmapFontSP font = comp->font()->get();
+	BitmapFontAspectSP   fontAspect;
+	TextureAspectSP      texAspect;
+
+	if(comp && comp->isEnabled()) {
+		fontAspect = comp->font();
+		if(fontAspect && !fontAspect->isValid()) {
+			fontAspect->warnIfInvalid(_loader->log());
+			fontAspect.reset();
+		}
+	}
+
+	if(fontAspect) {
+		texAspect = comp->texture();
+		if(texAspect && !texAspect->isValid()) {
+			texAspect->warnIfInvalid(_loader->log());
+			texAspect = _spriteRenderer->defaultTexture();
+		}
+	}
+
+	if(texAspect) {
+		const BitmapFont& font = fontAspect->get();
 
 		Matrix4 wt = lerp(interp,
 						  comp->_entity()->prevWorldTransform.matrix(),
 						  comp->_entity()->worldTransform.matrix());
 
-		// FIXME: Find a way to get rid of this - we should not upload stuff here.
-		if(!comp->texture()) {
-			comp->_setTexture(_spriteRenderer->createTexture(font->image()));
-			_spriteRenderer->renderer()->uploadPendingTextures();
-		}
-		TextureSP tex = comp->texture()->_get();
-
-		int width = (comp->size()(0) > 0)? comp->size()(0): 999999;
-		TextLayout layout = font->layoutText(comp->text(), width);
+		unsigned width = (comp->size()(0) > 0)? comp->size()(0): 999999;
+		TextLayout layout = font.layoutText(comp->text(), width);
 		unsigned index = _spriteRenderer->indexCount();
 		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
 			unsigned cp = layout.glyph(i).codepoint;
 			Vector2 pos = layout.glyph(i).pos;
-			const BitmapFont::Glyph& glyph = font->glyph(cp);
+			const BitmapFont::Glyph& glyph = font.glyph(cp);
 
 			Vector2 size = glyph.size;
 
 			pos(0) += glyph.offset(0);
-			pos(1) += font->height() - size(1) - glyph.offset(1)
+			pos(1) += font.height() - size(1) - glyph.offset(1)
 			        + layout.box().sizes()(1);
 			pos -= layout.box().sizes().cwiseProduct(comp->anchor());
 			Box2 coords(pos, pos + size);
@@ -299,7 +274,7 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 		unsigned count = _spriteRenderer->indexCount() - index;
 
 		if(count) {
-			_states.texture      = tex;
+			_states.texture      = &texAspect->_get();
 
 			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
 			            _spriteRenderer->shader(), camera.transform(), 0, Vector4i(1, 1, 65536, 65536));

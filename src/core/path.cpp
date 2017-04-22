@@ -36,14 +36,26 @@ namespace lair {
 
 #if defined(_WIN32) && !defined(_MSC_VER)
 
-WinFStream::WinFStream(const wchar_t* filename)
+WinIFStream::WinIFStream(const wchar_t* filename)
 	: std::istream(),
 	  _buf(_wfopen(filename, L"r"), std::ios_base::in),
 	  _orig(basic_ios::rdbuf(&_buf)){
 }
 
 
-WinFStream::~WinFStream() {
+WinIFStream::~WinIFStream() {
+	basic_ios::rdbuf(_orig);
+	_buf.close();
+}
+
+WinOFStream::WinOFStream(const wchar_t* filename)
+	: std::istream(),
+	  _buf(_wfopen(filename, L"w"), std::ios_base::out),
+	  _orig(basic_ios::rdbuf(&_buf)){
+}
+
+
+WinOFStream::~WinOFStream() {
 	basic_ios::rdbuf(_orig);
 	_buf.close();
 }
@@ -64,6 +76,9 @@ char Path::directory_separator = '/';
 #else
 char Path::directory_separator = '\\';
 #endif
+
+Path::Path() {
+}
 
 Path::Path(const char* utf8Path)
     : _path(utf8Path) {
@@ -124,6 +139,13 @@ Path& Path::operator/=(const Path& path) {
 }
 
 
+Path operator/(const Path& lp, const Path& rp) {
+	Path p(lp);
+	p /= rp;
+	return p;
+}
+
+
 void Path::makePreferred() {
 #ifdef _WIN32
 	for(char& c: _path) {
@@ -160,6 +182,68 @@ void Path::replaceExtension(const std::string& newExt) {
 }
 
 
+bool Path::normalize() {
+	char* begin = &_path[0];
+	char* end   = begin + _path.size();
+	char* cp0   = begin;
+	char* cp1   = begin;
+
+	if(cp0 < end && isDirectorySeparator(*cp0)) {
+		*(cp1++) = *(cp0++);
+	}
+
+	while(cp0 < end) {
+		// Skip duplicated separators and "./"
+		while((cp0 < end && isDirectorySeparator(*cp0))
+		   || (cp0+1 < end && cp0[0] == '.' && isDirectorySeparator(cp0[1]))) {
+			++cp0;
+		}
+
+		// Look for the end of this segment.
+		char* segEnd = cp0;
+		while(segEnd < end && !isDirectorySeparator(*segEnd))
+			++segEnd;
+
+		unsigned count = segEnd - cp0;
+		char* rewind = nullptr;
+		if(cp1 != begin && count && strncmp(cp0, "..", count) == 0) {
+			if(cp1 == begin + 1 && isDirectorySeparator(*begin)) {
+				// We try to rewind past the root !
+				_path.clear();
+				return false;
+			}
+
+			// Rewind...
+			rewind = cp1 - 1;
+			while(rewind-1 >= begin && !isDirectorySeparator(rewind[-1]))
+				--rewind;
+
+			// If the previous segment is .., keep everything. Otherwise, rewind.
+			if(strncmp(rewind, "..", 2) == 0) {
+				rewind = nullptr;
+			}
+		}
+
+		if(!rewind) {
+			while(cp0 < segEnd)
+				*(cp1++) = *(cp0++);
+
+			if(cp0 < end && isDirectorySeparator(*cp0)) {
+				*(cp1++) = *(cp0++);
+			}
+		}
+		else {
+			cp0 = segEnd;
+			cp1 = rewind;
+		}
+	}
+
+	_path.resize(cp1 - begin);
+
+	return true;
+}
+
+
 Path Path::dir() const {
 	Path p = *this;
 	p.removeFilename();
@@ -174,17 +258,10 @@ Path Path::withExtension(const std::string& newExt) const {
 }
 
 
-Path operator/(const Path& lp, const Path& rp) {
-	Path p(lp);
-	p /= rp;
-	return p;
-}
-
-
-Path make_absolute(const Path& cd, const Path& path) {
-	if(path.isAbsolute())
-		return path;
-	return cd / path;
+Path Path::normalized() const {
+	Path path(*this);
+	path.normalize();
+	return path;
 }
 
 
@@ -195,5 +272,17 @@ bool Path::isDirectorySeparator(char c) {
 	return (c == '/') || (c == '\\');
 #endif
 }
+
+
+Path makeAbsolute(const Path& cd, const Path& path) {
+	Path abs = path;
+	if(!path.isAbsolute())
+		abs = cd / path;
+	abs.normalize();
+	return abs;
+}
+
+
+const Path emptyPath;
 
 }

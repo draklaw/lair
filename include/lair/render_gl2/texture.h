@@ -24,6 +24,7 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/metatype.h>
 #include <lair/core/asset_manager.h>
 
 #include <lair/render_gl2/gl.h>
@@ -41,38 +42,39 @@ class Image;
 class Texture {
 public:
 	enum {
-		MAG_NEAREST        = 0 << 1,
-		MAG_LINEAR         = 1 << 1,
+		MAG_NEAREST        = 0 << 0,
+		MAG_LINEAR         = 1 << 0,
 
-		MIN_NEAREST        = 0 << 2,
-		MIN_LINEAR         = 1 << 2,
+		MIN_NEAREST        = 0 << 1,
+		MIN_LINEAR         = 1 << 1,
 
-		MIPMAP_NONE        = 0 << 3,
-		MIPMAP_NEAREST     = 1 << 3,
-		MIPMAP_LINEAR      = 2 << 3,
+		MIPMAP_NONE        = 0 << 2,
+		MIPMAP_NEAREST     = 1 << 2,
+		MIPMAP_LINEAR      = 2 << 2,
 
 		NEAREST            = MAG_NEAREST | MIN_NEAREST | MIPMAP_NONE,
 		BILINEAR_NO_MIPMAP = MAG_LINEAR  | MIN_LINEAR  | MIPMAP_NONE,
 		BILINEAR_MIPMAP    = MAG_LINEAR  | MIN_LINEAR  | MIPMAP_NEAREST,
 		TRILINEAR          = MAG_LINEAR  | MIN_LINEAR  | MIPMAP_LINEAR,
 
-		REPEAT_S           = 0 << 5,
-		CLAMP_S            = 1 << 5,
-		MIRROR_S           = 2 << 5,
+		REPEAT_S           = 0 << 4,
+		CLAMP_S            = 1 << 4,
+		MIRROR_S           = 2 << 4,
 
-		REPEAT_T           = 0 << 7,
-		CLAMP_T            = 1 << 7,
-		MIRROR_T           = 2 << 7,
+		REPEAT_T           = 0 << 6,
+		CLAMP_T            = 1 << 6,
+		MIRROR_T           = 2 << 6,
 
 		REPEAT             = REPEAT_S | REPEAT_T,
 		CLAMP              =  CLAMP_S |  CLAMP_T,
 		MIRROR             = MIRROR_S | MIRROR_T,
 
-		MAG_MASK           = (1 << 1),
-		MIN_MASK           = (1 << 2),
-		MIPMAP_MASK        = (1 << 3) | (1 << 4),
-		WRAP_S_MASK        = (1 << 5) | (1 << 6),
-		WRAP_T_MASK        = (1 << 7) | (1 << 8),
+		MAG_MASK           = (1 << 0),
+		MIN_MASK           = (1 << 1),
+		MIPMAP_MASK        = (1 << 2) | (1 << 3),
+		FILTER_MASK        = MAG_MASK | MIN_MASK | MIPMAP_MASK,
+		WRAP_S_MASK        = (1 << 4) | (1 << 5),
+		WRAP_T_MASK        = (1 << 6) | (1 << 7),
 		WRAP_MASK          = WRAP_S_MASK | WRAP_T_MASK
 	};
 
@@ -105,6 +107,8 @@ public:
 
 	void _release();
 	inline GLuint _glId() { return _id; }
+
+	static const FlagsInfo* flagsInfo();
 
 protected:
 	Context*       _context;

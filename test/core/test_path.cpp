@@ -19,45 +19,21 @@
  */
 
 
-#ifndef _LAIR_SYS_SDL2_IMAGE_LOADER_H
-#define _LAIR_SYS_SDL2_IMAGE_LOADER_H
+#include <gtest/gtest.h>
 
-
-#include <lair/core/lair.h>
-#include <lair/core/image.h>
 #include <lair/core/path.h>
-#include <lair/core/asset_manager.h>
-#include <lair/core/loader.h>
 
 
-namespace lair
-{
+using namespace lair;
 
-
-class ImageLoader : public Loader {
-public:
-	typedef ImageAspect Aspect;
-
-public:
-	ImageLoader(LoaderManager* manager, AspectSP aspect);
-	ImageLoader(const ImageLoader&) = delete;
-	ImageLoader(ImageLoader&&)      = delete;
-	virtual ~ImageLoader() = default;
-
-	ImageLoader& operator=(const ImageLoader&) = delete;
-	ImageLoader& operator=(ImageLoader&&)      = delete;
-
-	virtual void commit();
-
-protected:
-	virtual void loadSyncImpl(Logger& log);
-
-protected:
-	Image _image;
-};
-
-
+TEST(PathTest, Normalize) {
+	ASSERT_EQ(Path("/foo/bar"), Path("/foo/bar").normalized());
+	ASSERT_EQ(Path("foo/bar/"), Path("foo/bar/").normalized());
+	ASSERT_EQ(Path("foo/bar/"), Path("./foo/bar/").normalized());
+	ASSERT_EQ(Path("/foo/bar/"), Path("////.//./foo///.//././/bar//././//./").normalized());
+	ASSERT_EQ(Path("/bar"), Path("/foo/../bar").normalized());
+	ASSERT_EQ(Path("bar/"), Path("foo/../bar/").normalized());
+	ASSERT_EQ(Path("../foo/bar"), Path("../foo/bar").normalized());
+	ASSERT_EQ(Path("../bar/"), Path("foo/../../bar/").normalized());
+	ASSERT_EQ(Path(), Path("/foo/../../bar").normalized());
 }
-
-
-#endif

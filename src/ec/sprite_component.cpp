@@ -78,6 +78,38 @@ void SpriteComponent::setTexture(const Path& logicPath) {
 }
 
 
+const PropertyList& SpriteComponent::properties() {
+	static PropertyList props;
+	if(props.nProperties() == 0) {
+		props.addProperty("texture",
+		                  &SpriteComponent::texturePath,
+		                  &SpriteComponent::setTexture);
+		props.addProperty("anchor",
+		                  &SpriteComponent::anchor,
+		                  &SpriteComponent::setAnchor);
+		props.addProperty("color",
+		                  &SpriteComponent::color,
+		                  &SpriteComponent::setColor);
+		props.addProperty("tile_grid",
+		                  &SpriteComponent::tileGridSize,
+		                  &SpriteComponent::setTileGridSize);
+		props.addProperty("tile_index",
+		                  &SpriteComponent::tileIndex,
+		                  &SpriteComponent::setTileIndex);
+		props.addProperty("view",
+		                  &SpriteComponent::view,
+		                  &SpriteComponent::setView);
+		props.addProperty("blend", blendingModeInfo(),
+		                  &SpriteComponent::blendingMode,
+		                  &SpriteComponent::setBlendingMode);
+		props.addProperty("texture_flags", Texture::flagsInfo(),
+		                  &SpriteComponent::textureFlags,
+		                  &SpriteComponent::setTextureFlags);
+	}
+	return props;
+}
+
+
 Box2 SpriteComponent::_texCoords() const {
 	Vector2i nTiles = _tileGridSize.cwiseMax(Vector2i(1, 1));
 	return boxView(tileBox(nTiles, _tileIndex), _view);
@@ -119,7 +151,7 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
                                                   const Path& cd) {
 	SpriteComponent* comp = addComponent(entity);
 	if(json.isMember("sprite")) {
-		comp->setTexture(make_absolute(cd, json["sprite"].asString()));
+		comp->setTexture(makeAbsolute(cd, json["sprite"].asString()));
 	}
 	if(json.isMember("anchor")) {
 		Json::Value anchor = json["anchor"];
@@ -184,69 +216,6 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
 }
 
 
-SpriteComponent* SpriteComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	SpriteComponent* baseComp = get(base);
-	SpriteComponent* comp = _addComponent(entity, baseComp);
-	comp->setTexture(     baseComp->texture());
-	comp->setAnchor(      baseComp->anchor());
-	comp->setColor(       baseComp->color());
-	comp->setTileGridSize(baseComp->tileGridSize());
-	comp->setTileIndex(   baseComp->tileIndex());
-	comp->setView(        baseComp->view());
-	comp->setBlendingMode(baseComp->blendingMode());
-	comp->setTextureFlags(baseComp->textureFlags());
-	return comp;
-}
-
-
-//void SpriteComponentManager::render(float interp, const OrthographicCamera& camera) {
-//	sortArray(SpriteComponent::_renderCompare);
-
-//	RenderPass::DrawStates states;
-//	states.shader = _spriteRenderer->shader().shader;
-//	states.buffer = _spriteRenderer->buffer();
-//	states.format = _spriteRenderer->format();
-
-//	const ShaderParameter* params = _spriteRenderer->addShaderParameters(
-//	            _spriteRenderer->shader(), camera.transform(), 0);
-
-//	for(SpriteComponent& sc: *this) {
-//		// TODO: culling
-//		if(!sc.isEnabled()
-//		|| !sc.texture() || !sc.texture()->get() || !sc.texture()->get()->isValid()) {
-//			continue;
-//		}
-
-//		TextureSP tex = sc.texture()->_get();
-
-//		Matrix4 wt = lerp(interp,
-//		                  sc._entity()->prevWorldTransform.matrix(),
-//		                  sc._entity()->worldTransform.matrix());
-
-//		const Box2& texCoords = sc._texCoords();
-//		Scalar w = tex->width()  * texCoords.sizes()(0);
-//		Scalar h = tex->height() * texCoords.sizes()(1);
-//		Vector2 offset(-w * sc.anchor().x(),
-//		               -h * sc.anchor().y());
-//		Box2 coords(offset, Vector2(w, h) + offset);
-
-//		unsigned index = _spriteRenderer->indexCount();
-//		_spriteRenderer->addSprite(wt, coords, sc.color(), texCoords);
-//		unsigned count = _spriteRenderer->indexCount() - index;
-
-//		if(count) {
-//			states.texture      = tex;
-//			states.textureFlags = sc.textureFlags();
-//			states.blendingMode = sc.blendingMode();
-
-//			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
-//			                                        camera.viewBox().max()(2));
-//			_renderPass->addDrawCall(states, params, depth, index, count);
-//		}
-//	}
-//}
-
-
 void SpriteComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
 	compactArray();
 
@@ -278,17 +247,26 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		return;
 
 	SpriteComponent* sc = get(entity);
-	if(sc && sc->isEnabled()
-	&& sc->texture() && sc->texture()->get() && sc->texture()->get()->isValid()) {
-		TextureSP tex = sc->texture()->_get();
+	TextureAspectSP  texAspect;
+
+	if(sc && sc->isEnabled()) {
+		texAspect = sc->texture();
+		if(texAspect && !texAspect->isValid()) {
+			texAspect->warnIfInvalid(_loader->log());
+			texAspect = _spriteRenderer->defaultTexture();
+		}
+	}
+
+	if(texAspect) {
+		const Texture& tex = texAspect->get();
 
 		Matrix4 wt = lerp(interp,
 		                  sc->_entity()->prevWorldTransform.matrix(),
 		                  sc->_entity()->worldTransform.matrix());
 
 		Box2 texCoords = sc->_texCoords();
-		Scalar w = tex->width()  * texCoords.sizes()(0);
-		Scalar h = tex->height() * texCoords.sizes()(1);
+		Scalar w = tex.width()  * texCoords.sizes()(0);
+		Scalar h = tex.height() * texCoords.sizes()(1);
 		Vector2 offset(-w * sc->anchor().x(),
 		               -h * sc->anchor().y());
 		Box2 coords(offset, Vector2(w, h) + offset);
@@ -300,12 +278,12 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		unsigned count = _spriteRenderer->indexCount() - index;
 
 		if(count) {
-			_states.texture      = tex;
+			_states.texture      = &texAspect->_get();
 			_states.textureFlags = sc->textureFlags();
 			_states.blendingMode = sc->blendingMode();
 
 			Vector4i tileInfo;
-			tileInfo << sc->tileGridSize(), tex->width(), tex->height();
+			tileInfo << sc->tileGridSize(), tex.width(), tex.height();
 			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
 			            _spriteRenderer->shader(), camera.transform(), 0, tileInfo);
 

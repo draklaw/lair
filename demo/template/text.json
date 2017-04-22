@@ -1,9 +1,0 @@
-{
-    "name":   "text",
-    "text": {
-        "font":         "droid_sans_24.json",
-        "text":         "Lair\nEngine\n.$.¢.€.𐍈.\névènement",
-        "color":        [ 0.75, 0.1, 0.1, 1 ],
-        "anchor":       [ 0, 0.5 ]
-    }
-}

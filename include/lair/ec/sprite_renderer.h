@@ -117,6 +117,7 @@ public:
 	        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo);
 
 	TextureAspectSP createTexture(AssetSP asset);
+	TextureAspectSP defaultTexture() const;
 
 	Renderer* renderer();
 

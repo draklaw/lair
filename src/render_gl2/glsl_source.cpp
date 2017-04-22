@@ -57,7 +57,7 @@ void GlslSource::loadFromString(const std::string& source) {
 	_string = new GLchar*[1];
 	_string[0] = new GLchar[_length[0]+1];
 
-	std::strcpy(_string[0], source.c_str());
+	std::strncpy(_string[0], source.c_str(), _length[0]+1);
 //	GLchar* p = _string[0];
 //	for(auto c: source)
 //		*(p++) = c;
