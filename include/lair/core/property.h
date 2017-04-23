@@ -194,12 +194,12 @@ protected:
 class PropertyList {
 public:
 	PropertyList()  = default;
-	PropertyList(const PropertyList&)  = delete;
-	PropertyList(      PropertyList&&) = delete;
+	PropertyList(const PropertyList&)  = default;
+	PropertyList(      PropertyList&&) = default;
 	~PropertyList() = default;
 
-	PropertyList& operator=(const PropertyList&)  = delete;
-	PropertyList& operator=(      PropertyList&&) = delete;
+	PropertyList& operator=(const PropertyList&)  = default;
+	PropertyList& operator=(      PropertyList&&) = default;
 
 	unsigned nProperties() const;
 	/// Return -1 if there is no property with that name.
@@ -288,8 +288,8 @@ public:
 	}
 
 private:
-	typedef std::unique_ptr<Property>                 PropertyUP;
-	typedef std::vector<PropertyUP>                   PropertyVector;
+	typedef std::shared_ptr<Property>                 PropertySP;
+	typedef std::vector<PropertySP>                   PropertyVector;
 	typedef std::unordered_map<std::string, unsigned> PropertyMap;
 
 private:

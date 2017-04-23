@@ -81,7 +81,9 @@ BitmapTextComponent::BitmapTextComponent(Manager* manager, _Entity* entity)
       _text(),
       _color(1, 1, 1, 1),
       _size(0, 0),
-      _anchor(0, 0) {
+      _anchor(0, 0),
+      _blendingMode(BLEND_NONE),
+      _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::CLAMP) {
 }
 
 
@@ -124,6 +126,12 @@ const PropertyList& BitmapTextComponent::properties() {
 		props.addProperty("anchor",
 		                  &BitmapTextComponent::anchor,
 		                  &BitmapTextComponent::setAnchor);
+		props.addProperty("blend", blendingModeInfo(),
+		                  &BitmapTextComponent::blendingMode,
+		                  &BitmapTextComponent::setBlendingMode);
+		props.addProperty("texture_flags", Texture::flagsInfo(),
+		                  &BitmapTextComponent::textureFlags,
+		                  &BitmapTextComponent::setTextureFlags);
 	}
 	return props;
 }
@@ -275,6 +283,8 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 
 		if(count) {
 			_states.texture      = &texAspect->_get();
+			_states.textureFlags = comp->textureFlags();
+			_states.blendingMode = comp->blendingMode();
 
 			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
 			            _spriteRenderer->shader(), camera.transform(), 0, Vector4i(1, 1, 65536, 65536));

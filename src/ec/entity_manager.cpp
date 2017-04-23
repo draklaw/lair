@@ -156,6 +156,11 @@ bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 				success = false;
 			}
 		}
+		else if(key == "enabled") {
+			bool enabled = true;
+			if(ldlRead(parser, enabled))
+				entity.setEnabled(enabled);
+		}
 		else if(key == "children") {
 			success &= loadEntitiesFromLdl(parser, entity);
 		}

@@ -69,6 +69,9 @@ bool Context::initialize() {
 	log().info("OpenGL vendor: ",       getString(GL_VENDOR));
 	log().info("OpenGL renderer: ",     getString(GL_RENDERER));
 
+	glEnable(gl::DEPTH_TEST);
+	glDepthFunc(gl::LEQUAL);
+
 	return true;
 }
 

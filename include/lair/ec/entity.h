@@ -255,6 +255,14 @@ public:
 		return transform().matrix().block<2, 1>(0, 3);
 	}
 
+	inline Vector3 translation3() const {
+		return transform().matrix().block<3, 1>(0, 3);
+	}
+
+	inline Eigen::Block<Matrix4, 3, 1> translation3() {
+		return transform().matrix().block<3, 1>(0, 3);
+	}
+
 	inline Transform computeWorldTransform() const {
 		if(parent().isValid()) {
 			return parent().computeWorldTransform() * _entity->transform;
@@ -283,6 +291,10 @@ public:
 		place(Transform(Translation(pos)));
 	}
 
+	inline void place(const Vector2& pos) {
+		place(Transform(Translation((Vector3() << pos, transform()(2, 3)).finished())));
+	}
+
 	inline void moveTo(const Transform& transform) {
 		lairAssert(isValid());
 //		lairAssert(_entity->transform);
@@ -291,6 +303,10 @@ public:
 
 	inline void moveTo(const Vector3& pos) {
 		moveTo(Transform(Translation(pos)));
+	}
+
+	inline void moveTo(const Vector2& pos) {
+		moveTo(Transform(Translation((Vector3() << pos, transform()(2, 3)).finished())));
 	}
 
 	inline void translate(const Vector2& trans) {
