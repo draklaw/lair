@@ -51,6 +51,11 @@ public:
 
 public:
 	LdlParser(std::istream* stream, const String& streamName, ErrorList* errors, Context context = CTX_LIST);
+	LdlParser(const LdlParser&) = delete;
+	LdlParser(LdlParser&&) = delete;
+
+	LdlParser& operator=(const LdlParser&) = delete;
+	LdlParser& operator=(LdlParser&&) = delete;
 
 	inline Context context() const {
 		return _contextStack.back();
@@ -179,7 +184,21 @@ private:
 
 	bool nextState();
 	void _next() {
-		while(!nextState());
+//		static const char* s[] = {
+//				"ST_EXPECT_VALUE",
+//				"ST_EXPECT_SEP_END",
+//				"ST_EXPECT_KEY",
+//				"ST_EXPECT_ASSIGN",
+//				"ST_CHECK_IF_TYPE",
+//				"ST_END_NOW"
+//		};
+
+// 		dbgLogger.error("State from: ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
+		while(!nextState()) {
+// 			dbgLogger.error("State step: ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
+		}
+// 		dbgLogger.error("State end : ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
+// 		dbgLogger.warning(_buf.line(), ": ", _buf.col(), ": ", typeName(_type));
 	}
 
 	// Errors:

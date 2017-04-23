@@ -351,7 +351,7 @@ bool LdlParser::isParentContextList() const {
 bool LdlParser::nextState() {
 	if(_state == ST_END_NOW) {
 		_type = TYPE_END;
-		_state = isContextList()? ST_EXPECT_VALUE: ST_EXPECT_KEY;
+		_state = ST_EXPECT_SEP_END;//isContextList()? ST_EXPECT_VALUE: ST_EXPECT_KEY;
 		return true;
 	}
 
