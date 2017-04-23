@@ -29,6 +29,8 @@
 
 #if defined(_WIN32) && !defined(_MSC_VER)
 #include <ext/stdio_filebuf.h>
+#else
+#include <fstream>
 #endif
 
 #include <boost/functional/hash.hpp>
