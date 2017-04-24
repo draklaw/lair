@@ -337,7 +337,7 @@ void LoaderManager::_waitLoadEvent() {
 void LoaderManager::_finalize(LoaderList::iterator loaderIt) {
 	LoaderSP loader = *loaderIt;
 
-	log().info("Finalize \"", loader->asset()->logicPath(), "\"...");
+//	log().info("Finalize \"", loader->asset()->logicPath(), "\"...");
 	loader->commit();
 
 	Loader::CallbackList callbacks;
