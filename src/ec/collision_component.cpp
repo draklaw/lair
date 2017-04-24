@@ -298,14 +298,14 @@ CollisionComponent* CollisionComponentManager::cloneComponent(EntityRef base, En
 
 
 void CollisionComponentManager::findCollisions(HitEventQueue& hitQueue) {
-	compactArray();
+//	compactArray();
 
 	// TODO: Less brute-force approach.
 	// TODO: Support shapes other than aligned boxes
 	HitEvent hit;
 	for(int ci0 = 0; ci0 < int(nComponents()); ++ci0) {
 		CollisionComponent& c0 = _components[ci0];
-		if(!c0.entity().isEnabledRec() || !c0.isEnabled()
+		if(!c0.isAlive() || !c0.entity().isEnabledRec() || !c0.isEnabled()
 		|| !c0.shape() || c0.shape()->type() != SHAPE_ALIGNED_BOX)
 			continue;
 		hit.entities[0] = c0.entity();
@@ -313,11 +313,11 @@ void CollisionComponentManager::findCollisions(HitEventQueue& hitQueue) {
 		for(int ci1 = ci0 + 1; ci1 < int(nComponents()); ++ci1) {
 			CollisionComponent& c1 = _components[ci1];
 
-			if(!c1.entity().isEnabledRec() || !c1.isEnabled()
-			|| !c1.shape() || c1.shape()->type() != SHAPE_ALIGNED_BOX
+			if(!c1.shape() || c1.shape()->type() != SHAPE_ALIGNED_BOX
 			|| (c0.hitMask() & c1.hitMask())    == 0
 			|| (c0.hitMask() & c1.ignoreMask()) != 0
-			|| (c1.hitMask() & c0.ignoreMask()) != 0)
+			|| (c1.hitMask() & c0.ignoreMask()) != 0
+			|| !c1.entity().isEnabledRec() || !c1.isEnabled())
 				continue;
 			hit.entities[1] = c1.entity();
 

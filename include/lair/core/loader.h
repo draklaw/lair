@@ -165,11 +165,11 @@ public:
 		}
 		else if(aspect->isValid()) {
 			loader = Loader::newLoaderDone(this, aspect);
-			{
-				std::unique_lock<std::mutex> lk(_queueLock);
-				_wipList.push_back(loader);
-			}
-			_notifyReady();
+//			{
+//				std::unique_lock<std::mutex> lk(_queueLock);
+//				_wipList.push_back(loader);
+//			}
+//			_notifyReady();
 			return loader;
 		}
 		else {
@@ -276,10 +276,12 @@ LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback) {
 	}
 
 	auto loader = _manager->load<L>(makeAbsolute(asset()->logicPath().dir(), logicPath));
-	loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
-		callback(aspect, log);
-		_done();
-	});
+	if(loader) {
+		loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
+			callback(aspect, log);
+			_done();
+		});
+	}
 
 	return loader;
 }
