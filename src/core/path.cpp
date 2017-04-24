@@ -49,7 +49,7 @@ WinIFStream::~WinIFStream() {
 }
 
 WinOFStream::WinOFStream(const wchar_t* filename)
-	: std::istream(),
+	: std::ostream(),
 	  _buf(_wfopen(filename, L"w"), std::ios_base::out),
 	  _orig(basic_ios::rdbuf(&_buf)){
 }
