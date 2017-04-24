@@ -195,6 +195,41 @@ void EntityRef::destroy() {
 }
 
 
+void _updateWorldTransformsHelper(_Entity* entity, const Transform& parentTransform) {
+	entity->worldTransform = parentTransform * entity->transform;
+
+	_Entity* child = entity->firstChild;
+	while(child) {
+		_updateWorldTransformsHelper(child, entity->worldTransform);
+		child = child->nextSibling;
+	}
+}
+
+
+void EntityRef::updateWorldTransformRec() {
+	updateWorldTransform();
+	_updateWorldTransformsHelper(_entity, Transform::Identity());
+}
+
+
+void _setPrevWorldTransformsHelper(_Entity* entity, const Transform& parentTransform) {
+	entity->worldTransform = parentTransform * entity->transform;
+	entity->prevWorldTransform = entity->worldTransform;
+
+	_Entity* child = entity->firstChild;
+	while(child) {
+		_setPrevWorldTransformsHelper(child, entity->worldTransform);
+		child = child->nextSibling;
+	}
+}
+
+
+void EntityRef::setPrevWorldTransformRec() {
+	updateWorldTransform();
+	_setPrevWorldTransformsHelper(_entity, Transform::Identity());
+}
+
+
 EntityRef EntityRef::clone(EntityRef newParent, const char* newName) const {
 	lairAssert(isValid());
 	EntityRef entity = _entity->manager->cloneEntity(*this, newParent, newName);
