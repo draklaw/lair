@@ -247,19 +247,11 @@ public:
 		return Transform(interpMatrix(interp));
 	}
 
-	inline Vector2 translation2() const {
+	inline Vector2 position2() const {
 		return transform().matrix().block<2, 1>(0, 3);
 	}
 
-	inline Eigen::Block<Matrix4, 2, 1> translation2() {
-		return transform().matrix().block<2, 1>(0, 3);
-	}
-
-	inline Vector3 translation3() const {
-		return transform().matrix().block<3, 1>(0, 3);
-	}
-
-	inline Eigen::Block<Matrix4, 3, 1> translation3() {
+	inline Vector3 position3() const {
 		return transform().matrix().block<3, 1>(0, 3);
 	}
 
@@ -288,16 +280,19 @@ public:
 		lairAssert(isValid());
 //		lairAssert(_entity->transform);
 		/* * */_entity->transform = transform;
-		_entity->worldTransform = computeWorldTransform();
-		_entity->prevWorldTransform = _entity->worldTransform;
+		setPrevWorldTransform();
 	}
 
-	inline void place(const Vector3& pos) {
-		place(Transform(Translation(pos)));
+	inline void placeAt(const Vector3& pos) {
+		lairAssert(isValid());
+		moveTo(pos);
+		setPrevWorldTransform();
 	}
 
-	inline void place(const Vector2& pos) {
-		place(Transform(Translation((Vector3() << pos, transform()(2, 3)).finished())));
+	inline void placeAt(const Vector2& pos) {
+		lairAssert(isValid());
+		moveTo(pos);
+		setPrevWorldTransform();
 	}
 
 	inline void moveTo(const Transform& transform) {
@@ -307,11 +302,13 @@ public:
 	}
 
 	inline void moveTo(const Vector3& pos) {
-		moveTo(Transform(Translation(pos)));
+		lairAssert(isValid());
+		_entity->transform.translation() = pos;
 	}
 
 	inline void moveTo(const Vector2& pos) {
-		moveTo(Transform(Translation((Vector3() << pos, transform()(2, 3)).finished())));
+		lairAssert(isValid());
+		_entity->transform.translation() << pos, 0;
 	}
 
 	inline void translate(const Vector2& trans) {
