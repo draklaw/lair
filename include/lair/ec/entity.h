@@ -236,6 +236,18 @@ public:
 		return /* * */_entity->worldTransform;
 	}
 
+	inline Vector2 interpPosition2(float interp) const {
+		lairAssert(isValid());
+		return lerp(interp, _entity->prevWorldTransform.matrix().block<2, 1>(0, 3).eval(),
+		                    _entity->worldTransform    .matrix().block<2, 1>(0, 3).eval());
+	}
+
+	inline Vector3 interpPosition3(float interp) const {
+		lairAssert(isValid());
+		return lerp(interp, _entity->prevWorldTransform.matrix().block<3, 1>(0, 3).eval(),
+		                    _entity->worldTransform    .matrix().block<3, 1>(0, 3).eval());
+	}
+
 	inline Matrix4 interpMatrix(float interp) const {
 		lairAssert(isValid());
 		return lerp(interp, _entity->prevWorldTransform.matrix(),
@@ -308,7 +320,7 @@ public:
 
 	inline void moveTo(const Vector2& pos) {
 		lairAssert(isValid());
-		_entity->transform.translation() << pos, 0;
+		_entity->transform.translation().head<2>() = pos;
 	}
 
 	inline void translate(const Vector2& trans) {
