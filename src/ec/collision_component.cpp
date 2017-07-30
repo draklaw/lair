@@ -176,7 +176,8 @@ bool intersectABoxABox(const Shape& shape0, const Shape& shape1, Vector2* penetr
 	Box2 i = box0.intersection(box1);
 	if(!i.isEmpty()) {
 		if(penetration) {
-			assert(false);
+			// FIXME: Comput penetration.
+			*penetration = Vector2::Zero();
 		}
 		return true;
 	}

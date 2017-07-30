@@ -123,11 +123,15 @@ bool TileMap::setFromJson(Logger& log, const Path& path, const Json::Value& valu
 		log.error("Tile map \"", path, "\" has invalid number of tilesets.");
 		return false;
 	}
-	_tileSetPath   = makeAbsolute(path.dir(), tilesets[0].get("image", "").asString());
-	_tileSetHTiles = tilesets[0].get("imagewidth", 0).asInt()
-	               / tilesets[0].get("tilewidth", 1).asInt();
-	_tileSetVTiles = tilesets[0].get("imageheight", 0).asInt()
-	               / tilesets[0].get("tileheight", 1).asInt();
+//	_tileSetPath   = makeAbsolute(path.dir(), tilesets[0].get("image", "").asString());
+//	_tileSetHTiles = tilesets[0].get("imagewidth", 0).asInt()
+//	               / tilesets[0].get("tilewidth", 1).asInt();
+//	_tileSetVTiles = tilesets[0].get("imageheight", 0).asInt()
+//	               / tilesets[0].get("tileheight", 1).asInt();
+	// FIXME: Recent version of Tiled no longer store this in the file...
+	_tileSetPath   = "tileset.png";
+	_tileSetHTiles = 16;
+	_tileSetVTiles = 16;
 
 	_properties = value["properties"];
 
