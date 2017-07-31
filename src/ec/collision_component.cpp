@@ -89,6 +89,14 @@ void Shape::setTransformed(Shape& dst, const Matrix4& transform) const {
 	dst._points.resize(_points.size());
 	for(unsigned i = 0; i < _points.size(); ++i)
 		dst._points[i] = (transform * (Vector4() << _points[i], 0, 1).finished()).head<2>();
+
+	if(_type == SHAPE_ALIGNED_BOX) {
+		Box2 box;
+		box.extend(dst.point(0));
+		box.extend(dst.point(1));
+		dst._points[0] = box.min();
+		dst._points[1] = box.max();
+	}
 }
 
 
