@@ -215,7 +215,9 @@ protected:
 			: _self(self) {}
 
 		inline bool operator()(const HitEvent& hit) const {
-			return _self->get(hit.entities[0])->isDirty()
+			return !hit.entities[0].isValid()
+			    || !hit.entities[1].isValid()
+			    || _self->get(hit.entities[0])->isDirty()
 			    || _self->get(hit.entities[1])->isDirty();
 		}
 

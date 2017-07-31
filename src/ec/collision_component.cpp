@@ -609,7 +609,7 @@ CollisionComponent* CollisionComponentManager::cloneComponent(EntityRef base, En
 
 
 void CollisionComponentManager::findCollisions() {
-//	compactArray();
+	compactArray();
 
 	// Set all unusable shapes dirty: this will remove their elements from the list.
 	for(unsigned ci0 = 0; ci0 < nComponents(); ++ci0) {
