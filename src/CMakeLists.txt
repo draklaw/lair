@@ -101,6 +101,7 @@ set(lair_SOURCES
 	core/asset_manager.cpp
 	core/loader.cpp
 	core/bitmap_font.cpp
+	core/shapes.cpp
 
 	utils/input.cpp
 	utils/interp_loop.cpp
@@ -134,6 +135,7 @@ set(lair_SOURCES
 	ec/bitmap_text_component.cpp
 	ec/tile_layer_component.cpp
 	ec/collision_component.cpp
+#	ec/shape_component.cpp
 )
 
 set(lair_py_SOURCES

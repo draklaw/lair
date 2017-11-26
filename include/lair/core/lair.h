@@ -180,6 +180,17 @@ inline T setBits(T flags, B bits, bool enable) {
 }
 
 
+template<typename Derived>
+Eigen::WithFormat<Derived> fmt(const Eigen::DenseBase<Derived>& m) {
+	static Eigen::IOFormat vFormat(Eigen::StreamPrecision,
+	                               Eigen::DontAlignCols,
+	                               ", ", ", ", "", "", "[", "]");
+	static Eigen::IOFormat mFormat(Eigen::StreamPrecision);
+	if(m.cols() == 1 || m.rows() == 1)
+		return m.format(vFormat);
+	return m.format(mFormat);
+}
+
 }
 
 #endif

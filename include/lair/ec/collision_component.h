@@ -25,6 +25,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/ldl.h>
+#include <lair/core/shapes.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
@@ -43,82 +44,97 @@ enum Direction {
 };
 
 
-enum ShapeType {
-	SHAPE_ORIENTED_LINE,
+enum Shape2DType {
+	SHAPE_NONE,
+	SHAPE_SPHERE,
 	SHAPE_ALIGNED_BOX,
-	SHAPE_CIRCLE,
-//	SHAPE_CAPSULE,
-	SHAPE_POLYGON,
+	SHAPE_ORIENTED_BOX,
 };
 
-
-class Shape;
-typedef std::shared_ptr<Shape> ShapeSP;
-typedef std::vector<ShapeSP> ShapeSPVector;
-
-class Shape {
+class Shape2D {
 public:
-	Shape(ShapeType type = SHAPE_POLYGON, float radius = 0);
+	inline Shape2D()
+	    : _type(SHAPE_NONE)
+	    , _shape(nullptr)
+	{}
 
-	static ShapeSP newOrientedLine(const Vector2& p0, const Vector2& p1);
-	static ShapeSP newAlignedBox(const Box2& box);
-	static ShapeSP newCircle(const Vector2& center, float radius);
-	static ShapeSP newCircle(const Box2& box);
+	inline Shape2D(const Sphere2& sphere)
+	    : _type(SHAPE_SPHERE)
+	    , _shape(new Sphere2(sphere))
+	{}
 
-	Shape(const Shape&)  = delete;
-	Shape(      Shape&&) = default;
-	~Shape() = default;
+	inline Shape2D(const AlignedBox2& box)
+	    : _type(SHAPE_ALIGNED_BOX)
+	    , _shape(new AlignedBox2(box))
+	{}
 
-	Shape& operator=(const Shape&)  = delete;
-	Shape& operator=(      Shape&&) = default;
+	inline Shape2D(const OrientedBox2& oBox)
+	    : _type(SHAPE_ORIENTED_BOX)
+	    , _shape(new OrientedBox2(oBox))
+	{}
 
-	ShapeType      type() const             { return _type; }
-	Scalar         radius() const           { return _radius; }
-	unsigned       nPoints() const          { return _points.size(); }
-	const Vector2& point(unsigned pi) const { return _points[pi]; }
+	Shape2D(const Shape2D& other);
+	Shape2D(Shape2D&& other);
 
-	Box2 boundingBox() const;
+	~Shape2D();
 
-	Box2 abox() const {
-		assert(_type == SHAPE_ALIGNED_BOX);
-		return Box2(point(0), point(1));
+	Shape2D& operator=(Shape2D other);
+
+	inline Shape2DType type()   const { return _type; }
+	inline bool isValid()       const { return _type != SHAPE_NONE; }
+	inline bool isSphere()      const { return _type == SHAPE_SPHERE; }
+	inline bool isAlignedBox()  const { return _type == SHAPE_ALIGNED_BOX; }
+	inline bool isOrientedBox() const { return _type == SHAPE_ORIENTED_BOX; }
+
+	inline const Sphere2& asSphere() const {
+		lairAssert(isSphere());
+		return *static_cast<Sphere2*>(_shape);
 	}
 
-	Vector2 aboxCorner(unsigned i) const {
-		assert(_type == SHAPE_ALIGNED_BOX);
-		assert(i < 4);
-		return Vector2(point(i & 0x01)(0), point((i >> 1) & 0x01)(1));
+	inline const AlignedBox2& asAlignedBox() const {
+		lairAssert(isAlignedBox());
+		return *static_cast<AlignedBox2*>(_shape);
 	}
 
-	void setTransformed(Shape& dst, const Matrix4& transform) const;
+	inline const OrientedBox2& asOrientedBox() const {
+		lairAssert(isOrientedBox());
+		return *static_cast<OrientedBox2*>(_shape);
+	}
 
-private:
-	typedef std::vector<Vector2> PointVector;
+	Shape2D transformed(const Matrix3& transform) const;
 
-private:
-	ShapeType   _type;
-	Scalar      _radius;
-	PointVector _points;
+	inline Shape2D transformed(const Matrix4& transform) const {
+		Matrix3 m;
+		m << transform.topLeftCorner<2, 2>(), transform.topRightCorner<2, 1>(),
+		     0, 0, 1;
+		return transformed(m);
+	}
+
+	inline Shape2D transformed(const Transform& transform) const {
+		return transformed(transform.matrix());
+	}
+
+	AlignedBox2 boundingBox() const;
+
+	bool intersect(const Shape2D& other, Vector2* position = 0) const;
+
+	void swap(Shape2D& other);
+
+protected:
+	Shape2DType _type;
+	void*       _shape;
 };
 
-bool intersectOLineOLine    (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectOLineABox     (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectOLineCircle   (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectOLinePolygon  (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectABoxABox      (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectABoxCircle    (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectABoxPolygon   (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectCircleCircle  (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectCirclePolygon (const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
-bool intersectPolygonPolygon(const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
+std::ostream& operator<<(std::ostream& out, const Shape2D& shape);
 
-bool intersect(const Shape& shape0, const Shape& shape1, Vector2* penetration=0);
+typedef std::vector<Shape2D> Shape2DVector;
 
-bool ldlRead(LdlParser& parser, ShapeSP& value);
-bool ldlWrite(LdlWriter& writer, const ShapeSP& value);
 
-bool ldlRead(LdlParser& parser, ShapeSPVector& value);
-bool ldlWrite(LdlWriter& writer, const ShapeSPVector& value);
+bool ldlRead(LdlParser& parser, Shape2D& value);
+bool ldlWrite(LdlWriter& writer, const Shape2D& value);
+
+bool ldlRead(LdlParser& parser, Shape2DVector& value);
+bool ldlWrite(LdlWriter& writer, const Shape2DVector& value);
 
 
 class CollisionComponent;
@@ -130,7 +146,7 @@ public:
 	typedef CollisionComponentManager Manager;
 
 public:
-	CollisionComponent(Manager* manager, _Entity* entity, const ShapeSPVector& shape = ShapeSPVector());
+	CollisionComponent(Manager* manager, _Entity* entity, const Shape2DVector& shape = Shape2DVector());
 	CollisionComponent(const CollisionComponent&) = delete;
 	CollisionComponent(CollisionComponent&&)      = default;
 	~CollisionComponent() = default;
@@ -138,9 +154,9 @@ public:
 	CollisionComponent& operator=(const CollisionComponent&) = delete;
 	CollisionComponent& operator=(CollisionComponent&&)      = default;
 
-	inline const ShapeSPVector& shapes() const  { return _shapes; }
-	inline void setShapes(const ShapeSPVector& shapes) { _shapes = shapes; }
-	inline void addShape(const ShapeSP& shape) { _shapes.push_back(shape); }
+	inline const Shape2DVector& shapes() const  { return _shapes; }
+	inline void setShapes(const Shape2DVector& shapes) { _shapes = shapes; }
+	inline void addShape(const Shape2D& shape) { _shapes.push_back(shape); }
 
 	inline unsigned hitMask() const          { return _hitMask; }
 	inline void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
@@ -148,28 +164,23 @@ public:
 	inline unsigned ignoreMask() const             { return _ignoreMask; }
 	inline void setIgnoreMask(unsigned ignoreMask) { _ignoreMask = ignoreMask; }
 
-//	inline float penetration(Direction dir) const { return _penetration[dir]; }
-//	inline void setPenetration(Direction dir, float penetration) { _penetration[dir] = penetration; }
-
 	inline bool isDirty() const { return _dirty; }
 	inline void setDirty(bool dirty = true) { _dirty= dirty; }
 
 	static const PropertyList& properties();
 
 protected:
-	ShapeSPVector _shapes;
+	Shape2DVector _shapes;
 	unsigned      _hitMask;
 	unsigned      _ignoreMask;
 	bool          _dirty;
-//	float         _penetration[N_DIRECTIONS];
 };
 
 
 class HitEvent {
 public:
 	EntityRef entities[2];
-//	ShapeSP   shapes[2];
-	Vector2   penetration; // entities[1] -> entities[2]
+	Vector2   position;
 };
 typedef std::vector<HitEvent> HitEventVector;
 typedef std::deque<HitEvent> HitEventQueue;
@@ -186,21 +197,17 @@ public:
 	CollisionComponentManager& operator=(const CollisionComponentManager&)  = delete;
 	CollisionComponentManager& operator=(      CollisionComponentManager&&) = delete;
 
-	virtual CollisionComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                                 const Path& cd=Path());
-	virtual CollisionComponent* cloneComponent(EntityRef base, EntityRef entity);
-
 	inline const HitEventVector& hitEvents() const { return _hitEvents; }
 	void findCollisions();
 
-	bool hitTest(std::deque<EntityRef>& hits, const Box2& box, unsigned hitMask = 0x01);
+	bool hitTest(std::deque<EntityRef>& hits, const AlignedBox2& box, unsigned hitMask = 0x01);
 	bool hitTest(std::deque<EntityRef>& hits, const Vector2& p, unsigned hitMask = 0x01);
 
 protected:
 	struct _Element {
 		CollisionComponent* comp;
-		Shape               shape;
-		Box2                box;
+		Shape2D             shape;
+		AlignedBox2         box;
 	};
 	typedef std::vector<_Element> _ElementVector;
 
@@ -233,8 +240,8 @@ protected:
 }
 
 
-LAIR_REGISTER_METATYPE(lair::ShapeSP, "Shape");
-LAIR_REGISTER_METATYPE(lair::ShapeSPVector, "ShapeList");
+LAIR_REGISTER_METATYPE(lair::Shape2D, "Shape2D");
+LAIR_REGISTER_METATYPE(lair::Shape2DVector, "Shape2DList");
 
 
 #endif
