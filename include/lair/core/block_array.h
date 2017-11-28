@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_EC_DENSE_ARRAY_H
-#define _LAIR_EC_DENSE_ARRAY_H
+#ifndef _LAIR_CORE_BLOCK_ARRAY_H
+#define _LAIR_CORE_BLOCK_ARRAY_H
 
 
 #include <vector>
@@ -34,7 +34,7 @@ namespace lair
 
 
 template < typename T >
-class DenseArray {
+class BlockArray {
 public:
 	typedef T          value_type;
 	typedef ptrdiff_t  difference_type;
@@ -45,7 +45,7 @@ public:
 	typedef const T*   const_pointer;
 
 	typedef T                 Value;
-	typedef DenseArray<Value> Self;
+	typedef BlockArray<Value> Self;
 
 public:
 
@@ -160,24 +160,24 @@ public:
 	};
 
 public:
-	DenseArray(size_t componentBlockSize)
-	    : _blockSize(componentBlockSize),
+	BlockArray(size_t blockSize)
+	    : _blockSize(blockSize),
 	      _size(0),
 	      _blocks() {
 	}
 
-	DenseArray(const DenseArray&) = delete;
-	DenseArray(DenseArray&&)      = delete;
+	BlockArray(const BlockArray&) = delete;
+	BlockArray(BlockArray&&)      = delete;
 
-	~DenseArray() {
+	~BlockArray() {
 		clear();
 		for(Value* block: _blocks) {
 			Eigen::internal::aligned_free(block);
 		}
 	}
 
-	DenseArray& operator=(const DenseArray&) = delete;
-	DenseArray& operator=(DenseArray&&)      = delete;
+	BlockArray& operator=(const BlockArray&) = delete;
+	BlockArray& operator=(BlockArray&&)      = delete;
 
 	size_t size() const { return _size; }
 	size_t capacity() const { return _blocks.size() * _blockSize; }

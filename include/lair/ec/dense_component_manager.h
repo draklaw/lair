@@ -25,10 +25,10 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/property.h>
+#include <lair/core/block_array.h>
 
 #include <lair/ec/entity.h>
 #include <lair/ec/component_manager.h>
-#include <lair/ec/dense_array.h>
 
 
 namespace lair
@@ -41,7 +41,7 @@ public:
 	typedef _Component Component;
 	typedef DenseComponentManager<Component> Self;
 
-	typedef DenseArray<Component> ComponentArray;
+	typedef BlockArray<Component> ComponentArray;
 	typedef std::vector<size_t> SortBuffer;
 
 	class Iterator {

@@ -400,7 +400,18 @@ const PropertyList& CollisionComponent::properties() {
 
 CollisionComponentManager::CollisionComponentManager(size_t componentBlockSize)
 	: DenseComponentManager<CollisionComponent>("collision", componentBlockSize)
+    , _quadTree(AlignedBox2(Vector2(0, 0), Vector2(4096, 4096)))
 {
+}
+
+
+void CollisionComponentManager::setBounds(const AlignedBox2& bounds) {
+	for(unsigned ci0 = 0; ci0 < nComponents(); ++ci0) {
+		// QuadTree::reset clears the tree, so mark nodes dirty so they are re-inserted.
+		_components[ci0].setDirty();
+	}
+
+	_quadTree.reset(bounds);
 }
 
 
@@ -416,15 +427,14 @@ void CollisionComponentManager::findCollisions() {
 	}
 
 	// Filter out dirty elements.
-	auto dirtyElementsBegin = std::remove_if(_elements.begin(), _elements.end(), _FilterDirtyElement());
-	unsigned firstDirtyElement = dirtyElementsBegin - _elements.begin();
-	_elements.erase(dirtyElementsBegin, _elements.end());
+	_quadTree.filterIf(_FilterDirtyElement());
 
 	// Filter out hitEvents with a dirty Entity.
 	auto dirtyEventsBegin = std::remove_if(_hitEvents.begin(), _hitEvents.end(), _FilterDirty(this));
 	_hitEvents.erase(dirtyEventsBegin, _hitEvents.end());
 
 	// Update dirty entities
+	HitEvent hit;
 	for(unsigned ci0 = 0; ci0 < nComponents(); ++ci0) {
 		CollisionComponent& c0 = _components[ci0];
 
@@ -432,41 +442,29 @@ void CollisionComponentManager::findCollisions() {
 		if(!c0.isAlive() || !c0.isDirty() || !c0.isEnabled() || !c0.entity().isEnabledRec())
 			continue;
 
+		c0.setDirty(false);
+
 		for(const Shape2D& shape: c0.shapes()) {
-			_Element element;
-			element.comp  = &c0;
-			element.shape = shape.transformed(c0.entity().worldTransform());
-			element.box   = element.shape.boundingBox();
+			_Element e0;
+			e0.comp  = &c0;
+			e0.shape = shape.transformed(c0.entity().worldTransform());
+			e0.box   = e0.shape.boundingBox();
 
-			_elements.push_back(std::move(element));
-		}
-	}
+			_quadTree.hitTest(e0.box, [&hit, &e0, this](_Element& e1) {
+				if(e0.comp != e1.comp
+				&& (e0.comp->hitMask() & e1.comp->hitMask())    != 0
+				&& (e0.comp->hitMask() & e1.comp->ignoreMask()) == 0
+				&& (e1.comp->hitMask() & e0.comp->ignoreMask()) == 0
+				&& e0.shape.intersect(e1.shape, &hit.position)) {
+					hit.entities[0] = e0.comp->entity();
+					hit.entities[1] = e1.comp->entity();
+					_hitEvents.push_back(hit);
+				}
 
-	// Broad-phase: append candidates
-	// TODO: Broad-phase.
+				return false;
+			});
 
-	// Test collisions
-	HitEvent hit;
-	for(unsigned ei0 = 0; ei0 < _elements.size(); ++ei0) {
-		_Element& e0 = _elements[ei0];
-
-		e0.comp->setDirty(false);
-
-		for(unsigned ei1 = std::max(ei0 + 1, firstDirtyElement); ei1 < _elements.size(); ++ei1) {
-			_Element& e1 = _elements[ei1];
-
-			if(e0.comp == e1.comp
-			|| (e0.comp->hitMask() & e1.comp->hitMask())    == 0
-			|| (e0.comp->hitMask() & e1.comp->ignoreMask()) != 0
-			|| (e1.comp->hitMask() & e0.comp->ignoreMask()) != 0)
-				continue;
-
-
-			if(e0.shape.intersect(e1.shape, &hit.position)) {
-				hit.entities[0] = e0.comp->entity();
-				hit.entities[1] = e1.comp->entity();
-				_hitEvents.push_back(hit);
-			}
+			_quadTree.insert(e0);
 		}
 	}
 }
@@ -474,19 +472,17 @@ void CollisionComponentManager::findCollisions() {
 
 bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const AlignedBox2& box, unsigned hitMask) {
 	bool found = false;
-	for(unsigned ei = 0; ei < _elements.size(); ++ei) {
-		_Element& e = _elements[ei];
 
-		if((hitMask & e.comp->hitMask())    == 0
-		|| (hitMask & e.comp->ignoreMask()) != 0)
-			continue;
-
-		Shape2D boxShape(box);
-		if(e.shape.intersect(boxShape)) {
+	_quadTree.hitTest(box, [&hits, hitMask, &found](_Element& e) {
+		if((hitMask & e.comp->hitMask())    != 0
+		&& (hitMask & e.comp->ignoreMask()) == 0) {
 			hits.push_back(e.comp->entity());
 			found = true;
 		}
-	}
+
+		return false;
+	});
+
 	return found;
 }
 

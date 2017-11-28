@@ -34,8 +34,8 @@
 #include <lair/core/path.h>
 #include <lair/core/property.h>
 #include <lair/core/loader.h>
+#include <lair/core/block_array.h>
 
-#include <lair/ec/dense_array.h>
 #include <lair/ec/component_manager.h>
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>
@@ -98,7 +98,7 @@ public:
 	Logger& log() { return _logger; }
 
 protected:
-	typedef DenseArray<_Entity> EntityArray;
+	typedef BlockArray<_Entity> EntityArray;
 	typedef std::vector<ComponentManager*> CompManagerArray;
 	typedef std::unordered_map<std::string, ComponentManager*> CompManagerMap;
 

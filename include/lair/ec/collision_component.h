@@ -26,6 +26,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/ldl.h>
 #include <lair/core/shapes.h>
+#include <lair/core/octree.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
@@ -197,6 +198,8 @@ public:
 	CollisionComponentManager& operator=(const CollisionComponentManager&)  = delete;
 	CollisionComponentManager& operator=(      CollisionComponentManager&&) = delete;
 
+	void setBounds(const AlignedBox2& bounds);
+
 	inline const HitEventVector& hitEvents() const { return _hitEvents; }
 	void findCollisions();
 
@@ -205,11 +208,18 @@ public:
 
 protected:
 	struct _Element {
+		typedef float Scalar;
+		enum {
+			Dim = 2,
+		};
+
+		inline const AlignedBox2& boundingBox() { return box; }
+
 		CollisionComponent* comp;
 		Shape2D             shape;
 		AlignedBox2         box;
 	};
-	typedef std::vector<_Element> _ElementVector;
+	typedef Octree<_Element> QuadTree;
 
 	struct _FilterDirtyElement {
 		inline bool operator()(const _Element& element) const {
@@ -232,7 +242,7 @@ protected:
 	};
 
 protected:
-	_ElementVector _elements;
+	QuadTree       _quadTree;
 	HitEventVector _hitEvents;
 };
 
