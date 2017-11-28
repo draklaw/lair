@@ -102,6 +102,10 @@ public:
 	Octree& operator=(const Octree& ) = delete;
 	Octree& operator=(      Octree&&) = delete;
 
+	inline Box bounds() const {
+		return Box(*_root);
+	}
+
 	template<typename... Args>
 	inline Object* insert(Args... args) {
 		Item* item = _items.construct(std::forward<Args>(args)...);

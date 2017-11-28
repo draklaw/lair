@@ -198,6 +198,7 @@ public:
 	CollisionComponentManager& operator=(const CollisionComponentManager&)  = delete;
 	CollisionComponentManager& operator=(      CollisionComponentManager&&) = delete;
 
+	inline AlignedBox2 bounds() const { return _quadTree.bounds(); }
 	void setBounds(const AlignedBox2& bounds);
 
 	inline const HitEventVector& hitEvents() const { return _hitEvents; }
