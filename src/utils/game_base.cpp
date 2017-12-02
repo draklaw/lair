@@ -38,6 +38,7 @@ namespace lair {
 GameConfigBase::GameConfigBase()
     : fullscreen(false)
     , vSync     (true)
+    , windowSize(1280, 720)
 {
 }
 
@@ -45,7 +46,7 @@ void GameConfigBase::setFromArgs(int& argc, char** argv) {
 	int last = 1;
 	for(int argi = 1; argi < argc; ++ argi) {
 		char* arg = argv[argi];
-		if(std::strcmp(arg, "--fullscreen") == 0) {
+		if(std::strcmp(arg, "-f") == 0 || std::strcmp(arg, "--fullscreen") == 0) {
 			fullscreen = true;
 		}
 		else if(std::strcmp(arg, "--no-fullscreen") == 0) {
@@ -76,6 +77,8 @@ const PropertyList& GameConfigBase::staticProperties() {
 		                  &GameConfigBase::fullscreen);
 		props.addProperty("vsync",
 		                  &GameConfigBase::vSync);
+		props.addProperty("window_size",
+		                  &GameConfigBase::windowSize);
 	}
 	return props;
 }
@@ -224,7 +227,7 @@ void GameBase::initialize(GameConfigBase& config) {
 
 	// Window
 
-	_window = _sys->createWindow("Lair", 1280, 720);
+	_window = _sys->createWindow("Lair", config.windowSize(0), config.windowSize(1));
 	_window->setFullscreen(config.fullscreen);
 	_sys->setVSyncEnabled(config.vSync);
 	log().info("VSync: ", _sys->isVSyncEnabled()? "on": "off");

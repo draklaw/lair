@@ -61,8 +61,9 @@ public:
 	static const PropertyList& staticProperties();
 
 public:
-	bool fullscreen;
-	bool vSync;
+	bool     fullscreen;
+	bool     vSync;
+	Vector2i windowSize;
 };
 
 
