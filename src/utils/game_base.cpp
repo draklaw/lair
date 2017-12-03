@@ -172,6 +172,16 @@ AudioModule* GameBase::audio() {
 }
 
 
+int GameBase::argc() const {
+	return _argc;
+}
+
+
+char** GameBase::argv() const {
+	return _argv;
+}
+
+
 void GameBase::initialize(GameConfigBase& config) {
 	log().log("Starting game...");
 

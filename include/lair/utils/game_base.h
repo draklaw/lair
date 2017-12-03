@@ -92,6 +92,9 @@ public:
 
 	AudioModule*   audio();
 
+	int argc() const;
+	char** argv() const;
+
 	void initialize(GameConfigBase& config);
 	void shutdown();
 
