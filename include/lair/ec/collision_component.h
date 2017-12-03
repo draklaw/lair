@@ -142,6 +142,21 @@ class CollisionComponent;
 class CollisionComponentManager;
 
 
+struct _CollisionComponentElement {
+	typedef float Scalar;
+	enum {
+		Dim = 2,
+	};
+
+	inline const AlignedBox2& boundingBox() { return box; }
+
+	CollisionComponent* comp;
+	Shape2D             shape;
+	AlignedBox2         box;
+	_CollisionComponentElement* next;
+};
+
+
 class CollisionComponent : public Component, WithProperties<CollisionComponent> {
 public:
 	typedef CollisionComponentManager Manager;
@@ -175,6 +190,9 @@ protected:
 	unsigned      _hitMask;
 	unsigned      _ignoreMask;
 	bool          _dirty;
+
+public:
+	_CollisionComponentElement* _firstElem;
 };
 
 
@@ -204,22 +222,15 @@ public:
 	inline const HitEventVector& hitEvents() const { return _hitEvents; }
 	void findCollisions();
 
-	bool hitTest(std::deque<EntityRef>& hits, const AlignedBox2& box, unsigned hitMask = 0x01);
-	bool hitTest(std::deque<EntityRef>& hits, const Vector2& p, unsigned hitMask = 0x01);
+	bool hitTest(std::deque<EntityRef>& hits, const AlignedBox2& box,
+	             unsigned hitMask = 0x01, EntityRef dontPick = EntityRef());
+	bool hitTest(std::deque<EntityRef>& hits, const Vector2& p,
+	             unsigned hitMask = 0x01, EntityRef dontPick = EntityRef());
+
+	void update(EntityRef entity);
 
 protected:
-	struct _Element {
-		typedef float Scalar;
-		enum {
-			Dim = 2,
-		};
-
-		inline const AlignedBox2& boundingBox() { return box; }
-
-		CollisionComponent* comp;
-		Shape2D             shape;
-		AlignedBox2         box;
-	};
+	typedef _CollisionComponentElement _Element;
 	typedef Octree<_Element> QuadTree;
 
 	struct _FilterDirtyElement {

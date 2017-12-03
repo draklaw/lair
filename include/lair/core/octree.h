@@ -116,7 +116,7 @@ public:
 	void remove(Object* object) {
 		Item* item = static_cast<Item*>(object);
 		lairAssert(item->cell);
-		item->cell->removeItem(object);
+		item->cell->removeItem(item);
 		_items.destroy(item);
 	}
 

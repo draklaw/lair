@@ -376,6 +376,7 @@ CollisionComponent::CollisionComponent(Manager* manager, _Entity* entity, const 
 	, _hitMask    (1u)
 	, _ignoreMask (0u)
 	, _dirty      (true)
+    , _firstElem  (nullptr)
 {
 }
 
@@ -416,14 +417,15 @@ void CollisionComponentManager::setBounds(const AlignedBox2& bounds) {
 
 
 void CollisionComponentManager::findCollisions() {
-	compactArray();
-
 	// Set all unusable shapes dirty: this will remove their elements from the list.
 	for(unsigned ci0 = 0; ci0 < nComponents(); ++ci0) {
 		CollisionComponent& c0 = _components[ci0];
 
 		if(!c0.isAlive() || !c0.isEnabled() || !c0.entity().isEnabledRec())
 			c0.setDirty();
+
+		if(c0.isDirty())
+			c0._firstElem = nullptr;
 	}
 
 	// Filter out dirty elements.
@@ -432,6 +434,8 @@ void CollisionComponentManager::findCollisions() {
 	// Filter out hitEvents with a dirty Entity.
 	auto dirtyEventsBegin = std::remove_if(_hitEvents.begin(), _hitEvents.end(), _FilterDirty(this));
 	_hitEvents.erase(dirtyEventsBegin, _hitEvents.end());
+
+	compactArray();
 
 	// Update dirty entities
 	HitEvent hit;
@@ -444,6 +448,7 @@ void CollisionComponentManager::findCollisions() {
 
 		c0.setDirty(false);
 
+		_Element* next = nullptr;
 		for(const Shape2D& shape: c0.shapes()) {
 			_Element e0;
 			e0.comp  = &c0;
@@ -464,17 +469,23 @@ void CollisionComponentManager::findCollisions() {
 				return false;
 			});
 
-			_quadTree.insert(e0);
+			_Element* elem = _quadTree.insert(e0);
+			elem->next = next;
+			next = elem;
 		}
+
+		c0._firstElem = next;
 	}
 }
 
 
-bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const AlignedBox2& box, unsigned hitMask) {
+bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const AlignedBox2& box,
+                                        unsigned hitMask, EntityRef dontPick) {
 	bool found = false;
 
-	_quadTree.hitTest(box, [&hits, hitMask, &found](_Element& e) {
-		if((hitMask & e.comp->hitMask())    != 0
+	_quadTree.hitTest(box, [&hits, hitMask, &dontPick, &found](_Element& e) {
+		if( e.comp->entity() != dontPick
+		&& (hitMask & e.comp->hitMask())    != 0
 		&& (hitMask & e.comp->ignoreMask()) == 0) {
 			hits.push_back(e.comp->entity());
 			found = true;
@@ -487,9 +498,35 @@ bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const Align
 }
 
 
-bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const Vector2& p, unsigned hitMask) {
-	return hitTest(hits, AlignedBox2(p, p), hitMask);
+bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const Vector2& p,
+                                        unsigned hitMask, EntityRef dontPick) {
+	return hitTest(hits, AlignedBox2(p, p), hitMask, dontPick);
 }
 
+
+void CollisionComponentManager::update(EntityRef entity) {
+	CollisionComponent* comp = get(entity);
+
+	if(comp) {
+		_Element* elem = comp->_firstElem;
+		while(elem) {
+			_Element* next = elem->next;
+			_quadTree.remove(elem);
+			elem = next;
+		}
+
+		_Element* next = nullptr;
+		for(const Shape2D& shape: comp->shapes()) {
+			_Element e;
+			e.comp  = comp;
+			e.shape = shape.transformed(comp->entity().worldTransform());
+			e.box   = e.shape.boundingBox();
+
+			_Element* elem = _quadTree.insert(e);
+			elem->next = next;
+			next = elem;
+		}
+	}
+}
 
 }
