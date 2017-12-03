@@ -130,8 +130,8 @@ bool TileMap::setFromJson(Logger& log, const Path& path, const Json::Value& valu
 //	               / tilesets[0].get("tileheight", 1).asInt();
 	// FIXME: Recent version of Tiled no longer store this in the file...
 	_tileSetPath   = "tileset.png";
-	_tileSetHTiles = 16;
-	_tileSetVTiles = 16;
+	_tileSetHTiles = 4;
+	_tileSetVTiles = 4;
 
 	_properties = value["properties"];
 
