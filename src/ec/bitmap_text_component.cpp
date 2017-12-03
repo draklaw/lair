@@ -263,36 +263,12 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 
 		unsigned width = (comp->size()(0) > 0)? comp->size()(0): 999999;
 		TextLayout layout = font.layoutText(comp->text(), width);
-		unsigned index = _spriteRenderer->indexCount();
-		for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
-			unsigned cp = layout.glyph(i).codepoint;
-			Vector2 pos = layout.glyph(i).pos;
-			const BitmapFont::Glyph& glyph = font.glyph(cp);
 
-			Vector2 size = glyph.size;
-
-			pos(0) += glyph.offset(0);
-			pos(1) += font.height() - size(1) - glyph.offset(1)
-			        + layout.box().sizes()(1);
-			pos -= layout.box().sizes().cwiseProduct(comp->anchor());
-			Box2 coords(pos, pos + size);
-
-			_spriteRenderer->addSprite(wt, coords, comp->color(), glyph.region);
-		}
-		unsigned count = _spriteRenderer->indexCount() - index;
-
-		if(count) {
-			_states.texture      = &texAspect->_get();
-			_states.textureFlags = comp->textureFlags();
-			_states.blendingMode = comp->blendingMode();
-
-			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
-			            _spriteRenderer->shader(), camera.transform(), 0, Vector4i(1, 1, 65536, 65536));
-
-			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
-			                                        camera.viewBox().max()(2));
-			_renderPass->addDrawCall(_states, params, depth, index, count);
-		}
+		float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
+		                                        camera.viewBox().max()(2));
+		renderBitmapText(_renderPass, _spriteRenderer, font, &texAspect->_get(),
+		                 wt, depth, layout, comp->anchor(), comp->color(),
+		                 camera.transform(), comp->textureFlags(), comp->blendingMode());
 	}
 
 	EntityRef child = entity.firstChild();
@@ -302,5 +278,45 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 	}
 }
 
+
+void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
+                      const BitmapFont& font, Texture* texture,
+                      const Matrix4& transform, float depth,
+                      const TextLayout& layout, const Vector2& anchor,
+                      const Vector4& color, const Matrix4& viewTransform,
+                      unsigned textureFlags, BlendingMode blendingMode) {
+	unsigned index = renderer->indexCount();
+	for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
+		unsigned cp = layout.glyph(i).codepoint;
+		Vector2 pos = layout.glyph(i).pos;
+		const BitmapFont::Glyph& glyph = font.glyph(cp);
+
+		Vector2 size = glyph.size;
+
+		pos(0) += glyph.offset(0);
+		pos(1) += font.height() - size(1) - glyph.offset(1)
+		        + layout.box().sizes()(1);
+		pos -= layout.box().sizes().cwiseProduct(anchor);
+		Box2 coords(pos, pos + size);
+
+		renderer->addSprite(transform, coords, color, glyph.region);
+	}
+	unsigned count = renderer->indexCount() - index;
+
+	if(count) {
+		RenderPass::DrawStates states;
+		states.shader       = renderer->shader().shader;
+		states.buffer       = renderer->buffer();
+		states.format       = renderer->format();
+		states.texture      = texture;
+		states.textureFlags = textureFlags;
+		states.blendingMode = blendingMode;
+
+		const ShaderParameter* params = renderer->addShaderParameters(
+		            renderer->shader(), viewTransform, 0, Vector4i(1, 1, 65536, 65536));
+
+		pass->addDrawCall(states, params, depth, index, count);
+	}
+}
 
 }

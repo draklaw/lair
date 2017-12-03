@@ -158,6 +158,12 @@ private:
 };
 
 
+void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
+                      const BitmapFont& font, Texture* texture,
+                      const Matrix4& transform, float depth,
+                      const TextLayout& layout, const Vector2& anchor,
+                      const Vector4& color, const Matrix4& viewTransform,
+                      unsigned textureFlags, BlendingMode blendingMode);
 }
 
 #endif
