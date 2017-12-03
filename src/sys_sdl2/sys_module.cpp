@@ -334,9 +334,16 @@ void SysModule::_dispatchSystemEvent(const SDL_Event& event)
 
 		/* Mouse events */
 	case SDL_MOUSEMOTION:
+		if(onMouseMove) onMouseMove(event.motion);
+		break;
 	case SDL_MOUSEBUTTONDOWN:
+		if(onMousePress) onMousePress(event.button);
+		break;
 	case SDL_MOUSEBUTTONUP:
+		if(onMouseRelease) onMouseRelease(event.button);
+		break;
 	case SDL_MOUSEWHEEL:
+		if(onMouseWheel) onMouseWheel(event.wheel);
 		break;
 
 		/* Joystick events */

@@ -26,6 +26,8 @@
 #include <unordered_map>
 #include <functional>
 
+#include <SDL.h>
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/path.h>
@@ -50,6 +52,10 @@ class Window;
  */
 class SysModule {
 public:
+	typedef std::function<void(const SDL_MouseMotionEvent&)> MouseMoveCallback;
+	typedef std::function<void(const SDL_MouseButtonEvent&)> MouseButtonCallback;
+	typedef std::function<void(const SDL_MouseWheelEvent&)>  MouseWheelCallback;
+
 	typedef std::function<void()> QuitCallback;
 
 public:
@@ -141,6 +147,11 @@ public:
 
 
 public:
+	MouseMoveCallback   onMouseMove;
+	MouseButtonCallback onMousePress;
+	MouseButtonCallback onMouseRelease;
+	MouseWheelCallback  onMouseWheel;
+
 	QuitCallback onQuit;
 
 
