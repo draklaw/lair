@@ -120,6 +120,12 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 		comp = comp->_nextComponent;
 	}
 
+	EntityRef child = base.firstChild();
+	while(child.isValid()) {
+		cloneEntity(child, entity);
+		child = child.nextSibling();
+	}
+
 	return entity;
 }
 
