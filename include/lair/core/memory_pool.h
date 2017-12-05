@@ -106,7 +106,8 @@ public:
 	}
 
 protected:
-	typedef std::vector<Byte*, Eigen::aligned_allocator<Value*>> BlockList;
+	// FIXME: Check that this protduce the right alignment.
+	typedef std::vector<Byte*, Eigen::aligned_allocator<Byte*>> BlockList;
 
 protected:
 	size_t    _blockSize;
