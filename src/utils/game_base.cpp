@@ -38,6 +38,8 @@ namespace lair {
 GameConfigBase::GameConfigBase()
     : fullscreen(false)
     , vSync     (true)
+    , soundVolume(.25)
+    , musicVolume(.35)
     , windowSize(1280, 720)
 {
 }
@@ -77,6 +79,10 @@ const PropertyList& GameConfigBase::staticProperties() {
 		                  &GameConfigBase::fullscreen);
 		props.addProperty("vsync",
 		                  &GameConfigBase::vSync);
+		props.addProperty("sound_volume",
+		                  &GameConfigBase::soundVolume);
+		props.addProperty("music_volume",
+		                  &GameConfigBase::musicVolume);
 		props.addProperty("window_size",
 		                  &GameConfigBase::windowSize);
 	}
@@ -252,7 +258,7 @@ void GameBase::initialize(GameConfigBase& config) {
 
 	_audio.reset(new AudioModule(&_mlogger));
 	_audio->initialize();
-	_audio->setMusicVolume(.35);
+	_audio->setMusicVolume(config.musicVolume);
 }
 
 

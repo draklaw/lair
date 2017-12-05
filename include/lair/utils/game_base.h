@@ -63,6 +63,8 @@ public:
 public:
 	bool     fullscreen;
 	bool     vSync;
+	float    soundVolume;
+	float    musicVolume;
 	Vector2i windowSize;
 };
 

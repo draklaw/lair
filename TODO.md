@@ -54,7 +54,6 @@
     with it ?
   - How to deal with interpolation of other parameters (color...) ?
 - Audio module (OpenAL ?)
-  - Add sound level to config ?
 - Python
   - lair binding
   - Re-implement test-window
