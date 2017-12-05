@@ -64,6 +64,7 @@ void InterpLoop::reset() {
 	_frameCount       = 0;
 	_frameGameTime    = 0;
 	_frameRealTime    = 0;
+	_frameSkipped     = 0;
 }
 
 
@@ -74,6 +75,7 @@ void InterpLoop::start() {
 	_prevTickRealTime = 0;
 	_tickRealTime     = now;
 	_frameRealTime    = 0;
+	_frameSkipped     = 0;
 }
 
 
@@ -95,17 +97,20 @@ InterpLoop::EventType InterpLoop::nextEvent() {
 	_sys->dispatchPendingSystemEvents();
 
 	// FIXME: Works only if getTimeNs is near 0 when program start.
-	// uint64 maxFrameTime = _frameRealTime + _maxFrameDuration;
-	// if(_tickRealTime > maxFrameTime) {
-	// 	// We are late !
-	// 	int64 offset = now - maxFrameTime;
-	// 	if(offset > 0) {
-	// 		_prevTickRealTime += offset;
-	// 		_tickRealTime     += offset;
-	// 	}
-	// }
+//	uint64 maxFrameTime = _frameRealTime + _maxFrameDuration;
+//	bool late = _tickRealTime > maxFrameTime;
+//	if(late) {
+//		// We are late !
+//		int64 offset = _tickRealTime - maxFrameTime;
+//		if(offset > 0) {
+//			_prevTickRealTime += offset;
+//			_tickRealTime     += offset;
+//		}
+//	}
 
-	if(_tickRealTime < now) {
+	if(_frameSkipped < 3 && _tickRealTime < now) {
+		if(_frameRealTime < now)
+			++_frameSkipped;
 		++_tickCount;
 		_prevTickGameTime  = _tickGameTime;
 		_tickGameTime     += _tickDuration;
@@ -114,10 +119,11 @@ InterpLoop::EventType InterpLoop::nextEvent() {
 		return EventType::Tick;
 	} else {
 		++_frameCount;
-		_frameInterp = double(          now - _prevTickRealTime)
-		             / double(_tickRealTime - _prevTickRealTime);
+		_frameInterp = clamp(double(          now - _prevTickRealTime)
+		                   / double(_tickRealTime - _prevTickRealTime), 0., 1.);
 		_frameGameTime = lerp(_frameInterp, _prevTickGameTime, _tickGameTime);
 		_frameRealTime = std::max(_frameRealTime + _frameDuration, now - _frameMargin);
+		_frameSkipped = 0;
 		return EventType::Frame;
 	}
 }

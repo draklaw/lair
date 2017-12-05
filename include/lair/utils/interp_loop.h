@@ -78,6 +78,8 @@ protected:
 	uint64   _tickGameTime;
 	uint64   _prevTickRealTime;
 	uint64   _tickRealTime;
+	uint64   _lastFrameRealTime;
+	unsigned _frameSkipped;
 
 	uint64   _frameDuration;	// Ideal duration of 1 frame
 	uint64   _maxFrameDuration;	// After this delay, we slow down the game
