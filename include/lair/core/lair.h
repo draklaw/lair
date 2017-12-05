@@ -22,9 +22,11 @@
 #ifndef _LAIR_CORE_LAIR_H
 #define _LAIR_CORE_LAIR_H
 
+#define _USE_MATH_DEFINES
 
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <sstream>
