@@ -151,7 +151,12 @@ public:
 			entity->components[_index] = comp;
 		}
 		else {
-			_componentMap[entity] = comp;
+			if(comp) {
+				_componentMap[entity] = comp;
+			}
+			else {
+				_componentMap.erase(entity);
+			}
 		}
 	}
 

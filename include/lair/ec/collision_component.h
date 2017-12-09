@@ -150,7 +150,7 @@ struct _CollisionComponentElement {
 
 	inline const AlignedBox2& boundingBox() { return box; }
 
-	CollisionComponent* comp;
+	EntityRef           entity;
 	Shape2D             shape;
 	AlignedBox2         box;
 	_CollisionComponentElement* next;
@@ -234,9 +234,15 @@ protected:
 	typedef Octree<_Element> QuadTree;
 
 	struct _FilterDirtyElement {
+		inline _FilterDirtyElement(CollisionComponentManager* self)
+		    : _self(self) {}
+
 		inline bool operator()(const _Element& element) const {
-			return element.comp->isDirty();
+			CollisionComponent* comp = _self->get(element.entity);
+			return !comp || comp->isDirty();
 		}
+
+		CollisionComponentManager* _self;
 	};
 
 	struct _FilterDirty {
@@ -244,10 +250,14 @@ protected:
 			: _self(self) {}
 
 		inline bool operator()(const HitEvent& hit) const {
-			return !hit.entities[0].isValid()
+			CollisionComponent* comp0 = _self->get(hit.entities[0]);
+			CollisionComponent* comp1 = _self->get(hit.entities[1]);
+			return !comp0
+			    || !comp1
+			    || !hit.entities[0].isValid()
 			    || !hit.entities[1].isValid()
-			    || _self->get(hit.entities[0])->isDirty()
-			    || _self->get(hit.entities[1])->isDirty();
+			    || comp0->isDirty()
+			    || comp1->isDirty();
 		}
 
 		CollisionComponentManager* _self;

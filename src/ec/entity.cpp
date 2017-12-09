@@ -59,6 +59,16 @@ void _Entity::insertChild(_Entity* child, _Entity* previousSibling) {
 	lairAssert(!child->parent && !child->nextSibling);
 	lairAssert(!previousSibling || previousSibling->parent == this);
 
+#ifndef NDEBUG
+	{
+		_Entity* e = this;
+		while(e) {
+			lairAssert(e != child);
+			e = e->parent;
+		}
+	}
+#endif
+
 	child->parent = this;
 
 	if(!firstChild) {

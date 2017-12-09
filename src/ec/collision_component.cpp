@@ -429,7 +429,7 @@ void CollisionComponentManager::findCollisions() {
 	}
 
 	// Filter out dirty elements.
-	_quadTree.filterIf(_FilterDirtyElement());
+	_quadTree.filterIf(_FilterDirtyElement(this));
 
 	// Filter out hitEvents with a dirty Entity.
 	auto dirtyEventsBegin = std::remove_if(_hitEvents.begin(), _hitEvents.end(), _FilterDirty(this));
@@ -451,18 +451,20 @@ void CollisionComponentManager::findCollisions() {
 		_Element* next = nullptr;
 		for(const Shape2D& shape: c0.shapes()) {
 			_Element e0;
-			e0.comp  = &c0;
-			e0.shape = shape.transformed(c0.entity().worldTransform());
-			e0.box   = e0.shape.boundingBox();
+			e0.entity = c0.entity();
+			e0.shape  = shape.transformed(c0.entity().worldTransform());
+			e0.box    = e0.shape.boundingBox();
 
 			_quadTree.hitTest(e0.box, [&hit, &e0, this](_Element& e1) {
-				if(e0.comp != e1.comp
-				&& (e0.comp->hitMask() & e1.comp->hitMask())    != 0
-				&& (e0.comp->hitMask() & e1.comp->ignoreMask()) == 0
-				&& (e1.comp->hitMask() & e0.comp->ignoreMask()) == 0
+				CollisionComponent* comp0 = get(e0.entity);
+				CollisionComponent* comp1 = get(e1.entity);
+				if(comp0 != comp1
+				&& (comp0->hitMask() & comp1->hitMask())    != 0
+				&& (comp0->hitMask() & comp1->ignoreMask()) == 0
+				&& (comp0->hitMask() & comp1->ignoreMask()) == 0
 				&& e0.shape.intersect(e1.shape, &hit.position)) {
-					hit.entities[0] = e0.comp->entity();
-					hit.entities[1] = e1.comp->entity();
+					hit.entities[0] = e0.entity;
+					hit.entities[1] = e1.entity;
 					_hitEvents.push_back(hit);
 				}
 
@@ -483,11 +485,13 @@ bool CollisionComponentManager::hitTest(std::deque<EntityRef>& hits, const Align
                                         unsigned hitMask, EntityRef dontPick) {
 	bool found = false;
 
-	_quadTree.hitTest(box, [&hits, hitMask, &dontPick, &found](_Element& e) {
-		if( e.comp->entity() != dontPick
-		&& (hitMask & e.comp->hitMask())    != 0
-		&& (hitMask & e.comp->ignoreMask()) == 0) {
-			hits.push_back(e.comp->entity());
+	_quadTree.hitTest(box, [this, &hits, hitMask, &dontPick, &found](_Element& e) {
+		CollisionComponent* comp = get(e.entity);
+		if( comp
+		&& e.entity != dontPick
+		&& (hitMask & comp->hitMask())    != 0
+		&& (hitMask & comp->ignoreMask()) == 0) {
+			hits.push_back(e.entity);
 			found = true;
 		}
 
@@ -518,9 +522,9 @@ void CollisionComponentManager::update(EntityRef entity) {
 		_Element* next = nullptr;
 		for(const Shape2D& shape: comp->shapes()) {
 			_Element e;
-			e.comp  = comp;
-			e.shape = shape.transformed(comp->entity().worldTransform());
-			e.box   = e.shape.boundingBox();
+			e.entity = entity;
+			e.shape  = shape.transformed(comp->entity().worldTransform());
+			e.box    = e.shape.boundingBox();
 
 			_Element* elem = _quadTree.insert(e);
 			elem->next = next;
