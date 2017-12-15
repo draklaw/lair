@@ -67,6 +67,7 @@
 - Geometric shapes ? (Collisions + rendering)
 - UI elements
 - Include third-party package and try to link statically ?
+- Write a json2ldl utility, then get rid of Json as a dependency.
 
 
 - Move to Python coding convention ? (Closer to stdc++ & same conventions for python and C)
