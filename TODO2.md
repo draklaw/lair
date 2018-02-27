@@ -1,5 +1,4 @@
 - build:rm-json: Get rid of Json
-- build:rm-boost: Get rid of Boost
 - build:rm-glew: Get rid of GLEW
 - build:standalone: Inculde third-party packages and build statically
 - build:wasm: Test with wasm [req: build:standalone]

@@ -205,8 +205,8 @@ RenderPass::Index RenderPass::solidIndex(const DrawCall& call) {
 	constexpr unsigned texFlagsBits =  9;
 	constexpr unsigned depthBits    = 24;
 
-	Index bufferHash = hash<const VertexBuffer*>()(call.states.buffer) % (1 << bufferBits);
-	Index formatHash = hash<const VertexFormat*>()(call.states.format) % (1 << formatBits);
+	Index bufferHash = hash(call.states.buffer) % (1 << bufferBits);
+	Index formatHash = hash(call.states.format) % (1 << formatBits);
 
 	int i = 0;
 	#define SET_BITS(_value, _size) setBits(index, _value, i, _size); i += _size
@@ -236,8 +236,8 @@ RenderPass::Index RenderPass::transparentIndex(const DrawCall& call) {
 	constexpr unsigned texFlagsBits =  9;
 	constexpr unsigned depthBits    = 24;
 
-	Index bufferHash = hash<const VertexBuffer*>()(call.states.buffer) % (1 << bufferBits);
-	Index formatHash = hash<const VertexFormat*>()(call.states.format) % (1 << formatBits);
+	Index bufferHash = hash(call.states.buffer) % (1 << bufferBits);
+	Index formatHash = hash(call.states.format) % (1 << formatBits);
 
 	int i = 0;
 	#define SET_BITS(_value, _size) setBits(index, _value, i, _size); i += _size

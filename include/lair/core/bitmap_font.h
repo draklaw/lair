@@ -25,10 +25,9 @@
 
 #include <unordered_map>
 
-#include <boost/functional/hash.hpp>
-
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/hash.h>
 #include <lair/core/asset_manager.h>
 
 
@@ -106,7 +105,7 @@ protected:
 	typedef std::unordered_map<int, Glyph, std::hash<int>, std::equal_to<int>,
 	                           Eigen::aligned_allocator<std::pair<const int, Glyph>>> GlyphMap;
 	typedef std::pair<int, int> CharPair;
-	typedef std::unordered_map<CharPair, int, boost::hash<CharPair>> KerningMap;
+	typedef std::unordered_map<CharPair, int, Hash<CharPair>> KerningMap;
 
 protected:
 	unsigned wordWidth(const std::string& msg, unsigned i, unsigned* ci = nullptr) const;

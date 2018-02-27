@@ -14,7 +14,6 @@ To build Lair, you will need
 - SDL2 (https://www.libsdl.org/)
 - SDL2_image (https://www.libsdl.org/projects/SDL_image/)
 - SDL2_mixer (https://www.libsdl.org/projects/SDL_mixer/)
-- Boost (hash, header only) (http://www.boost.org/)
 
 To build the python binding (Probably compeltly broken now), you will need
 - Python 3.3 (minimum) (https://www.python.org/), intepreter + library

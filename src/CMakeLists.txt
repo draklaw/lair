@@ -47,8 +47,6 @@ find_package(SDL2_mixer REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
-find_package(Boost REQUIRED)
-
 
 set(lair_INCLUDE_DIRS
 	PUBLIC ${PROJECT_SOURCE_DIR}/include
@@ -58,7 +56,6 @@ set(lair_INCLUDE_DIRS
 	PUBLIC ${SDL2MIXER_INCLUDE_DIR}
 	PUBLIC ${SDL2_INCLUDE_DIR}
 	PUBLIC ${OPENGL_INCLUDE_DIRS}
-	PUBLIC ${Boost_INCLUDE_DIR}
 )
 
 set(lair_LIBRARIES

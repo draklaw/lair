@@ -27,6 +27,7 @@
 #include <typeinfo>
 #include <typeindex>
 
+#include <list>
 #include <deque>
 #include <unordered_map>
 

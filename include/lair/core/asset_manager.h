@@ -209,7 +209,7 @@ public:
 	void releaseAll();
 
 private:
-	typedef std::unordered_map<Path,            AssetSP, boost::hash<Path>>
+	typedef std::unordered_map<Path,            AssetSP, Hash<Path>>
 	                                                            AssetPathMap;
 	typedef std::unordered_map<const Asset*,    AspectSP>       AssetAspectMap;
 	typedef std::unordered_map<std::type_index, AssetAspectMap> AspectMap;

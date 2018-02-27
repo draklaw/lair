@@ -22,6 +22,7 @@
 #ifndef _LAIR_EC_SPRITE_RENDERER_H
 #define _LAIR_EC_SPRITE_RENDERER_H
 
+#include <list>
 
 #include <lair/core/lair.h>
 

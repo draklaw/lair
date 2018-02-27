@@ -33,9 +33,8 @@
 #include <fstream>
 #endif
 
-#include <boost/functional/hash.hpp>
-
 #include <lair/core/lair.h>
+#include <lair/core/hash.h>
 #include <lair/core/metatype.h>
 
 
@@ -128,8 +127,8 @@ private:
 
 
 // Used by boost using Argument Dependant Lookup.
-inline std::size_t hash_value(const Path& path) {
-	return boost::hash_value<std::string>(path.utf8String());
+inline std::size_t hash(const Path& path) {
+	return hash(path.utf8String());
 }
 
 
