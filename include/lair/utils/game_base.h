@@ -38,8 +38,8 @@
 #include <lair/sys_sdl2/window.h>
 #include <lair/sys_sdl2/audio_module.h>
 
-#include <lair/render_gl2/render_module.h>
-#include <lair/render_gl2/renderer.h>
+#include <lair/render_gl3/render_module.h>
+#include <lair/render_gl3/renderer.h>
 
 //#include "sound_player.h"
 
@@ -66,6 +66,7 @@ public:
 	float    soundVolume;
 	float    musicVolume;
 	Vector2i windowSize;
+	bool     debugGl;
 };
 
 

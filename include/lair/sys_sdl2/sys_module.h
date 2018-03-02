@@ -52,6 +52,8 @@ class Window;
  */
 class SysModule {
 public:
+	typedef void* (*GlGetProcAddressFunction)(const char*);
+
 	typedef std::function<void(const SDL_MouseMotionEvent&)> MouseMoveCallback;
 	typedef std::function<void(const SDL_MouseButtonEvent&)> MouseButtonCallback;
 	typedef std::function<void(const SDL_MouseWheelEvent&)>  MouseWheelCallback;
@@ -93,6 +95,13 @@ public:
 
 	Window* createWindow(const char* utf8Title, int width, int height);
 	void destroyAllWindows();
+
+	/// \}
+
+	/// \{
+	/// \name OpenGL.
+
+	GlGetProcAddressFunction glGetProcAddressFunction() const;
 
 	/// \}
 

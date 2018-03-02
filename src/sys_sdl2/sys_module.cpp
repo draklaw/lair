@@ -183,6 +183,11 @@ void SysModule::destroyAllWindows() {
 }
 
 
+SysModule::GlGetProcAddressFunction SysModule::glGetProcAddressFunction() const {
+	return SDL_GL_GetProcAddress;
+}
+
+
 void SysModule::waitAndDispatchSystemEvents() {
 	SDL_Event event;
 	SDL_WaitEvent(&event);

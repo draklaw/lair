@@ -41,12 +41,12 @@
 #include <lair/sys_sdl2/window.h>
 #include <lair/sys_sdl2/image_loader.h>
 
-#include <lair/render_gl2/orthographic_camera.h>
-#include <lair/render_gl2/shader_object.h>
-#include <lair/render_gl2/program_object.h>
-#include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/renderer.h>
-#include <lair/render_gl2/render_module.h>
+#include <lair/render_gl3/orthographic_camera.h>
+#include <lair/render_gl3/shader_object.h>
+#include <lair/render_gl3/program_object.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/renderer.h>
+#include <lair/render_gl3/render_module.h>
 
 #include <lair/ec/entity_manager.h>
 #include <lair/ec/sprite_component.h>

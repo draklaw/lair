@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_RENDER_MODULE_H
-#define _LAIR_RENDER_GL2_RENDER_MODULE_H
+#ifndef _LAIR_RENDER_GL3_RENDER_MODULE_H
+#define _LAIR_RENDER_GL3_RENDER_MODULE_H
 
 
 #include <memory>
@@ -30,7 +30,7 @@
 #include <lair/core/log.h>
 #include <lair/core/asset_manager.h>
 
-#include <lair/render_gl2/context.h>
+#include <lair/render_gl3/context.h>
 
 
 namespace lair
@@ -54,7 +54,7 @@ public:
 	RenderModule& operator=(const RenderModule&) = delete;
 	RenderModule& operator=(RenderModule&&)      = delete;
 
-	bool initialize();
+	bool initialize(bool debugGl = false);
 	void shutdown();
 
 	Renderer* createRenderer();

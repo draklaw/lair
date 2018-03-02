@@ -19,15 +19,15 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_VERTEX_FORMAT_H
-#define _LAIR_RENDER_GL2_VERTEX_FORMAT_H
+#ifndef _LAIR_RENDER_GL3_VERTEX_FORMAT_H
+#define _LAIR_RENDER_GL3_VERTEX_FORMAT_H
 
 
 #include <vector>
 
 #include <lair/core/lair.h>
 
-#include <lair/render_gl2/context.h>
+#include <lair/render_gl3/context.h>
 
 
 namespace lair

@@ -32,12 +32,12 @@
 #include <lair/core/path.h>
 #include <lair/core/asset_manager.h>
 
-#include <lair/render_gl2/context.h>
-#include <lair/render_gl2/vertex_format.h>
-#include <lair/render_gl2/glsl_source.h>
-#include <lair/render_gl2/shader_object.h>
-#include <lair/render_gl2/program_object.h>
-#include <lair/render_gl2/texture.h>
+#include <lair/render_gl3/context.h>
+#include <lair/render_gl3/vertex_format.h>
+#include <lair/render_gl3/glsl_source.h>
+#include <lair/render_gl3/shader_object.h>
+#include <lair/render_gl3/program_object.h>
+#include <lair/render_gl3/texture.h>
 
 
 namespace lair

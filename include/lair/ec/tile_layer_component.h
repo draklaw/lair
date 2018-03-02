@@ -25,8 +25,8 @@
 
 #include <lair/core/lair.h>
 
-#include <lair/render_gl2/render_pass.h>
-#include <lair/render_gl2/texture.h>
+#include <lair/render_gl3/render_pass.h>
+#include <lair/render_gl3/texture.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>

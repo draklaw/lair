@@ -29,9 +29,9 @@
 #include <lair/core/loader.h>
 #include <lair/core/bitmap_font.h>
 
-#include <lair/render_gl2/orthographic_camera.h>
-#include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/render_pass.h>
+#include <lair/render_gl3/orthographic_camera.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/render_pass.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>

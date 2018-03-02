@@ -41,6 +41,7 @@ GameConfigBase::GameConfigBase()
     , soundVolume(.25)
     , musicVolume(.35)
     , windowSize(1280, 720)
+    , debugGl(false)
 {
 }
 
@@ -59,6 +60,9 @@ void GameConfigBase::setFromArgs(int& argc, char** argv) {
 		}
 		else if(std::strcmp(arg, "--no-vsync") == 0) {
 			vSync = false;
+		}
+		else if(std::strcmp(arg, "--debug-gl") == 0) {
+			debugGl = true;
 		}
 		else {
 			argv[last++] = arg;
@@ -85,6 +89,8 @@ const PropertyList& GameConfigBase::staticProperties() {
 		                  &GameConfigBase::musicVolume);
 		props.addProperty("window_size",
 		                  &GameConfigBase::windowSize);
+		props.addProperty("debug_gl",
+		                  &GameConfigBase::debugGl);
 	}
 	return props;
 }
@@ -251,7 +257,7 @@ void GameBase::initialize(GameConfigBase& config) {
 	// Render
 
 	_renderModule.reset(new RenderModule(sys(), assets(), &_mlogger, DEFAULT_LOG_LEVEL));
-	_renderModule->initialize();
+	_renderModule->initialize(config.debugGl);
 	_renderer = _renderModule->createRenderer();
 
 	// Audio

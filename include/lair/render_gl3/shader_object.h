@@ -19,14 +19,14 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_SHADER_OBJECT_H
-#define _LAIR_RENDER_GL2_SHADER_OBJECT_H
+#ifndef _LAIR_RENDER_GL3_SHADER_OBJECT_H
+#define _LAIR_RENDER_GL3_SHADER_OBJECT_H
 
 
 #include <string>
 #include <istream>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/render_gl3/context.h>
 
 
 namespace lair {

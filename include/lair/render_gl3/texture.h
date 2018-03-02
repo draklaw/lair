@@ -19,15 +19,15 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_TEXTURE_H
-#define _LAIR_RENDER_GL2_TEXTURE_H
+#ifndef _LAIR_RENDER_GL3_TEXTURE_H
+#define _LAIR_RENDER_GL3_TEXTURE_H
 
 
 #include <lair/core/lair.h>
 #include <lair/core/metatype.h>
 #include <lair/core/asset_manager.h>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/render_gl3/context.h>
 
 
 namespace lair

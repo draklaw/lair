@@ -24,8 +24,6 @@
 #include "lair/core/path.h"
 #include "lair/core/property.h"
 
-#include <lair/render_gl2/render_pass.h>
-
 
 
 namespace lair

@@ -111,18 +111,17 @@ set(lair_SOURCES
 	sys_sdl2/sys_module.cpp
 	sys_sdl2/audio_module.cpp
 
-	render_gl2/gl.cpp
-	render_gl2/context.cpp
-	render_gl2/orthographic_camera.cpp
-	render_gl2/vertex_format.cpp
-	render_gl2/vertex_buffer.cpp
-	render_gl2/glsl_source.cpp
-	render_gl2/shader_object.cpp
-	render_gl2/program_object.cpp
-	render_gl2/texture.cpp
-	render_gl2/render_pass.cpp
-	render_gl2/renderer.cpp
-	render_gl2/render_module.cpp
+	render_gl3/context.cpp
+	render_gl3/orthographic_camera.cpp
+	render_gl3/vertex_format.cpp
+	render_gl3/vertex_buffer.cpp
+	render_gl3/glsl_source.cpp
+	render_gl3/shader_object.cpp
+	render_gl3/program_object.cpp
+	render_gl3/texture.cpp
+	render_gl3/render_pass.cpp
+	render_gl3/renderer.cpp
+	render_gl3/render_module.cpp
 
 	ec/entity.cpp
 	ec/entity_manager.cpp

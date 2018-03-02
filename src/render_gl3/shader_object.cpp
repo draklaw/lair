@@ -22,10 +22,10 @@
 #include <memory>
 #include <vector>
 
-#include <lair/render_gl2/glsl_source.h>
-#include <lair/render_gl2/renderer.h>
+#include <lair/render_gl3/glsl_source.h>
+#include <lair/render_gl3/renderer.h>
 
-#include <lair/render_gl2/shader_object.h>
+#include <lair/render_gl3/shader_object.h>
 
 
 namespace lair {

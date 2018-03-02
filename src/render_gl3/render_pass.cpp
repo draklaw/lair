@@ -22,14 +22,14 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/render_gl2/context.h"
-#include "lair/render_gl2/program_object.h"
-#include "lair/render_gl2/vertex_format.h"
-#include "lair/render_gl2/vertex_buffer.h"
-#include "lair/render_gl2/texture.h"
-#include "lair/render_gl2/renderer.h"
+#include "lair/render_gl3/context.h"
+#include "lair/render_gl3/program_object.h"
+#include "lair/render_gl3/vertex_format.h"
+#include "lair/render_gl3/vertex_buffer.h"
+#include "lair/render_gl3/texture.h"
+#include "lair/render_gl3/renderer.h"
 
-#include "lair/render_gl2/render_pass.h"
+#include "lair/render_gl3/render_pass.h"
 
 
 namespace lair
@@ -59,7 +59,8 @@ RenderPass::DrawCall::DrawCall(const DrawStates& states, const ShaderParameter* 
 
 
 RenderPass::RenderPass(Renderer* renderer)
-    : _renderer(renderer) {
+    : _renderer(renderer)
+    , _vao(0) {
 }
 
 
@@ -92,6 +93,12 @@ void RenderPass::render() {
 	std::sort(_sortBuffer.begin(), _sortBuffer.end());
 
 	Context* glc = _renderer->context();
+
+	if(!_vao) {
+		glc->genVertexArrays(1, &_vao);
+	}
+	glc->bindVertexArray(_vao);
+
 	// TODO: Support multitexturing
 	glc->activeTexture(gl::TEXTURE0);
 

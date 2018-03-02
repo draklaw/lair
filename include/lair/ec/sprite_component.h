@@ -32,10 +32,10 @@
 
 #include <lair/sys_sdl2/image_loader.h>
 
-#include <lair/render_gl2/gl.h>
-#include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/render_pass.h>
-#include <lair/render_gl2/renderer.h>
+#include <lair/render_gl3/context.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/render_pass.h>
+#include <lair/render_gl3/renderer.h>
 
 #include <lair/ec/entity.h>
 #include <lair/ec/component.h>

@@ -22,7 +22,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/render_gl2/orthographic_camera.h"
+#include "lair/render_gl3/orthographic_camera.h"
 
 
 namespace lair

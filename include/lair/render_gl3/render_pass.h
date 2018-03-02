@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_RENDER_PASS_H
-#define _LAIR_RENDER_GL2_RENDER_PASS_H
+#ifndef _LAIR_RENDER_GL3_RENDER_PASS_H
+#define _LAIR_RENDER_GL3_RENDER_PASS_H
 
 
 #include <vector>
@@ -28,7 +28,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/metatype.h>
 
-#include <lair/render_gl2/context.h>
+#include <lair/render_gl3/context.h>
 
 
 namespace lair
@@ -208,6 +208,8 @@ protected:
 
 protected:
 	Renderer* _renderer;
+
+	GLuint _vao;
 
 	// TODO: Framebuffer* _framebuffer;
 	// bool _depthTestEnable;

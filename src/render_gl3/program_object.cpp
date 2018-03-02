@@ -22,11 +22,11 @@
 #include <algorithm>
 #include <memory>
 
-#include <lair/render_gl2/context.h>
-#include <lair/render_gl2/renderer.h>
-#include <lair/render_gl2/shader_object.h>
+#include <lair/render_gl3/context.h>
+#include <lair/render_gl3/renderer.h>
+#include <lair/render_gl3/shader_object.h>
 
-#include <lair/render_gl2/program_object.h>
+#include <lair/render_gl3/program_object.h>
 
 
 namespace lair {

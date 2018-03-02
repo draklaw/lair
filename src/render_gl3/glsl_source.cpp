@@ -23,7 +23,7 @@
 #include <vector>
 #include <cstring>
 
-#include <lair/render_gl2/glsl_source.h>
+#include <lair/render_gl3/glsl_source.h>
 
 
 namespace lair {

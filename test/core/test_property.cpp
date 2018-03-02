@@ -27,7 +27,7 @@
 
 //using namespace lair;
 
-// BlendingMode and texture flags are copied from render_gl2
+// BlendingMode and texture flags are copied from render_gl3
 
 enum BlendingMode {
 	BLEND_NONE,

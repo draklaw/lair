@@ -24,7 +24,7 @@
 
 #include <lair/sys_sdl2/image_loader.h>
 
-#include <lair/render_gl2/texture.h>
+#include <lair/render_gl3/texture.h>
 
 #include <lair/ec/sprite_renderer.h>
 

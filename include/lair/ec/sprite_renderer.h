@@ -26,11 +26,11 @@
 
 #include <lair/core/lair.h>
 
-#include <lair/render_gl2/gl.h>
-#include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/vertex_buffer.h>
-#include <lair/render_gl2/render_pass.h>
-#include <lair/render_gl2/renderer.h>
+#include <lair/render_gl3/context.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/vertex_buffer.h>
+#include <lair/render_gl3/render_pass.h>
+#include <lair/render_gl3/renderer.h>
 
 
 namespace lair

@@ -19,14 +19,15 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_VERTEX_BUFFER_H
-#define _LAIR_RENDER_GL2_VERTEX_BUFFER_H
+#ifndef _LAIR_RENDER_GL3_VERTEX_BUFFER_H
+#define _LAIR_RENDER_GL3_VERTEX_BUFFER_H
 
 
 #include <vector>
 
 #include <lair/core/lair.h>
 
+#include <lair/render_gl3/context.h>
 
 namespace lair
 {

@@ -22,9 +22,9 @@
 #include <lair/core/json.h>
 #include <lair/core/log.h>
 
-#include <lair/render_gl2/orthographic_camera.h>
-#include <lair/render_gl2/texture.h>
-#include <lair/render_gl2/renderer.h>
+#include <lair/render_gl3/orthographic_camera.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/renderer.h>
 
 #include "lair/ec/entity.h"
 #include "lair/ec/entity_manager.h"

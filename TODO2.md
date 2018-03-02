@@ -19,7 +19,6 @@
 - assets:autoreload: Track file changes and auto-reload assets
 
 - render:shader-include: support #include in shaders [req: assets:resource]
-- render:es3: Upgrade to GL ES3
 - render:fbo: Support FBO
 - render:tex-filter: Texture filtering function [req: render:shader-includen]
 - render:tex-pack: Automatic texture packing (offline ?)

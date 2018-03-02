@@ -19,13 +19,13 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL2_GLSL_SOURCE_H
-#define _LAIR_RENDER_GL2_GLSL_SOURCE_H
+#ifndef _LAIR_RENDER_GL3_GLSL_SOURCE_H
+#define _LAIR_RENDER_GL3_GLSL_SOURCE_H
 
 
 #include <istream>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/render_gl3/context.h>
 
 
 namespace lair {

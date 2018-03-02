@@ -28,9 +28,9 @@
 
 #include <lair/sys_sdl2/image_loader.h>
 
-#include "lair/render_gl2/render_module.h"
+#include "lair/render_gl3/render_module.h"
 
-#include "lair/render_gl2/renderer.h"
+#include "lair/render_gl3/renderer.h"
 
 
 namespace lair

@@ -22,9 +22,9 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include <lair/render_gl2/gl.h>
+#include <lair/render_gl3/context.h>
 
-#include "lair/render_gl2/vertex_buffer.h"
+#include "lair/render_gl3/vertex_buffer.h"
 
 
 namespace lair

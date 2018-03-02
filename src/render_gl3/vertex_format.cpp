@@ -22,7 +22,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/render_gl2/vertex_format.h"
+#include "lair/render_gl3/vertex_format.h"
 
 
 namespace lair

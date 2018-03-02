@@ -24,7 +24,7 @@
 
 #include <lair/utils/tile_map.h>
 
-#include <lair/render_gl2/orthographic_camera.h>
+#include <lair/render_gl3/orthographic_camera.h>
 
 #include <lair/ec/sprite_renderer.h>
 
