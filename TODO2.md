@@ -1,5 +1,4 @@
 - build:rm-json: Get rid of Json
-- build:rm-glew: Get rid of GLEW
 - build:standalone: Inculde third-party packages and build statically
 - build:wasm: Test with wasm [req: build:standalone]
 
@@ -20,7 +19,7 @@
 
 - render:shader-include: support #include in shaders [req: assets:resource]
 - render:fbo: Support FBO
-- render:tex-filter: Texture filtering function [req: render:shader-includen]
+- render:tex-filter: Texture filtering function [req: render:shader-include]
 - render:tex-pack: Automatic texture packing (offline ?)
 - render:group-states: Grouped states (tex-set+filters / VBO+VAO, etc.)
 - render:shapes: Shape drawing (stroke + filled)

@@ -39,8 +39,6 @@ function(add_autopy TARGET MODULE_FILE)
 endfunction()
 
 
-find_package(OpenGL REQUIRED)
-
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(SDL2_mixer REQUIRED)
@@ -55,21 +53,13 @@ set(lair_INCLUDE_DIRS
 	PUBLIC ${SDL2IMAGE_INCLUDE_DIR}
 	PUBLIC ${SDL2MIXER_INCLUDE_DIR}
 	PUBLIC ${SDL2_INCLUDE_DIR}
-	PUBLIC ${OPENGL_INCLUDE_DIRS}
 )
 
 set(lair_LIBRARIES
 	PUBLIC ${SDL2IMAGE_LIBRARY}
 	PUBLIC ${SDL2MIXER_LIBRARY}
 	PUBLIC ${SDL2_LIBRARY}
-	PUBLIC ${OPENGL_LIBRARY}
 )
-
-if(NOT APPLE)
-	find_package(GLEW REQUIRED)
-	list(APPEND lair_INCLUDE_DIRS PUBLIC ${GLEW_INCLUDE_DIRS})
-	list(APPEND lair_LIBRARIES PUBLIC ${GLEW_LIBRARIES})
-endif()
 
 
 add_autopy(core/core_py core/core.py)

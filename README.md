@@ -10,7 +10,6 @@ Lair is in a early stage of development and should be considered a prototype. It
 To build Lair, you will need
 - CMake (http://www.cmake.org/)
 - Eigen (http://eigen.tuxfamily.org)
-- GLEW (http://glew.sourceforge.net/)
 - SDL2 (https://www.libsdl.org/)
 - SDL2_image (https://www.libsdl.org/projects/SDL_image/)
 - SDL2_mixer (https://www.libsdl.org/projects/SDL_mixer/)
