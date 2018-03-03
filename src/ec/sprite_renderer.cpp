@@ -29,14 +29,11 @@ namespace lair
 {
 
 
-static const VertexAttrib _spriteVertexFormat[] = {
-    { "vx_position", VxPosition, 4, gl::FLOAT, false,
-      offsetof(SpriteVertex, position) },
-    { "vx_color",    VxColor,    4, gl::FLOAT, false,
-      offsetof(SpriteVertex, color) },
-    { "vx_texCoord", VxTexCoord, 2, gl::FLOAT, false,
-      offsetof(SpriteVertex, texCoord) },
-    { nullptr, 0, 0, 0, false, 0 }
+static const VertexAttribInfo _spriteVertexAttribSet[] = {
+    { "vx_position", VxPosition },
+    { "vx_color",    VxColor },
+    { "vx_texCoord", VxTexCoord },
+    LAIR_VERTEX_ATTRIB_INFO_END
 };
 
 
@@ -130,11 +127,28 @@ SpriteShader::SpriteShader(ProgramObject* shader)
 //---------------------------------------------------------------------------//
 
 
-SpriteRenderer::SpriteRenderer(Renderer* renderer)
+SpriteRenderer::SpriteRenderer(Renderer* renderer, Size vBufferSize, Size iBufferSize)
 	: _renderer(renderer),
-      _spriteFormat(sizeof(SpriteVertex), _spriteVertexFormat),
-      _buffer(sizeof(SpriteVertex)) {
+      _attribSet(_spriteVertexAttribSet),
+      _vertexArray(),
+      _vertexBufferSize(vBufferSize),
+      _indexBufferSize(iBufferSize),
+      _vertexBuffer(renderer),
+      _indexBuffer(renderer) {
 	lairAssert(_renderer);
+
+	const VertexAttrib spriteVertexAttribs[] = {
+	    { &_vertexBuffer, VxPosition, 4, gl::FLOAT, false,
+	      offsetof(SpriteVertex, position) },
+	    { &_vertexBuffer, VxColor,    4, gl::FLOAT, false,
+	      offsetof(SpriteVertex, color) },
+	    { &_vertexBuffer, VxTexCoord, 2, gl::FLOAT, false,
+	      offsetof(SpriteVertex, texCoord) },
+	    LAIR_VERTEX_ATTRIB_END
+	};
+
+	_vertexArray = renderer->createVertexArray(
+	                sizeof(SpriteVertex), spriteVertexAttribs, &_indexBuffer);
 
 	ShaderObject vert = _renderer->compileShader("sprite", gl::VERTEX_SHADER,
 	                                   GlslSource(_spriteVertGlsl));
@@ -142,7 +156,7 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer)
 	                                   GlslSource(_spriteFragGlsl));
 	if(vert.isCompiled() && frag.isCompiled()) {
 		_defaultShaderProg = _renderer->compileProgram(
-		                         "sprite", &_spriteFormat, &vert, &frag);
+		                         "sprite", &_attribSet, &vert, &frag);
 	}
 	lairAssert(_defaultShaderProg.isLinked());
 	_defaultShader = SpriteShader(&_defaultShaderProg);
@@ -153,19 +167,13 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 
-void SpriteRenderer::clear() {
-	_buffer.clear();
-	_shaderParams.clear();
-}
-
-
 unsigned SpriteRenderer::vertexCount() const {
-	return _buffer.vertexCount();
+	return _vertexBuffer.pos() / sizeof(SpriteVertex);
 }
 
 
 unsigned SpriteRenderer::indexCount()  const {
-	return _buffer.indexSize();
+	return _indexBuffer.pos() / sizeof(unsigned);
 }
 
 
@@ -174,18 +182,58 @@ SpriteShader& SpriteRenderer::shader() {
 }
 
 
-VertexFormat* SpriteRenderer::format() {
-	return &_spriteFormat;
+VertexAttribSet* SpriteRenderer::attribSet() {
+	return &_attribSet;
 }
 
 
-VertexBuffer* SpriteRenderer::buffer() {
-	return &_buffer;
+VertexArray* SpriteRenderer::vertexArray() {
+	return _vertexArray.get();
+}
+
+
+BufferObject* SpriteRenderer::vertexBuffer() {
+	return &_vertexBuffer;
+}
+
+
+BufferObject* SpriteRenderer::indexBuffer() {
+	return &_indexBuffer;
+}
+
+
+void SpriteRenderer::beginRender() {
+	_vertexBuffer.beginWrite(_vertexBufferSize);
+	_indexBuffer.beginWrite(_indexBufferSize);
+}
+
+
+bool SpriteRenderer::endRender() {
+	bool success = true;
+
+	// Check for overflow and grow buffers if required
+	if(_vertexBuffer.pos() > _vertexBufferSize) {
+		dbgLogger.warning("SpriteRenderer: Vertex buffer too small ! Actual size: ",
+		                  _vertexBufferSize, ", required size: ", _vertexBuffer.pos());
+		_vertexBufferSize = _vertexBuffer.pos() * 2;
+		success = false;
+	}
+	if(_indexBuffer.pos() > _indexBufferSize) {
+		dbgLogger.warning("SpriteRenderer: Index buffer too small ! Actual size: ",
+		                  _indexBufferSize, ", required size: ", _indexBuffer.pos());
+		_indexBufferSize = _indexBuffer.pos() * 2;
+		success = false;
+	}
+
+	success &= _vertexBuffer.endWrite();
+	success &= _indexBuffer.endWrite();
+
+	return success;
 }
 
 
 void SpriteRenderer::addVertex(const Vector4& pos, const Vector4& color, const Vector2& texCoord) {
-	_buffer.addVertex(SpriteVertex{ pos, color, texCoord });
+	_vertexBuffer.write(SpriteVertex{ pos, color, texCoord });
 }
 
 
@@ -195,7 +243,7 @@ void SpriteRenderer::addVertex(const Vector3& pos, const Vector4& color, const V
 
 
 void SpriteRenderer::addIndex(unsigned index) {
-	_buffer.addIndex(index);
+	_indexBuffer.write(index);
 }
 
 

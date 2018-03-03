@@ -211,8 +211,7 @@ void BitmapTextComponentManager::render(EntityRef entity, float interp, const Or
 	compactArray();
 
 	_states.shader = _spriteRenderer->shader().shader;
-	_states.buffer = _spriteRenderer->buffer();
-	_states.format = _spriteRenderer->format();
+	_states.vertices = _spriteRenderer->vertexArray();
 	_states.textureFlags = Texture::BILINEAR_NO_MIPMAP | Texture::CLAMP;
 	_states.blendingMode = BLEND_ALPHA;
 
@@ -306,8 +305,7 @@ void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
 	if(count) {
 		RenderPass::DrawStates states;
 		states.shader       = renderer->shader().shader;
-		states.buffer       = renderer->buffer();
-		states.format       = renderer->format();
+		states.vertices     = renderer->vertexArray();
 		states.texture      = texture;
 		states.textureFlags = textureFlags;
 		states.blendingMode = blendingMode;

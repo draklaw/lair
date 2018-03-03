@@ -24,8 +24,6 @@
 
 #include "lair/render_gl3/context.h"
 #include "lair/render_gl3/program_object.h"
-#include "lair/render_gl3/vertex_format.h"
-#include "lair/render_gl3/vertex_buffer.h"
 #include "lair/render_gl3/texture.h"
 #include "lair/render_gl3/renderer.h"
 
@@ -58,9 +56,28 @@ RenderPass::DrawCall::DrawCall(const DrawStates& states, const ShaderParameter* 
 }
 
 
+void RenderPass::Stats::reset() {
+	shaderStateChangeCount = 0;
+	vertexArraySetupCount = 0;
+	textureBindCount = 0;
+	textureSetFlagCount = 0;
+	blendingModeChangeCount = 0;
+	drawCallCount = 0;
+}
+
+
+void RenderPass::Stats::dump(Logger& log) const {
+	log.info("Shader changes:         ", shaderStateChangeCount);
+	log.info("VAO setups:             ", vertexArraySetupCount);
+	log.info("Texture bindings:       ", textureBindCount);
+	log.info("Texture flag changes:   ", textureSetFlagCount);
+	log.info("Blending mode changes:  ", blendingModeChangeCount);
+	log.info("Draw calls:             ", drawCallCount);
+}
+
+
 RenderPass::RenderPass(Renderer* renderer)
-    : _renderer(renderer)
-    , _vao(0) {
+    : _renderer(renderer) {
 }
 
 
@@ -83,6 +100,8 @@ void RenderPass::addDrawCall(const DrawStates& states, const ShaderParameter* pa
 
 
 void RenderPass::render() {
+	_stats.reset();
+
 	_sortBuffer.clear();
 	_sortBuffer.reserve(_drawCalls.size());
 	for(DrawCall& call: _drawCalls) {
@@ -94,11 +113,6 @@ void RenderPass::render() {
 
 	Context* glc = _renderer->context();
 
-	if(!_vao) {
-		glc->genVertexArrays(1, &_vao);
-	}
-	glc->bindVertexArray(_vao);
-
 	// TODO: Support multitexturing
 	glc->activeTexture(gl::TEXTURE0);
 
@@ -109,15 +123,12 @@ void RenderPass::render() {
 
 		if(!prev || prev->states.shader != states.shader) {
 			states.shader->use();
+			_stats.shaderStateChangeCount += 1;
 		}
 
-		bool updateBuffer = !prev || prev->states.buffer != states.buffer;
-		if(updateBuffer) {
-			states.buffer->bindAndUpload(glc);
-		}
-
-		if(updateBuffer || !prev || prev->states.format != states.format) {
-			states.format->setup(glc);
+		if(!prev || prev->states.vertices != states.vertices) {
+			states.vertices->setup();
+			_stats.vertexArraySetupCount += 1;
 		}
 
 		const ShaderParameter* param = call.params;
@@ -155,10 +166,12 @@ void RenderPass::render() {
 		bool updateTexture = !prev || prev->states.texture != states.texture;
 		if(updateTexture) {
 			states.texture->bind();
+			_stats.textureBindCount += 1;
 		}
 
 		if(updateTexture || !prev || prev->states.textureFlags != states.textureFlags) {
 			states.texture->_setFlags(states.textureFlags);
+			_stats.textureSetFlagCount += 1;
 		}
 
 		if(!prev || prev->states.blendingMode != states.blendingMode) {
@@ -182,13 +195,22 @@ void RenderPass::render() {
 				glc->blendFunc(gl::DST_COLOR, gl::ZERO);
 				break;
 			}
+			_stats.blendingModeChangeCount += 1;
 		}
 
-		glc->drawElements(gl::TRIANGLES, call.count, gl::UNSIGNED_INT,
-						  reinterpret_cast<void*>(call.index*sizeof(unsigned)));
+		if(states.vertices->indices()) {
+			glc->drawElements(gl::TRIANGLES, call.count, gl::UNSIGNED_INT,
+			                  reinterpret_cast<void*>(call.index*sizeof(unsigned)));
+		}
+		else {
+			glc->drawArrays(gl::TRIANGLES, call.index, call.count);
+		}
+		_stats.drawCallCount += 1;
 
 		prev = &call;
 	}
+
+//	_stats.dump(dbgLogger);
 }
 
 
@@ -205,25 +227,20 @@ RenderPass::Index RenderPass::solidIndex(const DrawCall& call) {
 
 	Index index = 0;
 
-	constexpr unsigned shaderBits   =  6;
-	constexpr unsigned formatBits   =  6;
-	constexpr unsigned bufferBits   =  8;
+	constexpr unsigned shaderBits   = 10;
+	constexpr unsigned verticesBits = 10;
 	constexpr unsigned textureBits  = 10;
 	constexpr unsigned texFlagsBits =  9;
 	constexpr unsigned depthBits    = 24;
 
-	Index bufferHash = hash(call.states.buffer) % (1 << bufferBits);
-	Index formatHash = hash(call.states.format) % (1 << formatBits);
-
 	int i = 0;
 	#define SET_BITS(_value, _size) setBits(index, _value, i, _size); i += _size
-	SET_BITS(call.depth,                   depthBits);
-	SET_BITS(call.states.textureFlags,     texFlagsBits);
-	SET_BITS(call.states.texture->_glId(), textureBits);
-	SET_BITS(formatHash,                   formatBits);
-	SET_BITS(bufferHash,                   bufferBits);
-	SET_BITS(call.states.shader->id(),     shaderBits);
-	SET_BITS(1,                            1);
+	SET_BITS(call.depth,                    depthBits);
+	SET_BITS(call.states.textureFlags,      texFlagsBits);
+	SET_BITS(call.states.texture->_glId(),  textureBits);
+	SET_BITS(call.states.vertices->index(), verticesBits);
+	SET_BITS(call.states.shader->id(),      shaderBits);
+	SET_BITS(1,                             1);
 	lairAssert(i == (8 * sizeof(Index)));
 	#undef SET_BITS
 
@@ -236,25 +253,20 @@ RenderPass::Index RenderPass::transparentIndex(const DrawCall& call) {
 
 	Index index = 0;
 
-	constexpr unsigned shaderBits   =  6;
-	constexpr unsigned formatBits   =  6;
-	constexpr unsigned bufferBits   =  8;
+	constexpr unsigned shaderBits   = 10;
+	constexpr unsigned verticesBits = 10;
 	constexpr unsigned textureBits  = 10;
 	constexpr unsigned texFlagsBits =  9;
 	constexpr unsigned depthBits    = 24;
 
-	Index bufferHash = hash(call.states.buffer) % (1 << bufferBits);
-	Index formatHash = hash(call.states.format) % (1 << formatBits);
-
 	int i = 0;
 	#define SET_BITS(_value, _size) setBits(index, _value, i, _size); i += _size
-	SET_BITS(call.states.textureFlags,     texFlagsBits);
-	SET_BITS(call.states.texture->_glId(), textureBits);
-	SET_BITS(formatHash,                   formatBits);
-	SET_BITS(bufferHash,                   bufferBits);
-	SET_BITS(call.states.shader->id(),     shaderBits);
-	SET_BITS(0x00ffffffu - call.depth,     depthBits);
-	SET_BITS(1,                            1);
+	SET_BITS(call.states.textureFlags,      texFlagsBits);
+	SET_BITS(call.states.texture->_glId(),  textureBits);
+	SET_BITS(call.states.vertices->index(), verticesBits);
+	SET_BITS(call.states.shader->id(),      shaderBits);
+	SET_BITS(0x00ffffffu - call.depth,      depthBits);
+	SET_BITS(1,                             1);
 	lairAssert(i == (8 * sizeof(Index)));
 	#undef SET_BITS
 

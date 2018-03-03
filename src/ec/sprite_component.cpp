@@ -219,9 +219,8 @@ SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, 
 void SpriteComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
 //	compactArray();
 
-	_states.shader = _spriteRenderer->shader().shader;
-	_states.buffer = _spriteRenderer->buffer();
-	_states.format = _spriteRenderer->format();
+	_states.shader   = _spriteRenderer->shader().shader;
+	_states.vertices = _spriteRenderer->vertexArray();
 
 	_render(entity, interp, camera);
 }

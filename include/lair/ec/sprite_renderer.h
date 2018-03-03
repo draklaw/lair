@@ -28,7 +28,9 @@
 
 #include <lair/render_gl3/context.h>
 #include <lair/render_gl3/texture.h>
-#include <lair/render_gl3/vertex_buffer.h>
+#include <lair/render_gl3/buffer_object.h>
+#include <lair/render_gl3/vertex_attrib_set.h>
+#include <lair/render_gl3/vertex_array.h>
 #include <lair/render_gl3/render_pass.h>
 #include <lair/render_gl3/renderer.h>
 
@@ -91,7 +93,9 @@ inline Box2 boxView(const Box2& box, const Box2& view) {
 
 class SpriteRenderer {
 public:
-	SpriteRenderer(Renderer* renderer);
+	SpriteRenderer(Renderer* renderer,
+	               Size vBufferSize = (1 << 20) * sizeof(SpriteVertex),
+	               Size iBufferSize = (1 << 20) * sizeof(unsigned));
 	SpriteRenderer(const SpriteRenderer&) = delete;
 	SpriteRenderer(SpriteRenderer&&)      = delete;
 	~SpriteRenderer();
@@ -102,11 +106,14 @@ public:
 	unsigned vertexCount() const;
 	unsigned indexCount()  const;
 
-	SpriteShader& shader();
-	VertexFormat* format();
-	VertexBuffer* buffer();
+	SpriteShader&    shader();
+	VertexAttribSet* attribSet();
+	VertexArray*     vertexArray();
+	BufferObject*    vertexBuffer();
+	BufferObject*    indexBuffer();
 
-	void clear();
+	void beginRender();
+	bool endRender();
 
 	void addVertex(const Vector4& pos, const Vector4& color, const Vector2& texCoord);
 	void addVertex(const Vector3& pos, const Vector4& color, const Vector2& texCoord);
@@ -128,11 +135,15 @@ protected:
 protected:
 	Renderer*        _renderer;
 
-	VertexFormat     _spriteFormat;
+	VertexAttribSet  _attribSet;
+	VertexArraySP    _vertexArray;
 	ProgramObject    _defaultShaderProg;
 	SpriteShader     _defaultShader;
 
-	VertexBuffer     _buffer;
+	Size             _vertexBufferSize;
+	Size             _indexBufferSize;
+	BufferObject     _vertexBuffer;
+	BufferObject     _indexBuffer;
 	ShaderParamList  _shaderParams;
 };
 

@@ -42,7 +42,21 @@ TileLayerComponent::TileLayerComponent(Manager* manager, _Entity* entity)
     , _layerIndex(0)
     , _blendingMode(BLEND_NONE)
     , _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT)
-    , _buffer(new VertexBuffer(sizeof(SpriteVertex))) {
+    , _vBuffer(new BufferObject(manager->spriteRenderer()->renderer()))
+    , _iBuffer(new BufferObject(manager->spriteRenderer()->renderer())) {
+
+	const VertexAttrib spriteVertexAttribs[] = {
+	    { _vBuffer.get(), VxPosition, 4, gl::FLOAT, false,
+	      offsetof(SpriteVertex, position) },
+	    { _vBuffer.get(), VxColor,    4, gl::FLOAT, false,
+	      offsetof(SpriteVertex, color) },
+	    { _vBuffer.get(), VxTexCoord, 2, gl::FLOAT, false,
+	      offsetof(SpriteVertex, texCoord) },
+	    LAIR_VERTEX_ATTRIB_END
+	};
+
+	_vertexArray = manager->spriteRenderer()->renderer()->createVertexArray(
+	                sizeof(SpriteVertex), spriteVertexAttribs, _iBuffer.get());
 }
 
 
@@ -125,10 +139,13 @@ void TileLayerComponentManager::render(EntityRef entity, float interp, const Ort
 	compactArray();
 
 	_states.shader = _spriteRenderer->shader().shader;
-	_states.buffer = _spriteRenderer->buffer();
-	_states.format = _spriteRenderer->format();
 
 	_render(entity, interp, camera);
+}
+
+
+SpriteRenderer* TileLayerComponentManager::spriteRenderer() {
+	return _spriteRenderer;
 }
 
 
@@ -137,12 +154,18 @@ LoaderManager* TileLayerComponentManager::loader() {
 }
 
 
-void TileLayerComponentManager::_fillBuffer(VertexBuffer& buffer, const TileMap& tileMap, unsigned layer,
-                                            float tileWidth, float tileHeight, const Matrix4& wt) const {
-	buffer.clear();
-
+unsigned TileLayerComponentManager::_fillBuffer(BufferObject& vBuffer, BufferObject& iBuffer,
+                                                const TileMap& tileMap, unsigned layer,
+                                                float tileWidth, float tileHeight, const Matrix4& wt) const {
 	unsigned width      = tileMap.width (layer);
 	unsigned height     = tileMap.height(layer);
+
+	unsigned nVertices = width * height * 4;
+	unsigned nIndices  = width * height * 6;
+
+	vBuffer.beginWrite(nVertices * sizeof(SpriteVertex));
+	iBuffer.beginWrite(nIndices * sizeof(unsigned));
+
 	Vector2i nTiles(tileMap.tileSetHTiles(), tileMap.tileSetVTiles());
 	for(unsigned y = 0; y < height; ++y) {
 		for(unsigned x = 0; x < width; ++x) {
@@ -150,7 +173,7 @@ void TileLayerComponentManager::_fillBuffer(VertexBuffer& buffer, const TileMap&
 			if(tile == 0)
 				continue;
 
-			unsigned index = buffer.vertexCount();
+			unsigned index = vBuffer.pos() / sizeof(SpriteVertex);
 			Box2 tc  = boxView(tileBox(nTiles, tile - 1),
 			                   Box2(Vector2(0.001, 0.001), Vector2(0.999, 0.999)));
 			for(unsigned vi = 0; vi < 4; ++vi) {
@@ -158,18 +181,24 @@ void TileLayerComponentManager::_fillBuffer(VertexBuffer& buffer, const TileMap&
 				unsigned y2 = (vi & 0x02)? 1: 0;
 				Vector4 pos = wt * Vector4((         x + x2) * tileWidth,
 				                           (height - y - y2) * tileHeight, 0, 1);
-				buffer.addVertex(SpriteVertex{ pos, Vector4::Constant(1),
-				                               tc.corner(Box2::CornerType(x2 + y2*2)) });
+				vBuffer.write(SpriteVertex{ pos, Vector4::Constant(1),
+				                            tc.corner(Box2::CornerType(x2 + y2*2)) });
 			}
 
-			buffer.addIndex(index + 0);
-			buffer.addIndex(index + 1);
-			buffer.addIndex(index + 2);
-			buffer.addIndex(index + 2);
-			buffer.addIndex(index + 1);
-			buffer.addIndex(index + 3);
+			iBuffer.write(index + 0);
+			iBuffer.write(index + 1);
+			iBuffer.write(index + 2);
+			iBuffer.write(index + 2);
+			iBuffer.write(index + 1);
+			iBuffer.write(index + 3);
 		}
 	}
+
+	// FIXME: Check return value and retry.
+	vBuffer.endWrite();
+	iBuffer.endWrite();
+
+	return nIndices;
 }
 
 
@@ -220,13 +249,13 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 		if(comp->_bufferDirty) {
 			float tileWidth  = float(tex.width())  / float(tileMap.tileSetHTiles());
 			float tileHeight = float(tex.height()) / float(tileMap.tileSetVTiles());
-			_fillBuffer(*comp->_buffer, tileMap, layer, tileWidth, tileHeight, wt);
+			comp->_vertexCount = _fillBuffer(*comp->_vBuffer, *comp->_iBuffer,
+			                                 tileMap, layer, tileWidth, tileHeight, wt);
 			comp->_bufferDirty = false;
 		}
-		unsigned count = comp->_buffer->indexSize();
 
-		if(count) {
-			_states.buffer       = comp->_buffer.get();
+		if(comp->_vertexCount) {
+			_states.vertices     = comp->_vertexArray.get();
 			_states.texture      = &tex;
 			_states.textureFlags = comp->textureFlags();
 			_states.blendingMode = comp->blendingMode();
@@ -238,7 +267,7 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 
 			float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
 			                                        camera.viewBox().max()(2));
-			_renderPass->addDrawCall(_states, params, depth, 0, count);
+			_renderPass->addDrawCall(_states, params, depth, 0, comp->_vertexCount);
 		}
 	}
 

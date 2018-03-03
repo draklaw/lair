@@ -103,8 +103,9 @@ set(lair_SOURCES
 
 	render_gl3/context.cpp
 	render_gl3/orthographic_camera.cpp
-	render_gl3/vertex_format.cpp
-	render_gl3/vertex_buffer.cpp
+	render_gl3/buffer_object.cpp
+	render_gl3/vertex_attrib_set.cpp
+	render_gl3/vertex_array.cpp
 	render_gl3/glsl_source.cpp
 	render_gl3/shader_object.cpp
 	render_gl3/program_object.cpp

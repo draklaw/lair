@@ -22,50 +22,32 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/render_gl3/vertex_format.h"
+#include "lair/render_gl3/vertex_attrib_set.h"
 
 
 namespace lair
 {
 
 
-VertexFormat::VertexFormat(GLsizei sizeInBytes, const VertexAttrib* attribs)
-    : _sizeInBytes(sizeInBytes),
-      _attribs() {
-	const VertexAttrib* end = attribs;
+VertexAttribSet::VertexAttribSet(const VertexAttribInfo* attribs)
+    : _attribs() {
+	const VertexAttribInfo* end = attribs;
 	while(end->name) ++end;
 	_attribs.assign(attribs, end);
 }
 
 
-VertexFormat::~VertexFormat() {
+VertexAttribSet::~VertexAttribSet() {
 }
 
 
-VertexFormat::AttribIterator VertexFormat::begin() const {
+VertexAttribSet::AttribIterator VertexAttribSet::begin() const {
 	return _attribs.begin();
 }
 
 
-VertexFormat::AttribIterator VertexFormat::end() const {
+VertexAttribSet::AttribIterator VertexAttribSet::end() const {
 	return _attribs.end();
-}
-
-
-void VertexFormat::setup(Context* glc) const {
-	for(const VertexAttrib& attrib: _attribs) {
-		glc->enableVertexAttribArray(attrib.index);
-		glc->vertexAttribPointer(attrib.index, attrib.size, attrib.type,
-		                         attrib.normalized, _sizeInBytes,
-		                         reinterpret_cast<const void*>(attrib.offset));
-	}
-}
-
-
-void VertexFormat::clear(Context* glc) const {
-	for(const VertexAttrib& attrib: _attribs) {
-		glc->disableVertexAttribArray(attrib.index);
-	}
 }
 
 

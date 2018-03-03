@@ -19,11 +19,9 @@
  */
 
 
-#ifndef _LAIR_RENDER_GL3_VERTEX_FORMAT_H
-#define _LAIR_RENDER_GL3_VERTEX_FORMAT_H
+#ifndef LAIR_RENDER_GL3_VERTEX_ATTRIB_SET_H
+#define LAIR_RENDER_GL3_VERTEX_ATTRIB_SET_H
 
-
-#include <vector>
 
 #include <lair/core/lair.h>
 
@@ -34,42 +32,41 @@ namespace lair
 {
 
 
-struct VertexAttrib {
+struct VertexAttribInfo {
 	const char* name;
 	GLuint      index;
-	GLint       size;
-	GLenum      type;
-	GLboolean   normalized;
-	GLsizei     offset;
 };
 
+#define LAIR_VERTEX_ATTRIB_INFO_END { nullptr, 0 }
 
-class VertexFormat {
+
+/**
+ * \brief A set of vertex attribute info (vx_id, index).
+ *
+ * This describe the attributes of a vertex, and more specifically how attribute
+ * names in shaders map to the application indices. The main goal of this class
+ * is to be given to program objects to bind vertex attributes.
+ */
+class VertexAttribSet {
 protected:
-	typedef std::vector<VertexAttrib> AttribList;
+	typedef std::vector<VertexAttribInfo> AttribList;
 
 public:
 	typedef AttribList::const_iterator AttribIterator;
 
 public:
-	VertexFormat(GLsizei sizeInBytes, const VertexAttrib* attribs);
-	VertexFormat(const VertexFormat&) = delete;
-	VertexFormat(VertexFormat&&)      = delete;
-	~VertexFormat();
+	VertexAttribSet(const VertexAttribInfo* attribs);
+	VertexAttribSet(const VertexAttribSet&) = delete;
+	VertexAttribSet(VertexAttribSet&&)      = delete;
+	~VertexAttribSet();
 
-	VertexFormat& operator=(const VertexFormat&) = delete;
-	VertexFormat& operator=(VertexFormat&&)      = delete;
-
-	inline GLsizei sizeInBytes() const { return _sizeInBytes; }
+	VertexAttribSet& operator=(const VertexAttribSet&) = delete;
+	VertexAttribSet& operator=(VertexAttribSet&&)      = delete;
 
 	AttribIterator begin() const;
 	AttribIterator end() const;
 
-	void setup(Context* glc) const;
-	void clear(Context* glc) const;
-
 protected:
-	GLsizei    _sizeInBytes;
 	AttribList _attribs;
 };
 

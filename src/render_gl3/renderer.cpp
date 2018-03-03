@@ -28,7 +28,8 @@
 
 #include <lair/sys_sdl2/image_loader.h>
 
-#include "lair/render_gl3/render_module.h"
+#include <lair/render_gl3/vertex_attrib_set.h>
+#include <lair/render_gl3/render_module.h>
 
 #include "lair/render_gl3/renderer.h"
 
@@ -41,6 +42,7 @@ Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
     : _module(module),
       _assetManager(assetManager),
       _context(module? module->context(): nullptr),
+      _vertexArrayCount(0),
       _defaultTexture() {
 	lairAssert(_module);
 	lairAssert(_assetManager);
@@ -73,8 +75,16 @@ ShaderObject Renderer::compileShader(const char* name, GLenum type,
 }
 
 
+VertexArraySP Renderer::createVertexArray(GLsizei sizeInBytes,
+                                          const VertexAttrib* attribs,
+                                          BufferObject* indices) {
+	return std::make_shared<VertexArray>(
+	            this, _vertexArrayCount++, sizeInBytes, attribs, indices);
+}
+
+
 ProgramObject Renderer::compileProgram(const char* name,
-                                       const VertexFormat* format,
+                                       const VertexAttribSet* attribs,
                                        const ShaderObject* vert,
                                        const ShaderObject* frag) {
 	ProgramObject prog(this);
@@ -82,9 +92,8 @@ ProgramObject Renderer::compileProgram(const char* name,
 	prog.attachShader(*vert);
 	prog.attachShader(*frag);
 
-	for(const VertexAttrib& attrib: *format) {
+	for(const VertexAttribInfo& attrib: *attribs) {
 		prog.bindAttributeLocation(attrib.name, attrib.index);
-		++format;
 	}
 
 	if(!prog.link()) {

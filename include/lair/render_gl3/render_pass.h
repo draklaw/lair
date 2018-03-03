@@ -37,8 +37,8 @@ namespace lair
 
 class Renderer;
 class ProgramObject;
-class VertexFormat;
-class VertexBuffer;
+class BufferObject;
+class VertexArray;
 class Texture;
 
 typedef std::shared_ptr<Texture> TextureSP;
@@ -151,8 +151,7 @@ public:
 	// Stuff that is likely to be the same for several contiguous draw calls
 	struct DrawStates {
 		ProgramObject* shader;
-		VertexBuffer*  buffer;
-		VertexFormat*  format;
+		VertexArray*   vertices;
 		Texture*       texture;
 		unsigned       textureFlags;
 		BlendingMode   blendingMode;
@@ -173,6 +172,19 @@ public:
 	};
 	typedef std::vector<DrawCall> DrawCallList;
 
+
+	// Stats about rendering
+	struct Stats {
+		void reset();
+		void dump(Logger& log) const;
+
+		unsigned shaderStateChangeCount;
+		unsigned vertexArraySetupCount;
+		unsigned textureBindCount;
+		unsigned textureSetFlagCount;
+		unsigned blendingModeChangeCount;
+		unsigned drawCallCount;
+	};
 
 public:
 	RenderPass(Renderer* renderer);
@@ -209,14 +221,14 @@ protected:
 protected:
 	Renderer* _renderer;
 
-	GLuint _vao;
-
 	// TODO: Framebuffer* _framebuffer;
 	// bool _depthTestEnable;
 	// DepthTest _depthTest;
 
 	DrawCallList _drawCalls;
 	SortBuffer   _sortBuffer;
+
+	Stats _stats;
 };
 
 

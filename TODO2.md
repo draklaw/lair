@@ -20,8 +20,9 @@
 - render:shader-include: support #include in shaders [req: assets:resource]
 - render:fbo: Support FBO
 - render:tex-filter: Texture filtering function [req: render:shader-include]
-- render:tex-pack: Automatic texture packing (offline ?)
-- render:group-states: Grouped states (tex-set+filters / VBO+VAO, etc.)
+- render:tex-atlas: Allow one GL texture to contain several "logical" texture (batching)
+- render:tex-pack: Automatic texture packing (offline ?) [req: render:tex-atlas]
+- render:tex-set: Support texture set (list of texture + params)
 - render:shapes: Shape drawing (stroke + filled)
 - render:text: Text shaders (sdf / vector)
 
@@ -29,7 +30,7 @@
 - entities:camera-sg: Include camera in the scene-graph
 - entities:prop-array: Allow components property to live in a separate array for performances and ping-pong for interpolation
 - entities:bake-disable: Propagate disabled state to avoid walking the tree to know if an entity is enabled
-- entities:tile-map: Use generic tile maps instead of grid-based tiling
+- entities:tile-map-culling: Update render so it uses culling instead of static buffers
 - entities:tranforms-helper: Write transforms methods for entities for convenience
 
 - coll:enhance: Finish & test basic shape collisions

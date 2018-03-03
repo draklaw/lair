@@ -87,9 +87,13 @@ InterpLoop::EventType InterpLoop::nextEvent() {
 	uint64 now = _sys->getTimeNs();
 
 	uint64 nextFrame = _frameRealTime + _frameDuration;
-	uint64 nextEvent = std::min(_tickRealTime + 1, nextFrame);
+	uint64 nextTick  = _tickRealTime + 1;
+	uint64 nextEvent = _frameDuration? std::min(nextTick, nextFrame): nextTick;
 
 	while(now < nextEvent) {
+		if(!frameDuration())
+			return EventType::Frame;
+
 		_sys->dispatchPendingSystemEvents();
 		_sys->waitNs(nextEvent - now);
 		now = _sys->getTimeNs();

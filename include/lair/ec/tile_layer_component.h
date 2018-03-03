@@ -92,7 +92,10 @@ protected:
 
 public:
 	bool         _bufferDirty;
-	std::unique_ptr<VertexBuffer> _buffer;
+	unsigned     _vertexCount;
+	std::shared_ptr<VertexArray>  _vertexArray;
+	std::unique_ptr<BufferObject> _vBuffer;
+	std::unique_ptr<BufferObject> _iBuffer;
 };
 
 
@@ -119,11 +122,13 @@ public:
 
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
+	SpriteRenderer* spriteRenderer();
 	LoaderManager* loader();
 
 protected:
-	void _fillBuffer(VertexBuffer& buffer, const TileMap& tileMap, unsigned layer,
-	                 float tileWidth, float tileHeight, const Matrix4& wt) const;
+	unsigned _fillBuffer(BufferObject& vBuffer, BufferObject& iBuffer,
+	                     const TileMap& tileMap, unsigned layer,
+	                     float tileWidth, float tileHeight, const Matrix4& wt) const;
 	void _render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 protected:

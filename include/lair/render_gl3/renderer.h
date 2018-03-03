@@ -33,8 +33,8 @@
 #include <lair/core/asset_manager.h>
 
 #include <lair/render_gl3/context.h>
-#include <lair/render_gl3/vertex_format.h>
 #include <lair/render_gl3/glsl_source.h>
+#include <lair/render_gl3/vertex_array.h>
 #include <lair/render_gl3/shader_object.h>
 #include <lair/render_gl3/program_object.h>
 #include <lair/render_gl3/texture.h>
@@ -46,6 +46,7 @@ namespace lair
 
 class Image;
 
+class VertexAttribSet;
 class RenderModule;
 
 
@@ -61,10 +62,14 @@ public:
 
 	Context* context();
 
+	VertexArraySP createVertexArray(GLsizei sizeInBytes,
+	                                const VertexAttrib* attribs,
+	                                BufferObject* indices);
+
 	ShaderObject compileShader(const char* name, GLenum type,
 	                           const GlslSource& source);
 	ProgramObject compileProgram(const char* name,
-	                             const VertexFormat* format,
+	                             const VertexAttribSet* attribs,
 	                             const ShaderObject* vert,
 	                             const ShaderObject* frag);
 
@@ -89,6 +94,8 @@ protected:
 	AssetManager*   _assetManager;
 
 	Context*        _context;
+
+	unsigned        _vertexArrayCount;
 
 	TextureList     _pendingTextures;
 	TextureAspectSP _defaultTexture;
