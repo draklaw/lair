@@ -33,20 +33,24 @@ namespace lair
 {
 
 
-void APIENTRY debugCallback(GLenum /*source*/, GLenum /*type*/, GLuint /*id*/,
+void APIENTRY debugCallback(GLenum source, GLenum type, GLuint id,
                             GLenum severity, GLsizei /*length*/,
                             const char* message, const void* userParam) {
 	RenderModule* rm = (RenderModule*)userParam;
 
 	LogLevel level = LogLevel::Debug;
 	switch(severity) {
-	case gl::DEBUG_SEVERITY_HIGH_ARB:   level = LogLevel::Error; break;
-	case gl::DEBUG_SEVERITY_MEDIUM_ARB: level = LogLevel::Warning; break;
-	case gl::DEBUG_SEVERITY_LOW_ARB:    level = LogLevel::Info; break;
+	case gl::DEBUG_SEVERITY_HIGH:         level = LogLevel::Error; break;
+	case gl::DEBUG_SEVERITY_MEDIUM:       level = LogLevel::Warning; break;
+	case gl::DEBUG_SEVERITY_LOW:          level = LogLevel::Log; break;
+	case gl::DEBUG_SEVERITY_NOTIFICATION: level = LogLevel::Info; break;
 	}
 
 	rm->log().write(level, "OpenGL: ", message,
-	                " (", rm->context()->getDebugSeverityName(severity), ")");
+	                " (", rm->context()->getEnumName(source),
+	                ", ", rm->context()->getEnumName(type),
+	                ", ", id,
+	                ", ", rm->context()->getEnumName(severity), ")");
 }
 
 
@@ -76,37 +80,33 @@ bool RenderModule::initialize(bool debugGl) {
 		return false;
 	}
 
-#ifndef NDEBUG
-	if(_context._gl_arb_debug_output) {
-		log().warning("Here we are...");
-		_context.debugMessageCallbackARB(debugCallback, (const void*)this);
+	if(_context._gl_khr_debug) {
+		_context.debugMessageCallback(debugCallback, (const void*)this);
 
-		// Note: It seems the drivers send messages with an invalid severity.
-		// If debugGl is true, just enable everything, otherwise, disable all
-		// (including "invalid" messages) and only enable high and medium
-		// severity messages.
-		_context.debugMessageControlARB(
-		            gl::DONT_CARE, gl::DONT_CARE, gl::DONT_CARE, 0, nullptr, debugGl);
-		_context.debugMessageControlARB(
-		            gl::DONT_CARE, gl::DONT_CARE, gl::DEBUG_SEVERITY_HIGH_ARB, 0, nullptr, true);
-		_context.debugMessageControlARB(
-		            gl::DONT_CARE, gl::DONT_CARE, gl::DEBUG_SEVERITY_MEDIUM_ARB, 0, nullptr, true);
-		_context.debugMessageControlARB(
-		            gl::DONT_CARE, gl::DONT_CARE, gl::DEBUG_SEVERITY_LOW_ARB, 0, nullptr, debugGl);
+		_context.debugMessageControl(
+		            gl::DONT_CARE, gl::DONT_CARE, gl::DEBUG_SEVERITY_LOW,
+		            0, nullptr, debugGl);
+		_context.debugMessageControl(
+		            gl::DONT_CARE, gl::DONT_CARE, gl::DEBUG_SEVERITY_NOTIFICATION,
+		            0, nullptr, debugGl);
 
-		_context.enable(gl::DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		_context.enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
 
 		const char* msg = "GL_ARB_debug_output enabled and working";
-		_context.debugMessageInsertARB(gl::DEBUG_SOURCE_APPLICATION_ARB,
-		                               gl::DEBUG_TYPE_OTHER_ARB, 0,
-		                               gl::DEBUG_SEVERITY_MEDIUM_ARB,
-		                               strlen(msg), msg);
+		_context.debugMessageInsert(gl::DEBUG_SOURCE_APPLICATION,
+		                            gl::DEBUG_TYPE_OTHER, 0,
+		                            gl::DEBUG_SEVERITY_MEDIUM,
+		                            strlen(msg), msg);
 
+#ifndef NDEBUG
 		// Disable error reporting using glGetError as it is redundant and less
 		// detailed.
 		_context.setLogErrors(false);
-	}
 #endif
+	}
+
+	_context.enable(gl::DEPTH_TEST);
+	_context.depthFunc(gl::LEQUAL);
 
 	_initialized = true;
 
@@ -119,11 +119,9 @@ void RenderModule::shutdown() {
 
 	log().log("Render module shutdown...");
 
-#ifndef NDEBUG
-	if(_context._gl_arb_debug_output) {
-		_context.debugMessageCallbackARB(nullptr, nullptr);
+	if(_context._gl_khr_debug) {
+		_context.debugMessageCallback(nullptr, nullptr);
 	}
-#endif
 
 	_context.shutdown();
 

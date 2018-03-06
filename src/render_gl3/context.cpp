@@ -73,8 +73,11 @@ Context::Context(GlGetProcAddress glGetProcAddress, Logger* logger):
 	_gl_3_0(false),
 	_gl_3_1(false),
 	_gl_3_2(false),
+	_gl_3_3(false),
 	_gl_ext_texture_filter_anisotropic(false),
-	_gl_arb_debug_output(false),
+	_gl_khr_debug(false),
+	_gl_arb_conservative_depth(false),
+	_gl_arb_texture_storage(false),
 
 	// GL_VERSION_1_0
 
@@ -425,12 +428,56 @@ Context::Context(GlGetProcAddress glGetProcAddress, Logger* logger):
 	_glGetMultisamplefv(nullptr),
 	_glSampleMaski(nullptr),
 
-	// GL_ARB_debug_output
+	// GL_VERSION_3_3
 
-	_glDebugMessageControlARB(nullptr),
-	_glDebugMessageInsertARB(nullptr),
-	_glDebugMessageCallbackARB(nullptr),
-	_glGetDebugMessageLogARB(nullptr),
+	_glBindFragDataLocationIndexed(nullptr),
+	_glGetFragDataIndex(nullptr),
+	_glGenSamplers(nullptr),
+	_glDeleteSamplers(nullptr),
+	_glIsSampler(nullptr),
+	_glBindSampler(nullptr),
+	_glSamplerParameteri(nullptr),
+	_glSamplerParameteriv(nullptr),
+	_glSamplerParameterf(nullptr),
+	_glSamplerParameterfv(nullptr),
+	_glSamplerParameterIiv(nullptr),
+	_glSamplerParameterIuiv(nullptr),
+	_glGetSamplerParameteriv(nullptr),
+	_glGetSamplerParameterIiv(nullptr),
+	_glGetSamplerParameterfv(nullptr),
+	_glGetSamplerParameterIuiv(nullptr),
+	_glQueryCounter(nullptr),
+	_glGetQueryObjecti64v(nullptr),
+	_glGetQueryObjectui64v(nullptr),
+	_glVertexAttribDivisor(nullptr),
+	_glVertexAttribP1ui(nullptr),
+	_glVertexAttribP1uiv(nullptr),
+	_glVertexAttribP2ui(nullptr),
+	_glVertexAttribP2uiv(nullptr),
+	_glVertexAttribP3ui(nullptr),
+	_glVertexAttribP3uiv(nullptr),
+	_glVertexAttribP4ui(nullptr),
+	_glVertexAttribP4uiv(nullptr),
+
+	// GL_KHR_debug
+
+	_glDebugMessageControl(nullptr),
+	_glDebugMessageInsert(nullptr),
+	_glDebugMessageCallback(nullptr),
+	_glGetDebugMessageLog(nullptr),
+	_glPushDebugGroup(nullptr),
+	_glPopDebugGroup(nullptr),
+	_glObjectLabel(nullptr),
+	_glGetObjectLabel(nullptr),
+	_glObjectPtrLabel(nullptr),
+	_glGetObjectPtrLabel(nullptr),
+	_glGetPointerv(nullptr),
+
+	// GL_ARB_texture_storage
+
+	_glTexStorage1D(nullptr),
+	_glTexStorage2D(nullptr),
+	_glTexStorage3D(nullptr),
 
 	_log(logger),
 	_abortOnError(false),
@@ -818,20 +865,70 @@ bool Context::initialize(bool debugGl) {
 	_glSampleMaski = (_PfnGlSampleMaski)_getProcAddress("glSampleMaski");
 	_gl_3_2 = (_gl_3_1 && _procCount == 19);
 
-	// GL_ARB_debug_output
+	// GL_VERSION_3_3
 
 	_procCount = 0;
-	_glDebugMessageControlARB = (_PfnGlDebugMessageControlARB)_getProcAddress("glDebugMessageControlARB");
-	_glDebugMessageInsertARB = (_PfnGlDebugMessageInsertARB)_getProcAddress("glDebugMessageInsertARB");
-	_glDebugMessageCallbackARB = (_PfnGlDebugMessageCallbackARB)_getProcAddress("glDebugMessageCallbackARB");
-	_glGetDebugMessageLogARB = (_PfnGlGetDebugMessageLogARB)_getProcAddress("glGetDebugMessageLogARB");
-	_gl_arb_debug_output = (_procCount == 4);
+	_glBindFragDataLocationIndexed = (_PfnGlBindFragDataLocationIndexed)_getProcAddress("glBindFragDataLocationIndexed");
+	_glGetFragDataIndex = (_PfnGlGetFragDataIndex)_getProcAddress("glGetFragDataIndex");
+	_glGenSamplers = (_PfnGlGenSamplers)_getProcAddress("glGenSamplers");
+	_glDeleteSamplers = (_PfnGlDeleteSamplers)_getProcAddress("glDeleteSamplers");
+	_glIsSampler = (_PfnGlIsSampler)_getProcAddress("glIsSampler");
+	_glBindSampler = (_PfnGlBindSampler)_getProcAddress("glBindSampler");
+	_glSamplerParameteri = (_PfnGlSamplerParameteri)_getProcAddress("glSamplerParameteri");
+	_glSamplerParameteriv = (_PfnGlSamplerParameteriv)_getProcAddress("glSamplerParameteriv");
+	_glSamplerParameterf = (_PfnGlSamplerParameterf)_getProcAddress("glSamplerParameterf");
+	_glSamplerParameterfv = (_PfnGlSamplerParameterfv)_getProcAddress("glSamplerParameterfv");
+	_glSamplerParameterIiv = (_PfnGlSamplerParameterIiv)_getProcAddress("glSamplerParameterIiv");
+	_glSamplerParameterIuiv = (_PfnGlSamplerParameterIuiv)_getProcAddress("glSamplerParameterIuiv");
+	_glGetSamplerParameteriv = (_PfnGlGetSamplerParameteriv)_getProcAddress("glGetSamplerParameteriv");
+	_glGetSamplerParameterIiv = (_PfnGlGetSamplerParameterIiv)_getProcAddress("glGetSamplerParameterIiv");
+	_glGetSamplerParameterfv = (_PfnGlGetSamplerParameterfv)_getProcAddress("glGetSamplerParameterfv");
+	_glGetSamplerParameterIuiv = (_PfnGlGetSamplerParameterIuiv)_getProcAddress("glGetSamplerParameterIuiv");
+	_glQueryCounter = (_PfnGlQueryCounter)_getProcAddress("glQueryCounter");
+	_glGetQueryObjecti64v = (_PfnGlGetQueryObjecti64v)_getProcAddress("glGetQueryObjecti64v");
+	_glGetQueryObjectui64v = (_PfnGlGetQueryObjectui64v)_getProcAddress("glGetQueryObjectui64v");
+	_glVertexAttribDivisor = (_PfnGlVertexAttribDivisor)_getProcAddress("glVertexAttribDivisor");
+	_glVertexAttribP1ui = (_PfnGlVertexAttribP1ui)_getProcAddress("glVertexAttribP1ui");
+	_glVertexAttribP1uiv = (_PfnGlVertexAttribP1uiv)_getProcAddress("glVertexAttribP1uiv");
+	_glVertexAttribP2ui = (_PfnGlVertexAttribP2ui)_getProcAddress("glVertexAttribP2ui");
+	_glVertexAttribP2uiv = (_PfnGlVertexAttribP2uiv)_getProcAddress("glVertexAttribP2uiv");
+	_glVertexAttribP3ui = (_PfnGlVertexAttribP3ui)_getProcAddress("glVertexAttribP3ui");
+	_glVertexAttribP3uiv = (_PfnGlVertexAttribP3uiv)_getProcAddress("glVertexAttribP3uiv");
+	_glVertexAttribP4ui = (_PfnGlVertexAttribP4ui)_getProcAddress("glVertexAttribP4ui");
+	_glVertexAttribP4uiv = (_PfnGlVertexAttribP4uiv)_getProcAddress("glVertexAttribP4uiv");
+	_gl_3_3 = (_gl_3_2 && _procCount == 28);
+
+	// GL_KHR_debug
+
+	_procCount = 0;
+	_glDebugMessageControl = (_PfnGlDebugMessageControl)_getProcAddress("glDebugMessageControl");
+	_glDebugMessageInsert = (_PfnGlDebugMessageInsert)_getProcAddress("glDebugMessageInsert");
+	_glDebugMessageCallback = (_PfnGlDebugMessageCallback)_getProcAddress("glDebugMessageCallback");
+	_glGetDebugMessageLog = (_PfnGlGetDebugMessageLog)_getProcAddress("glGetDebugMessageLog");
+	_glPushDebugGroup = (_PfnGlPushDebugGroup)_getProcAddress("glPushDebugGroup");
+	_glPopDebugGroup = (_PfnGlPopDebugGroup)_getProcAddress("glPopDebugGroup");
+	_glObjectLabel = (_PfnGlObjectLabel)_getProcAddress("glObjectLabel");
+	_glGetObjectLabel = (_PfnGlGetObjectLabel)_getProcAddress("glGetObjectLabel");
+	_glObjectPtrLabel = (_PfnGlObjectPtrLabel)_getProcAddress("glObjectPtrLabel");
+	_glGetObjectPtrLabel = (_PfnGlGetObjectPtrLabel)_getProcAddress("glGetObjectPtrLabel");
+	_glGetPointerv = (_PfnGlGetPointerv)_getProcAddress("glGetPointerv");
+	_gl_khr_debug = (_procCount == 11);
+
+	// GL_ARB_texture_storage
+
+	_procCount = 0;
+	_glTexStorage1D = (_PfnGlTexStorage1D)_getProcAddress("glTexStorage1D");
+	_glTexStorage2D = (_PfnGlTexStorage2D)_getProcAddress("glTexStorage2D");
+	_glTexStorage3D = (_PfnGlTexStorage3D)_getProcAddress("glTexStorage3D");
+	_gl_arb_texture_storage = (_procCount == 3);
 
 	_gl_ext_texture_filter_anisotropic = hasExtension("GL_EXT_texture_filter_anisotropic");
-	_gl_arb_debug_output = _gl_arb_debug_output && hasExtension("GL_ARB_debug_output");
+	_gl_khr_debug = _gl_khr_debug && hasExtension("GL_KHR_debug");
+	_gl_arb_conservative_depth = hasExtension("GL_ARB_conservative_depth");
+	_gl_arb_texture_storage = _gl_arb_texture_storage && hasExtension("GL_ARB_texture_storage");
 
-	if(!_gl_3_2) {
-		log().error("Failed to load gl 3.2.");
+	if(!_gl_3_3) {
+		log().error("Failed to load gl 3.3.");
 		return false;
 	}
 
@@ -840,12 +937,11 @@ bool Context::initialize(bool debugGl) {
 	log().info("OpenGL vendor: ",       getString(gl::VENDOR));
 	log().info("OpenGL renderer: ",     getString(gl::RENDERER));
 	if(_gl_ext_texture_filter_anisotropic) log().info("OpenGL enable extension: GL_EXT_texture_filter_anisotropic");
-	if(_gl_arb_debug_output) log().info("OpenGL enable extension: GL_ARB_debug_output");
+	if(_gl_khr_debug) log().info("OpenGL enable extension: GL_KHR_debug");
+	if(_gl_arb_conservative_depth) log().info("OpenGL enable extension: GL_ARB_conservative_depth");
+	if(_gl_arb_texture_storage) log().info("OpenGL enable extension: GL_ARB_texture_storage");
 
-	enable(gl::DEPTH_TEST);
-	depthFunc(gl::LEQUAL);
-
-	return _gl_3_2;
+	return _gl_3_3;
 }
 
 
@@ -862,7 +958,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 	switch(enum_) {
 		case 0x00000000: return "[GL_FALSE|GL_POINTS|GL_ZERO|GL_NONE|GL_NO_ERROR]";
 		case 0x00000001: return "[GL_TRUE|GL_LINES|GL_ONE|GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT|GL_MAP_READ_BIT|GL_CONTEXT_CORE_PROFILE_BIT|GL_SYNC_FLUSH_COMMANDS_BIT]";
-		case 0x00000002: return "[GL_LINE_LOOP|GL_MAP_WRITE_BIT|GL_CONTEXT_COMPATIBILITY_PROFILE_BIT]";
+		case 0x00000002: return "[GL_LINE_LOOP|GL_MAP_WRITE_BIT|GL_CONTEXT_COMPATIBILITY_PROFILE_BIT|GL_CONTEXT_FLAG_DEBUG_BIT]";
 		case 0x00000003: return "GL_LINE_STRIP";
 		case 0x00000004: return "[GL_TRIANGLES|GL_MAP_INVALIDATE_RANGE_BIT]";
 		case 0x00000005: return "GL_TRIANGLE_STRIP";
@@ -904,6 +1000,8 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00000500: return "GL_INVALID_ENUM";
 		case 0x00000501: return "GL_INVALID_VALUE";
 		case 0x00000502: return "GL_INVALID_OPERATION";
+		case 0x00000503: return "GL_STACK_OVERFLOW";
+		case 0x00000504: return "GL_STACK_UNDERFLOW";
 		case 0x00000505: return "GL_OUT_OF_MEMORY";
 		case 0x00000506: return "GL_INVALID_FRAMEBUFFER_OPERATION";
 		case 0x00000900: return "GL_CW";
@@ -1097,6 +1195,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00008071: return "GL_TEXTURE_DEPTH";
 		case 0x00008072: return "GL_TEXTURE_WRAP_R";
 		case 0x00008073: return "GL_MAX_3D_TEXTURE_SIZE";
+		case 0x00008074: return "GL_VERTEX_ARRAY";
 		case 0x0000809d: return "GL_MULTISAMPLE";
 		case 0x0000809e: return "GL_SAMPLE_ALPHA_TO_COVERAGE";
 		case 0x0000809f: return "GL_SAMPLE_ALPHA_TO_ONE";
@@ -1162,22 +1261,35 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x0000823a: return "GL_RG16UI";
 		case 0x0000823b: return "GL_RG32I";
 		case 0x0000823c: return "GL_RG32UI";
-		case 0x00008242: return "GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB";
-		case 0x00008243: return "GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB";
-		case 0x00008244: return "GL_DEBUG_CALLBACK_FUNCTION_ARB";
-		case 0x00008245: return "GL_DEBUG_CALLBACK_USER_PARAM_ARB";
-		case 0x00008246: return "GL_DEBUG_SOURCE_API_ARB";
-		case 0x00008247: return "GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB";
-		case 0x00008248: return "GL_DEBUG_SOURCE_SHADER_COMPILER_ARB";
-		case 0x00008249: return "GL_DEBUG_SOURCE_THIRD_PARTY_ARB";
-		case 0x0000824a: return "GL_DEBUG_SOURCE_APPLICATION_ARB";
-		case 0x0000824b: return "GL_DEBUG_SOURCE_OTHER_ARB";
-		case 0x0000824c: return "GL_DEBUG_TYPE_ERROR_ARB";
-		case 0x0000824d: return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB";
-		case 0x0000824e: return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB";
-		case 0x0000824f: return "GL_DEBUG_TYPE_PORTABILITY_ARB";
-		case 0x00008250: return "GL_DEBUG_TYPE_PERFORMANCE_ARB";
-		case 0x00008251: return "GL_DEBUG_TYPE_OTHER_ARB";
+		case 0x00008242: return "GL_DEBUG_OUTPUT_SYNCHRONOUS";
+		case 0x00008243: return "GL_DEBUG_NEXT_LOGGED_MESSAGE_LENGTH";
+		case 0x00008244: return "GL_DEBUG_CALLBACK_FUNCTION";
+		case 0x00008245: return "GL_DEBUG_CALLBACK_USER_PARAM";
+		case 0x00008246: return "GL_DEBUG_SOURCE_API";
+		case 0x00008247: return "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+		case 0x00008248: return "GL_DEBUG_SOURCE_SHADER_COMPILER";
+		case 0x00008249: return "GL_DEBUG_SOURCE_THIRD_PARTY";
+		case 0x0000824a: return "GL_DEBUG_SOURCE_APPLICATION";
+		case 0x0000824b: return "GL_DEBUG_SOURCE_OTHER";
+		case 0x0000824c: return "GL_DEBUG_TYPE_ERROR";
+		case 0x0000824d: return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+		case 0x0000824e: return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
+		case 0x0000824f: return "GL_DEBUG_TYPE_PORTABILITY";
+		case 0x00008250: return "GL_DEBUG_TYPE_PERFORMANCE";
+		case 0x00008251: return "GL_DEBUG_TYPE_OTHER";
+		case 0x00008268: return "GL_DEBUG_TYPE_MARKER";
+		case 0x00008269: return "GL_DEBUG_TYPE_PUSH_GROUP";
+		case 0x0000826a: return "GL_DEBUG_TYPE_POP_GROUP";
+		case 0x0000826b: return "GL_DEBUG_SEVERITY_NOTIFICATION";
+		case 0x0000826c: return "GL_MAX_DEBUG_GROUP_STACK_DEPTH";
+		case 0x0000826d: return "GL_DEBUG_GROUP_STACK_DEPTH";
+		case 0x000082e0: return "GL_BUFFER";
+		case 0x000082e1: return "GL_SHADER";
+		case 0x000082e2: return "GL_PROGRAM";
+		case 0x000082e3: return "GL_QUERY";
+		case 0x000082e4: return "GL_PROGRAM_PIPELINE";
+		case 0x000082e6: return "GL_SAMPLER";
+		case 0x000082e8: return "GL_MAX_LABEL_LENGTH";
 		case 0x00008362: return "GL_UNSIGNED_BYTE_2_3_3_REV";
 		case 0x00008363: return "GL_UNSIGNED_SHORT_5_6_5";
 		case 0x00008364: return "GL_UNSIGNED_SHORT_5_6_5_REV";
@@ -1311,6 +1423,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x000088bb: return "GL_BUFFER_ACCESS";
 		case 0x000088bc: return "GL_BUFFER_MAPPED";
 		case 0x000088bd: return "GL_BUFFER_MAP_POINTER";
+		case 0x000088bf: return "GL_TIME_ELAPSED";
 		case 0x000088e0: return "GL_STREAM_DRAW";
 		case 0x000088e1: return "GL_STREAM_READ";
 		case 0x000088e2: return "GL_STREAM_COPY";
@@ -1326,7 +1439,12 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x000088ef: return "GL_PIXEL_UNPACK_BUFFER_BINDING";
 		case 0x000088f0: return "GL_DEPTH24_STENCIL8";
 		case 0x000088f1: return "GL_TEXTURE_STENCIL_SIZE";
+		case 0x000088f9: return "GL_SRC1_COLOR";
+		case 0x000088fa: return "GL_ONE_MINUS_SRC1_COLOR";
+		case 0x000088fb: return "GL_ONE_MINUS_SRC1_ALPHA";
+		case 0x000088fc: return "GL_MAX_DUAL_SOURCE_DRAW_BUFFERS";
 		case 0x000088fd: return "GL_VERTEX_ATTRIB_ARRAY_INTEGER";
+		case 0x000088fe: return "GL_VERTEX_ATTRIB_ARRAY_DIVISOR";
 		case 0x000088ff: return "GL_MAX_ARRAY_TEXTURE_LAYERS";
 		case 0x00008904: return "GL_MIN_PROGRAM_TEXEL_OFFSET";
 		case 0x00008905: return "GL_MAX_PROGRAM_TEXEL_OFFSET";
@@ -1334,6 +1452,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00008916: return "GL_GEOMETRY_VERTICES_OUT";
 		case 0x00008917: return "GL_GEOMETRY_INPUT_TYPE";
 		case 0x00008918: return "GL_GEOMETRY_OUTPUT_TYPE";
+		case 0x00008919: return "GL_SAMPLER_BINDING";
 		case 0x0000891c: return "GL_CLAMP_READ_COLOR";
 		case 0x0000891d: return "GL_FIXED_ONLY";
 		case 0x00008a11: return "GL_UNIFORM_BUFFER";
@@ -1434,6 +1553,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00008c2b: return "GL_MAX_TEXTURE_BUFFER_SIZE";
 		case 0x00008c2c: return "GL_TEXTURE_BINDING_BUFFER";
 		case 0x00008c2d: return "GL_TEXTURE_BUFFER_DATA_STORE_BINDING";
+		case 0x00008c2f: return "GL_ANY_SAMPLES_PASSED";
 		case 0x00008c3a: return "GL_R11F_G11F_B10F";
 		case 0x00008c3b: return "GL_UNSIGNED_INT_10F_11F_11F_REV";
 		case 0x00008c3d: return "GL_RGB9_E5";
@@ -1556,6 +1676,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00008d99: return "GL_RGBA_INTEGER";
 		case 0x00008d9a: return "GL_BGR_INTEGER";
 		case 0x00008d9b: return "GL_BGRA_INTEGER";
+		case 0x00008d9f: return "GL_INT_2_10_10_10_REV";
 		case 0x00008da7: return "GL_FRAMEBUFFER_ATTACHMENT_LAYERED";
 		case 0x00008da8: return "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS";
 		case 0x00008dad: return "GL_FLOAT_32_UNSIGNED_INT_24_8_REV";
@@ -1597,6 +1718,12 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00008e14: return "GL_QUERY_NO_WAIT";
 		case 0x00008e15: return "GL_QUERY_BY_REGION_WAIT";
 		case 0x00008e16: return "GL_QUERY_BY_REGION_NO_WAIT";
+		case 0x00008e28: return "GL_TIMESTAMP";
+		case 0x00008e42: return "GL_TEXTURE_SWIZZLE_R";
+		case 0x00008e43: return "GL_TEXTURE_SWIZZLE_G";
+		case 0x00008e44: return "GL_TEXTURE_SWIZZLE_B";
+		case 0x00008e45: return "GL_TEXTURE_SWIZZLE_A";
+		case 0x00008e46: return "GL_TEXTURE_SWIZZLE_RGBA";
 		case 0x00008e4c: return "GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION";
 		case 0x00008e4d: return "GL_FIRST_VERTEX_CONVENTION";
 		case 0x00008e4e: return "GL_LAST_VERTEX_CONVENTION";
@@ -1618,6 +1745,7 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00008f9c: return "GL_SIGNED_NORMALIZED";
 		case 0x00008f9d: return "GL_PRIMITIVE_RESTART";
 		case 0x00008f9e: return "GL_PRIMITIVE_RESTART_INDEX";
+		case 0x0000906f: return "GL_RGB10_A2UI";
 		case 0x00009100: return "GL_TEXTURE_2D_MULTISAMPLE";
 		case 0x00009101: return "GL_PROXY_TEXTURE_2D_MULTISAMPLE";
 		case 0x00009102: return "GL_TEXTURE_2D_MULTISAMPLE_ARRAY";
@@ -1656,12 +1784,14 @@ const char* Context::getEnumName(GLenum enum_) const {
 		case 0x00009124: return "GL_MAX_GEOMETRY_OUTPUT_COMPONENTS";
 		case 0x00009125: return "GL_MAX_FRAGMENT_INPUT_COMPONENTS";
 		case 0x00009126: return "GL_CONTEXT_PROFILE_MASK";
-		case 0x00009143: return "GL_MAX_DEBUG_MESSAGE_LENGTH_ARB";
-		case 0x00009144: return "GL_MAX_DEBUG_LOGGED_MESSAGES_ARB";
-		case 0x00009145: return "GL_DEBUG_LOGGED_MESSAGES_ARB";
-		case 0x00009146: return "GL_DEBUG_SEVERITY_HIGH_ARB";
-		case 0x00009147: return "GL_DEBUG_SEVERITY_MEDIUM_ARB";
-		case 0x00009148: return "GL_DEBUG_SEVERITY_LOW_ARB";
+		case 0x0000912f: return "GL_TEXTURE_IMMUTABLE_FORMAT";
+		case 0x00009143: return "GL_MAX_DEBUG_MESSAGE_LENGTH";
+		case 0x00009144: return "GL_MAX_DEBUG_LOGGED_MESSAGES";
+		case 0x00009145: return "GL_DEBUG_LOGGED_MESSAGES";
+		case 0x00009146: return "GL_DEBUG_SEVERITY_HIGH";
+		case 0x00009147: return "GL_DEBUG_SEVERITY_MEDIUM";
+		case 0x00009148: return "GL_DEBUG_SEVERITY_LOW";
+		case 0x000092e0: return "GL_DEBUG_OUTPUT";
 		case 0xffffffff: return "GL_INVALID_INDEX";
 	}
 	return "<Unknown GLenum>";
@@ -1808,6 +1938,7 @@ const char* Context::getEnableCapName(GLenum enum_) const {
 		case 0x0B90: return "GL_STENCIL_TEST";
 		case 0x0DE0: return "GL_TEXTURE_1D";
 		case 0x0DE1: return "GL_TEXTURE_2D";
+		case 0x8074: return "GL_VERTEX_ARRAY";
 	}
 	return "<Unknown EnableCap>";
 }
@@ -1820,6 +1951,8 @@ const char* Context::getErrorCodeName(GLenum enum_) const {
 		case 0x0501: return "GL_INVALID_VALUE";
 		case 0: return "GL_NO_ERROR";
 		case 0x0505: return "GL_OUT_OF_MEMORY";
+		case 0x0503: return "GL_STACK_OVERFLOW";
+		case 0x0504: return "GL_STACK_UNDERFLOW";
 	}
 	return "<Unknown ErrorCode>";
 }
@@ -1903,9 +2036,18 @@ const char* Context::getGetPNameName(GLenum enum_) const {
 		case 0x0CF4: return "GL_UNPACK_SKIP_PIXELS";
 		case 0x0CF3: return "GL_UNPACK_SKIP_ROWS";
 		case 0x0CF0: return "GL_UNPACK_SWAP_BYTES";
+		case 0x8074: return "GL_VERTEX_ARRAY";
 		case 0x0BA2: return "GL_VIEWPORT";
 	}
 	return "<Unknown GetPName>";
+}
+
+const char* Context::getGetPointervPNameName(GLenum enum_) const {
+	switch(enum_) {
+		case 0x8244: return "GL_DEBUG_CALLBACK_FUNCTION";
+		case 0x8245: return "GL_DEBUG_CALLBACK_USER_PARAM";
+	}
+	return "<Unknown GetPointervPName>";
 }
 
 const char* Context::getGetTextureParameterName(GLenum enum_) const {
@@ -2059,6 +2201,7 @@ const char* Context::getInternalFormatName(GLenum enum_) const {
 		case 0x8D7C: return "GL_RGBA8UI";
 		case 0x8D76: return "GL_RGBA16UI";
 		case 0x8D70: return "GL_RGBA32UI";
+		case 0x906F: return "GL_RGB10_A2UI";
 		case 0x1902: return "GL_DEPTH_COMPONENT";
 		case 0x81A5: return "GL_DEPTH_COMPONENT16";
 		case 0x8CAC: return "GL_DEPTH_COMPONENT32F";
@@ -2227,6 +2370,11 @@ const char* Context::getTextureParameterNameName(GLenum enum_) const {
 		case 0x813A: return "GL_TEXTURE_MIN_LOD";
 		case 0x813B: return "GL_TEXTURE_MAX_LOD";
 		case 0x813D: return "GL_TEXTURE_MAX_LEVEL";
+		case 0x8E42: return "GL_TEXTURE_SWIZZLE_R";
+		case 0x8E43: return "GL_TEXTURE_SWIZZLE_G";
+		case 0x8E44: return "GL_TEXTURE_SWIZZLE_B";
+		case 0x8E45: return "GL_TEXTURE_SWIZZLE_A";
+		case 0x8E46: return "GL_TEXTURE_SWIZZLE_RGBA";
 		case 0x805F: return "GL_TEXTURE_ALPHA_SIZE";
 		case 0x805E: return "GL_TEXTURE_BLUE_SIZE";
 		case 0x805D: return "GL_TEXTURE_GREEN_SIZE";
@@ -2375,8 +2523,10 @@ const char* Context::getTypeEnumName(GLenum enum_) const {
 const char* Context::getQueryTargetName(GLenum enum_) const {
 	switch(enum_) {
 		case 0x8914: return "GL_SAMPLES_PASSED";
+		case 0x8C2F: return "GL_ANY_SAMPLES_PASSED";
 		case 0x8C87: return "GL_PRIMITIVES_GENERATED";
 		case 0x8C88: return "GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN";
+		case 0x88BF: return "GL_TIME_ELAPSED";
 	}
 	return "<Unknown QueryTarget>";
 }
@@ -2414,7 +2564,10 @@ const char* Context::getBlendingFactorName(GLenum enum_) const {
 		case 0x8003: return "GL_CONSTANT_ALPHA";
 		case 0x8004: return "GL_ONE_MINUS_CONSTANT_ALPHA";
 		case 0x0308: return "GL_SRC_ALPHA_SATURATE";
+		case 0x88F9: return "GL_SRC1_COLOR";
+		case 0x88FA: return "GL_ONE_MINUS_SRC1_COLOR";
 		case 0x8589: return "GL_SRC1_ALPHA";
+		case 0x88FB: return "GL_ONE_MINUS_SRC1_ALPHA";
 	}
 	return "<Unknown BlendingFactor>";
 }
@@ -2462,12 +2615,12 @@ const char* Context::getShaderTypeName(GLenum enum_) const {
 
 const char* Context::getDebugSourceName(GLenum enum_) const {
 	switch(enum_) {
-		case 0x8246: return "GL_DEBUG_SOURCE_API_ARB";
-		case 0x8247: return "GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB";
-		case 0x8248: return "GL_DEBUG_SOURCE_SHADER_COMPILER_ARB";
-		case 0x8249: return "GL_DEBUG_SOURCE_THIRD_PARTY_ARB";
-		case 0x824A: return "GL_DEBUG_SOURCE_APPLICATION_ARB";
-		case 0x824B: return "GL_DEBUG_SOURCE_OTHER_ARB";
+		case 0x8246: return "GL_DEBUG_SOURCE_API";
+		case 0x8247: return "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+		case 0x8248: return "GL_DEBUG_SOURCE_SHADER_COMPILER";
+		case 0x8249: return "GL_DEBUG_SOURCE_THIRD_PARTY";
+		case 0x824A: return "GL_DEBUG_SOURCE_APPLICATION";
+		case 0x824B: return "GL_DEBUG_SOURCE_OTHER";
 		case 0x1100: return "GL_DONT_CARE";
 	}
 	return "<Unknown DebugSource>";
@@ -2475,12 +2628,15 @@ const char* Context::getDebugSourceName(GLenum enum_) const {
 
 const char* Context::getDebugTypeName(GLenum enum_) const {
 	switch(enum_) {
-		case 0x824C: return "GL_DEBUG_TYPE_ERROR_ARB";
-		case 0x824D: return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB";
-		case 0x824E: return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB";
-		case 0x824F: return "GL_DEBUG_TYPE_PORTABILITY_ARB";
-		case 0x8250: return "GL_DEBUG_TYPE_PERFORMANCE_ARB";
-		case 0x8251: return "GL_DEBUG_TYPE_OTHER_ARB";
+		case 0x824C: return "GL_DEBUG_TYPE_ERROR";
+		case 0x824D: return "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+		case 0x824E: return "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
+		case 0x824F: return "GL_DEBUG_TYPE_PORTABILITY";
+		case 0x8250: return "GL_DEBUG_TYPE_PERFORMANCE";
+		case 0x8268: return "GL_DEBUG_TYPE_MARKER";
+		case 0x8269: return "GL_DEBUG_TYPE_PUSH_GROUP";
+		case 0x826A: return "GL_DEBUG_TYPE_POP_GROUP";
+		case 0x8251: return "GL_DEBUG_TYPE_OTHER";
 		case 0x1100: return "GL_DONT_CARE";
 	}
 	return "<Unknown DebugType>";
@@ -2488,9 +2644,9 @@ const char* Context::getDebugTypeName(GLenum enum_) const {
 
 const char* Context::getDebugSeverityName(GLenum enum_) const {
 	switch(enum_) {
-		case 0x9148: return "GL_DEBUG_SEVERITY_LOW_ARB";
-		case 0x9147: return "GL_DEBUG_SEVERITY_MEDIUM_ARB";
-		case 0x9146: return "GL_DEBUG_SEVERITY_HIGH_ARB";
+		case 0x9148: return "GL_DEBUG_SEVERITY_LOW";
+		case 0x9147: return "GL_DEBUG_SEVERITY_MEDIUM";
+		case 0x9146: return "GL_DEBUG_SEVERITY_HIGH";
 		case 0x1100: return "GL_DONT_CARE";
 	}
 	return "<Unknown DebugSeverity>";
@@ -2531,12 +2687,44 @@ const char* Context::getUniformPNameName(GLenum enum_) const {
 	return "<Unknown UniformPName>";
 }
 
+const char* Context::getSamplerParameterNameName(GLenum enum_) const {
+	switch(enum_) {
+		case 0x2802: return "GL_TEXTURE_WRAP_S";
+		case 0x2803: return "GL_TEXTURE_WRAP_T";
+		case 0x8072: return "GL_TEXTURE_WRAP_R";
+		case 0x2801: return "GL_TEXTURE_MIN_FILTER";
+		case 0x2800: return "GL_TEXTURE_MAG_FILTER";
+		case 0x1004: return "GL_TEXTURE_BORDER_COLOR";
+		case 0x813A: return "GL_TEXTURE_MIN_LOD";
+		case 0x813B: return "GL_TEXTURE_MAX_LOD";
+		case 0x884C: return "GL_TEXTURE_COMPARE_MODE";
+		case 0x884D: return "GL_TEXTURE_COMPARE_FUNC";
+	}
+	return "<Unknown SamplerParameterName>";
+}
+
 const char* Context::getVertexProvokingModeName(GLenum enum_) const {
 	switch(enum_) {
 		case 0x8E4D: return "GL_FIRST_VERTEX_CONVENTION";
 		case 0x8E4E: return "GL_LAST_VERTEX_CONVENTION";
 	}
 	return "<Unknown VertexProvokingMode>";
+}
+
+const char* Context::getObjectIdentifierName(GLenum enum_) const {
+	switch(enum_) {
+		case 0x82E0: return "GL_BUFFER";
+		case 0x82E1: return "GL_SHADER";
+		case 0x82E2: return "GL_PROGRAM";
+		case 0x8074: return "GL_VERTEX_ARRAY";
+		case 0x82E3: return "GL_QUERY";
+		case 0x82E4: return "GL_PROGRAM_PIPELINE";
+		case 0x82E6: return "GL_SAMPLER";
+		case 0x1702: return "GL_TEXTURE";
+		case 0x8D41: return "GL_RENDERBUFFER";
+		case 0x8D40: return "GL_FRAMEBUFFER";
+	}
+	return "<Unknown ObjectIdentifier>";
 }
 
 const char* Context::getSyncParameterNameName(GLenum enum_) const {
@@ -2585,6 +2773,7 @@ const char* Context::getVertexAttribEnumName(GLenum enum_) const {
 		case 0x8625: return "GL_VERTEX_ATTRIB_ARRAY_TYPE";
 		case 0x886A: return "GL_VERTEX_ATTRIB_ARRAY_NORMALIZED";
 		case 0x88FD: return "GL_VERTEX_ATTRIB_ARRAY_INTEGER";
+		case 0x88FE: return "GL_VERTEX_ATTRIB_ARRAY_DIVISOR";
 		case 0x8626: return "GL_CURRENT_VERTEX_ATTRIB";
 	}
 	return "<Unknown VertexAttribEnum>";
@@ -2653,6 +2842,7 @@ const char* Context::getVertexAttribPointerTypeName(GLenum enum_) const {
 		case 0x1406: return "GL_FLOAT";
 		case 0x140A: return "GL_DOUBLE";
 		case 0x140B: return "GL_HALF_FLOAT";
+		case 0x8D9F: return "GL_INT_2_10_10_10_REV";
 		case 0x8368: return "GL_UNSIGNED_INT_2_10_10_10_REV";
 		case 0x8C3B: return "GL_UNSIGNED_INT_10F_11F_11F_REV";
 	}
@@ -2725,6 +2915,7 @@ String Context::bitsetClearBufferMaskAsString(GLbitfield bitfield) const {
 String Context::bitsetContextFlagMaskAsString(GLbitfield bitfield) const {
 	static const BitMask masks[] = {
 		{ 0x00000001, "GL_CONTEXT_FLAG_FORWARD_COMPATIBLE_BIT" },
+		{ 0x00000002, "GL_CONTEXT_FLAG_DEBUG_BIT" },
 		{ 0, nullptr }
 	};
 	return lair::bitsetAsString(masks, bitfield);
@@ -5386,39 +5577,351 @@ void Context::sampleMaski(GLuint maskNumber, GLbitfield mask) {
 }
 
 
-// GL_ARB_debug_output
+// GL_VERSION_3_3
 
-void Context::debugMessageControlARB(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled) {
+void Context::bindFragDataLocationIndexed(GLuint program, GLuint colorNumber, GLuint index, const GLchar *name) {
 	if(_logCalls) {
-		_log->write(_logLevel, "glDebugMessageControlARB(", getDebugSourceName(source), ", ", getDebugTypeName(type), ", ", getDebugSeverityName(severity), ", ", count, ", ", ids, ", ", getBooleanName(enabled), ")");
+		_log->write(_logLevel, "glBindFragDataLocationIndexed(", program, ", ", colorNumber, ", ", index, ", ", name, ")");
 	}
-	_glDebugMessageControlARB(source, type, severity, count, ids, enabled);
+	_glBindFragDataLocationIndexed(program, colorNumber, index, name);
 	checkGlErrors();
 }
 
-void Context::debugMessageInsertARB(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf) {
+GLint Context::getFragDataIndex(GLuint program, const GLchar *name) {
 	if(_logCalls) {
-		_log->write(_logLevel, "glDebugMessageInsertARB(", getDebugSourceName(source), ", ", getDebugTypeName(type), ", ", id, ", ", getDebugSeverityName(severity), ", ", length, ", ", buf, ")");
+		_log->write(_logLevel, "glGetFragDataIndex(", program, ", ", name, ")");
 	}
-	_glDebugMessageInsertARB(source, type, id, severity, length, buf);
-	checkGlErrors();
-}
-
-void Context::debugMessageCallbackARB(GLDEBUGPROCARB callback, const void *userParam) {
-	if(_logCalls) {
-		_log->write(_logLevel, "glDebugMessageCallbackARB(", callback, ", ", userParam, ")");
-	}
-	_glDebugMessageCallbackARB(callback, userParam);
-	checkGlErrors();
-}
-
-GLuint Context::getDebugMessageLogARB(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog) {
-	if(_logCalls) {
-		_log->write(_logLevel, "glGetDebugMessageLogARB(", count, ", ", bufSize, ", ", sources, ", ", types, ", ", ids, ", ", severities, ", ", lengths, ", ", messageLog, ")");
-	}
-	GLuint result = _glGetDebugMessageLogARB(count, bufSize, sources, types, ids, severities, lengths, messageLog);
+	GLint result = _glGetFragDataIndex(program, name);
 	checkGlErrors();
 	return result;
+}
+
+void Context::genSamplers(GLsizei count, GLuint *samplers) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGenSamplers(", count, ", ", samplers, ")");
+	}
+	_glGenSamplers(count, samplers);
+	checkGlErrors();
+}
+
+void Context::deleteSamplers(GLsizei count, const GLuint *samplers) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glDeleteSamplers(", count, ", ", samplers, ")");
+	}
+	_glDeleteSamplers(count, samplers);
+	checkGlErrors();
+}
+
+GLboolean Context::isSampler(GLuint sampler) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glIsSampler(", sampler, ")");
+	}
+	GLboolean result = _glIsSampler(sampler);
+	checkGlErrors();
+	return result;
+}
+
+void Context::bindSampler(GLuint unit, GLuint sampler) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glBindSampler(", unit, ", ", sampler, ")");
+	}
+	_glBindSampler(unit, sampler);
+	checkGlErrors();
+}
+
+void Context::samplerParameteri(GLuint sampler, GLenum pname, GLint param) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glSamplerParameteri(", sampler, ", ", getSamplerParameterNameName(pname), ", ", param, ")");
+	}
+	_glSamplerParameteri(sampler, pname, param);
+	checkGlErrors();
+}
+
+void Context::samplerParameteriv(GLuint sampler, GLenum pname, const GLint *param) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glSamplerParameteriv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", param, ")");
+	}
+	_glSamplerParameteriv(sampler, pname, param);
+	checkGlErrors();
+}
+
+void Context::samplerParameterf(GLuint sampler, GLenum pname, GLfloat param) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glSamplerParameterf(", sampler, ", ", getSamplerParameterNameName(pname), ", ", param, ")");
+	}
+	_glSamplerParameterf(sampler, pname, param);
+	checkGlErrors();
+}
+
+void Context::samplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *param) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glSamplerParameterfv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", param, ")");
+	}
+	_glSamplerParameterfv(sampler, pname, param);
+	checkGlErrors();
+}
+
+void Context::samplerParameterIiv(GLuint sampler, GLenum pname, const GLint *param) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glSamplerParameterIiv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", param, ")");
+	}
+	_glSamplerParameterIiv(sampler, pname, param);
+	checkGlErrors();
+}
+
+void Context::samplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *param) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glSamplerParameterIuiv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", param, ")");
+	}
+	_glSamplerParameterIuiv(sampler, pname, param);
+	checkGlErrors();
+}
+
+void Context::getSamplerParameteriv(GLuint sampler, GLenum pname, GLint *params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetSamplerParameteriv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", params, ")");
+	}
+	_glGetSamplerParameteriv(sampler, pname, params);
+	checkGlErrors();
+}
+
+void Context::getSamplerParameterIiv(GLuint sampler, GLenum pname, GLint *params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetSamplerParameterIiv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", params, ")");
+	}
+	_glGetSamplerParameterIiv(sampler, pname, params);
+	checkGlErrors();
+}
+
+void Context::getSamplerParameterfv(GLuint sampler, GLenum pname, GLfloat *params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetSamplerParameterfv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", params, ")");
+	}
+	_glGetSamplerParameterfv(sampler, pname, params);
+	checkGlErrors();
+}
+
+void Context::getSamplerParameterIuiv(GLuint sampler, GLenum pname, GLuint *params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetSamplerParameterIuiv(", sampler, ", ", getSamplerParameterNameName(pname), ", ", params, ")");
+	}
+	_glGetSamplerParameterIuiv(sampler, pname, params);
+	checkGlErrors();
+}
+
+void Context::queryCounter(GLuint id, GLenum target) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glQueryCounter(", id, ", ", getQueryTargetName(target), ")");
+	}
+	_glQueryCounter(id, target);
+	checkGlErrors();
+}
+
+void Context::getQueryObjecti64v(GLuint id, GLenum pname, GLint64 *params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetQueryObjecti64v(", id, ", ", getQueryObjectParameterNameName(pname), ", ", params, ")");
+	}
+	_glGetQueryObjecti64v(id, pname, params);
+	checkGlErrors();
+}
+
+void Context::getQueryObjectui64v(GLuint id, GLenum pname, GLuint64 *params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetQueryObjectui64v(", id, ", ", getQueryObjectParameterNameName(pname), ", ", params, ")");
+	}
+	_glGetQueryObjectui64v(id, pname, params);
+	checkGlErrors();
+}
+
+void Context::vertexAttribDivisor(GLuint index, GLuint divisor) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribDivisor(", index, ", ", divisor, ")");
+	}
+	_glVertexAttribDivisor(index, divisor);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP1ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP1ui(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP1ui(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP1uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP1uiv(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP1uiv(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP2ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP2ui(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP2ui(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP2uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP2uiv(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP2uiv(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP3ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP3ui(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP3ui(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP3uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP3uiv(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP3uiv(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP4ui(GLuint index, GLenum type, GLboolean normalized, GLuint value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP4ui(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP4ui(index, type, normalized, value);
+	checkGlErrors();
+}
+
+void Context::vertexAttribP4uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glVertexAttribP4uiv(", index, ", ", getVertexAttribPointerTypeName(type), ", ", getBooleanName(normalized), ", ", value, ")");
+	}
+	_glVertexAttribP4uiv(index, type, normalized, value);
+	checkGlErrors();
+}
+
+
+// GL_KHR_debug
+
+void Context::debugMessageControl(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glDebugMessageControl(", getDebugSourceName(source), ", ", getDebugTypeName(type), ", ", getDebugSeverityName(severity), ", ", count, ", ", ids, ", ", getBooleanName(enabled), ")");
+	}
+	_glDebugMessageControl(source, type, severity, count, ids, enabled);
+	checkGlErrors();
+}
+
+void Context::debugMessageInsert(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glDebugMessageInsert(", getDebugSourceName(source), ", ", getDebugTypeName(type), ", ", id, ", ", getDebugSeverityName(severity), ", ", length, ", ", buf, ")");
+	}
+	_glDebugMessageInsert(source, type, id, severity, length, buf);
+	checkGlErrors();
+}
+
+void Context::debugMessageCallback(GLDEBUGPROC callback, const void *userParam) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glDebugMessageCallback(", callback, ", ", userParam, ")");
+	}
+	_glDebugMessageCallback(callback, userParam);
+	checkGlErrors();
+}
+
+GLuint Context::getDebugMessageLog(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetDebugMessageLog(", count, ", ", bufSize, ", ", sources, ", ", types, ", ", ids, ", ", severities, ", ", lengths, ", ", messageLog, ")");
+	}
+	GLuint result = _glGetDebugMessageLog(count, bufSize, sources, types, ids, severities, lengths, messageLog);
+	checkGlErrors();
+	return result;
+}
+
+void Context::pushDebugGroup(GLenum source, GLuint id, GLsizei length, const GLchar *message) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glPushDebugGroup(", getDebugSourceName(source), ", ", id, ", ", length, ", ", message, ")");
+	}
+	_glPushDebugGroup(source, id, length, message);
+	checkGlErrors();
+}
+
+void Context::popDebugGroup() {
+	if(_logCalls) {
+		_log->write(_logLevel, "glPopDebugGroup()");
+	}
+	_glPopDebugGroup();
+	checkGlErrors();
+}
+
+void Context::objectLabel(GLenum identifier, GLuint name, GLsizei length, const GLchar *label) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glObjectLabel(", getObjectIdentifierName(identifier), ", ", name, ", ", length, ", ", label, ")");
+	}
+	_glObjectLabel(identifier, name, length, label);
+	checkGlErrors();
+}
+
+void Context::getObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetObjectLabel(", identifier, ", ", name, ", ", bufSize, ", ", length, ", ", label, ")");
+	}
+	_glGetObjectLabel(identifier, name, bufSize, length, label);
+	checkGlErrors();
+}
+
+void Context::objectPtrLabel(const void *ptr, GLsizei length, const GLchar *label) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glObjectPtrLabel(", ptr, ", ", length, ", ", label, ")");
+	}
+	_glObjectPtrLabel(ptr, length, label);
+	checkGlErrors();
+}
+
+void Context::getObjectPtrLabel(const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetObjectPtrLabel(", ptr, ", ", bufSize, ", ", length, ", ", label, ")");
+	}
+	_glGetObjectPtrLabel(ptr, bufSize, length, label);
+	checkGlErrors();
+}
+
+void Context::getPointerv(GLenum pname, void **params) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glGetPointerv(", getGetPointervPNameName(pname), ", ", params, ")");
+	}
+	_glGetPointerv(pname, params);
+	checkGlErrors();
+}
+
+
+// GL_ARB_texture_storage
+
+void Context::texStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glTexStorage1D(", getTextureTargetName(target), ", ", levels, ", ", getInternalFormatName(internalformat), ", ", width, ")");
+	}
+	_glTexStorage1D(target, levels, internalformat, width);
+	checkGlErrors();
+}
+
+void Context::texStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glTexStorage2D(", getTextureTargetName(target), ", ", levels, ", ", getInternalFormatName(internalformat), ", ", width, ", ", height, ")");
+	}
+	_glTexStorage2D(target, levels, internalformat, width, height);
+	checkGlErrors();
+}
+
+void Context::texStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth) {
+	if(_logCalls) {
+		_log->write(_logLevel, "glTexStorage3D(", getTextureTargetName(target), ", ", levels, ", ", getInternalFormatName(internalformat), ", ", width, ", ", height, ", ", depth, ")");
+	}
+	_glTexStorage3D(target, levels, internalformat, width, height, depth);
+	checkGlErrors();
 }
 
 

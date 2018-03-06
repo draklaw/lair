@@ -217,6 +217,9 @@ class FeatureSet:
 	def has_profile(self, profile):
 		return self.profile is None or self.profile == profile
 
+	def has_api(self, api):
+		return self.api is None or self.api == api
+
 	def __repr__(self):
 		repr = [ '<FeatureSet {type}' ]
 		if self.api:
@@ -339,7 +342,7 @@ class ApiItems:
 				self.main_feature = feat
 			self.features.append(feat)
 			for fs in feat.feature_set:
-				if not fs.has_profile(profile):
+				if not fs.has_profile(profile) or not fs.has_api(api):
 					continue
 				method = set.union
 				if fs.type == 'remove':
@@ -654,9 +657,6 @@ bool Context::initialize(bool debugGl) {
 	log().info("OpenGL vendor: ",       getString(gl::VENDOR));
 	log().info("OpenGL renderer: ",     getString(gl::RENDERER));
 	>>> render_log_enabled_extensions(extensions)
-
-	enable(gl::DEPTH_TEST);
-	depthFunc(gl::LEQUAL);
 
 	return {{feature_var_name(api_items.main_feature)}};
 }
@@ -1060,11 +1060,17 @@ if __name__ == '__main__':
 	specs = Specs(ElementTree.parse("gl.xml"))
 
 	api     = 'gl'
-	version = '3.2'
+	version = '3.3'
 	profile = 'core'
 	extensions = [
 		'GL_EXT_texture_filter_anisotropic',
-		'GL_ARB_debug_output',
+		'GL_KHR_debug',
+		'GL_ARB_conservative_depth',
+		#'GL_ARB_ES2_compatibility',
+		#'GL_ARB_texture_buffer_range',
+		'GL_ARB_texture_storage',
+		#'GL_ARB_vertex_attrib_binding',
+		#'GL_ARB_viewport_array',
 	]
 
 	print("Select features...")

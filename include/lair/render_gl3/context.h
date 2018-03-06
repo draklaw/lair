@@ -63,7 +63,7 @@ typedef ptrdiff_t GLsizeiptr;
 typedef int64_t GLint64;
 typedef uint64_t GLuint64;
 typedef struct __GLsync *GLsync;
-typedef void ( *GLDEBUGPROCARB)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+typedef void ( *GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
 
 namespace gl {
 enum GL {
@@ -903,35 +903,76 @@ enum GL {
 	MAX_DEPTH_TEXTURE_SAMPLES                     = 0x910F,
 	MAX_INTEGER_SAMPLES                           = 0x9110,
 
+	// GL_VERSION_3_3
+
+	VERTEX_ATTRIB_ARRAY_DIVISOR                   = 0x88FE,
+	SRC1_COLOR                                    = 0x88F9,
+	ONE_MINUS_SRC1_COLOR                          = 0x88FA,
+	ONE_MINUS_SRC1_ALPHA                          = 0x88FB,
+	MAX_DUAL_SOURCE_DRAW_BUFFERS                  = 0x88FC,
+	ANY_SAMPLES_PASSED                            = 0x8C2F,
+	SAMPLER_BINDING                               = 0x8919,
+	RGB10_A2UI                                    = 0x906F,
+	TEXTURE_SWIZZLE_R                             = 0x8E42,
+	TEXTURE_SWIZZLE_G                             = 0x8E43,
+	TEXTURE_SWIZZLE_B                             = 0x8E44,
+	TEXTURE_SWIZZLE_A                             = 0x8E45,
+	TEXTURE_SWIZZLE_RGBA                          = 0x8E46,
+	TIME_ELAPSED                                  = 0x88BF,
+	TIMESTAMP                                     = 0x8E28,
+	INT_2_10_10_10_REV                            = 0x8D9F,
+
 	// GL_EXT_texture_filter_anisotropic
 
 	TEXTURE_MAX_ANISOTROPY_EXT                    = 0x84FE,
 	MAX_TEXTURE_MAX_ANISOTROPY_EXT                = 0x84FF,
 
-	// GL_ARB_debug_output
+	// GL_KHR_debug
 
-	DEBUG_OUTPUT_SYNCHRONOUS_ARB                  = 0x8242,
-	DEBUG_NEXT_LOGGED_MESSAGE_LENGTH_ARB          = 0x8243,
-	DEBUG_CALLBACK_FUNCTION_ARB                   = 0x8244,
-	DEBUG_CALLBACK_USER_PARAM_ARB                 = 0x8245,
-	DEBUG_SOURCE_API_ARB                          = 0x8246,
-	DEBUG_SOURCE_WINDOW_SYSTEM_ARB                = 0x8247,
-	DEBUG_SOURCE_SHADER_COMPILER_ARB              = 0x8248,
-	DEBUG_SOURCE_THIRD_PARTY_ARB                  = 0x8249,
-	DEBUG_SOURCE_APPLICATION_ARB                  = 0x824A,
-	DEBUG_SOURCE_OTHER_ARB                        = 0x824B,
-	DEBUG_TYPE_ERROR_ARB                          = 0x824C,
-	DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB            = 0x824D,
-	DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB             = 0x824E,
-	DEBUG_TYPE_PORTABILITY_ARB                    = 0x824F,
-	DEBUG_TYPE_PERFORMANCE_ARB                    = 0x8250,
-	DEBUG_TYPE_OTHER_ARB                          = 0x8251,
-	MAX_DEBUG_MESSAGE_LENGTH_ARB                  = 0x9143,
-	MAX_DEBUG_LOGGED_MESSAGES_ARB                 = 0x9144,
-	DEBUG_LOGGED_MESSAGES_ARB                     = 0x9145,
-	DEBUG_SEVERITY_HIGH_ARB                       = 0x9146,
-	DEBUG_SEVERITY_MEDIUM_ARB                     = 0x9147,
-	DEBUG_SEVERITY_LOW_ARB                        = 0x9148,
+	DEBUG_OUTPUT_SYNCHRONOUS                      = 0x8242,
+	DEBUG_NEXT_LOGGED_MESSAGE_LENGTH              = 0x8243,
+	DEBUG_CALLBACK_FUNCTION                       = 0x8244,
+	DEBUG_CALLBACK_USER_PARAM                     = 0x8245,
+	DEBUG_SOURCE_API                              = 0x8246,
+	DEBUG_SOURCE_WINDOW_SYSTEM                    = 0x8247,
+	DEBUG_SOURCE_SHADER_COMPILER                  = 0x8248,
+	DEBUG_SOURCE_THIRD_PARTY                      = 0x8249,
+	DEBUG_SOURCE_APPLICATION                      = 0x824A,
+	DEBUG_SOURCE_OTHER                            = 0x824B,
+	DEBUG_TYPE_ERROR                              = 0x824C,
+	DEBUG_TYPE_DEPRECATED_BEHAVIOR                = 0x824D,
+	DEBUG_TYPE_UNDEFINED_BEHAVIOR                 = 0x824E,
+	DEBUG_TYPE_PORTABILITY                        = 0x824F,
+	DEBUG_TYPE_PERFORMANCE                        = 0x8250,
+	DEBUG_TYPE_OTHER                              = 0x8251,
+	DEBUG_TYPE_MARKER                             = 0x8268,
+	DEBUG_TYPE_PUSH_GROUP                         = 0x8269,
+	DEBUG_TYPE_POP_GROUP                          = 0x826A,
+	DEBUG_SEVERITY_NOTIFICATION                   = 0x826B,
+	MAX_DEBUG_GROUP_STACK_DEPTH                   = 0x826C,
+	DEBUG_GROUP_STACK_DEPTH                       = 0x826D,
+	BUFFER                                        = 0x82E0,
+	SHADER                                        = 0x82E1,
+	PROGRAM                                       = 0x82E2,
+	VERTEX_ARRAY                                  = 0x8074,
+	QUERY                                         = 0x82E3,
+	PROGRAM_PIPELINE                              = 0x82E4,
+	SAMPLER                                       = 0x82E6,
+	MAX_LABEL_LENGTH                              = 0x82E8,
+	MAX_DEBUG_MESSAGE_LENGTH                      = 0x9143,
+	MAX_DEBUG_LOGGED_MESSAGES                     = 0x9144,
+	DEBUG_LOGGED_MESSAGES                         = 0x9145,
+	DEBUG_SEVERITY_HIGH                           = 0x9146,
+	DEBUG_SEVERITY_MEDIUM                         = 0x9147,
+	DEBUG_SEVERITY_LOW                            = 0x9148,
+	DEBUG_OUTPUT                                  = 0x92E0,
+	CONTEXT_FLAG_DEBUG_BIT                        = 0x00000002,
+	STACK_OVERFLOW                                = 0x0503,
+	STACK_UNDERFLOW                               = 0x0504,
+
+	// GL_ARB_texture_storage
+
+	TEXTURE_IMMUTABLE_FORMAT                      = 0x912F,
 };
 }
 
@@ -990,6 +1031,7 @@ public:
 	const char* getErrorCodeName(GLenum enum_) const;
 	const char* getFrontFaceDirectionName(GLenum enum_) const;
 	const char* getGetPNameName(GLenum enum_) const;
+	const char* getGetPointervPNameName(GLenum enum_) const;
 	const char* getGetTextureParameterName(GLenum enum_) const;
 	const char* getHintModeName(GLenum enum_) const;
 	const char* getHintTargetName(GLenum enum_) const;
@@ -1027,7 +1069,9 @@ public:
 	const char* getSyncConditionName(GLenum enum_) const;
 	const char* getUniformBlockPNameName(GLenum enum_) const;
 	const char* getUniformPNameName(GLenum enum_) const;
+	const char* getSamplerParameterNameName(GLenum enum_) const;
 	const char* getVertexProvokingModeName(GLenum enum_) const;
+	const char* getObjectIdentifierName(GLenum enum_) const;
 	const char* getSyncParameterNameName(GLenum enum_) const;
 	const char* getShaderParameterNameName(GLenum enum_) const;
 	const char* getQueryObjectParameterNameName(GLenum enum_) const;
@@ -1404,12 +1448,56 @@ public:
 	void getMultisamplefv(GLenum pname, GLuint index, GLfloat *val);
 	void sampleMaski(GLuint maskNumber, GLbitfield mask);
 
-	// GL_ARB_debug_output
+	// GL_VERSION_3_3
 
-	void debugMessageControlARB(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
-	void debugMessageInsertARB(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf);
-	void debugMessageCallbackARB(GLDEBUGPROCARB callback, const void *userParam);
-	GLuint getDebugMessageLogARB(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
+	void bindFragDataLocationIndexed(GLuint program, GLuint colorNumber, GLuint index, const GLchar *name);
+	GLint getFragDataIndex(GLuint program, const GLchar *name);
+	void genSamplers(GLsizei count, GLuint *samplers);
+	void deleteSamplers(GLsizei count, const GLuint *samplers);
+	GLboolean isSampler(GLuint sampler);
+	void bindSampler(GLuint unit, GLuint sampler);
+	void samplerParameteri(GLuint sampler, GLenum pname, GLint param);
+	void samplerParameteriv(GLuint sampler, GLenum pname, const GLint *param);
+	void samplerParameterf(GLuint sampler, GLenum pname, GLfloat param);
+	void samplerParameterfv(GLuint sampler, GLenum pname, const GLfloat *param);
+	void samplerParameterIiv(GLuint sampler, GLenum pname, const GLint *param);
+	void samplerParameterIuiv(GLuint sampler, GLenum pname, const GLuint *param);
+	void getSamplerParameteriv(GLuint sampler, GLenum pname, GLint *params);
+	void getSamplerParameterIiv(GLuint sampler, GLenum pname, GLint *params);
+	void getSamplerParameterfv(GLuint sampler, GLenum pname, GLfloat *params);
+	void getSamplerParameterIuiv(GLuint sampler, GLenum pname, GLuint *params);
+	void queryCounter(GLuint id, GLenum target);
+	void getQueryObjecti64v(GLuint id, GLenum pname, GLint64 *params);
+	void getQueryObjectui64v(GLuint id, GLenum pname, GLuint64 *params);
+	void vertexAttribDivisor(GLuint index, GLuint divisor);
+	void vertexAttribP1ui(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	void vertexAttribP1uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	void vertexAttribP2ui(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	void vertexAttribP2uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	void vertexAttribP3ui(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	void vertexAttribP3uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	void vertexAttribP4ui(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	void vertexAttribP4uiv(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+
+	// GL_KHR_debug
+
+	void debugMessageControl(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
+	void debugMessageInsert(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf);
+	void debugMessageCallback(GLDEBUGPROC callback, const void *userParam);
+	GLuint getDebugMessageLog(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
+	void pushDebugGroup(GLenum source, GLuint id, GLsizei length, const GLchar *message);
+	void popDebugGroup();
+	void objectLabel(GLenum identifier, GLuint name, GLsizei length, const GLchar *label);
+	void getObjectLabel(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label);
+	void objectPtrLabel(const void *ptr, GLsizei length, const GLchar *label);
+	void getObjectPtrLabel(const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label);
+	void getPointerv(GLenum pname, void **params);
+
+	// GL_ARB_texture_storage
+
+	void texStorage1D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
+	void texStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+	void texStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
 
 public:
 	bool _gl_1_0;
@@ -1423,8 +1511,11 @@ public:
 	bool _gl_3_0;
 	bool _gl_3_1;
 	bool _gl_3_2;
+	bool _gl_3_3;
 	bool _gl_ext_texture_filter_anisotropic;
-	bool _gl_arb_debug_output;
+	bool _gl_khr_debug;
+	bool _gl_arb_conservative_depth;
+	bool _gl_arb_texture_storage;
 
 public:
 
@@ -2093,16 +2184,98 @@ public:
 	typedef void (APIENTRYP _PfnGlSampleMaski)(GLuint maskNumber, GLbitfield mask);
 	_PfnGlSampleMaski _glSampleMaski;
 
-	// GL_ARB_debug_output
+	// GL_VERSION_3_3
 
-	typedef void (APIENTRYP _PfnGlDebugMessageControlARB)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
-	_PfnGlDebugMessageControlARB _glDebugMessageControlARB;
-	typedef void (APIENTRYP _PfnGlDebugMessageInsertARB)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf);
-	_PfnGlDebugMessageInsertARB _glDebugMessageInsertARB;
-	typedef void (APIENTRYP _PfnGlDebugMessageCallbackARB)(GLDEBUGPROCARB callback, const void *userParam);
-	_PfnGlDebugMessageCallbackARB _glDebugMessageCallbackARB;
-	typedef GLuint (APIENTRYP _PfnGlGetDebugMessageLogARB)(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
-	_PfnGlGetDebugMessageLogARB _glGetDebugMessageLogARB;
+	typedef void (APIENTRYP _PfnGlBindFragDataLocationIndexed)(GLuint program, GLuint colorNumber, GLuint index, const GLchar *name);
+	_PfnGlBindFragDataLocationIndexed _glBindFragDataLocationIndexed;
+	typedef GLint (APIENTRYP _PfnGlGetFragDataIndex)(GLuint program, const GLchar *name);
+	_PfnGlGetFragDataIndex _glGetFragDataIndex;
+	typedef void (APIENTRYP _PfnGlGenSamplers)(GLsizei count, GLuint *samplers);
+	_PfnGlGenSamplers _glGenSamplers;
+	typedef void (APIENTRYP _PfnGlDeleteSamplers)(GLsizei count, const GLuint *samplers);
+	_PfnGlDeleteSamplers _glDeleteSamplers;
+	typedef GLboolean (APIENTRYP _PfnGlIsSampler)(GLuint sampler);
+	_PfnGlIsSampler _glIsSampler;
+	typedef void (APIENTRYP _PfnGlBindSampler)(GLuint unit, GLuint sampler);
+	_PfnGlBindSampler _glBindSampler;
+	typedef void (APIENTRYP _PfnGlSamplerParameteri)(GLuint sampler, GLenum pname, GLint param);
+	_PfnGlSamplerParameteri _glSamplerParameteri;
+	typedef void (APIENTRYP _PfnGlSamplerParameteriv)(GLuint sampler, GLenum pname, const GLint *param);
+	_PfnGlSamplerParameteriv _glSamplerParameteriv;
+	typedef void (APIENTRYP _PfnGlSamplerParameterf)(GLuint sampler, GLenum pname, GLfloat param);
+	_PfnGlSamplerParameterf _glSamplerParameterf;
+	typedef void (APIENTRYP _PfnGlSamplerParameterfv)(GLuint sampler, GLenum pname, const GLfloat *param);
+	_PfnGlSamplerParameterfv _glSamplerParameterfv;
+	typedef void (APIENTRYP _PfnGlSamplerParameterIiv)(GLuint sampler, GLenum pname, const GLint *param);
+	_PfnGlSamplerParameterIiv _glSamplerParameterIiv;
+	typedef void (APIENTRYP _PfnGlSamplerParameterIuiv)(GLuint sampler, GLenum pname, const GLuint *param);
+	_PfnGlSamplerParameterIuiv _glSamplerParameterIuiv;
+	typedef void (APIENTRYP _PfnGlGetSamplerParameteriv)(GLuint sampler, GLenum pname, GLint *params);
+	_PfnGlGetSamplerParameteriv _glGetSamplerParameteriv;
+	typedef void (APIENTRYP _PfnGlGetSamplerParameterIiv)(GLuint sampler, GLenum pname, GLint *params);
+	_PfnGlGetSamplerParameterIiv _glGetSamplerParameterIiv;
+	typedef void (APIENTRYP _PfnGlGetSamplerParameterfv)(GLuint sampler, GLenum pname, GLfloat *params);
+	_PfnGlGetSamplerParameterfv _glGetSamplerParameterfv;
+	typedef void (APIENTRYP _PfnGlGetSamplerParameterIuiv)(GLuint sampler, GLenum pname, GLuint *params);
+	_PfnGlGetSamplerParameterIuiv _glGetSamplerParameterIuiv;
+	typedef void (APIENTRYP _PfnGlQueryCounter)(GLuint id, GLenum target);
+	_PfnGlQueryCounter _glQueryCounter;
+	typedef void (APIENTRYP _PfnGlGetQueryObjecti64v)(GLuint id, GLenum pname, GLint64 *params);
+	_PfnGlGetQueryObjecti64v _glGetQueryObjecti64v;
+	typedef void (APIENTRYP _PfnGlGetQueryObjectui64v)(GLuint id, GLenum pname, GLuint64 *params);
+	_PfnGlGetQueryObjectui64v _glGetQueryObjectui64v;
+	typedef void (APIENTRYP _PfnGlVertexAttribDivisor)(GLuint index, GLuint divisor);
+	_PfnGlVertexAttribDivisor _glVertexAttribDivisor;
+	typedef void (APIENTRYP _PfnGlVertexAttribP1ui)(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	_PfnGlVertexAttribP1ui _glVertexAttribP1ui;
+	typedef void (APIENTRYP _PfnGlVertexAttribP1uiv)(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	_PfnGlVertexAttribP1uiv _glVertexAttribP1uiv;
+	typedef void (APIENTRYP _PfnGlVertexAttribP2ui)(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	_PfnGlVertexAttribP2ui _glVertexAttribP2ui;
+	typedef void (APIENTRYP _PfnGlVertexAttribP2uiv)(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	_PfnGlVertexAttribP2uiv _glVertexAttribP2uiv;
+	typedef void (APIENTRYP _PfnGlVertexAttribP3ui)(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	_PfnGlVertexAttribP3ui _glVertexAttribP3ui;
+	typedef void (APIENTRYP _PfnGlVertexAttribP3uiv)(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	_PfnGlVertexAttribP3uiv _glVertexAttribP3uiv;
+	typedef void (APIENTRYP _PfnGlVertexAttribP4ui)(GLuint index, GLenum type, GLboolean normalized, GLuint value);
+	_PfnGlVertexAttribP4ui _glVertexAttribP4ui;
+	typedef void (APIENTRYP _PfnGlVertexAttribP4uiv)(GLuint index, GLenum type, GLboolean normalized, const GLuint *value);
+	_PfnGlVertexAttribP4uiv _glVertexAttribP4uiv;
+
+	// GL_KHR_debug
+
+	typedef void (APIENTRYP _PfnGlDebugMessageControl)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
+	_PfnGlDebugMessageControl _glDebugMessageControl;
+	typedef void (APIENTRYP _PfnGlDebugMessageInsert)(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf);
+	_PfnGlDebugMessageInsert _glDebugMessageInsert;
+	typedef void (APIENTRYP _PfnGlDebugMessageCallback)(GLDEBUGPROC callback, const void *userParam);
+	_PfnGlDebugMessageCallback _glDebugMessageCallback;
+	typedef GLuint (APIENTRYP _PfnGlGetDebugMessageLog)(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
+	_PfnGlGetDebugMessageLog _glGetDebugMessageLog;
+	typedef void (APIENTRYP _PfnGlPushDebugGroup)(GLenum source, GLuint id, GLsizei length, const GLchar *message);
+	_PfnGlPushDebugGroup _glPushDebugGroup;
+	typedef void (APIENTRYP _PfnGlPopDebugGroup)();
+	_PfnGlPopDebugGroup _glPopDebugGroup;
+	typedef void (APIENTRYP _PfnGlObjectLabel)(GLenum identifier, GLuint name, GLsizei length, const GLchar *label);
+	_PfnGlObjectLabel _glObjectLabel;
+	typedef void (APIENTRYP _PfnGlGetObjectLabel)(GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label);
+	_PfnGlGetObjectLabel _glGetObjectLabel;
+	typedef void (APIENTRYP _PfnGlObjectPtrLabel)(const void *ptr, GLsizei length, const GLchar *label);
+	_PfnGlObjectPtrLabel _glObjectPtrLabel;
+	typedef void (APIENTRYP _PfnGlGetObjectPtrLabel)(const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label);
+	_PfnGlGetObjectPtrLabel _glGetObjectPtrLabel;
+	typedef void (APIENTRYP _PfnGlGetPointerv)(GLenum pname, void **params);
+	_PfnGlGetPointerv _glGetPointerv;
+
+	// GL_ARB_texture_storage
+
+	typedef void (APIENTRYP _PfnGlTexStorage1D)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width);
+	_PfnGlTexStorage1D _glTexStorage1D;
+	typedef void (APIENTRYP _PfnGlTexStorage2D)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+	_PfnGlTexStorage2D _glTexStorage2D;
+	typedef void (APIENTRYP _PfnGlTexStorage3D)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+	_PfnGlTexStorage3D _glTexStorage3D;
 
 private:
 	void* _getProcAddress(const char* proc);
