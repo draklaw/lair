@@ -108,6 +108,8 @@ bool RenderModule::initialize(bool debugGl) {
 	_context.enable(gl::DEPTH_TEST);
 	_context.depthFunc(gl::LEQUAL);
 
+	_context.enable(gl::FRAMEBUFFER_SRGB);
+
 	_initialized = true;
 
 	return true;

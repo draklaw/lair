@@ -38,14 +38,13 @@ namespace lair
 
 SpriteComponent::SpriteComponent(Manager* manager,_Entity* entity)
     : Component(manager, entity),
-      _texture(),
+      _textureSet(),
       _anchor(0, 0),
       _color(1, 1, 1, 1),
       _tileGridSize(1, 1),
       _tileIndex(0),
       _view(Vector2(0, 0), Vector2(1, 1)),
-      _blendingMode(BLEND_NONE),
-      _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT) {
+      _blendingMode(BLEND_NONE) {
 }
 
 
@@ -55,6 +54,23 @@ SpriteComponent::~SpriteComponent() {
 
 SpriteComponent::Manager* SpriteComponent::manager() {
 	return static_cast<Manager*>(_manager);
+}
+
+
+void SpriteComponent::setTextureSet(const TextureSet& textureSet) {
+	_textureSet = manager()->spriteRenderer()->getTextureSet(textureSet);
+}
+
+
+TextureAspectSP SpriteComponent::texture() const {
+	return _textureSet? _textureSet->getTextureAspect(TexColor): nullptr;
+}
+
+
+void SpriteComponent::setTexture(TextureAspectSP texture) {
+	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor): nullptr;
+	_textureSet = manager()->spriteRenderer()->getTextureSet(
+	                  TexColor, texture, sampler);
 }
 
 
@@ -81,6 +97,7 @@ void SpriteComponent::setTexture(const Path& logicPath) {
 const PropertyList& SpriteComponent::properties() {
 	static PropertyList props;
 	if(props.nProperties() == 0) {
+		// TODO: Support texture sets
 		props.addProperty("texture",
 		                  &SpriteComponent::texturePath,
 		                  &SpriteComponent::setTexture);
@@ -102,9 +119,6 @@ const PropertyList& SpriteComponent::properties() {
 		props.addProperty("blend", blendingModeInfo(),
 		                  &SpriteComponent::blendingMode,
 		                  &SpriteComponent::setBlendingMode);
-		props.addProperty("texture_flags", Texture::flagsInfo(),
-		                  &SpriteComponent::textureFlags,
-		                  &SpriteComponent::setTextureFlags);
 	}
 	return props;
 }
@@ -118,9 +132,7 @@ Box2 SpriteComponent::_texCoords() const {
 inline bool SpriteComponent::_renderCompare(SpriteComponent* c0, SpriteComponent* c1) {
 	return c0->_blendingMode <  c1->_blendingMode
 	   || (c0->_blendingMode == c1->_blendingMode
-	       && (     c0->_texture.owner_before(c1->_texture)
-	           || (!c1->_texture.owner_before(c0->_texture)
-	               && c0->_textureFlags < c1->_textureFlags)));
+	       && c0->_textureSet.owner_before(c1->_textureSet));
 }
 
 //---------------------------------------------------------------------------//
@@ -144,75 +156,6 @@ SpriteComponentManager::SpriteComponentManager(AssetManager* assetManager,
 
 
 SpriteComponentManager::~SpriteComponentManager() {
-}
-
-
-SpriteComponent* SpriteComponentManager::addComponentFromJson(EntityRef entity, const Json::Value& json,
-                                                  const Path& cd) {
-	SpriteComponent* comp = addComponent(entity);
-	if(json.isMember("sprite")) {
-		comp->setTexture(makeAbsolute(cd, json["sprite"].asString()));
-	}
-	if(json.isMember("anchor")) {
-		Json::Value anchor = json["anchor"];
-		if(anchor.isArray() || anchor.size() == 2) {
-			comp->setAnchor(Vector2(anchor[0].asFloat(), anchor[1].asFloat()));
-		} /*else {
-			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
-		}*/
-	}
-	if(json.isMember("color")) {
-		Json::Value color = json["color"];
-		if(color.isArray() || color.size() == 4) {
-			comp->setColor(Vector4(color[0].asFloat(), color[1].asFloat(),
-			               color[2].asFloat(), color[3].asFloat()));
-		} /*else {
-			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
-		}*/
-	}
-	comp->setTileGridSize(Vector2i(json.get("h_tiles", 1).asInt(),
-	                               json.get("v_tiles", 1).asInt()));
-	comp->setTileIndex(json.get("index", 0).asInt());
-	if(json.isMember("view")) {
-		Json::Value view = json["view"];
-		if(view.isArray() || view.size() == 4) {
-			comp->setView(Box2(Vector2(view[0].asFloat(), view[1].asFloat()),
-			        Vector2(view[2].asFloat(), view[3].asFloat())));
-		} /*else {
-			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
-		}*/
-	}
-	if(json.isMember("blend")) {
-		std::string blend = json["blend"].asString();
-		if(blend == "none") {
-			comp->setBlendingMode(BLEND_NONE);
-		}
-		else if(blend == "alpha") {
-			comp->setBlendingMode(BLEND_ALPHA);
-		}
-		else if(blend == "add") {
-			comp->setBlendingMode(BLEND_ADD);
-		}
-		else if(blend == "multiply") {
-			comp->setBlendingMode(BLEND_MULTIPLY);
-		}
-	}
-	if(json.isMember("texture_flags")) {
-		std::string flags = json["texture_flags"].asString();
-		if(flags == "nearest") {
-			comp->setTextureFlags(Texture::NEAREST | Texture::REPEAT);
-		}
-		if(flags == "bilinear_no_mipmap") {
-			comp->setTextureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT);
-		}
-		if(flags == "bilinear_mipmap") {
-			comp->setTextureFlags(Texture::BILINEAR_MIPMAP | Texture::REPEAT);
-		}
-		if(flags == "trilinear") {
-			comp->setTextureFlags(Texture::TRILINEAR | Texture::REPEAT);
-		}
-	}
-	return comp;
 }
 
 
@@ -246,26 +189,26 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		return;
 
 	SpriteComponent* sc = get(entity);
-	TextureAspectSP  texAspect;
+	TextureSetCSP    textureSet;
+	const Texture*   texColor = nullptr;
 
 	if(sc && sc->isEnabled()) {
-		texAspect = sc->texture();
-		if(texAspect && !texAspect->isValid()) {
-			texAspect->warnIfInvalid(_loader->log());
-			texAspect = _spriteRenderer->defaultTexture();
+		textureSet = sc->textureSet();
+		texColor   = textureSet? textureSet->getTextureOrWarn(TexColor, _loader->log()): nullptr;
+		if(!texColor) {
+			textureSet = _spriteRenderer->defaultTextureSet();
+			texColor = textureSet->getTexture(TexColor);
 		}
 	}
 
-	if(texAspect) {
-		const Texture& tex = texAspect->get();
-
+	if(texColor) {
 		Matrix4 wt = lerp(interp,
 		                  sc->_entity()->prevWorldTransform.matrix(),
 		                  sc->_entity()->worldTransform.matrix());
 
 		Box2 texCoords = sc->_texCoords();
-		Scalar w = tex.width()  * texCoords.sizes()(0);
-		Scalar h = tex.height() * texCoords.sizes()(1);
+		Scalar w = texColor->width()  * texCoords.sizes()(0);
+		Scalar h = texColor->height() * texCoords.sizes()(1);
 		Vector2 offset(-w * sc->anchor().x(),
 		               -h * sc->anchor().y());
 		Box2 coords(offset, Vector2(w, h) + offset);
@@ -277,12 +220,11 @@ void SpriteComponentManager::_render(EntityRef entity, float interp, const Ortho
 		unsigned count = _spriteRenderer->indexCount() - index;
 
 		if(count) {
-			_states.texture      = &texAspect->_get();
-			_states.textureFlags = sc->textureFlags();
+			_states.textureSet   = textureSet;
 			_states.blendingMode = sc->blendingMode();
 
 			Vector4i tileInfo;
-			tileInfo << sc->tileGridSize(), tex.width(), tex.height();
+			tileInfo << sc->tileGridSize(), texColor->width(), texColor->height();
 			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
 			            _spriteRenderer->shader(), camera.transform(), 0, tileInfo);
 

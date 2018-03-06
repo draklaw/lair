@@ -27,6 +27,7 @@
 
 #include <lair/render_gl3/render_pass.h>
 #include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/texture_set.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
@@ -69,8 +70,12 @@ public:
 	void setTileMap(AssetSP tileMap);
 	void setTileMap(const Path& logicPath);
 
-	inline TextureAspectSP tileSet() const { return _tileSet.lock(); }
-	inline void _setTileSet(TextureAspectSP tileSet) { _tileSet = tileSet; }
+	inline TextureSetCSP textureSet() const { return _textureSet; }
+	inline void setTextureSet(const TextureSetCSP textureSet) { _textureSet = textureSet; }
+	void setTextureSet(const TextureSet& textureSet);
+
+	TextureAspectSP tileSet() const;
+	void _setTileSet(TextureAspectSP tileSet);
 
 	inline unsigned layerIndex() const { return _layerIndex; }
 	inline void setLayerIndex(unsigned index) { _layerIndex = index; _bufferDirty = true; }
@@ -78,17 +83,13 @@ public:
 	inline BlendingMode blendingMode() const { return _blendingMode; }
 	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
-	inline unsigned textureFlags() const { return _textureFlags; }
-	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
-
 	static const PropertyList& properties();
 
 protected:
 	TileMapAspectSP _tileMap;
-	TextureAspectWP _tileSet;
+	TextureSetCSP   _textureSet;
 	unsigned        _layerIndex;
 	BlendingMode    _blendingMode;
-	unsigned        _textureFlags;
 
 public:
 	bool         _bufferDirty;
@@ -113,10 +114,6 @@ public:
 
 	TileLayerComponentManager& operator=(const TileLayerComponentManager&) = delete;
 	TileLayerComponentManager& operator=(TileLayerComponentManager&&)      = delete;
-
-	virtual TileLayerComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                  const Path& cd=Path());
-	virtual TileLayerComponent* cloneComponent(EntityRef base, EntityRef entity);
 
 	void createTextures();
 

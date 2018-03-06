@@ -42,8 +42,9 @@ Renderer::Renderer(RenderModule* module, AssetManager* assetManager)
     : _module(module),
       _assetManager(assetManager),
       _context(module? module->context(): nullptr),
-      _vertexArrayCount(0),
-      _defaultTexture() {
+      _vertexArrayIndex(0),
+      _defaultTexture(),
+      _textureSetIndex(0) {
 	lairAssert(_module);
 	lairAssert(_assetManager);
 
@@ -79,7 +80,7 @@ VertexArraySP Renderer::createVertexArray(GLsizei sizeInBytes,
                                           const VertexAttrib* attribs,
                                           BufferObject* indices) {
 	return std::make_shared<VertexArray>(
-	            this, _vertexArrayCount++, sizeInBytes, attribs, indices);
+	            this, _vertexArrayIndex++, sizeInBytes, attribs, indices);
 }
 
 
@@ -103,6 +104,19 @@ ProgramObject Renderer::compileProgram(const char* name,
 	}
 	prog.detachAllShaders();
 	return prog;
+}
+
+
+SamplerSP Renderer::getSampler(const SamplerParams& params) {
+	SamplerWP wp = _samplerMap[params];
+	SamplerSP sp = wp.lock();
+
+	if(!sp) {
+		sp = std::make_shared<Sampler>(_context, params);
+		wp = sp;
+	}
+
+	return sp;
 }
 
 
@@ -142,6 +156,29 @@ void Renderer::uploadPendingTextures() {
 
 Logger& Renderer::log() {
 	return _module->log();
+}
+
+
+TextureSetCSP Renderer::getTextureSet(const TextureSet& texSet) {
+	TextureSetWP& wp = _textureSetMap[texSet];
+	TextureSetSP  sp = wp.lock();
+
+	if(!sp) {
+		sp = std::make_shared<TextureSet>(texSet);
+		sp->_setIndex(_textureSetIndex++);
+		wp = sp;
+	}
+
+	return sp;
+}
+
+
+TextureSetCSP Renderer::getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler) {
+	return getTextureSet(TextureSet(unit, texture, sampler));
+}
+
+TextureSetCSP Renderer::getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler) {
+	return getTextureSet(unit, createTexture(textureAsset), sampler);
 }
 
 

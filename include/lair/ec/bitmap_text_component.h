@@ -31,6 +31,7 @@
 
 #include <lair/render_gl3/orthographic_camera.h>
 #include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/texture_set.h>
 #include <lair/render_gl3/render_pass.h>
 
 #include <lair/ec/component.h>
@@ -87,8 +88,12 @@ public:
 	void setFont(AssetSP font);
 	void setFont(const Path& logicPath);
 
-	inline TextureAspectSP texture() const { return _texture.lock(); }
-	inline void _setTexture(TextureAspectSP texture) { _texture = texture; }
+	inline TextureSetCSP textureSet() const { return _textureSet; }
+	inline void setTextureSet(TextureSetCSP textureSet) { _textureSet = textureSet; }
+	void setTextureSet(const TextureSet& textureSet);
+
+	inline TextureAspectSP texture() const;
+	inline void _setTexture(TextureAspectSP texture);
 
 	inline const std::string& text() const { return _text; }
 	inline void setText(const std::string& text) { _text = text; }
@@ -105,20 +110,16 @@ public:
 	inline BlendingMode blendingMode() const { return _blendingMode; }
 	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
-	inline unsigned textureFlags() const { return _textureFlags; }
-	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
-
 	static const PropertyList& properties();
 
 public:
 	BitmapFontAspectWP _font;
-	TextureAspectWP    _texture;
+	TextureSetCSP      _textureSet;
 	std::string        _text;
 	Vector4            _color;
 	Vector2i           _size;
 	Vector2            _anchor;
 	BlendingMode       _blendingMode;
-	unsigned           _textureFlags;
 };
 
 
@@ -133,9 +134,6 @@ public:
 	BitmapTextComponentManager(BitmapTextComponentManager&&)      = delete;
 
 	virtual ~BitmapTextComponentManager();
-
-	virtual BitmapTextComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                  const Path& cd=Path());
 
 	void createTextures();
 
@@ -159,11 +157,11 @@ private:
 
 
 void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
-                      const BitmapFont& font, Texture* texture,
+                      const BitmapFont& font, const TextureSetCSP& textureSet,
                       const Matrix4& transform, float depth,
                       const TextLayout& layout, const Vector2& anchor,
                       const Vector4& color, const Matrix4& viewTransform,
-                      unsigned textureFlags, BlendingMode blendingMode);
+                      BlendingMode blendingMode);
 }
 
 #endif

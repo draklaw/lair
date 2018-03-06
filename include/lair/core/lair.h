@@ -182,6 +182,24 @@ inline T setBits(T flags, B bits, bool enable) {
 }
 
 
+inline float srgbFromLinear(float coeff) {
+	return (coeff <= 0.0031308f)? 12.92f * coeff:
+	                              1.055f * pow(coeff, 1.0f/2.4f) - 0.055f;
+}
+
+inline float linearFromSrgb(float coeff) {
+	return (coeff <= 0.04045f)? coeff / 12.92:
+	                            pow((coeff + 0.055f) / 1.055f, 2.4f);
+}
+
+inline Vector3 srgb(float r, float g, float b) {
+	return Vector3(linearFromSrgb(r), linearFromSrgb(g), linearFromSrgb(b));
+}
+
+inline Vector4 srgba(float r, float g, float b, float a = 1.0f) {
+	return Vector4(linearFromSrgb(r), linearFromSrgb(g), linearFromSrgb(b), a);
+}
+
 template<typename Derived>
 Eigen::WithFormat<Derived> fmt(const Eigen::DenseBase<Derived>& m) {
 	static Eigen::IOFormat vFormat(Eigen::StreamPrecision,

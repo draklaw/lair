@@ -77,13 +77,12 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 BitmapTextComponent::BitmapTextComponent(Manager* manager, _Entity* entity)
     : Component(manager, entity),
       _font(),
-      _texture(),
+      _textureSet(),
       _text(),
       _color(1, 1, 1, 1),
       _size(0, 0),
       _anchor(0, 0),
-      _blendingMode(BLEND_NONE),
-      _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::CLAMP) {
+      _blendingMode(BLEND_NONE) {
 }
 
 
@@ -108,6 +107,23 @@ void BitmapTextComponent::setFont(const Path& logicPath) {
 }
 
 
+void BitmapTextComponent::setTextureSet(const TextureSet& textureSet) {
+	_textureSet = manager()->spriteRenderer()->getTextureSet(textureSet);
+}
+
+
+TextureAspectSP BitmapTextComponent::texture() const {
+	return _textureSet? _textureSet->getTextureAspect(TexColor): nullptr;
+}
+
+
+void BitmapTextComponent::_setTexture(TextureAspectSP texture) {
+	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor): nullptr;
+	_textureSet = manager()->spriteRenderer()->getTextureSet(
+	                  TexColor, texture, sampler);
+}
+
+
 const PropertyList& BitmapTextComponent::properties() {
 	static PropertyList props;
 	if(props.nProperties() == 0) {
@@ -129,9 +145,6 @@ const PropertyList& BitmapTextComponent::properties() {
 		props.addProperty("blend", blendingModeInfo(),
 		                  &BitmapTextComponent::blendingMode,
 		                  &BitmapTextComponent::setBlendingMode);
-		props.addProperty("texture_flags", Texture::flagsInfo(),
-		                  &BitmapTextComponent::textureFlags,
-		                  &BitmapTextComponent::setTextureFlags);
 	}
 	return props;
 }
@@ -160,44 +173,6 @@ BitmapTextComponentManager::~BitmapTextComponentManager() {
 }
 
 
-BitmapTextComponent* BitmapTextComponentManager::addComponentFromJson(
-        EntityRef entity, const Json::Value& json, const Path& cd) {
-	BitmapTextComponent* comp = addComponent(entity);
-	if(json.isMember("font")) {
-		comp->setFont(makeAbsolute(cd, json["font"].asString()));
-	}
-	if(json.isMember("text")) {
-		comp->setText(json["text"].asString());
-	}
-	if(json.isMember("color")) {
-		Json::Value color = json["color"];
-		if(color.isArray() || color.size() == 4) {
-			comp->setColor(Vector4(color[0].asFloat(), color[1].asFloat(),
-			               color[2].asFloat(), color[3].asFloat()));
-		} /*else {
-			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
-		}*/
-	}
-	if(json.isMember("size")) {
-		Json::Value size = json["size"];
-		if(size.isArray() || size.size() == 2) {
-			comp->setSize(Vector2i(size[0].asInt(), size[1].asInt()));
-		} /*else {
-			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
-		}*/
-	}
-	if(json.isMember("anchor")) {
-		Json::Value anchor = json["anchor"];
-		if(anchor.isArray() || anchor.size() == 2) {
-			comp->setAnchor(Vector2(anchor[0].asFloat(), anchor[1].asFloat()));
-		} /*else {
-			log().warning("Invalid anchor field while loading entity \"", entity.name(), "\".");
-		}*/
-	}
-	return comp;
-}
-
-
 void BitmapTextComponentManager::createTextures() {
 	for(BitmapTextComponent& comp: *this) {
 		BitmapFontAspectSP font = comp.font();
@@ -212,8 +187,6 @@ void BitmapTextComponentManager::render(EntityRef entity, float interp, const Or
 
 	_states.shader = _spriteRenderer->shader().shader;
 	_states.vertices = _spriteRenderer->vertexArray();
-	_states.textureFlags = Texture::BILINEAR_NO_MIPMAP | Texture::CLAMP;
-	_states.blendingMode = BLEND_ALPHA;
 
 	_render(entity, interp, camera);
 }
@@ -235,7 +208,7 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 
 	BitmapTextComponent* comp = get(entity);
 	BitmapFontAspectSP   fontAspect;
-	TextureAspectSP      texAspect;
+	TextureSetCSP        textureSet;
 
 	if(comp && comp->isEnabled()) {
 		fontAspect = comp->font();
@@ -246,14 +219,13 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 	}
 
 	if(fontAspect) {
-		texAspect = comp->texture();
-		if(texAspect && !texAspect->isValid()) {
-			texAspect->warnIfInvalid(_loader->log());
-			texAspect = _spriteRenderer->defaultTexture();
+		textureSet = comp->textureSet();
+		if(!textureSet || !textureSet->getTextureAspectOrWarn(TexColor, _loader->log())) {
+			textureSet = _spriteRenderer->defaultTextureSet();
 		}
 	}
 
-	if(texAspect) {
+	if(textureSet) {
 		const BitmapFont& font = fontAspect->get();
 
 		Matrix4 wt = lerp(interp,
@@ -265,9 +237,9 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 
 		float depth = 1.f - normalize(wt(2, 3), camera.viewBox().min()(2),
 		                                        camera.viewBox().max()(2));
-		renderBitmapText(_renderPass, _spriteRenderer, font, &texAspect->_get(),
+		renderBitmapText(_renderPass, _spriteRenderer, font, textureSet,
 		                 wt, depth, layout, comp->anchor(), comp->color(),
-		                 camera.transform(), comp->textureFlags(), comp->blendingMode());
+		                 camera.transform(), comp->blendingMode());
 	}
 
 	EntityRef child = entity.firstChild();
@@ -279,11 +251,11 @@ void BitmapTextComponentManager::_render(EntityRef entity, float interp, const O
 
 
 void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
-                      const BitmapFont& font, Texture* texture,
+                      const BitmapFont& font, const TextureSetCSP& textureSet,
                       const Matrix4& transform, float depth,
                       const TextLayout& layout, const Vector2& anchor,
                       const Vector4& color, const Matrix4& viewTransform,
-                      unsigned textureFlags, BlendingMode blendingMode) {
+                      BlendingMode blendingMode) {
 	unsigned index = renderer->indexCount();
 	for(unsigned i = 0; i < layout.nGlyphs(); ++i) {
 		unsigned cp = layout.glyph(i).codepoint;
@@ -306,8 +278,7 @@ void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
 		RenderPass::DrawStates states;
 		states.shader       = renderer->shader().shader;
 		states.vertices     = renderer->vertexArray();
-		states.texture      = texture;
-		states.textureFlags = textureFlags;
+		states.textureSet   = textureSet;
 		states.blendingMode = blendingMode;
 
 		const ShaderParameter* params = renderer->addShaderParameters(

@@ -38,10 +38,8 @@ namespace lair
 TileLayerComponent::TileLayerComponent(Manager* manager, _Entity* entity)
     : Component(manager, entity)
     , _tileMap()
-    , _tileSet()
     , _layerIndex(0)
     , _blendingMode(BLEND_NONE)
-    , _textureFlags(Texture::BILINEAR_NO_MIPMAP | Texture::REPEAT)
     , _vBuffer(new BufferObject(manager->spriteRenderer()->renderer()))
     , _iBuffer(new BufferObject(manager->spriteRenderer()->renderer())) {
 
@@ -82,6 +80,23 @@ void TileLayerComponent::setTileMap(const Path& logicPath) {
 }
 
 
+void TileLayerComponent::setTextureSet(const TextureSet& textureSet) {
+	_textureSet = manager()->spriteRenderer()->getTextureSet(textureSet);
+}
+
+
+TextureAspectSP TileLayerComponent::tileSet() const {
+	return _textureSet? _textureSet->getTextureAspect(TexColor): nullptr;
+}
+
+
+void TileLayerComponent::_setTileSet(TextureAspectSP texture) {
+	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor): nullptr;
+	_textureSet = manager()->spriteRenderer()->getTextureSet(
+	                  TexColor, texture, sampler);
+}
+
+
 const PropertyList& TileLayerComponent::properties() {
 	static PropertyList props;
 	if(props.nProperties() == 0) {
@@ -94,9 +109,6 @@ const PropertyList& TileLayerComponent::properties() {
 		props.addProperty("blend",
 		                  &TileLayerComponent::blendingMode,
 		                  &TileLayerComponent::setBlendingMode);
-		props.addProperty("texture_flags",
-		                  &TileLayerComponent::textureFlags,
-		                  &TileLayerComponent::setTextureFlags);
 	}
 	return props;
 }
@@ -114,24 +126,6 @@ TileLayerComponentManager::TileLayerComponentManager(
     , _loader(loaderManager)
     , _renderPass(renderPass)
     , _states() {
-}
-
-
-TileLayerComponent* TileLayerComponentManager::addComponentFromJson(EntityRef /*entity*/, const Json::Value& /*json*/,
-                                  const Path& /*cd*/) {
-	lairAssert(false);
-  return nullptr;
-}
-
-
-TileLayerComponent* TileLayerComponentManager::cloneComponent(EntityRef base, EntityRef entity) {
-	TileLayerComponent* baseComp = get(base);
-	TileLayerComponent* comp = _addComponent(entity, baseComp);
-	comp->setTileMap(     baseComp->tileMap());
-	comp->setLayerIndex(  baseComp->layerIndex());
-	comp->setBlendingMode(baseComp->blendingMode());
-	comp->setTextureFlags(baseComp->textureFlags());
-	return comp;
 }
 
 
@@ -217,7 +211,8 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 
 	TileLayerComponent* comp = get(entity);
 	TileMapAspectSP     tileMapAspect;
-	TextureAspectSP     texAspect;
+	TextureSetCSP       textureSet;
+	const Texture*      texColor = nullptr;
 
 	if(comp && comp->isEnabled()) {
 		tileMapAspect = comp->tileMap();
@@ -228,18 +223,17 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 	}
 
 	if(tileMapAspect) {
-		texAspect = comp->tileSet();
-		if(texAspect && !texAspect->isValid()) {
-			texAspect->warnIfInvalid(_loader->log());
-			texAspect = _spriteRenderer->defaultTexture();
+		textureSet = comp->textureSet();
+		texColor = textureSet? textureSet->getTextureOrWarn(TexColor, _loader->log()): nullptr;
+		if(!texColor) {
+			textureSet = _spriteRenderer->defaultTextureSet();
+			texColor = textureSet->getTexture(TexColor);
 		}
 	}
 
-	if(texAspect) {
+	if(texColor) {
 		const TileMap& tileMap = tileMapAspect->get();
 		unsigned       layer   = comp->layerIndex();
-
-		Texture& tex = texAspect->_get();
 
 		// FIXME: wt should be applied as a shader parameter
 		Matrix4 wt = lerp(interp,
@@ -247,8 +241,8 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 						  comp->_entity()->worldTransform.matrix());
 
 		if(comp->_bufferDirty) {
-			float tileWidth  = float(tex.width())  / float(tileMap.tileSetHTiles());
-			float tileHeight = float(tex.height()) / float(tileMap.tileSetVTiles());
+			float tileWidth  = float(texColor->width())  / float(tileMap.tileSetHTiles());
+			float tileHeight = float(texColor->height()) / float(tileMap.tileSetVTiles());
 			comp->_vertexCount = _fillBuffer(*comp->_vBuffer, *comp->_iBuffer,
 			                                 tileMap, layer, tileWidth, tileHeight, wt);
 			comp->_bufferDirty = false;
@@ -256,12 +250,11 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 
 		if(comp->_vertexCount) {
 			_states.vertices     = comp->_vertexArray.get();
-			_states.texture      = &tex;
-			_states.textureFlags = comp->textureFlags();
+			_states.textureSet   = textureSet;
 			_states.blendingMode = comp->blendingMode();
 
 			Vector4i tileInfo(tileMap.tileSetHTiles(), tileMap.tileSetVTiles(),
-			                  tex.width(), tex.height());
+			                  texColor->width(), texColor->height());
 			const ShaderParameter* params = _spriteRenderer->addShaderParameters(
 			            _spriteRenderer->shader(), camera.transform(), 0, tileInfo);
 

@@ -305,6 +305,28 @@ TextureAspectSP SpriteRenderer::defaultTexture() const {
 }
 
 
+TextureSetCSP SpriteRenderer::getTextureSet(const TextureSet& textureSet) {
+	return _renderer->getTextureSet(textureSet);
+}
+
+
+TextureSetCSP SpriteRenderer::getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler) {
+	return _renderer->getTextureSet(unit, texture, sampler);
+}
+
+TextureSetCSP SpriteRenderer::getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler) {
+	return _renderer->getTextureSet(unit, textureAsset, sampler);
+}
+
+
+TextureSetCSP SpriteRenderer::defaultTextureSet() {
+	if(!_defaultTextureSet) {
+		_defaultTextureSet = getTextureSet(TexColor, defaultTexture(), nullptr);
+	}
+	return _defaultTextureSet;
+}
+
+
 Renderer* SpriteRenderer::renderer() {
 	return _renderer;
 }

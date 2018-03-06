@@ -39,9 +39,12 @@ class Renderer;
 class ProgramObject;
 class BufferObject;
 class VertexArray;
+class Sampler;
 class Texture;
+class TextureSet;
 
 typedef std::shared_ptr<Texture> TextureSP;
+typedef std::shared_ptr<const TextureSet> TextureSetCSP;
 
 
 class ShaderParameter {
@@ -152,8 +155,7 @@ public:
 	struct DrawStates {
 		ProgramObject* shader;
 		VertexArray*   vertices;
-		Texture*       texture;
-		unsigned       textureFlags;
+		TextureSetCSP  textureSet;
 		BlendingMode   blendingMode;
 		// Box2i _viewport;
 	};
@@ -180,8 +182,8 @@ public:
 
 		unsigned shaderStateChangeCount;
 		unsigned vertexArraySetupCount;
+		unsigned samplerBindCount;
 		unsigned textureBindCount;
-		unsigned textureSetFlagCount;
 		unsigned blendingModeChangeCount;
 		unsigned drawCallCount;
 	};

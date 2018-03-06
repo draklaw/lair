@@ -9,6 +9,7 @@
 - sys:mouse: Better mouse support
 - sys:gamepad: Support gamepads
 
+- assets:rework: Rethink asset system _or_ document it
 - assets:simple-loader: Create a simple, single-threaded loader
 - assets:file-sys: File system abstraction
 - assets:resource: Resource system [req: assets:file-sys]
@@ -23,6 +24,7 @@
 - render:tex-atlas: Allow one GL texture to contain several "logical" texture (batching)
 - render:tex-pack: Automatic texture packing (offline ?) [req: render:tex-atlas]
 - render:tex-set: Support texture set (list of texture + params)
+- render:uniform-buffer: Improve uniform args system + use uniform buffers.
 - render:shapes: Shape drawing (stroke + filled)
 - render:text: Text shaders (sdf / vector)
 

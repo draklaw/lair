@@ -22,10 +22,11 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/render_gl3/context.h"
-#include "lair/render_gl3/program_object.h"
-#include "lair/render_gl3/texture.h"
-#include "lair/render_gl3/renderer.h"
+#include <lair/render_gl3/context.h>
+#include <lair/render_gl3/program_object.h>
+#include <lair/render_gl3/sampler.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/renderer.h>
 
 #include "lair/render_gl3/render_pass.h"
 
@@ -59,8 +60,8 @@ RenderPass::DrawCall::DrawCall(const DrawStates& states, const ShaderParameter* 
 void RenderPass::Stats::reset() {
 	shaderStateChangeCount = 0;
 	vertexArraySetupCount = 0;
+	samplerBindCount = 0;
 	textureBindCount = 0;
-	textureSetFlagCount = 0;
 	blendingModeChangeCount = 0;
 	drawCallCount = 0;
 }
@@ -69,8 +70,8 @@ void RenderPass::Stats::reset() {
 void RenderPass::Stats::dump(Logger& log) const {
 	log.info("Shader changes:         ", shaderStateChangeCount);
 	log.info("VAO setups:             ", vertexArraySetupCount);
+	log.info("Sampler bindings:       ", samplerBindCount);
 	log.info("Texture bindings:       ", textureBindCount);
-	log.info("Texture flag changes:   ", textureSetFlagCount);
 	log.info("Blending mode changes:  ", blendingModeChangeCount);
 	log.info("Draw calls:             ", drawCallCount);
 }
@@ -112,9 +113,6 @@ void RenderPass::render() {
 	std::sort(_sortBuffer.begin(), _sortBuffer.end());
 
 	Context* glc = _renderer->context();
-
-	// TODO: Support multitexturing
-	glc->activeTexture(gl::TEXTURE0);
 
 	DrawCall* prev = 0;
 	for(IndexedCall icall: _sortBuffer) {
@@ -163,15 +161,34 @@ void RenderPass::render() {
 //		SpriteShaderParams params(viewTransform);
 //		_defaultShader.setParams(glc, params);
 
-		bool updateTexture = !prev || prev->states.texture != states.texture;
-		if(updateTexture) {
-			states.texture->bind();
-			_stats.textureBindCount += 1;
-		}
+		if(!prev || prev->states.textureSet != states.textureSet) {
+			// TODO: Optimize state changes: keep track of the currently bound
+			// texture / sampler per unit and only update them when required.
 
-		if(updateTexture || !prev || prev->states.textureFlags != states.textureFlags) {
-			states.texture->_setFlags(states.textureFlags);
-			_stats.textureSetFlagCount += 1;
+			// TODO: Instead of setting all textures in the texture set, should
+			// we ask the shader for the active texture units and set them ? The
+			// main difference is that if a unit is not present in a texture
+			// set, we init it to the default texture in the later case. Also if
+			// a shader don't use a unit, we don't bother to bind it.
+
+			for(const TextureBinding& binding: *states.textureSet) {
+				if(binding.texture) {
+					glc->activeTexture(gl::TEXTURE0 + binding.unit);
+
+					TextureAspectSP texture =
+					        binding.texture->isValid()? binding.texture:
+					                                    _renderer->defaultTexture();
+					texture->get().bind();
+
+					if(binding.sampler)
+						binding.sampler->bind(binding.unit);
+					else
+						glc->bindSampler(binding.unit, 0);
+
+					_stats.textureBindCount += 1;
+					_stats.samplerBindCount += 1;
+				}
+			}
 		}
 
 		if(!prev || prev->states.blendingMode != states.blendingMode) {
@@ -229,18 +246,16 @@ RenderPass::Index RenderPass::solidIndex(const DrawCall& call) {
 
 	constexpr unsigned shaderBits   = 10;
 	constexpr unsigned verticesBits = 10;
-	constexpr unsigned textureBits  = 10;
-	constexpr unsigned texFlagsBits =  9;
+	constexpr unsigned textureBits  = 19;
 	constexpr unsigned depthBits    = 24;
 
 	int i = 0;
 	#define SET_BITS(_value, _size) setBits(index, _value, i, _size); i += _size
-	SET_BITS(call.depth,                    depthBits);
-	SET_BITS(call.states.textureFlags,      texFlagsBits);
-	SET_BITS(call.states.texture->_glId(),  textureBits);
-	SET_BITS(call.states.vertices->index(), verticesBits);
-	SET_BITS(call.states.shader->id(),      shaderBits);
-	SET_BITS(1,                             1);
+	SET_BITS(call.depth,                      depthBits);
+	SET_BITS(call.states.textureSet->index(), textureBits);
+	SET_BITS(call.states.vertices->index(),   verticesBits);
+	SET_BITS(call.states.shader->id(),        shaderBits);
+	SET_BITS(1,                               1);
 	lairAssert(i == (8 * sizeof(Index)));
 	#undef SET_BITS
 
@@ -255,18 +270,17 @@ RenderPass::Index RenderPass::transparentIndex(const DrawCall& call) {
 
 	constexpr unsigned shaderBits   = 10;
 	constexpr unsigned verticesBits = 10;
-	constexpr unsigned textureBits  = 10;
-	constexpr unsigned texFlagsBits =  9;
+	constexpr unsigned textureBits  = 19;
 	constexpr unsigned depthBits    = 24;
+
 
 	int i = 0;
 	#define SET_BITS(_value, _size) setBits(index, _value, i, _size); i += _size
-	SET_BITS(call.states.textureFlags,      texFlagsBits);
-	SET_BITS(call.states.texture->_glId(),  textureBits);
-	SET_BITS(call.states.vertices->index(), verticesBits);
-	SET_BITS(call.states.shader->id(),      shaderBits);
-	SET_BITS(0x00ffffffu - call.depth,      depthBits);
-	SET_BITS(1,                             1);
+	SET_BITS(call.states.textureSet->index(), textureBits);
+	SET_BITS(call.states.vertices->index(),   verticesBits);
+	SET_BITS(call.states.shader->id(),        shaderBits);
+	SET_BITS(0x00ffffffu - call.depth,        depthBits);
+	SET_BITS(1,                               1);
 	lairAssert(i == (8 * sizeof(Index)));
 	#undef SET_BITS
 

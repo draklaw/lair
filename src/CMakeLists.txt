@@ -109,7 +109,9 @@ set(lair_SOURCES
 	render_gl3/glsl_source.cpp
 	render_gl3/shader_object.cpp
 	render_gl3/program_object.cpp
+	render_gl3/sampler.cpp
 	render_gl3/texture.cpp
+	render_gl3/texture_set.cpp
 	render_gl3/render_pass.cpp
 	render_gl3/renderer.cpp
 	render_gl3/render_module.cpp

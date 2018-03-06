@@ -37,7 +37,9 @@
 #include <lair/render_gl3/vertex_array.h>
 #include <lair/render_gl3/shader_object.h>
 #include <lair/render_gl3/program_object.h>
+#include <lair/render_gl3/sampler.h>
 #include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/texture_set.h>
 
 
 namespace lair
@@ -73,6 +75,8 @@ public:
 	                             const ShaderObject* vert,
 	                             const ShaderObject* frag);
 
+	SamplerSP getSampler(const SamplerParams& params);
+
 	TextureAspectSP createTexture(AssetSP asset);
 	void enqueueToUpload(TextureAspectSP texture);
 	void uploadPendingTextures();
@@ -81,10 +85,32 @@ public:
 		return _defaultTexture;
 	}
 
+	TextureSetCSP getTextureSet(const TextureSet& texSet);
+	TextureSetCSP getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler);
+	TextureSetCSP getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler);
+	// TODO: A cleanup function that removes texture sets with only one ref.
+	// We can't use weak pointers here because texture sets are keys in the set
+	// and we should not mutate them.
+
 	Logger& log();
 
 protected:
 	typedef std::vector<TextureAspectSP> TextureList;
+	typedef std::unordered_map<SamplerParams, SamplerWP,
+	                           Hash<SamplerParams>> SamplerMap;
+
+	// This is not optimal to store this in a map, since the key and value are
+	// the same by design. The problems are
+	//   1. We can't use weak pointer with sets because the value is also the
+	//      key and mutating the key is _bad_.
+	//   2. Find() only take the exact key type in parameter, so if it is a
+	//      shared_pointer, we first need to create an object to test if it is
+	//      in the set, which is a waste.
+	//
+	// Note that using weak pointers here is not that meaningful because the
+	// texure set is anyway copied in the key.
+	typedef std::unordered_map<TextureSet, TextureSetWP,
+	                           Hash<TextureSet>> TextureSetMap;
 
 protected:
 	void _createDefaultTexture();
@@ -95,10 +121,14 @@ protected:
 
 	Context*        _context;
 
-	unsigned        _vertexArrayCount;
+	unsigned        _vertexArrayIndex;
 
 	TextureList     _pendingTextures;
 	TextureAspectSP _defaultTexture;
+
+	SamplerMap      _samplerMap;
+	TextureSetMap   _textureSetMap;
+	unsigned        _textureSetIndex;
 };
 
 

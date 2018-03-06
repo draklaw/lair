@@ -52,7 +52,6 @@ inline std::size_t combineHash(std::size_t h0, std::size_t h1) {
 }
 
 
-
 #define LAIR_DECL_STD_HASH(_type) inline std::size_t hash(const _type& v) { return std::hash<_type>()(v); }
 
 LAIR_DECL_STD_HASH(bool)
@@ -118,6 +117,12 @@ struct Hash {
 		return hash(v);
 	}
 };
+
+
+template<typename T, typename... Args>
+inline std::size_t hash(const T& first, const Args&... others) {
+	return combineHash(hash(first), hash(others...));
+}
 
 
 }

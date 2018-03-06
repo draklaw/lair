@@ -34,6 +34,7 @@
 
 #include <lair/render_gl3/context.h>
 #include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/texture_set.h>
 #include <lair/render_gl3/render_pass.h>
 #include <lair/render_gl3/renderer.h>
 
@@ -72,14 +73,17 @@ public:
 
 	Manager* manager();
 
-	inline TextureAspectSP texture() const { return _texture.lock(); }
+	inline TextureSetCSP textureSet() const { return _textureSet; }
+	inline void setTextureSet(TextureSetCSP textureSet) { _textureSet = textureSet; }
+	void setTextureSet(const TextureSet& textureSet);
+
+	TextureAspectSP texture() const;
 	inline const Path& texturePath() const {
 		TextureAspectSP tex = texture();
 		return tex? tex->asset()->logicPath(): emptyPath;
 	}
-	inline void setTexture(TextureAspectSP texture) {
-		_texture = texture;
-	}
+
+	void setTexture(TextureAspectSP texture);
 	void setTexture(AssetSP texture);
 	void setTexture(const Path& logicPath);
 
@@ -101,9 +105,6 @@ public:
 	inline BlendingMode blendingMode() const { return _blendingMode; }
 	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
-	inline unsigned textureFlags() const { return _textureFlags; }
-	inline void setTextureFlags(unsigned flags) { _textureFlags = flags; }
-
 	static const PropertyList& properties();
 
 	Box2 _texCoords() const;
@@ -111,14 +112,13 @@ public:
 	static bool _renderCompare(SpriteComponent* c0, SpriteComponent* c1);
 
 protected:
-	TextureAspectWP _texture;
+	TextureSetCSP   _textureSet;
 	Vector2         _anchor;
 	Vector4         _color;
 	Vector2i        _tileGridSize;
 	unsigned        _tileIndex;
 	Box2            _view;
 	BlendingMode    _blendingMode;
-	unsigned        _textureFlags;
 };
 
 
@@ -137,9 +137,6 @@ public:
 
 	SpriteComponentManager& operator=(const SpriteComponentManager&) = delete;
 	SpriteComponentManager& operator=(SpriteComponentManager&&)      = delete;
-
-	virtual SpriteComponent* addComponentFromJson(EntityRef entity, const Json::Value& json,
-	                                  const Path& cd=Path());
 
 //	void render(float interp, const OrthographicCamera& camera);
 	void render(EntityRef entity, float interp, const OrthographicCamera& camera);
