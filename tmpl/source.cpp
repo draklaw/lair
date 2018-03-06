@@ -22,7 +22,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/{{ module }}/{{ class_underscore }}.h"
+#include "lair/{{ module }}/{{ class_snake }}.h"
 
 
 namespace lair

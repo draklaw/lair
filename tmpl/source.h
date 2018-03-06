@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_{{ module|upper }}_{{ class_underscore|upper }}_H
-#define _LAIR_{{ module|upper }}_{{ class_underscore|upper }}_H
+#ifndef LAIR_{{ module|upper }}_{{ class_snake|upper }}_H
+#define LAIR_{{ module|upper }}_{{ class_snake|upper }}_H
 
 
 #include <lair/core/lair.h>

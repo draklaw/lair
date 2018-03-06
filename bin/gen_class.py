@@ -69,103 +69,104 @@ def error(msg, *, print_usage=False):
 	exit(1)
 
 
-def camelCaseToUnderscore(camelCase):
-	underscore = StringIO()
+def camel_case_to_snake_case(camelCase):
+	snake = StringIO()
 	for i, c in enumerate(camelCase):
 		if c.isupper():
 			if (    i != 0
 			    and c.isupper()
 			    and i+1 < len(camelCase)
 			    and camelCase[i+1].islower()):
-				underscore.write('_')
-		underscore.write(c.lower())
-	return underscore.getvalue()
+				snake.write('_')
+		snake.write(c.lower())
+	return snake.getvalue()
 
 
-# Sanity check
-if not isdir(tmpl_dir) or not isdir(include_base) or not isdir(src_base):
-	error("Some required dir not found. Not running from the base directory ? Aborting.")
+if __name__ == '__main__':
+	# Sanity check
+	if not isdir(tmpl_dir) or not isdir(include_base) or not isdir(src_base):
+		error("Some required dir not found. Not running from the base directory ? Aborting.")
 
 
-# Argument parsing
-while argv:
-	arg = argv.pop(0)
-	if arg == '-f':
-		overwrite = True
-	elif arg == '-h':
-		usage()
-		exit(0)
-	elif arg == '-m':
-		create_module = True
-	elif arg[0] == '-':
-		error("Unrecognized argument \"{}\"".format(arg), print_usage=True)
-	else:
-		if   module      is None: module      = arg
-		elif class_camel is None: class_camel = arg
-		else:
+	# Argument parsing
+	while argv:
+		arg = argv.pop(0)
+		if arg == '-f':
+			overwrite = True
+		elif arg == '-h':
+			usage()
+			exit(0)
+		elif arg == '-m':
+			create_module = True
+		elif arg[0] == '-':
 			error("Unrecognized argument \"{}\"".format(arg), print_usage=True)
+		else:
+			if   module      is None: module      = arg
+			elif class_camel is None: class_camel = arg
+			else:
+				error("Unrecognized argument \"{}\"".format(arg), print_usage=True)
 
-if module      is None: error("Missing MODULE",     print_usage=True)
-if class_camel is None: error("Missing CLASS_NAME", print_usage=True)
-
-
-# Some variables
-class_underscore = camelCaseToUnderscore(class_camel)
-
-print("Module:          ", module)
-print("Class camelCase: ", class_camel)
-print("Class underscore:", class_underscore)
-
-module_include   = join(include_base, module)
-module_src       = join(src_base,     module)
-
-print("Module include:  ", module_include)
-print("Module src:      ", module_src)
-
-module_exists    = exists(module_include) and exists(module_src)
-
-print("Create module:   ", create_module)
-
-cmake_file  = join(module_src,     'CMakeLists.txt')
-header_file = join(module_include, class_underscore + '.h')
-source_file = join(module_src,     class_underscore + '.cpp')
-
-print("CMake file:      ", cmake_file)
-print("Header file:     ", header_file)
-print("Source file:     ", source_file)
+	if module      is None: error("Missing MODULE",     print_usage=True)
+	if class_camel is None: error("Missing CLASS_NAME", print_usage=True)
 
 
-# Sanity checks
-if not module_exists and not create_module:
-	error("Module \"{}\" does not exist".format(module))
-if not overwrite and (
-		   exists(header_file)
-		or exists(source_file)):
-	error("Class \"{}\" seems to already exist. Aborting.".format(class_camel))
+	# Some variables
+	class_snake = camel_case_to_snake_case(class_camel)
+
+	print("Module:          ", module)
+	print("Class camelCase: ", class_camel)
+	print("Class snake_case:", class_snake)
+
+	module_include   = join(include_base, module)
+	module_src       = join(src_base,     module)
+
+	print("Module include:  ", module_include)
+	print("Module src:      ", module_src)
+
+	module_exists    = exists(module_include) and exists(module_src)
+
+	print("Create module:   ", create_module)
+
+	cmake_file  = join(module_src,     'CMakeLists.txt')
+	header_file = join(module_include, class_snake + '.h')
+	source_file = join(module_src,     class_snake + '.cpp')
+
+	print("CMake file:      ", cmake_file)
+	print("Header file:     ", header_file)
+	print("Source file:     ", source_file)
 
 
-# Templates environment
-env = Environment(loader=FileSystemLoader(tmpl_dir))
-env.globals["module"]           = module
-env.globals["class_camel"]      = class_camel
-env.globals["class_underscore"] = class_underscore
-
-cmake_tmpl  = env.get_template(cmake_tmpl_file)
-header_tmpl = env.get_template(header_tmpl_file)
-source_tmpl = env.get_template(source_tmpl_file)
+	# Sanity checks
+	if not module_exists and not create_module:
+		error("Module \"{}\" does not exist".format(module))
+	if not overwrite and (
+			   exists(header_file)
+			or exists(source_file)):
+		error("Class \"{}\" seems to already exist. Aborting.".format(class_camel))
 
 
-# Module creation
-if create_module:
-	print("Creating module \"{}\"...".format(module))
-	mkdir(module_src)
-	mkdir(module_include)
-	with open(cmake_file, "w") as out:
-		out.write(cmake_tmpl.render())
+	# Templates environment
+	env = Environment(loader=FileSystemLoader(tmpl_dir))
+	env.globals["module"]      = module
+	env.globals["class_camel"] = class_camel
+	env.globals["class_snake"] = class_snake
+
+	cmake_tmpl  = env.get_template(cmake_tmpl_file)
+	header_tmpl = env.get_template(header_tmpl_file)
+	source_tmpl = env.get_template(source_tmpl_file)
 
 
-# Source files creation
-with open(header_file, "w") as out:
-	out.write(header_tmpl.render())
-with open(source_file, "w") as out:
-	out.write(source_tmpl.render())
+	# Module creation
+	if create_module:
+		print("Creating module \"{}\"...".format(module))
+		mkdir(module_src)
+		mkdir(module_include)
+		with open(cmake_file, "w") as out:
+			out.write(cmake_tmpl.render())
+
+
+	# Source files creation
+	with open(header_file, "w") as out:
+		out.write(header_tmpl.render())
+	with open(source_file, "w") as out:
+		out.write(source_tmpl.render())
