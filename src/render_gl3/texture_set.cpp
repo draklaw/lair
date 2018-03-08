@@ -180,7 +180,7 @@ bool TextureSet::operator==(const TextureSet& other) const {
 	auto it1  = other.begin();
 	auto end0 = end();
 	auto end1 = other.end();
-	for(; it0 != end0 || it1 != end1; ++it0, ++it1) {
+	for(; it0 != end0 && it1 != end1; ++it0, ++it1) {
 		if(*it0 != *it1)
 			return false;
 	}
