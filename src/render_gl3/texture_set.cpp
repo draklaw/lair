@@ -21,6 +21,11 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/loader.h>
+
+#include <lair/sys_sdl2/image_loader.h>
+
+#include <lair/render_gl3/renderer.h>
 
 #include "lair/render_gl3/texture_set.h"
 
@@ -40,7 +45,7 @@ TextureSet::TextureSet(const TextureBinding* bindings)
 }
 
 
-TextureSet::TextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler) {
+TextureSet::TextureSet(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler) {
 	setTexture(unit, texture, sampler);
 }
 
@@ -57,7 +62,7 @@ bool TextureSet::checkTexturesValidity(Logger& logger) const {
 }
 
 
-TextureBinding* TextureSet::_get(unsigned unit) {
+TextureBinding* TextureSet::_get(const TextureUnit* unit) {
 	auto binding = std::find_if(_bindings.begin(), _bindings.end(),
 	                            [unit](const TextureBinding& b) {
 		return unit == b.unit;
@@ -67,12 +72,12 @@ TextureBinding* TextureSet::_get(unsigned unit) {
 }
 
 
-const TextureBinding* TextureSet::get(unsigned unit) const {
+const TextureBinding* TextureSet::get(const TextureUnit* unit) const {
 	return const_cast<TextureSet*>(this)->_get(unit);
 }
 
 
-TextureBinding* TextureSet::_getOrInsert(unsigned unit) {
+TextureBinding* TextureSet::_getOrInsert(const TextureUnit* unit) {
 	auto binding = _get(unit);
 	if(binding)
 		return binding;
@@ -84,19 +89,19 @@ TextureBinding* TextureSet::_getOrInsert(unsigned unit) {
 }
 
 
-const Texture* TextureSet::getTexture(unsigned unit) const {
+const Texture* TextureSet::getTexture(const TextureUnit* unit) const {
 	TextureAspectSP aspect = getTextureAspect(unit);
 	return (aspect && aspect->isValid())? &aspect->get(): nullptr;
 }
 
 
-const Texture* TextureSet::getTextureOrWarn(unsigned unit, Logger& logger) const {
+const Texture* TextureSet::getTextureOrWarn(const TextureUnit* unit, Logger& logger) const {
 	TextureAspectSP aspect = getTextureAspectOrWarn(unit, logger);
 	return aspect? &aspect->get(): nullptr;
 }
 
 
-TextureAspectSP TextureSet::getTextureAspect(unsigned unit) const {
+TextureAspectSP TextureSet::getTextureAspect(const TextureUnit* unit) const {
 	const TextureBinding* binding = get(unit);
 	if(!binding || !binding->texture)
 		return TextureAspectSP();
@@ -104,7 +109,7 @@ TextureAspectSP TextureSet::getTextureAspect(unsigned unit) const {
 }
 
 
-TextureAspectSP TextureSet::getTextureAspectOrWarn(unsigned unit, Logger& logger) const {
+TextureAspectSP TextureSet::getTextureAspectOrWarn(const TextureUnit* unit, Logger& logger) const {
 	const TextureBinding* binding = get(unit);
 	if(!binding || !binding->texture)
 		return TextureAspectSP();
@@ -116,7 +121,7 @@ TextureAspectSP TextureSet::getTextureAspectOrWarn(unsigned unit, Logger& logger
 }
 
 
-void TextureSet::setTexture(unsigned unit, TextureAspectSP texture) {
+void TextureSet::setTexture(const TextureUnit* unit, TextureAspectSP texture) {
 	if(texture) {
 		TextureBinding* binding = _getOrInsert(unit);
 		binding->texture = texture;
@@ -130,7 +135,7 @@ void TextureSet::setTexture(unsigned unit, TextureAspectSP texture) {
 }
 
 
-void TextureSet::setTexture(unsigned unit, TextureAspectSP texture,
+void TextureSet::setTexture(const TextureUnit* unit, TextureAspectSP texture,
                 SamplerSP sampler) {
 	if(texture) {
 		TextureBinding* binding = _getOrInsert(unit);
@@ -146,13 +151,13 @@ void TextureSet::setTexture(unsigned unit, TextureAspectSP texture,
 }
 
 
-SamplerSP TextureSet::getSampler(unsigned unit) const {
+SamplerSP TextureSet::getSampler(const TextureUnit* unit) const {
 	const TextureBinding* binding = get(unit);
 	return binding? binding->sampler: nullptr;
 }
 
 
-void TextureSet::setSampler(unsigned unit, SamplerSP sampler) {
+void TextureSet::setSampler(const TextureUnit* unit, SamplerSP sampler) {
 	TextureBinding* binding = _get(unit);
 	if(binding) {
 		binding->sampler = sampler;
@@ -189,6 +194,151 @@ Size hash(const TextureSet& texSet) {
 		h = combineHash(h, hash(binding));
 	}
 	return h;
+}
+
+
+bool ldlRead(LdlParser& parser, TextureBinding& binding, Renderer* renderer,
+             LoaderManager* loader) {
+	if(parser.isValueTyped() && (parser.getValueTypeName() != "Texture")) {
+		parser.warning("Unexpected type annotation: expected Texture, got ",
+		               parser.getValueTypeName());
+	}
+
+	bool success = true;
+	if(parser.valueType() == LdlParser::TYPE_LIST) {
+		parser.enter();
+
+		if(parser.valueType() == LdlParser::TYPE_STRING) {
+			String unitName = parser.getString();
+			binding.unit = renderer->getTextureUnit(unitName);
+			parser.next();
+			if(!binding.unit) {
+				parser.error("Unknown texture unit \"", unitName, "\"");
+				success = false;
+			}
+		}
+		else {
+			parser.error("Invalid type: expected Int or texture unit name (String), got ", parser.valueTypeName());
+			parser.skip();
+			success = false;
+		}
+
+		if(success && parser.valueType() == LdlParser::TYPE_STRING) {
+			AssetSP asset = loader->loadAsset<ImageLoader>(parser.getString());
+			binding.texture = renderer->createTexture(asset);
+			parser.next();
+		}
+		else if(success) {
+			parser.error("Invalid type: expected Path (String), got ", parser.valueTypeName());
+			parser.skip();
+			success = false;
+		}
+
+		binding.sampler = nullptr;
+		if(success && parser.valueType() != LdlParser::TYPE_END) {
+			success = ldlRead(parser, binding.sampler, renderer);
+		}
+
+		if(success && parser.valueType() != LdlParser::TYPE_END) {
+			parser.warning("Too many parameters in texture declaration. Ignoring.");
+		}
+		while(parser.valueType() != LdlParser::TYPE_END)
+			parser.skip();
+
+		parser.leave();
+	}
+	else {
+		parser.error("Invalid type: expected VarList, got ", parser.valueTypeName());
+		parser.skip();
+		success = false;
+	}
+
+	return success;
+}
+
+
+bool ldlRead(LdlParser& parser, TextureSetCSP& textureSet, Renderer* renderer,
+             LoaderManager* loader) {
+	bool success  = true;
+	bool typed    = parser.isValueTyped();
+
+	if(typed && (parser.getValueTypeName() == "Texture")) {
+		TextureBinding bindings[] = {
+		    { nullptr, nullptr, nullptr },
+		    LAIR_TEXTURE_BINDING_END
+		};
+
+		success = ldlRead(parser, bindings[0], renderer, loader);
+		if(success) {
+			textureSet = renderer->getTextureSet(TextureSet(bindings));
+		}
+	}
+	else if(typed && (parser.getValueTypeName() == "TextureSet")) {
+		if(parser.valueType() == LdlParser::TYPE_STRING) {
+			textureSet = renderer->getTextureSet(parser.getString());
+			parser.next();
+			success = bool(textureSet);
+		}
+		else if(parser.valueType() == LdlParser::TYPE_LIST) {
+			std::vector<TextureBinding> bindings;
+			bindings.emplace_back(TextureBinding{nullptr, nullptr, nullptr});
+
+			parser.enter();
+			while(parser.valueType() != LdlParser::TYPE_END) {
+				bool ok = ldlRead(parser, bindings.back(), renderer, loader);
+				if(ok) {
+					bindings.emplace_back(TextureBinding{nullptr, nullptr, nullptr});
+				}
+			}
+			parser.leave();
+
+			textureSet = renderer->getTextureSet(TextureSet(bindings.data()));
+
+			success = bool(textureSet);
+		}
+		else {
+			parser.error("Invalid type: expected identifier (String) or a list "
+			             "of textures (VarList), got ", parser.valueTypeName());
+			parser.skip();
+			success = false;
+		}
+	}
+	else {
+		parser.error("Unepected type annotation: expected TextureSet or Texture, got ",
+		             typed? parser.getValueTypeName(): "none");
+		parser.skip();
+		success = false;
+	}
+
+	return success;
+}
+
+
+bool ldlWrite(LdlWriter& writer, const TextureSetCSP& textureSet) {
+	bool success = true;
+
+	writer.openList(LdlWriter::CF_MULTI_LINE, "TextureSet");
+	for(const TextureBinding& binding: *textureSet) {
+		if(!binding.texture)
+			continue;
+
+		writer.openList(LdlWriter::CF_SINGLE_LINE, "Texture");
+
+		writer.writeString(binding.unit->name);
+
+		writer.writeString(binding.texture->asset()->logicPath().utf8String());
+
+		if(binding.sampler)
+			success &= ldlWrite(writer, binding.sampler);
+
+		writer.close();
+		dbgLogger.log("Log: ", binding.unit->name,
+		              ", ", binding.texture,
+		              ", ", binding.sampler);
+	}
+	writer.close();
+
+	return success;
 }
 
 

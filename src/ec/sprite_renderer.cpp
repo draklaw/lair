@@ -37,6 +37,10 @@ static const VertexAttribInfo _spriteVertexAttribSet[] = {
 };
 
 
+static const TextureUnit _texColor = { 0, "sprite_color" };
+const TextureUnit* TexColor = &_texColor;
+
+
 const char* _spriteVertGlsl =
 	"#define lowp\n"
 	"#define mediump\n"
@@ -136,6 +140,8 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, Size vBufferSize, Size iBuffe
       _vertexBuffer(renderer),
       _indexBuffer(renderer) {
 	lairAssert(_renderer);
+
+	_renderer->registerTextureUnit(TexColor);
 
 	const VertexAttrib spriteVertexAttribs[] = {
 	    { &_vertexBuffer, VxPosition, 4, gl::FLOAT, false,
@@ -310,18 +316,29 @@ TextureSetCSP SpriteRenderer::getTextureSet(const TextureSet& textureSet) {
 }
 
 
-TextureSetCSP SpriteRenderer::getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler) {
+TextureSetCSP SpriteRenderer::getTextureSet(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler) {
 	return _renderer->getTextureSet(unit, texture, sampler);
 }
 
-TextureSetCSP SpriteRenderer::getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler) {
+
+TextureSetCSP SpriteRenderer::getTextureSet(const TextureUnit* unit, AssetSP textureAsset, SamplerSP sampler) {
 	return _renderer->getTextureSet(unit, textureAsset, sampler);
+}
+
+
+SamplerSP SpriteRenderer::defaultSampler() {
+	if(!_defaultSampler) {
+		_defaultSampler = _renderer->getSampler(
+		        SamplerParams(SamplerParams::BILINEAR_NO_MIPMAP
+		                    | SamplerParams::CLAMP));
+	}
+	return _defaultSampler;
 }
 
 
 TextureSetCSP SpriteRenderer::defaultTextureSet() {
 	if(!_defaultTextureSet) {
-		_defaultTextureSet = getTextureSet(TexColor, defaultTexture(), nullptr);
+		_defaultTextureSet = getTextureSet(TexColor, defaultTexture(), defaultSampler());
 	}
 	return _defaultTextureSet;
 }

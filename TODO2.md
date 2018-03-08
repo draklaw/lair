@@ -23,7 +23,6 @@
 - render:tex-filter: Texture filtering function [req: render:shader-include]
 - render:tex-atlas: Allow one GL texture to contain several "logical" texture (batching)
 - render:tex-pack: Automatic texture packing (offline ?) [req: render:tex-atlas]
-- render:tex-set: Support texture set (list of texture + params)
 - render:uniform-buffer: Improve uniform args system + use uniform buffers.
 - render:shapes: Shape drawing (stroke + filled)
 - render:text: Text shaders (sdf / vector)

@@ -51,9 +51,7 @@ struct SpriteVertex {
 	Vector2 texCoord;
 };
 
-enum SpriteTexture {
-	TexColor,
-};
+extern const TextureUnit* TexColor;
 
 struct SpriteShaderParams {
 	SpriteShaderParams(const Matrix4& viewMatrix = Matrix4::Identity(),
@@ -132,8 +130,10 @@ public:
 	TextureAspectSP defaultTexture() const;
 
 	TextureSetCSP getTextureSet(const TextureSet& textureSet);
-	TextureSetCSP getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler);
-	TextureSetCSP getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler);
+	TextureSetCSP getTextureSet(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler);
+	TextureSetCSP getTextureSet(const TextureUnit* unit, AssetSP textureAsset, SamplerSP sampler);
+
+	SamplerSP defaultSampler();
 	TextureSetCSP defaultTextureSet();
 
 	Renderer* renderer();
@@ -155,6 +155,7 @@ protected:
 	BufferObject     _indexBuffer;
 	ShaderParamList  _shaderParams;
 
+	SamplerSP        _defaultSampler;
 	TextureSetCSP    _defaultTextureSet;
 };
 

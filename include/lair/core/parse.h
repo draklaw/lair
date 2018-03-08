@@ -50,7 +50,24 @@ inline String cat(const Args&... args) {
 }
 
 
-class ErrorList {
+class ErrorOutput {
+public:
+	virtual void warning(const String& message) = 0;
+	virtual void error(const String& message) = 0;
+
+	template<typename... Args>
+	void warning(Args... args) {
+		warning(cat(args...));
+	}
+
+	template<typename... Args>
+	void error(Args... args) {
+		error(cat(args...));
+	}
+};
+
+
+class ErrorList : public ErrorOutput {
 public:
 	enum ErrorType {
 		WARNING,
@@ -68,18 +85,11 @@ public:
 	const String& errorMessage(unsigned index) const;
 
 	void clear();
-	void warning(const String& message);
-	void error(const String& message);
+	void warning(const String& message) override;
+	void error(const String& message) override;
 
-	template<typename... Args>
-	void warning(Args... args) {
-		warning(cat(args...));
-	}
-
-	template<typename... Args>
-	void error(Args... args) {
-		error(cat(args...));
-	}
+	using ErrorOutput::warning;
+	using ErrorOutput::error;
 
 	template<typename... Args>
 	void prepend(unsigned from, Args... args) {

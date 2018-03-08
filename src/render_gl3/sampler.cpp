@@ -21,6 +21,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/ldl.h>
+
+#include <lair/render_gl3/renderer.h>
 
 #include "lair/render_gl3/sampler.h"
 
@@ -213,6 +216,110 @@ void Sampler::_release() {
 		_context->deleteSamplers(1, &_sampler);
 		_sampler = 0;
 	}
+}
+
+
+bool ldlRead(LdlParser& parser, SamplerSP& sampler, Renderer* renderer) {
+	if(parser.isValueTyped() && parser.getValueTypeName() != "Sampler") {
+		parser.warning("Unexpected type annotation: expected Sampler, got ", parser.getValueTypeName());
+	}
+
+	bool success = true;
+	SamplerParams params;
+	if(parser.valueType() == LdlParser::TYPE_LIST) {
+		parser.enter();
+
+		if(success && parser.valueType() == LdlParser::TYPE_STRING) {
+			params.flags = SamplerParams::flagsInfo()->parse(parser.getString(), &parser);
+			parser.next();
+		}
+		else {
+			parser.error("Type error: expected texture flags (String), got ", parser.valueTypeName());
+			parser.skip();
+			success = false;
+		}
+
+		if(success && parser.valueType() == LdlParser::TYPE_FLOAT) {
+			params.maxAnisotropy = parser.getFloat();
+			parser.next();
+		}
+		else if(parser.valueType() != LdlParser::TYPE_END) {
+			parser.error("Type error: expected max anisotropy (Float), got ", parser.valueTypeName());
+			parser.skip();
+			success  = false;
+		}
+
+		if(success && parser.valueType() == LdlParser::TYPE_FLOAT) {
+			params.lodBias = parser.getFloat();
+			parser.next();
+		}
+		else if(parser.valueType() != LdlParser::TYPE_END) {
+			parser.error("Type error: expected lod bias (Float), got ", parser.valueTypeName());
+			parser.skip();
+			success  = false;
+		}
+
+		if(success && parser.valueType() == LdlParser::TYPE_FLOAT) {
+			params.minLod = parser.getFloat();
+			parser.next();
+		}
+		else if(parser.valueType() != LdlParser::TYPE_END) {
+			parser.error("Type error: expected min lod (Float), got ", parser.valueTypeName());
+			parser.skip();
+			success  = false;
+		}
+
+		if(success && parser.valueType() == LdlParser::TYPE_FLOAT) {
+			params.maxLod = parser.getFloat();
+			parser.next();
+		}
+		else if(parser.valueType() != LdlParser::TYPE_END) {
+			parser.error("Type error: expected max lod (Float), got ", parser.valueTypeName());
+			parser.skip();
+			success  = false;
+		}
+
+		if(success && parser.valueType() != LdlParser::TYPE_END) {
+			parser.warning("Too many parameters in texture declaration. Ignoring.");
+		}
+		while(parser.valueType() != LdlParser::TYPE_END)
+			parser.skip();
+
+		parser.leave();
+	}
+	else {
+		parser.error("Invalid type: expected Sampler (VarList), got ", parser.valueTypeName());
+		parser.skip();
+		success = false;
+	}
+
+	if(success) {
+		sampler = renderer->getSampler(params);
+	}
+
+	return success;
+}
+
+
+bool ldlWrite(LdlWriter& writer, const SamplerSP& sampler) {
+	const SamplerParams& params = sampler->params();
+
+	writer.openList(LdlWriter::CF_SINGLE_LINE, "Sampler");
+
+	{
+		std::ostringstream flags;
+		SamplerParams::flagsInfo()->write(flags, params.flags);
+		writer.writeString(flags.str());
+	}
+
+	writer.writeFloat(params.maxAnisotropy);
+	writer.writeFloat(params.lodBias);
+	writer.writeFloat(params.minLod);
+	writer.writeFloat(params.maxLod);
+
+	writer.close();
+
+	return true;
 }
 
 

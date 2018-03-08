@@ -24,6 +24,8 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/metatype.h>
+#include <lair/core/ldl.h>
 
 #include <lair/render_gl3/sampler.h>
 #include <lair/render_gl3/texture.h>
@@ -33,13 +35,20 @@ namespace lair
 {
 
 
+class LoaderManager;
+
+struct TextureUnit {
+	unsigned    index;
+	const char* name;
+};
+
 struct TextureBinding {
-	unsigned        unit;
-	SamplerSP       sampler;
-	TextureAspectSP texture;
+	const TextureUnit* unit;
+	SamplerSP          sampler;
+	TextureAspectSP    texture;
 
 	inline bool operator==(const TextureBinding& other) const {
-		return unit == other.unit
+		return unit    == other.unit
 		    && sampler == other.sampler
 		    && texture == other.texture;
 	}
@@ -53,10 +62,10 @@ struct TextureBinding {
 	}
 };
 
-#define LAIR_TEXTURE_BINDING_END { 0, SamplerSP(), TextureAspectSP() }
+#define LAIR_TEXTURE_BINDING_END { nullptr, SamplerSP(), TextureAspectSP() }
 
 inline Size hash(const TextureBinding& binding) {
-	return hash(binding.unit, binding.sampler, binding.texture);
+	return hash(binding.unit->index, binding.sampler, binding.texture);
 }
 
 
@@ -69,7 +78,7 @@ public:
 
 public:
 	TextureSet(const TextureBinding* bindings = nullptr);
-	TextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler);
+	TextureSet(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler);
 	TextureSet(const TextureSet&) = default;
 	TextureSet(TextureSet&&)      = default;
 	~TextureSet() = default;
@@ -86,20 +95,20 @@ public:
 	inline unsigned index() const { return _index; }
 	inline void _setIndex(unsigned index) { _index = index; }
 
-	TextureBinding* _get(unsigned unit);
-	const TextureBinding* get(unsigned unit) const;
-	TextureBinding* _getOrInsert(unsigned unit);
+	TextureBinding* _get(const TextureUnit* unit);
+	const TextureBinding* get(const TextureUnit* unit) const;
+	TextureBinding* _getOrInsert(const TextureUnit* unit);
 
-	const Texture* getTexture(unsigned unit) const;
-	const Texture* getTextureOrWarn(unsigned unit, Logger& logger) const;
-	TextureAspectSP getTextureAspect(unsigned unit) const;
-	TextureAspectSP getTextureAspectOrWarn(unsigned unit, Logger& logger) const;
+	const Texture* getTexture(const TextureUnit* unit) const;
+	const Texture* getTextureOrWarn(const TextureUnit* unit, Logger& logger) const;
+	TextureAspectSP getTextureAspect(const TextureUnit* unit) const;
+	TextureAspectSP getTextureAspectOrWarn(const TextureUnit* unit, Logger& logger) const;
 
-	void setTexture(unsigned unit, TextureAspectSP texture);
-	void setTexture(unsigned unit, TextureAspectSP texture, SamplerSP sampler);
+	void setTexture(const TextureUnit* unit, TextureAspectSP texture);
+	void setTexture(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler);
 
-	SamplerSP getSampler(unsigned unit) const;
-	void setSampler(unsigned unit, SamplerSP sampler);
+	SamplerSP getSampler(const TextureUnit* unit) const;
+	void setSampler(const TextureUnit* unit, SamplerSP sampler);
 
 	BindingIterator begin() const;
 	BindingIterator end() const;
@@ -122,7 +131,16 @@ typedef std::shared_ptr<TextureSet>       TextureSetSP;
 typedef std::shared_ptr<const TextureSet> TextureSetCSP;
 typedef std::weak_ptr<TextureSet>         TextureSetWP;
 
+
+bool ldlRead(LdlParser& parser, TextureSetCSP& textureSet, Renderer* renderer,
+             LoaderManager* loader);
+bool ldlWrite(LdlWriter& writer, const TextureSetCSP& textureSet);
+
+
 }
+
+
+LAIR_REGISTER_METATYPE(lair::TextureSetCSP, "TextureSet");
 
 
 #endif

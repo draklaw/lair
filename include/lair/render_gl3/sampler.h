@@ -34,7 +34,11 @@ namespace lair
 {
 
 
+class LdlParser;
+class LdlWriter;
+
 class Context;
+class Renderer;
 
 
 class SamplerParams {
@@ -194,7 +198,15 @@ protected:
 typedef std::shared_ptr<Sampler> SamplerSP;
 typedef std::weak_ptr  <Sampler> SamplerWP;
 
+
+bool ldlRead(LdlParser& parser, SamplerSP& sampler, Renderer* renderer);
+bool ldlWrite(LdlWriter& writer, const SamplerSP& sampler);
+
+
 }
+
+
+LAIR_REGISTER_METATYPE(lair::Sampler, "Sampler");
 
 
 #endif

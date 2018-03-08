@@ -30,7 +30,7 @@
 namespace lair {
 
 
-class LdlParser {
+class LdlParser : public ErrorOutput {
 public:
 	enum Context {
 		CTX_LIST,
@@ -124,23 +124,24 @@ public:
 		_next();
 	}
 
-	template<typename... Args>
-	inline void error(const Args&... args) {
-		if(_errors) {
-			_errors->error(_buf.streamName(), ": ", _buf.line(), ": ",
-			               _buf.col(), ": ", args...);
-		}
+	inline void error(const String& message) override {
+		_errors->error(_buf.streamName(), ": ", _buf.line(), ": ",
+		               _buf.col(), ": ", message);
 	}
 
-	template<typename... Args>
-	inline void warning(const Args&... args) {
-		if(_errors) {
-			_errors->warning(_buf.streamName(), ": ", _buf.line(), ": ",
-			                 _buf.col(), ": ", args...);
-		}
+	inline void warning(const String& message) override {
+		_errors->warning(_buf.streamName(), ": ", _buf.line(), ": ",
+		                 _buf.col(), ": ", message);
 	}
+
+	using ErrorOutput::error;
+	using ErrorOutput::warning;
 
 	static const char* typeName(Type type);
+
+	inline ErrorList* errorList() {
+		return _errors;
+	}
 
 private:
 	enum Token {
@@ -687,17 +688,17 @@ bool ldlRead(LdlParser& parser, Eigen::AlignedBox<Scalar, Dim>& value) {
 }
 
 
-bool ldlWrite(LdlWriter& writer, bool   value);
-bool ldlWrite(LdlWriter& writer, int8   value);
-bool ldlWrite(LdlWriter& writer, int16  value);
-bool ldlWrite(LdlWriter& writer, int32  value);
-bool ldlWrite(LdlWriter& writer, int64  value);
-bool ldlWrite(LdlWriter& writer, uint8  value);
-bool ldlWrite(LdlWriter& writer, uint16 value);
-bool ldlWrite(LdlWriter& writer, uint32 value);
-bool ldlWrite(LdlWriter& writer, uint64 value);
-bool ldlWrite(LdlWriter& writer, float  value);
-bool ldlWrite(LdlWriter& writer, double value);
+bool ldlWrite(LdlWriter& writer, const bool&   value);
+bool ldlWrite(LdlWriter& writer, const int8&   value);
+bool ldlWrite(LdlWriter& writer, const int16&  value);
+bool ldlWrite(LdlWriter& writer, const int32&  value);
+bool ldlWrite(LdlWriter& writer, const int64&  value);
+bool ldlWrite(LdlWriter& writer, const uint8&  value);
+bool ldlWrite(LdlWriter& writer, const uint16& value);
+bool ldlWrite(LdlWriter& writer, const uint32& value);
+bool ldlWrite(LdlWriter& writer, const uint64& value);
+bool ldlWrite(LdlWriter& writer, const float&  value);
+bool ldlWrite(LdlWriter& writer, const double& value);
 bool ldlWrite(LdlWriter& writer, const String& value);
 bool ldlWrite(LdlWriter& writer, const Path&   value);
 
@@ -747,6 +748,16 @@ bool ldlWrite(LdlWriter& writer, const Eigen::AlignedBox<Scalar, Dim>& value) {
 	writer.close();
 
 	return true;
+}
+
+template<typename T>
+String ldlToString(const T& value) {
+	std::ostringstream out;
+	LdlWriter writer(&out, "<string>", nullptr);
+	writer.openList();
+	ldlWrite(writer, value);
+	writer.close();
+	return out.str();
 }
 
 }

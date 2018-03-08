@@ -110,6 +110,7 @@ typedef unsigned ScanCode;
 typedef std::string String;
 class Path;
 
+class ErrorOutput;
 class ErrorList;
 
 /// Functions to write a representation of `v` to `out`.

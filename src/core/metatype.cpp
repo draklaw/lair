@@ -128,7 +128,7 @@ const FlagsInfo::FlagSet* FlagsInfo::flagSet(const String& label) const {
 	return (it == _flagSetFromLabel.end())? nullptr: it->second;
 }
 
-unsigned FlagsInfo::parse(std::istream& in, ErrorList* errors) const {
+unsigned FlagsInfo::parse(std::istream& in, ErrorOutput* errors) const {
 	unsigned flags = 0;
 	unsigned mask  = 0;
 
@@ -177,7 +177,7 @@ unsigned FlagsInfo::parse(std::istream& in, ErrorList* errors) const {
 	return flags;
 }
 
-unsigned FlagsInfo::parse(const String& in, ErrorList* errors) const {
+unsigned FlagsInfo::parse(const String& in, ErrorOutput* errors) const {
 	std::istringstream inStream(in);
 	return parse(inStream, errors);
 }

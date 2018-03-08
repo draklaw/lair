@@ -68,7 +68,8 @@ TextureAspectSP SpriteComponent::texture() const {
 
 
 void SpriteComponent::setTexture(TextureAspectSP texture) {
-	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor): nullptr;
+	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor):
+	                                 manager()->spriteRenderer()->defaultSampler();
 	_textureSet = manager()->spriteRenderer()->getTextureSet(
 	                  TexColor, texture, sampler);
 }
@@ -97,10 +98,9 @@ void SpriteComponent::setTexture(const Path& logicPath) {
 const PropertyList& SpriteComponent::properties() {
 	static PropertyList props;
 	if(props.nProperties() == 0) {
-		// TODO: Support texture sets
 		props.addProperty("texture",
-		                  &SpriteComponent::texturePath,
-		                  &SpriteComponent::setTexture);
+		                  &SpriteComponent::textureSet,
+		                  &SpriteComponent::setTextureSet);
 		props.addProperty("anchor",
 		                  &SpriteComponent::anchor,
 		                  &SpriteComponent::setAnchor);

@@ -85,12 +85,16 @@ public:
 		return _defaultTexture;
 	}
 
-	TextureSetCSP getTextureSet(const TextureSet& texSet);
-	TextureSetCSP getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler);
-	TextureSetCSP getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler);
+	TextureSetCSP getTextureSet(const String& name) const;
+	TextureSetCSP getTextureSet(const TextureSet& texSet, const String& name = String());
+	TextureSetCSP getTextureSet(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler);
+	TextureSetCSP getTextureSet(const TextureUnit* unit, AssetSP textureAsset, SamplerSP sampler);
 	// TODO: A cleanup function that removes texture sets with only one ref.
 	// We can't use weak pointers here because texture sets are keys in the set
 	// and we should not mutate them.
+
+	void registerTextureUnit(const TextureUnit* unit);
+	const TextureUnit* getTextureUnit(const String& name) const;
 
 	Logger& log();
 
@@ -112,23 +116,30 @@ protected:
 	typedef std::unordered_map<TextureSet, TextureSetWP,
 	                           Hash<TextureSet>> TextureSetMap;
 
+	// Use a shared pointer so we keep around named texture set.
+	typedef std::unordered_map<String, TextureSetSP> StringTextureSetMap;
+
+	typedef std::unordered_map<String, const TextureUnit*> TextureUnitMap;
+
 protected:
 	void _createDefaultTexture();
 
 protected:
-	RenderModule*   _module;
-	AssetManager*   _assetManager;
+	RenderModule*       _module;
+	AssetManager*       _assetManager;
 
-	Context*        _context;
+	Context*            _context;
 
-	unsigned        _vertexArrayIndex;
+	unsigned            _vertexArrayIndex;
 
-	TextureList     _pendingTextures;
-	TextureAspectSP _defaultTexture;
+	TextureList         _pendingTextures;
+	TextureAspectSP     _defaultTexture;
 
-	SamplerMap      _samplerMap;
-	TextureSetMap   _textureSetMap;
-	unsigned        _textureSetIndex;
+	SamplerMap          _samplerMap;
+	TextureSetMap       _textureSetMap;
+	StringTextureSetMap _textureSetByName;
+	unsigned            _textureSetIndex;
+	TextureUnitMap      _textureUnitMap;
 };
 
 

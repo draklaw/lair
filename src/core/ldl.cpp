@@ -953,19 +953,20 @@ bool ldlRead(LdlParser& parser, Transform& value) {
 }
 
 
-bool ldlWrite(LdlWriter& writer, bool value) {
+bool ldlWrite(LdlWriter& writer, const bool& value) {
 	writer.writeBool(value);
 	return true;
 }
 
 #define DECL_LDL_WRITE_INT(_type) \
-bool ldlWrite(LdlWriter& writer, _type value) { \
+bool ldlWrite(LdlWriter& writer, const _type& value) { \
 	uint64 max = std::numeric_limits<_type>::max(); \
+	int64  v   = value; \
 	if(value > 0 && uint64(value) > max) { \
 		writer.warning("Out-of-bound interger: clamping ", value, " to ", max); \
-		value = max; \
+	    v = max; \
 	} \
-	writer.writeInt(value); \
+	writer.writeInt(v); \
 	return true; \
 }
 
@@ -979,7 +980,7 @@ DECL_LDL_WRITE_INT(uint32)
 DECL_LDL_WRITE_INT(uint64)
 
 #define DECL_LDL_WRITE_FLOAT(_type) \
-bool ldlWrite(LdlWriter& writer, _type value) { \
+bool ldlWrite(LdlWriter& writer, const _type& value) { \
 	writer.writeFloat(value); \
 	return true; \
 }

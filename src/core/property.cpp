@@ -158,7 +158,7 @@ bool LdlPropertySerializer::_read(LdlParser& parser, const PropertyList& propert
 				if(parser.valueType() == LdlParser::TYPE_STRING) {
 					String label;
 					success &= ldlRead(parser, label);
-					unsigned flags = property.flagsInfo()->parse(label, nullptr);
+					unsigned flags = property.flagsInfo()->parse(label, &parser);
 					property.set<unsigned>(obj, flags);
 				}
 				else {

@@ -108,12 +108,14 @@ ProgramObject Renderer::compileProgram(const char* name,
 
 
 SamplerSP Renderer::getSampler(const SamplerParams& params) {
-	SamplerWP wp = _samplerMap[params];
-	SamplerSP sp = wp.lock();
+	SamplerWP& wp = _samplerMap[params];
+	SamplerSP  sp = wp.lock();
 
 	if(!sp) {
 		sp = std::make_shared<Sampler>(_context, params);
 		wp = sp;
+
+		log().info("Create Sampler: ", ldlToString(sp));
 	}
 
 	return sp;
@@ -154,12 +156,15 @@ void Renderer::uploadPendingTextures() {
 }
 
 
-Logger& Renderer::log() {
-	return _module->log();
+TextureSetCSP Renderer::getTextureSet(const String& name) const {
+	auto it = _textureSetByName.find(name);
+	if(it == _textureSetByName.end())
+		return nullptr;
+	return it->second;
 }
 
 
-TextureSetCSP Renderer::getTextureSet(const TextureSet& texSet) {
+TextureSetCSP Renderer::getTextureSet(const TextureSet& texSet, const String& name) {
 	TextureSetWP& wp = _textureSetMap[texSet];
 	TextureSetSP  sp = wp.lock();
 
@@ -167,18 +172,42 @@ TextureSetCSP Renderer::getTextureSet(const TextureSet& texSet) {
 		sp = std::make_shared<TextureSet>(texSet);
 		sp->_setIndex(_textureSetIndex++);
 		wp = sp;
+
+		log().info("Create texture set: ", ldlToString(sp));
+	}
+
+	if(name.size()) {
+		_textureSetByName.emplace(name, sp);
 	}
 
 	return sp;
 }
 
 
-TextureSetCSP Renderer::getTextureSet(unsigned unit, TextureAspectSP texture, SamplerSP sampler) {
+TextureSetCSP Renderer::getTextureSet(const TextureUnit* unit, TextureAspectSP texture, SamplerSP sampler) {
 	return getTextureSet(TextureSet(unit, texture, sampler));
 }
 
-TextureSetCSP Renderer::getTextureSet(unsigned unit, AssetSP textureAsset, SamplerSP sampler) {
+TextureSetCSP Renderer::getTextureSet(const TextureUnit* unit, AssetSP textureAsset, SamplerSP sampler) {
 	return getTextureSet(unit, createTexture(textureAsset), sampler);
+}
+
+
+void Renderer::registerTextureUnit(const TextureUnit* unit) {
+	_textureUnitMap[unit->name] = unit;
+}
+
+
+const TextureUnit* Renderer::getTextureUnit(const String& name) const {
+	auto it = _textureUnitMap.find(name);
+	if(it == _textureUnitMap.end())
+		return nullptr;
+	return it->second;
+}
+
+
+Logger& Renderer::log() {
+	return _module->log();
 }
 
 

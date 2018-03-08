@@ -173,7 +173,7 @@ void RenderPass::render() {
 
 			for(const TextureBinding& binding: *states.textureSet) {
 				if(binding.texture) {
-					glc->activeTexture(gl::TEXTURE0 + binding.unit);
+					glc->activeTexture(gl::TEXTURE0 + binding.unit->index);
 
 					TextureAspectSP texture =
 					        binding.texture->isValid()? binding.texture:
@@ -181,9 +181,9 @@ void RenderPass::render() {
 					texture->get().bind();
 
 					if(binding.sampler)
-						binding.sampler->bind(binding.unit);
+						binding.sampler->bind(binding.unit->index);
 					else
-						glc->bindSampler(binding.unit, 0);
+						glc->bindSampler(binding.unit->index, 0);
 
 					_stats.textureBindCount += 1;
 					_stats.samplerBindCount += 1;

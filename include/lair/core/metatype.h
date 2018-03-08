@@ -850,8 +850,8 @@ public:
 	unsigned nFlagSet() const;
 	const FlagSet* flagSet(const String& label) const;
 
-	unsigned parse(std::istream& in, ErrorList* errors = 0) const;
-	unsigned parse(const String& in, ErrorList* errors = 0) const;
+	unsigned parse(std::istream& in, ErrorOutput* errors = 0) const;
+	unsigned parse(const String& in, ErrorOutput* errors = 0) const;
 	void write(std::ostream& out, unsigned flags) const;
 	String format(unsigned flags) const;
 

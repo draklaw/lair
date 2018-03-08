@@ -361,6 +361,9 @@ bool _propertyFromJson(void* obj, const Property& property, const Json::Value& j
 
 
 class LdlPropertySerializer {
+private:
+	typedef std::function<bool(LdlParser&, void*, const Property&)> ReadFn;
+	typedef std::function<bool(LdlWriter&, const void*, const Property&)> WriteFn;
 public:
 	LdlPropertySerializer();
 	LdlPropertySerializer(const LdlPropertySerializer&)  = delete;
@@ -372,7 +375,18 @@ public:
 
 	template<typename T>
 	inline void registerType() {
-		_registerType(metaTypes.get<T>(), _wrapLdlRead<T>, _wrapLdlWrite<T>);
+		bool (*read )(LdlParser&,       T&) = &ldlRead;
+		bool (*write)(LdlWriter&, const T&) = &ldlWrite;
+		_registerType(metaTypes.get<T>(),
+		              ReadFn(ReadWrapper<T, bool(*)(LdlParser&, T&)>(read)),
+		              WriteFn(WriteWrapper<T, bool(*)(LdlWriter&, const T&)>(write)));
+	}
+
+	template<typename T, typename Read, typename Write>
+	inline void registerType(const Read& read, const Write& write) {
+		_registerType(metaTypes.get<T>(),
+		              ReadFn(ReadWrapper<T, Read>(read)),
+		              WriteFn(WriteWrapper<T, Write>(write)));
 	}
 
 	template<typename T>
@@ -394,9 +408,6 @@ public:
 	bool _write(LdlWriter& writer, const PropertyList& properties, const void* obj);
 
 private:
-	typedef bool (*ReadFn)(LdlParser& parser, void* value, const Property& property);
-	typedef bool (*WriteFn)(LdlWriter& writer, const void* value, const Property& property);
-
 	struct ReadWrite {
 		ReadFn  read;
 		WriteFn write;
@@ -404,20 +415,32 @@ private:
 	typedef std::unordered_map<const MetaType*, ReadWrite> TypeMap;
 
 private:
-	template<typename T>
-	static bool _wrapLdlRead(LdlParser& parser, void* obj, const Property& property) {
-		T tmp;
-		if(ldlRead(parser, tmp)) {
-			property.set<T>(obj, tmp);
-			return true;
-		}
-		return false;
-	}
+	template<typename T, typename ReadFn>
+	struct ReadWrapper {
+		ReadWrapper(const ReadFn& read): _read(read) {}
 
-	template<typename T>
-	static bool _wrapLdlWrite(LdlWriter& writer, const void* obj, const Property& property) {
-		return ldlWrite(writer, property.get<T>(obj));
-	}
+		bool operator()(LdlParser& parser, void* obj, const Property& property) const {
+			T tmp;
+			if(_read(parser, tmp)) {
+				property.set<T>(obj, tmp);
+				return true;
+			}
+			return false;
+		}
+
+		ReadFn _read;
+	};
+
+	template<typename T, typename WriteFn>
+	struct WriteWrapper {
+		WriteWrapper(const WriteFn& write): _write(write) {}
+
+		bool operator()(LdlWriter& writer, const void* obj, const Property& property) const {
+			return _write(writer, property.get<T>(obj));
+		}
+
+		WriteFn _write;
+	};
 
 	void _registerType(const MetaType* metatype, ReadFn read, WriteFn write);
 

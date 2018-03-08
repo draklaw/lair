@@ -118,7 +118,8 @@ TextureAspectSP BitmapTextComponent::texture() const {
 
 
 void BitmapTextComponent::_setTexture(TextureAspectSP texture) {
-	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor): nullptr;
+	SamplerSP sampler = _textureSet? _textureSet->getSampler(TexColor):
+	                                 manager()->spriteRenderer()->defaultSampler();
 	_textureSet = manager()->spriteRenderer()->getTextureSet(
 	                  TexColor, texture, sampler);
 }
