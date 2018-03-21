@@ -22,6 +22,7 @@ cmake_minimum_required(VERSION 3.6)
 project(lair)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(Lair)
 
 add_subdirectory(src)
 

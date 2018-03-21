@@ -186,7 +186,7 @@ void TileMapLoader::commit() {
 
 void TileMapLoader::loadSyncImpl(Logger& log) {
 	Json::Value json;
-	if(!parseJson(json, realPath(), asset()->logicPath(), log))
+	if(!parseJson(json, file(), asset()->logicPath(), log))
 		return;
 
 	if(!_tileMap.setFromJson(log, asset()->logicPath(), json))

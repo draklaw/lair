@@ -72,6 +72,11 @@ add_autopy(lair_py lair.py
 )
 
 
+add_lair_resource(lair_resource.cpp lair
+	shader render_gl3/shader
+)
+
+
 set(lair_SOURCES
 	jsoncpp.cpp
 
@@ -89,6 +94,11 @@ set(lair_SOURCES
 	core/loader.cpp
 	core/bitmap_font.cpp
 	core/shapes.cpp
+
+	fs/abstract_file_system.cpp
+	fs/file_system.cpp
+	fs/memory_file_system.cpp
+	fs/real_file_system.cpp
 
 	utils/input.cpp
 	utils/interp_loop.cpp
@@ -125,6 +135,8 @@ set(lair_SOURCES
 	ec/tile_layer_component.cpp
 	ec/collision_component.cpp
 #	ec/shape_component.cpp
+
+	lair_resource.cpp
 )
 
 set(lair_py_SOURCES

@@ -19,8 +19,11 @@
  */
 
 
+#include <functional>
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/loader.h>
 
 #include "lair/ec/sprite_renderer.h"
 
@@ -39,63 +42,6 @@ static const VertexAttribInfo _spriteVertexAttribSet[] = {
 
 static const TextureUnit _texColor = { 0, "sprite_color" };
 const TextureUnit* TexColor = &_texColor;
-
-
-const char* _spriteVertGlsl =
-	"#define lowp\n"
-	"#define mediump\n"
-	"#define highp\n"
-
-	"uniform highp mat4 viewMatrix;\n"
-
-	"attribute highp   vec4 vx_position;\n"
-	"attribute lowp    vec4 vx_color;\n"
-	"attribute mediump vec2 vx_texCoord;\n"
-
-	"varying highp   vec4 position;\n"
-	"varying lowp    vec4 color;\n"
-	"varying mediump vec2 texCoord;\n"
-
-	"void main() {\n"
-	"	gl_Position = viewMatrix * vx_position;\n"
-	"	position    = vx_position;\n"
-	"	color       = vx_color;\n"
-	"	texCoord    = vx_texCoord;\n"
-	"}\n";
-
-
-const char* _spriteFragGlsl =
-	"#define lowp\n"
-	"#define mediump\n"
-	"#define highp\n"
-
-	"uniform sampler2D texture;\n"
-	"uniform vec4      tileInfo;\n"
-
-	"varying highp   vec4 position;\n"
-	"varying lowp    vec4 color;\n"
-	"varying mediump vec2 texCoord;\n"
-
-	"void main() {\n"
-	"	// Is this useful ?\n"
-	"	vec2 nTiles    = tileInfo.xy;\n"
-	"	vec2 texSize   = tileInfo.zw;\n"
-	"	vec2 texCoord2 = texCoord * nTiles;\n"
-	"	vec2 margin    = nTiles / (2.0 * texSize);\n"
-	"	vec2 tileCoord = fract(texCoord2);\n"
-	"	vec2 tile      = texCoord2 - tileCoord;\n"
-	"	tileCoord      = clamp(tileCoord, margin, vec2(1.0) - margin);\n"
-	"	texCoord2      = (tile + tileCoord) / nTiles;\n"
-	"	\n"
-	"	vec4 fcolor = color * texture2D(texture, texCoord2);\n"
-	"	if(fcolor.a < .01){\n"
-	"		discard;\n"
-	"	}\n"
-	"	gl_FragColor = fcolor;\n"
-	"//	gl_FragColor = vec4(texCoord, 0., 1.);\n"
-	"//	gl_FragColor = vec4(1., 0., 0., 1.);\n"
-	"//	gl_FragColor = vec4(tileCoord, 0., 1.);\n"
-	"}\n";
 
 
 //---------------------------------------------------------------------------//
@@ -120,19 +66,38 @@ SpriteShader::SpriteShader()
 }
 
 
-SpriteShader::SpriteShader(ProgramObject* shader)
+SpriteShader::SpriteShader(ShaderAspectSP shader)
     : shader       (shader),
-      viewMatrixLoc(shader->getUniformLocation("viewMatrix")),
-      textureLoc   (shader->getUniformLocation("texture")),
-      tileInfoLoc  (shader->getUniformLocation("tileInfo")) {
+      finalized    (false),
+      viewMatrixLoc(-1),
+      textureLoc   (-1),
+      tileInfoLoc  (-1) {
+}
+
+bool SpriteShader::finalize() {
+	if(!finalized && shader->isValid()) {
+		const ProgramObject& s = shader->get();
+		finalized     = true;
+		viewMatrixLoc = s.getUniformLocation("viewMatrix");
+		textureLoc    = s.getUniformLocation("texture");
+		tileInfoLoc   = s.getUniformLocation("tileInfo");
+	}
+	return finalized;
+}
+
+
+ProgramObject* SpriteShader::get() {
+	return &shader->_get();
 }
 
 
 //---------------------------------------------------------------------------//
 
 
-SpriteRenderer::SpriteRenderer(Renderer* renderer, Size vBufferSize, Size iBufferSize)
-	: _renderer(renderer),
+SpriteRenderer::SpriteRenderer(LoaderManager* loader, Renderer* renderer,
+                               Size vBufferSize, Size iBufferSize)
+    : _loader(loader),
+      _renderer(renderer),
       _attribSet(_spriteVertexAttribSet),
       _vertexArray(),
       _vertexBufferSize(vBufferSize),
@@ -156,16 +121,7 @@ SpriteRenderer::SpriteRenderer(Renderer* renderer, Size vBufferSize, Size iBuffe
 	_vertexArray = renderer->createVertexArray(
 	                sizeof(SpriteVertex), spriteVertexAttribs, &_indexBuffer);
 
-	ShaderObject vert = _renderer->compileShader("sprite", gl::VERTEX_SHADER,
-	                                   GlslSource(_spriteVertGlsl));
-	ShaderObject frag = _renderer->compileShader("sprite", gl::FRAGMENT_SHADER,
-	                                   GlslSource(_spriteFragGlsl));
-	if(vert.isCompiled() && frag.isCompiled()) {
-		_defaultShaderProg = _renderer->compileProgram(
-		                         "sprite", &_attribSet, &vert, &frag);
-	}
-	lairAssert(_defaultShaderProg.isLinked());
-	_defaultShader = SpriteShader(&_defaultShaderProg);
+	_defaultShader = loadShader("shader/sprite.ldl");
 }
 
 
@@ -183,7 +139,7 @@ unsigned SpriteRenderer::indexCount()  const {
 }
 
 
-SpriteShader& SpriteRenderer::shader() {
+SpriteShaderSP SpriteRenderer::shader() {
 	return _defaultShader;
 }
 
@@ -274,8 +230,23 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 }
 
 
+SpriteShaderSP SpriteRenderer::loadShader(const Path& logicPath) {
+	auto loader = _loader->load<ShaderLoader>(logicPath, _renderer, &_attribSet);
+	auto shader = std::make_shared<SpriteShader>(loader->asset()->aspect<ShaderAspect>());
+	_unfinalizedShaders.push_back(shader);
+	return shader;
+}
+
+
+void SpriteRenderer::finalizeShaders() {
+	using namespace std::placeholders;
+	std::remove_if(_unfinalizedShaders.begin(), _unfinalizedShaders.end(),
+	               std::bind(&SpriteShader::finalize, _1));
+}
+
+
 const ShaderParameter* SpriteRenderer::addShaderParameters(
-        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo) {
+        const SpriteShaderSP shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo) {
 	if(!_shaderParams.empty()) {
 		SpriteShaderParams& sp = _shaderParams.back();
 		if(sp.viewMatrix == viewTransform && sp.texUnit == texUnit && sp.tileInfo == tileInfo.cast<float>())
@@ -286,14 +257,14 @@ const ShaderParameter* SpriteRenderer::addShaderParameters(
 	SpriteShaderParams& sp = _shaderParams.back();
 	ShaderParameter* params = sp.params;
 
-	if(shader.viewMatrixLoc >= 0) {
-		*(params++) = makeShaderParameter(shader.viewMatrixLoc, sp.viewMatrix);
+	if(shader->viewMatrixLoc >= 0) {
+		*(params++) = makeShaderParameter(shader->viewMatrixLoc, sp.viewMatrix);
 	}
-	if(shader.textureLoc >= 0) {
-		*(params++) = makeShaderParameter(shader.textureLoc, &sp.texUnit);
+	if(shader->textureLoc >= 0) {
+		*(params++) = makeShaderParameter(shader->textureLoc, &sp.texUnit);
 	}
-	if(shader.tileInfoLoc >= 0) {
-		*(params++) = makeShaderParameter(shader.tileInfoLoc, sp.tileInfo);
+	if(shader->tileInfoLoc >= 0) {
+		*(params++) = makeShaderParameter(shader->tileInfoLoc, sp.tileInfo);
 	}
 	params->index = -1;
 

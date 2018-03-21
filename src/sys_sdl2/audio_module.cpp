@@ -25,6 +25,8 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 
+#include <lair/sys_sdl2/sys_module.h>
+
 #include "lair/sys_sdl2/audio_module.h"
 
 
@@ -244,13 +246,18 @@ void SoundLoader::commit() {
 
 
 void SoundLoader::loadSyncImpl(Logger& log) {
-	Mix_Chunk* chunk = Mix_LoadWAV(realPath().utf8CStr());
+	SDL_RWops* rw = sdlRwFromFile(file());
+	if(!rw) {
+		log.error("Failed to load sound \"", asset()->logicPath(), "\": Invalid file");
+		return;
+	}
+
+	Mix_Chunk* chunk = Mix_LoadWAV_RW(rw, true);
 	if(chunk) {
 		_sound.set(chunk);
 	}
 	else {
-		log.error("Failed to load sound \"", asset()->logicPath(), "\" (",
-		          realPath(), "): ", Mix_GetError());
+		log.error("Failed to load sound \"", asset()->logicPath(), "\": ", Mix_GetError());
 	}
 }
 
@@ -270,13 +277,17 @@ void MusicLoader::commit() {
 
 
 void MusicLoader::loadSyncImpl(Logger& log) {
-	Mix_Music* track = Mix_LoadMUS(realPath().utf8CStr());
+	SDL_RWops* rw = sdlRwFromFile(file());
+	if(!rw) {
+		log.error("Failed to load music \"", asset()->logicPath(), "\": Invalid file");
+		return;
+	}
+	Mix_Music* track = Mix_LoadMUS_RW(rw, true);
 	if(track) {
 		_music.set(track);
 	}
 	else {
-		log.error("Failed to load music \"", asset()->logicPath(), "\" (",
-		          realPath(), "): ", Mix_GetError());
+		log.error("Failed to load music \"", asset()->logicPath(), "\": ", Mix_GetError());
 	}
 }
 

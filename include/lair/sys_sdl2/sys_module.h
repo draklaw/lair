@@ -32,6 +32,8 @@
 #include <lair/core/log.h>
 #include <lair/core/path.h>
 
+#include <lair/fs/abstract_file_system.h>
+
 
 extern "C" {
 typedef union  SDL_Event SDL_Event;
@@ -44,6 +46,10 @@ namespace lair
 class Window;
 
 /// \defgroup sys_sdl2 sys_sdl2
+
+
+SDL_RWops* sdlRwFromFile(const VirtualFile& file);
+
 
 /**
  * \brief The sys_sdl2 module object.

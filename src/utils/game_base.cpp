@@ -35,6 +35,10 @@
 namespace lair {
 
 
+// This function is declared in an auto-generated file
+void registerLairResource(MemoryFileSystem& fs);
+
+
 GameConfigBase::GameConfigBase()
     : fullscreen(false)
     , vSync     (true)
@@ -144,6 +148,11 @@ Path GameBase::dataPath() const {
 }
 
 
+FileSystemSP GameBase::fileSystem() const {
+	return _fileSystem;
+}
+
+
 LdlPropertySerializer& GameBase::serializer() {
 	return _serializer;
 }
@@ -241,11 +250,22 @@ void GameBase::initialize(GameConfigBase& config) {
 	}
 	log().log("Data directory: ", _dataPath);
 
+	// File systems
+
+	_realFs.reset(new RealFileSystem(_dataPath));
+	_memoryFs.reset(new MemoryFileSystem);
+
+	registerLairResource(*_memoryFs);
+
+	_fileSystem = std::make_shared<FileSystem>();
+	_fileSystem->addFileSystem("/", _realFs);
+	_fileSystem->addFileSystem("/", _memoryFs);
+
 	// Assets
 
 	_assets = make_unique(new AssetManager);
 	_loader = make_unique(new LoaderManager(_assets.get(), 1, _logger));
-	_loader->setBasePath(dataPath());
+	_loader->setFileSystem(fileSystem());
 
 	// Window
 

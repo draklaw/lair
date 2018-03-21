@@ -45,7 +45,8 @@ namespace lair
 #if defined(_WIN32) && !defined(_MSC_VER)
 class WinIFStream : public std::istream {
 public:
-	WinIFStream(const wchar_t* filename);
+	WinIFStream(const wchar_t* filename,
+	            std::ios_base::openmode mode = std::ios_base::in);
 	~WinIFStream();
 
 private:
@@ -54,7 +55,8 @@ private:
 };
 class WinOFStream : public std::ostream {
 public:
-	WinOFStream(const wchar_t* filename);
+	WinOFStream(const wchar_t* filename,
+	            std::ios_base::openmode mode = std::ios_base::out);
 	~WinOFStream();
 
 private:
@@ -66,6 +68,8 @@ private:
 
 class Path {
 public:
+	typedef String::const_iterator ConstIterator;
+
 #if defined(_WIN32) && !defined(_MSC_VER)
 	typedef WinIFStream   IStream;
 	typedef WinOFStream   OStream;
@@ -100,12 +104,22 @@ public:
 
 	bool isAbsolute() const;
 
+	ConstIterator begin() const;
+	ConstIterator end() const;
+
 	bool operator==(const Path& other) const { return _path == other._path; }
 	bool operator!=(const Path& other) const { return _path != other._path; }
 	bool operator< (const Path& other) const { return _path <  other._path; }
 	bool operator<=(const Path& other) const { return _path <= other._path; }
 	bool operator> (const Path& other) const { return _path >  other._path; }
 	bool operator>=(const Path& other) const { return _path >= other._path; }
+
+	void set(const String& utf8Path);
+
+	template<typename It>
+	void set(It utf8Begin, It utf8End) {
+		_path.assign(utf8Begin, utf8End);
+	}
 
 	Path& operator/=(const Path& path);
 

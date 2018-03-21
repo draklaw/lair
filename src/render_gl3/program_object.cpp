@@ -21,9 +21,13 @@
 #include <cassert>
 #include <algorithm>
 #include <memory>
+#include <functional>
+
+#include <lair/core/ldl.h>
 
 #include <lair/render_gl3/context.h>
 #include <lair/render_gl3/renderer.h>
+#include <lair/render_gl3/glsl_source.h>
 #include <lair/render_gl3/shader_object.h>
 
 #include <lair/render_gl3/program_object.h>
@@ -238,6 +242,141 @@ void swap(ProgramObject& p0, ProgramObject& p1) {
 	std::swap(p0._renderer,    p1._renderer);
 	std::swap(p0._id,          p1._id);
 	std::swap(p0._link_status, p1._link_status);
+}
+
+
+
+ShaderLoader::ShaderLoader(LoaderManager* manager, AspectSP aspect,
+                           Renderer* renderer, const VertexAttribSet* attribs)
+    : Loader(manager, aspect),
+      _renderer(renderer),
+      _attribs(attribs) {
+}
+
+
+void ShaderLoader::commit() {
+	ShaderAspectSP aspect = std::static_pointer_cast<ShaderAspect>(_aspect);
+
+	if(_vertexShader.isValid() && _fragmentShader.isValid()) {
+		ProgramObject shader = _renderer->compileProgram(
+		                           asset()->logicPath().utf8CStr(),
+		                           _attribs, &_vertexShader, &_fragmentShader);
+		aspect->_get() = std::move(shader);
+	}
+
+	Loader::commit();
+}
+
+
+void ShaderLoader::loadSyncImpl(Logger& log) {
+	VirtualFile file = this->file();
+	if(!file) {
+		log.error("Failed to load shader \"", asset()->logicPath(), "\": Invalid file.");
+		return;
+	}
+
+	std::unique_ptr<std::istream> in;
+	Path realPath = file.realPath();
+	if(!realPath.empty()) {
+		in.reset(new Path::IStream(realPath.native().c_str()));
+	}
+	else {
+		const MemFile* memFile = file.fileBuffer();
+		if(memFile) {
+			String str((const char*)memFile->data, memFile->size);
+			in.reset(new std::istringstream(str));
+		}
+	}
+
+	Path vertPath;
+	Path fragPath;
+
+	ErrorList errors;
+	LdlParser parser(in.get(), asset()->logicPath().utf8String(), &errors, LdlParser::CTX_MAP);
+
+	bool success = true;
+	if(parser.valueType() == LdlParser::TYPE_MAP) {
+		parser.enter();
+
+		while(parser.valueType() != LdlParser::TYPE_END) {
+			String key = parser.getKey();
+			Path* path = (key == "vert")? &vertPath:
+			             (key == "frag")? &fragPath:
+			                              nullptr;
+
+			if(!path) {
+				parser.error("Unexpected key \"", key, "\".");
+				success = false;
+			}
+
+			if(success && !path->empty()) {
+				parser.error("Duplicated key \"", key, "\".");
+				success = false;
+			}
+
+			if(success && parser.valueType() != LdlParser::TYPE_STRING) {
+				parser.error("Expected shader path (String), got ", parser.valueTypeName());
+				success = false;
+			}
+
+			if(success) {
+				*path = parser.getString();
+			}
+
+			parser.next();
+		}
+
+		parser.leave();
+	}
+	else {
+		parser.error("Expected shader (VarMap), got ", parser.valueTypeName());
+	}
+
+	errors.log(log);
+
+	if(!success) {
+		return;
+	}
+
+	if(vertPath.empty()) {
+		log.error(asset()->logicPath(), ": Missing required vertex shader (vert).");
+	}
+	if(fragPath.empty()) {
+		log.error(asset()->logicPath(), ": Missing required fragment shader (frag).");
+	}
+	if(vertPath.empty() || fragPath.empty()) {
+		return;
+	}
+
+	using namespace std::placeholders;
+
+	log.info("Load vertex shader: \"", vertPath, "\"");
+	_load<GlslSourceLoader>(vertPath, std::bind(&ShaderLoader::loadShader,
+	                                            this, _1, _2, gl::VERTEX_SHADER));
+
+	log.info("Load fragment shader: \"", fragPath, "\"");
+	_load<GlslSourceLoader>(fragPath, std::bind(&ShaderLoader::loadShader,
+	                                            this, _1, _2, gl::FRAGMENT_SHADER));
+}
+
+
+void ShaderLoader::loadShader(AspectSP aspect, Logger& log, GLenum type) {
+	if(aspect->isValid()) {
+		GlslSourceAspectSP sourceAspect = std::static_pointer_cast<GlslSourceAspect>(aspect);
+
+		ShaderObject* shader = (type == gl::VERTEX_SHADER)?   &_vertexShader:
+		                       (type == gl::FRAGMENT_SHADER)? &_fragmentShader:
+		                                                      nullptr;
+		lairAssert(shader);
+
+		*shader = _renderer->compileShader(
+		              aspect->asset()->logicPath().utf8CStr(),
+		              type, sourceAspect->get());
+	}
+	else {
+		log.error("Error while loading shader \"", asset()->logicPath(),
+		          "\": Failed to load \"", aspect->asset()->logicPath(), "\".");
+	}
 }
 
 

@@ -25,6 +25,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/sys_sdl2/sys_module.h>
+
 #include "lair/sys_sdl2/image_loader.h"
 
 
@@ -45,7 +47,13 @@ void ImageLoader::commit() {
 
 
 void ImageLoader::loadSyncImpl(Logger& log) {
-	auto surf = make_unique(IMG_Load(realPath().utf8CStr()), SDL_FreeSurface);
+	SDL_RWops* rw = sdlRwFromFile(file());
+	if(!rw) {
+		log.error("Failed to load image \"", asset()->logicPath(), "\": Invalid file");
+		return;
+	}
+
+	auto surf = make_unique(IMG_Load_RW(rw, true), SDL_FreeSurface);
 	if(surf) {
 		Image::Format format;
 		switch(surf->format->format) {
@@ -63,8 +71,7 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 
 		_image = std::move(Image(surf->w, surf->h, format, surf->pixels));
 	} else {
-		log.error("Failed to load image \"", asset()->logicPath(), "\" (", realPath(),
-		          "): ", IMG_GetError());
+		log.error("Failed to load image \"", asset()->logicPath(), "\": ", IMG_GetError());
 	}
 }
 

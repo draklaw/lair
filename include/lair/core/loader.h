@@ -43,6 +43,8 @@
 #include <lair/core/path.h>
 #include <lair/core/asset_manager.h>
 
+#include <lair/fs/abstract_file_system.h>
+
 
 namespace lair
 {
@@ -86,7 +88,7 @@ public:
 	bool               isSuccessful();
 	AssetSP            asset()    const { return _aspect->asset(); }
 	AspectSP           aspect()   const { return _aspect; }
-	Path               realPath() const;
+	VirtualFile        file() const;
 
 	void registerCallback(DoneCallback&& callback);
 	void stealCallbacks(CallbackList& callbacks);
@@ -150,11 +152,10 @@ public:
 
 	unsigned    nThread() const { return _nThread; }
 	unsigned    nToLoad();
-	const Path& basePath() const { return _basePath; }
+	AbstractFileSystemSP fileSystem() const { return _fileSystem; }
 
 	void setNThread(unsigned count);
-	void setBasePath(const Path& path);
-	Path realFromLogic(const Path& path) const;
+	void setFileSystem(AbstractFileSystemSP fileSystem);
 
 	/// Load an aspect, even if already loaded.
 	template < typename L, typename... Args >
@@ -265,7 +266,7 @@ private:
 	unsigned      _nThread;
 	_LoaderThread _threadPool[MAX_LOADER_THREADS];
 
-	Path          _basePath;
+	AbstractFileSystemSP _fileSystem;
 };
 
 

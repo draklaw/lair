@@ -36,10 +36,10 @@ namespace lair {
 
 #if defined(_WIN32) && !defined(_MSC_VER)
 
-WinIFStream::WinIFStream(const wchar_t* filename)
+WinIFStream::WinIFStream(const wchar_t* filename, std::ios_base::openmode mode)
 	: std::istream(),
-	  _buf(_wfopen(filename, L"r"), std::ios_base::in),
-	  _orig(basic_ios::rdbuf(&_buf)){
+      _buf(_wfopen(filename, L"r"), mode),
+      _orig(basic_ios::rdbuf(&_buf)){
 }
 
 
@@ -48,10 +48,10 @@ WinIFStream::~WinIFStream() {
 	_buf.close();
 }
 
-WinOFStream::WinOFStream(const wchar_t* filename)
+WinOFStream::WinOFStream(const wchar_t* filename, std::ios_base::openmode mode)
 	: std::ostream(),
-	  _buf(_wfopen(filename, L"w"), std::ios_base::out),
-	  _orig(basic_ios::rdbuf(&_buf)){
+      _buf(_wfopen(filename, L"w"), mode),
+      _orig(basic_ios::rdbuf(&_buf)){
 }
 
 
@@ -123,6 +123,21 @@ std::wstring Path::native() const {
 
 bool Path::isAbsolute() const {
 	return !empty() && isDirectorySeparator(_path[0]);
+}
+
+
+Path::ConstIterator Path::begin() const {
+	return _path.begin();
+}
+
+
+Path::ConstIterator Path::end() const {
+	return _path.end();
+}
+
+
+void Path::set(const String& utf8Path) {
+	_path = utf8Path;
 }
 
 

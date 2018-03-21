@@ -63,8 +63,8 @@ bool Loader::isSuccessful() {
 }
 
 
-Path Loader::realPath() const {
-	return _manager->realFromLogic(asset()->logicPath());
+VirtualFile Loader::file() const {
+	return _manager->fileSystem()->file(asset()->logicPath());
 }
 
 
@@ -255,14 +255,8 @@ void LoaderManager::setNThread(unsigned count) {
 }
 
 
-void LoaderManager::setBasePath(const Path& path) {
-	_basePath = path;
-}
-
-
-Path LoaderManager::realFromLogic(const Path& path) const {
-	// TODO: use a FileSystem to access file
-	return _basePath / path;
+void LoaderManager::setFileSystem(AbstractFileSystemSP fileSystem) {
+	_fileSystem = fileSystem;
 }
 
 

@@ -39,6 +39,9 @@ namespace lair
 {
 
 
+class LoaderManager;
+
+
 enum SpriteVertexAttrib {
 	VxPosition,
 	VxColor,
@@ -66,14 +69,21 @@ struct SpriteShaderParams {
 class SpriteShader {
 public:
 	SpriteShader();
-	SpriteShader(ProgramObject* shader);
+	SpriteShader(ShaderAspectSP shader);
+
+	bool finalize();
+
+	ProgramObject* get();
 
 public:
-	ProgramObject* shader;
+	ShaderAspectSP shader;
+	bool           finalized;
 	GLint          viewMatrixLoc;
 	GLint          textureLoc;
 	GLint          tileInfoLoc;
 };
+
+typedef std::shared_ptr<SpriteShader> SpriteShaderSP;
 
 
 inline Box2 tileBox(const Vector2i& nTiles, const Vector2& tile) {
@@ -95,7 +105,8 @@ inline Box2 boxView(const Box2& box, const Box2& view) {
 
 class SpriteRenderer {
 public:
-	SpriteRenderer(Renderer* renderer,
+	SpriteRenderer(LoaderManager* manager,
+	               Renderer* renderer,
 	               Size vBufferSize = (1 << 20) * sizeof(SpriteVertex),
 	               Size iBufferSize = (1 << 20) * sizeof(unsigned));
 	SpriteRenderer(const SpriteRenderer&) = delete;
@@ -108,7 +119,7 @@ public:
 	unsigned vertexCount() const;
 	unsigned indexCount()  const;
 
-	SpriteShader&    shader();
+	SpriteShaderSP   shader();
 	VertexAttribSet* attribSet();
 	VertexArray*     vertexArray();
 	BufferObject*    vertexBuffer();
@@ -123,8 +134,11 @@ public:
 	void addSprite(const Matrix4& trans, const Box2& coords,
 	               const Vector4& color, const Box2& texCoords);
 
+	SpriteShaderSP loadShader(const Path& logicPath);
+	void finalizeShaders();
+
 	const ShaderParameter* addShaderParameters(
-	        const SpriteShader& shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo);
+	        const SpriteShaderSP shader, const Matrix4& viewTransform, int texUnit, const Vector4i& tileInfo);
 
 	TextureAspectSP createTexture(AssetSP asset);
 	TextureAspectSP defaultTexture() const;
@@ -140,14 +154,17 @@ public:
 
 protected:
 	typedef std::list<SpriteShaderParams> ShaderParamList;
+	typedef std::list<SpriteShaderSP> ShaderList;
 
 protected:
+	LoaderManager*   _loader;
 	Renderer*        _renderer;
 
 	VertexAttribSet  _attribSet;
 	VertexArraySP    _vertexArray;
 	ProgramObject    _defaultShaderProg;
-	SpriteShader     _defaultShader;
+	SpriteShaderSP   _defaultShader;
+	ShaderList       _unfinalizedShaders;
 
 	Size             _vertexBufferSize;
 	Size             _indexBufferSize;

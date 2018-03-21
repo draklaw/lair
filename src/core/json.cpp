@@ -46,6 +46,28 @@ bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, 
 	return parseJson(value, in, localPath, log);
 }
 
+bool parseJson(Json::Value& value, const VirtualFile& file, const Path& localPath, Logger& log) {
+	if(!file) {
+		log.error("Invalid file: \"", localPath, "\".");
+		return false;
+	}
+
+	Path realPath = file.realPath();
+	if(!realPath.empty()) {
+		return parseJson(value, realPath, localPath, log);
+	}
+
+	const MemFile* memFile = file.fileBuffer();
+	if(memFile) {
+		String buffer((const char*)memFile->data, memFile->size);
+		std::istringstream in(buffer);
+		return parseJson(value, in, localPath, log);
+	}
+
+	lairAssert(false);
+	return false;
+}
+
 
 Matrix4 parseMatrix4(const Json::Value& json, bool* ok) {
 	Matrix4 m = Matrix4::Identity();

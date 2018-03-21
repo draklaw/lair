@@ -32,12 +32,15 @@
 #include <lair/core/log.h>
 #include <lair/core/path.h>
 
+#include <lair/fs/abstract_file_system.h>
+
 
 namespace lair {
 
 
 bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log);
 bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, Logger& log);
+bool parseJson(Json::Value& value, const VirtualFile& file, const Path& localPath, Logger& log);
 
 
 Matrix4 parseMatrix4(const Json::Value& json, bool* ok = nullptr);

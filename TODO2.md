@@ -6,13 +6,13 @@
 - arch:ldl-lib: Make LDL a standalone library ?
 - arch:meta-lib: Make meta-type system a standalone library ?
 
+- log:newlines: Indent new lines and replace tabs by spaces.
+
 - sys:mouse: Better mouse support
 - sys:gamepad: Support gamepads
 
 - assets:rework: Rethink asset system _or_ document it
 - assets:simple-loader: Create a simple, single-threaded loader
-- assets:file-sys: File system abstraction
-- assets:resource: Resource system [req: assets:file-sys]
 - assets:default-resources: Built-in default texture, font, etc. [req: assets:resource]
 - assets:cleanup: Remove cached objects when possible
 - assets:group: Create assets groups to automatically follow load progress / release assets

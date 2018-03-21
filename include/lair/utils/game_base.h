@@ -34,6 +34,10 @@
 #include <lair/core/asset_manager.h>
 #include <lair/core/loader.h>
 
+#include <lair/fs/file_system.h>
+#include <lair/fs/memory_file_system.h>
+#include <lair/fs/real_file_system.h>
+
 #include <lair/sys_sdl2/sys_module.h>
 #include <lair/sys_sdl2/window.h>
 #include <lair/sys_sdl2/audio_module.h>
@@ -81,6 +85,7 @@ public:
 	GameBase& operator=(      GameBase&&) = delete;
 
 	Path dataPath() const;
+	FileSystemSP fileSystem() const;
 
 	LdlPropertySerializer& serializer();
 
@@ -121,6 +126,9 @@ protected:
 	char**        _argv;
 
 	Path          _dataPath;
+	FileSystemSP  _fileSystem;
+	RealFileSystemSP   _realFs;
+	MemoryFileSystemSP _memoryFs;
 
 	LdlPropertySerializer _serializer;
 

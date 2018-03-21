@@ -25,6 +25,8 @@
 
 #include <istream>
 
+#include <lair/core/loader.h>
+
 #include <lair/render_gl3/context.h>
 
 
@@ -50,14 +52,19 @@ public:
 	 */
 	GlslSource(const std::string& source);
 	// TODO: implement the copy constructor of glsl_source.
-	GlslSource(const GlslSource&) = delete;
+	GlslSource(const GlslSource&  other) = delete;
+	GlslSource(      GlslSource&& other);
+
 	/**
 	 * \brief Destroy a glsl_source object.
 	 */
 	virtual ~GlslSource();
 
 	// TODO: implement the assignement operator of glsl_source.
-	GlslSource& operator=(const GlslSource&) = delete;
+	GlslSource& operator=(const GlslSource&  other) = delete;
+	GlslSource& operator=(      GlslSource&& other);
+
+	bool isValid() const;
 
 	/**
 	 * \brief Loads a shader from a string object.
@@ -116,9 +123,40 @@ public:
 	GLsizei count() const;
 
 private:
+	GLchar* createHeader() const;
+
+private:
 	GLchar** _string;
 	GLint* _length;
 	GLsizei _count;
+};
+
+
+typedef GenericAspect  <GlslSource>       GlslSourceAspect;
+typedef std::shared_ptr<GlslSourceAspect> GlslSourceAspectSP;
+typedef std::weak_ptr  <GlslSourceAspect> GlslSourceAspectWP;
+
+
+class GlslSourceLoader : public Loader {
+public:
+	typedef GlslSourceAspect Aspect;
+
+public:
+	GlslSourceLoader(LoaderManager* manager, AspectSP aspect);
+	GlslSourceLoader(const GlslSourceLoader&) = delete;
+	GlslSourceLoader(GlslSourceLoader&&)      = delete;
+	virtual ~GlslSourceLoader() = default;
+
+	GlslSourceLoader& operator=(const GlslSourceLoader&) = delete;
+	GlslSourceLoader& operator=(GlslSourceLoader&&)      = delete;
+
+	virtual void commit();
+
+protected:
+	virtual void loadSyncImpl(Logger& log);
+
+protected:
+	GlslSource _source;
 };
 
 

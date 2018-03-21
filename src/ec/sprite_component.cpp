@@ -162,7 +162,7 @@ SpriteComponentManager::~SpriteComponentManager() {
 void SpriteComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
 //	compactArray();
 
-	_states.shader   = _spriteRenderer->shader().shader;
+	_states.shader   = _spriteRenderer->shader()->get();
 	_states.vertices = _spriteRenderer->vertexArray();
 
 	_render(entity, interp, camera);

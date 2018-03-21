@@ -22,18 +22,59 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/core/file_system.h"
+#include "lair/fs/abstract_file_system.h"
 
 
 namespace lair
 {
 
 
+VirtualFile::VirtualFile()
+    : _fs(nullptr)
+    , _relativePath() {
+}
+
+
+VirtualFile::VirtualFile(const AbstractFileSystem* fs, const Path& relativePath)
+    : _fs(fs)
+    , _relativePath(relativePath) {
+}
+
+
+bool VirtualFile::isValid() const {
+	return _fs;
+}
+
+
+VirtualFile::operator bool() const {
+	return _fs;
+}
+
+
+const MemFile* VirtualFile::fileBuffer() const {
+	lairAssert(_fs);
+	return _fs->_fileBuffer(_relativePath);
+}
+
+
+Path VirtualFile::realPath() const {
+	lairAssert(_fs);
+	return _fs->_realPath(_relativePath);
+}
+
+
+
 AbstractFileSystem::AbstractFileSystem() {
 }
 
 
-AbstractFileSystem::~AbstractFileSystem() {
+const MemFile* AbstractFileSystem::_fileBuffer(const Path& /*logicPath*/) const {
+	return nullptr;
+}
+
+
+Path AbstractFileSystem::_realPath(const Path& /*logicPath*/) const {
+	return Path();
 }
 
 

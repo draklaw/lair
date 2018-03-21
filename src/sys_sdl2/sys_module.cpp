@@ -37,6 +37,24 @@ namespace lair
 {
 
 
+SDL_RWops* sdlRwFromFile(const VirtualFile& file) {
+	if(file) {
+		Path realPath = file.realPath();
+		if(!realPath.empty()) {
+			return SDL_RWFromFile(realPath.utf8CStr(), "rb");
+		}
+
+		const MemFile* memFile = file.fileBuffer();
+		if(memFile) {
+			return SDL_RWFromConstMem(memFile->data, memFile->size);
+		}
+	}
+
+	return nullptr;
+}
+
+
+
 SysModule::SysModule(MasterLogger* logger, LogLevel level)
     : onQuit(nullptr),
       _log("sys_sdl2", logger, level),

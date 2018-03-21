@@ -133,7 +133,7 @@ TileLayerComponentManager::TileLayerComponentManager(
 void TileLayerComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
 	compactArray();
 
-	_states.shader = _spriteRenderer->shader().shader;
+	_states.shader = _spriteRenderer->shader()->get();
 
 	_render(entity, interp, camera);
 }

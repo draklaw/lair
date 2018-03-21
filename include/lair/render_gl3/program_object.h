@@ -25,7 +25,10 @@
 
 #include <ostream>
 
+#include <lair/core/loader.h>
+
 #include <lair/render_gl3/context.h>
+#include <lair/render_gl3/shader_object.h>
 
 
 namespace lair {
@@ -33,6 +36,7 @@ namespace lair {
 
 class Context;
 class Renderer;
+class VertexAttribSet;
 class ShaderObject;
 
 
@@ -81,6 +85,39 @@ private:
 	Renderer* _renderer;
 	GLuint    _id;
 	GLint     _link_status;
+};
+
+
+typedef GenericAspect  <ProgramObject> ShaderAspect;
+typedef std::shared_ptr<ShaderAspect>  ShaderAspectSP;
+typedef std::weak_ptr  <ShaderAspect>  ShaderAspectWP;
+
+
+class ShaderLoader : public Loader {
+public:
+	typedef ShaderAspect Aspect;
+
+public:
+	ShaderLoader(LoaderManager* manager, AspectSP aspect,
+	             Renderer* renderer, const VertexAttribSet* attribs);
+	ShaderLoader(const ShaderLoader&) = delete;
+	ShaderLoader(ShaderLoader&&)      = delete;
+	virtual ~ShaderLoader() = default;
+
+	ShaderLoader& operator=(const ShaderLoader&) = delete;
+	ShaderLoader& operator=(ShaderLoader&&)      = delete;
+
+	virtual void commit();
+
+protected:
+	virtual void loadSyncImpl(Logger& log);
+	void loadShader(AspectSP aspect, Logger& log, GLenum type);
+
+protected:
+	Renderer*              _renderer;
+	const VertexAttribSet* _attribs;
+	ShaderObject           _vertexShader;
+	ShaderObject           _fragmentShader;
 };
 
 

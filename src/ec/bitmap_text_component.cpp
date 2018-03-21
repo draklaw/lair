@@ -51,7 +51,7 @@ void BitmapFontLoader::commit() {
 
 
 void BitmapFontLoader::loadSyncImpl(Logger& log) {
-	if(!parseJson(_fontDesc, realPath(), asset()->logicPath(), log)) {
+	if(!parseJson(_fontDesc, file(), asset()->logicPath(), log)) {
 		return;
 	}
 
@@ -186,7 +186,7 @@ void BitmapTextComponentManager::createTextures() {
 void BitmapTextComponentManager::render(EntityRef entity, float interp, const OrthographicCamera& camera) {
 	compactArray();
 
-	_states.shader = _spriteRenderer->shader().shader;
+	_states.shader   = _spriteRenderer->shader()->get();
 	_states.vertices = _spriteRenderer->vertexArray();
 
 	_render(entity, interp, camera);
@@ -277,7 +277,7 @@ void renderBitmapText(RenderPass* pass, SpriteRenderer* renderer,
 
 	if(count) {
 		RenderPass::DrawStates states;
-		states.shader       = renderer->shader().shader;
+		states.shader       = renderer->shader()->get();
 		states.vertices     = renderer->vertexArray();
 		states.textureSet   = textureSet;
 		states.blendingMode = blendingMode;
