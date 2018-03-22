@@ -13,7 +13,7 @@
 
 - assets:rework: Rethink asset system _or_ document it
 - assets:simple-loader: Create a simple, single-threaded loader
-- assets:default-resources: Built-in default texture, font, etc. [req: assets:resource]
+- assets:default-resources: Built-in default texture, font, etc.
 - assets:cleanup: Remove cached objects when possible
 - assets:group: Create assets groups to automatically follow load progress / release assets
 - assets:autoreload: Track file changes and auto-reload assets

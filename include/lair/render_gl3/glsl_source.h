@@ -50,10 +50,10 @@ public:
 	/**
 	 * \brief Creates a glsl_source object from a string.
 	 */
-	GlslSource(const std::string& source);
+	GlslSource(const std::string& source, const Path& filename);
 	// TODO: implement the copy constructor of glsl_source.
 	GlslSource(const GlslSource&  other) = delete;
-	GlslSource(      GlslSource&& other);
+	GlslSource(      GlslSource&& other) = default;
 
 	/**
 	 * \brief Destroy a glsl_source object.
@@ -62,7 +62,7 @@ public:
 
 	// TODO: implement the assignement operator of glsl_source.
 	GlslSource& operator=(const GlslSource&  other) = delete;
-	GlslSource& operator=(      GlslSource&& other);
+	GlslSource& operator=(      GlslSource&& other) = default;
 
 	bool isValid() const;
 
@@ -70,7 +70,7 @@ public:
 	 * \brief Loads a shader from a string object.
 	 * \param source A string containing GLSL code.
 	 */
-	void loadFromString(const std::string& source);
+	void loadFromString(const std::string& source, const Path& filename);
 
 	/**
 	 * \brief Loads a shader from a file.
@@ -87,7 +87,7 @@ public:
 	 * \brief Loads a shader from an input stream.
 	 * \param in The input stream.
 	 */
-	void loadFromStream(std::istream& in);
+	void loadFromStream(std::istream& in, const Path& filename);
 
 	/**
 	 * \brief Clear the object, deleting its content.
@@ -123,12 +123,26 @@ public:
 	GLsizei count() const;
 
 private:
-	GLchar* createHeader() const;
+	typedef std::vector<GLint> IntVector;
+	typedef std::vector<GLchar*> CStringVector;
+
+	struct SourceInfo {
+		Path filename;
+		int  line;
+	};
+	typedef std::vector<SourceInfo> SourceInfoVector;
 
 private:
-	GLchar** _string;
-	GLint* _length;
-	GLsizei _count;
+	void addHeader();
+
+	void addString(const String& string, const SourceInfo& info);
+	void addString(const char* string, Size size, const SourceInfo& info);
+
+private:
+	CStringVector _string;
+	IntVector     _length;
+
+	SourceInfoVector _sourceInfo;
 };
 
 

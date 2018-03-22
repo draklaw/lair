@@ -57,7 +57,7 @@ public:
 
 	bool compile(const GlslSource& source);
 	bool compileFromFile(const std::string& filename);
-	bool compileFromStream(std::istream& in);
+	bool compileFromStream(std::istream& in, const Path& filename);
 
 	void getLog(std::string& out) const;
 

@@ -29,75 +29,37 @@
 namespace lair {
 
 
-GlslSource::GlslSource()
-    : _string(nullptr),
-      _length(nullptr),
-	  _count(0) {
+GlslSource::GlslSource() {
 }
 
-GlslSource::GlslSource(const std::string& source)
-    : _string(nullptr),
-      _length(nullptr),
-	  _count(0) {
-	loadFromString(source);
+
+GlslSource::GlslSource(const std::string& source, const Path& filename) {
+	loadFromString(source, filename);
 }
 
-GlslSource::GlslSource(GlslSource&& other)
-    : _string(other._string),
-      _length(other._length),
-      _count (other._count) {
-	other._string = nullptr;
-	other._length = nullptr;
-	other._count  = 0;
-}
 
 GlslSource::~GlslSource() {
 	clear();
 }
 
-GlslSource& GlslSource::operator=(GlslSource&& other) {
-	if(this != &other) {
-		clear();
-
-		_string = other._string;
-		_length = other._length;
-		_count  = other._count;
-
-		other._string = nullptr;
-		other._length = nullptr;
-		other._count  = 0;
-	}
-	return *this;
-}
 
 bool GlslSource::isValid() const {
-	return _string;
+	return _string.size();
 }
 
-void GlslSource::loadFromString(const std::string& source) {
+
+void GlslSource::loadFromString(const std::string& source, const Path& filename) {
 	clear();
 
-	char* header = createHeader();
-
-	_count = 2;
-
-	_length = new GLint[_count];
-	_length[0] = std::strlen(header);
-	_length[1] = source.size();
-
-	_string = new GLchar*[_count];
-	_string[0] = header;
-	_string[1] = new GLchar[_length[1]+1];
-
-	std::strncpy(_string[1], source.c_str(), _length[1]+1);
-//	GLchar* p = _string[0];
-//	for(auto c: source)
-//		*(p++) = c;
+	addHeader();
+	addString(source, SourceInfo{filename, 0});
 }
+
 
 void GlslSource::loadFromFile(const std::string& filename) {
 	loadFromFile(filename.c_str());
 }
+
 
 void GlslSource::loadFromFile(const char* filename) {
 	std::ifstream in(filename);
@@ -105,29 +67,24 @@ void GlslSource::loadFromFile(const char* filename) {
 		throw std::runtime_error(
 				"Unable to read the file \""+std::string(filename)+"\".");
 
-	loadFromStream(in);
+	loadFromStream(in, filename);
 }
 
-void GlslSource::loadFromStream(std::istream& in) {
+
+void GlslSource::loadFromStream(std::istream& in, const Path& filename) {
 	clear();
+
+	addHeader();
 
 	std::istream::sentry se(in, true);
 	std::streambuf* sb = in.rdbuf();
 
-	char* header = createHeader();
-
-	_count = 2;
-
-	_length = new GLint[_count];
-	_length[0] = std::strlen(header);
-	_length[1] = int(sb->pubseekoff(0, std::ios_base::end));
+	Size size = int(sb->pubseekoff(0, std::ios_base::end));
 	sb->pubseekoff(0, std::ios_base::beg);
 
-	_string = new GLchar*[_count];
-	_string[0] = header;
-	_string[1] = new GLchar[_length[1]];
+	char* string = new GLchar[size];
 
-	GLchar* p = _string[1];
+	GLchar* p = string;
 	while(true) {
 		int c = sb->sbumpc();
 		switch(c) {
@@ -137,34 +94,38 @@ void GlslSource::loadFromStream(std::istream& in) {
 			c = '\n';
 			break;
 		case EOF:
-			_length[1] = p - _string[1];
+			size = p - string;
 			return;
 		}
 		*(p++) = c;
 	}
+
+	addString(string, size, SourceInfo{filename, 0});
 }
+
 
 void GlslSource::clear() {
-	for(GLsizei i=0; i<_count; ++i)
-		delete[] _string[i];
-	delete[] _string;
-	delete[] _length;
-	_count = 0;
+	for(char* string: _string)
+		delete[] string;
 }
+
 
 const GLchar *const* GlslSource::string() const {
-	return _string;
+	return _string.data();
 }
+
 
 const GLint* GlslSource::length() const {
-	return _length;
+	return _length.data();
 }
+
 
 GLsizei GlslSource::count() const {
-	return _count;
+	return _length.size();
 }
 
-GLchar* GlslSource::createHeader() const {
+
+void GlslSource::addHeader() {
 	// TODO: Generate header based on OpenGL version.
 	static const char* header =
 	    "#version 330 core\n"
@@ -172,12 +133,24 @@ GLchar* GlslSource::createHeader() const {
 	    "#define mediump\n"
 	    "#define highp\n";
 
-	Size size = std::strlen(header) + 1;
-	GLchar* h = new GLchar[size];
-	std::strncpy(h, header, size);
-	return h;
+	addString(header, std::strlen(header), SourceInfo{"<gl_3_3_header>", 0});
 }
 
+
+void GlslSource::addString(const String& string, const SourceInfo& info) {
+	addString(string.data(), string.size(), info);
+}
+
+
+void GlslSource::addString(const char* string, Size size, const SourceInfo& info) {
+	_length.push_back(size);
+
+	char* s = new GLchar[size];
+	std::strncpy(s, string, size);
+	_string.push_back(s);
+
+	_sourceInfo.push_back(info);
+}
 
 
 GlslSourceLoader::GlslSourceLoader(LoaderManager* manager, AspectSP aspect)
@@ -202,13 +175,13 @@ void GlslSourceLoader::loadSyncImpl(Logger& log) {
 	Path realPath = file.realPath();
 	if(!realPath.empty()) {
 		Path::IStream in(realPath.native().c_str());
-		_source.loadFromStream(in);
+		_source.loadFromStream(in, asset()->logicPath());
 	}
 	else {
 		const MemFile* memFile = file.fileBuffer();
 		if(memFile) {
 			String code((const char*)memFile->data, memFile->size);
-			_source.loadFromString(code);
+			_source.loadFromString(code, asset()->logicPath());
 		}
 	}
 }

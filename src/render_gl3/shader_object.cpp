@@ -120,9 +120,9 @@ bool ShaderObject::compileFromFile(const std::string& filename) {
 }
 
 
-bool ShaderObject::compileFromStream(std::istream& in) {
+bool ShaderObject::compileFromStream(std::istream& in, const Path& filename) {
 	GlslSource source;
-	source.loadFromStream(in);
+	source.loadFromStream(in, filename);
 	return compile(source);
 }
 
