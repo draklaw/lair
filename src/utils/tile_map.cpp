@@ -200,7 +200,7 @@ void TileMapLoader::loadSyncImpl(Logger& log) {
 			return;
 		}
 		_tileMap._setTileSet(tileSetImg);
-	});
+	}, log);
 }
 
 

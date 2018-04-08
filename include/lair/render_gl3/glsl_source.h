@@ -89,6 +89,8 @@ public:
 	 */
 	void loadFromStream(std::istream& in, const Path& filename);
 
+	void addBlock(const String& code, const Path& filename, int line);
+
 	/**
 	 * \brief Clear the object, deleting its content.
 	 */
@@ -102,11 +104,11 @@ public:
 	 *
 	 * \return an array of string containing the shader.
 	 */
-	GLchar const* const* string() const;
+	GLchar const* const* strings() const;
 
 	/**
 	 * \brief Returns an array of count() int describing the lengths of strings
-	 * returned by string().
+	 * returned by strings().
 	 *
 	 * The pointer returned by this function can be directly given to
 	 * glShaderSource(...).
@@ -116,11 +118,15 @@ public:
 	const GLint* length() const;
 
 	/**
-	 * \brief Returns the number of elements in the arrays returned by string()
+	 * \brief Returns the number of elements in the arrays returned by strings()
 	 * and length()
 	 * \return
 	 */
 	GLsizei count() const;
+
+	const GLchar* string(unsigned i) const;
+	const Path& filename(unsigned i) const;
+	int line(unsigned i) const;
 
 private:
 	typedef std::vector<GLint> IntVector;
@@ -170,7 +176,24 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 protected:
-	GlslSource _source;
+	enum ChunkType {
+		CODE,
+		INCLUDE,
+	};
+
+	struct Chunk {
+		ChunkType type;
+		char* begin;
+		char* end;
+		int line;
+		GlslSourceAspectSP include;
+	};
+
+	typedef std::vector<Chunk> ChunkVector;
+
+protected:
+	String      _code;
+	ChunkVector _chunks;
 };
 
 

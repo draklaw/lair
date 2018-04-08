@@ -52,7 +52,7 @@ void GlslSource::loadFromString(const std::string& source, const Path& filename)
 	clear();
 
 	addHeader();
-	addString(source, SourceInfo{filename, 0});
+	addString(source, SourceInfo{filename, 1});
 }
 
 
@@ -100,7 +100,16 @@ void GlslSource::loadFromStream(std::istream& in, const Path& filename) {
 		*(p++) = c;
 	}
 
-	addString(string, size, SourceInfo{filename, 0});
+	addString(string, size, SourceInfo{filename, 1});
+}
+
+
+void GlslSource::addBlock(const String& code, const Path& filename, int line) {
+	if(!_string.size()) {
+		addHeader();
+	}
+
+	addString(code, SourceInfo{filename, line});
 }
 
 
@@ -110,7 +119,7 @@ void GlslSource::clear() {
 }
 
 
-const GLchar *const* GlslSource::string() const {
+const GLchar *const* GlslSource::strings() const {
 	return _string.data();
 }
 
@@ -125,6 +134,24 @@ GLsizei GlslSource::count() const {
 }
 
 
+const GLchar* GlslSource::string(unsigned i) const {
+	lairAssert(i < unsigned(count()));
+	return _string[i];
+}
+
+
+const Path& GlslSource::filename(unsigned i) const {
+	lairAssert(i < unsigned(count()));
+	return _sourceInfo[i].filename;
+}
+
+
+int GlslSource::line(unsigned i) const {
+	lairAssert(i < unsigned(count()));
+	return _sourceInfo[i].line;
+}
+
+
 void GlslSource::addHeader() {
 	// TODO: Generate header based on OpenGL version.
 	static const char* header =
@@ -133,7 +160,7 @@ void GlslSource::addHeader() {
 	    "#define mediump\n"
 	    "#define highp\n";
 
-	addString(header, std::strlen(header), SourceInfo{"<gl_3_3_header>", 0});
+	addString(header, std::strlen(header), SourceInfo{"<gl_3_3_header>", 1});
 }
 
 
@@ -145,8 +172,9 @@ void GlslSource::addString(const String& string, const SourceInfo& info) {
 void GlslSource::addString(const char* string, Size size, const SourceInfo& info) {
 	_length.push_back(size);
 
-	char* s = new GLchar[size];
+	char* s = new GLchar[size + 1];
 	std::strncpy(s, string, size);
+	s[size] = '\0';
 	_string.push_back(s);
 
 	_sourceInfo.push_back(info);
@@ -159,8 +187,38 @@ GlslSourceLoader::GlslSourceLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void GlslSourceLoader::commit() {
+	GlslSource source;
+	for(const Chunk& chunk: _chunks) {
+		bool fail = false;
+		switch(chunk.type) {
+		case CODE:
+			source.addBlock(String(chunk.begin, chunk.end),
+			                asset()->logicPath(), chunk.line);
+			break;
+		case INCLUDE: {
+			if(!chunk.include->isValid()) {
+				_manager->log().error(asset()->logicPath(), ": ", chunk.line,
+				                      ": Failed to load include \"",
+				                      chunk.include->asset()->logicPath(), "\"");
+				source.clear();
+				fail = true;
+				break;
+			}
+			const GlslSource& include = chunk.include->get();
+			// Start at 1 to skip the header block
+			for(unsigned i = 1; i < unsigned(include.count()); ++i) {
+				source.addBlock(include.string(i), include.filename(i), include.line(i));
+			}
+			break;
+		}
+		}
+
+		if(fail)
+			break;
+	}
+
 	GlslSourceAspectSP aspect = std::static_pointer_cast<GlslSourceAspect>(_aspect);
-	aspect->_get() = std::move(_source);
+	aspect->_get() = std::move(source);
 	Loader::commit();
 }
 
@@ -175,15 +233,99 @@ void GlslSourceLoader::loadSyncImpl(Logger& log) {
 	Path realPath = file.realPath();
 	if(!realPath.empty()) {
 		Path::IStream in(realPath.native().c_str());
-		_source.loadFromStream(in, asset()->logicPath());
+		in.seekg(0, std::ios::end);
+		_code.resize(in.tellg());
+		in.seekg(0, std::ios::beg);
+		in.read(&_code[0], _code.size());
 	}
-	else {
+
+	if(_code.empty()) {
 		const MemFile* memFile = file.fileBuffer();
 		if(memFile) {
-			String code((const char*)memFile->data, memFile->size);
-			_source.loadFromString(code, asset()->logicPath());
+			_code.assign((const char*)memFile->data, memFile->size);
 		}
 	}
+
+	char* p   = &_code[0];
+	char* end = p + _code.size();
+	int line = 1;
+
+	_chunks.emplace_back(Chunk{CODE, p, p, line, GlslSourceAspectSP()});
+
+	static const char* includeKeyword = "include";
+	while(p != end) {
+		char* lineStart = p;
+		char closeChar = 0;
+		char* begin = nullptr;
+		char* end   = nullptr;
+
+		while(p != end && (*p == ' ' || *p == '\t'))
+			++p;
+
+		bool match = (*p == '#');
+
+		if(match) {
+			++p;
+
+			while(p != end && (*p == ' ' || *p == '\t'))
+				++p;
+
+			match = (strncmp(p, includeKeyword, strlen(includeKeyword)) == 0);
+		}
+
+		if(match) {
+			p += strlen(includeKeyword);
+
+			while(p != end && (*p == ' ' || *p == '\t'))
+				++p;
+
+			switch(*p) {
+			case '<': closeChar = '>'; break;
+			case '"': closeChar = '"'; break;
+			default:
+				match = false;
+				log.error(asset()->logicPath(), ": ", line, ": Syntax error");
+				break;
+			}
+		}
+
+		if(match) {
+			++p;
+			begin = p;
+			while(p != end && *p != closeChar && *p != '\n')
+				++p;
+
+			match = (*p == closeChar);
+		}
+
+		if(match) {
+			end = p;
+			++p;
+			while(p != end && (*p == ' ' || *p == '\t'))
+				++p;
+
+			if(*p != '\n' && *p != '\0') {
+				match = false;
+				log.error(asset()->logicPath(), ": ", line, ": Syntax error");
+			}
+		}
+
+		if(match) {
+			_chunks.back().end = lineStart;
+			auto loader = _load<GlslSourceLoader>(Path(String(begin, end)),
+			                                      [](AspectSP, Logger&){}, log);
+			auto aspect = std::static_pointer_cast<GlslSourceAspect>(loader->aspect());
+			_chunks.push_back(Chunk{INCLUDE, begin, end, line, aspect});
+			_chunks.push_back(Chunk{CODE, p, p, line, GlslSourceAspectSP()});
+		}
+
+		while(p != end && *p != '\n')
+			++p;
+		if(p != end)
+			++p;
+		line += 1;
+	}
+	_chunks.back().end = p;
 }
 
 

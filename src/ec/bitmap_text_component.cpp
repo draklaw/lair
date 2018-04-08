@@ -67,7 +67,7 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 			log.error("Error while loading BitmapFont \"", asset()->logicPath(),
 			          "\": failed to load image \"", imgAspect->asset()->logicPath(), "\".");
 		}
-	});
+	}, log);
 }
 
 

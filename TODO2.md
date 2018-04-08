@@ -17,6 +17,7 @@
 - assets:cleanup: Remove cached objects when possible
 - assets:group: Create assets groups to automatically follow load progress / release assets
 - assets:autoreload: Track file changes and auto-reload assets
+- assets:race-condition: Fix race-condition when accessing loader callbacks.
 
 - render:shader-include: support #include in shaders [req: assets:resource]
 - render:fbo: Support FBO

@@ -102,7 +102,7 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 	template <typename L>
-	LoaderSP _load(const Path& logicPath, DoneCallback callback);
+	LoaderSP _load(const Path& logicPath, DoneCallback callback, Logger& log);
 
 	void _done();
 
@@ -271,18 +271,21 @@ private:
 
 
 template <typename L>
-LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback) {
-	{
-		std::unique_lock<std::mutex> lk(_mutex);
-		++_depCount;
-	}
-
+LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback, Logger& log) {
 	auto loader = _manager->load<L>(makeAbsolute(asset()->logicPath().dir(), logicPath));
-	if(loader) {
+	if(loader && loader->state() != LOADED) {
+		{
+			std::unique_lock<std::mutex> lk(_mutex);
+			++_depCount;
+		}
+
 		loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
 			callback(aspect, log);
 			_done();
 		});
+	}
+	else {
+		callback(loader->aspect(), log);
 	}
 
 	return loader;

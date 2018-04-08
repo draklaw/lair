@@ -105,7 +105,7 @@ void ShaderObject::deleteObject() {
 
 bool ShaderObject::compile(const GlslSource& source) {
 	lairAssert(_id != 0);
-	_context->shaderSource(_id, source.count(), (GLchar* const*)source.string(), (int*)source.length());
+	_context->shaderSource(_id, source.count(), (GLchar* const*)source.strings(), (int*)source.length());
 	_context->compileShader(_id);
 
 	_context->getShaderiv(_id, gl::COMPILE_STATUS, &_compile_status);

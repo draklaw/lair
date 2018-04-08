@@ -352,11 +352,11 @@ void ShaderLoader::loadSyncImpl(Logger& log) {
 
 	log.info("Load vertex shader: \"", vertPath, "\"");
 	_load<GlslSourceLoader>(vertPath, std::bind(&ShaderLoader::loadShader,
-	                                            this, _1, _2, gl::VERTEX_SHADER));
+	                                            this, _1, _2, gl::VERTEX_SHADER), log);
 
 	log.info("Load fragment shader: \"", fragPath, "\"");
 	_load<GlslSourceLoader>(fragPath, std::bind(&ShaderLoader::loadShader,
-	                                            this, _1, _2, gl::FRAGMENT_SHADER));
+	                                            this, _1, _2, gl::FRAGMENT_SHADER), log);
 }
 
 
