@@ -19,7 +19,7 @@
 - assets:autoreload: Track file changes and auto-reload assets
 - assets:race-condition: Fix race-condition when accessing loader callbacks.
 
-- render:shader-include: support #include in shaders [req: assets:resource]
+- render:shader-error: Improve shader compilation error by showing the right file/line combination.
 - render:fbo: Support FBO
 - render:tex-filter: Texture filtering function [req: render:shader-include]
 - render:tex-atlas: Allow one GL texture to contain several "logical" texture (batching)
