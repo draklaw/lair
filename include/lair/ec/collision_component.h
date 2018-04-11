@@ -25,8 +25,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/ldl.h>
-#include <lair/core/shapes.h>
-#include <lair/core/octree.h>
+
+#include <lair/geometry/shape_2d.h>
+#include <lair/geometry/octree.h>
 
 #include <lair/ec/component.h>
 #include <lair/ec/dense_component_manager.h>
@@ -43,99 +44,6 @@ enum Direction {
 	RIGHT,
 	N_DIRECTIONS,
 };
-
-
-enum Shape2DType {
-	SHAPE_NONE,
-	SHAPE_SPHERE,
-	SHAPE_ALIGNED_BOX,
-	SHAPE_ORIENTED_BOX,
-};
-
-class Shape2D {
-public:
-	inline Shape2D()
-	    : _type(SHAPE_NONE)
-	    , _shape(nullptr)
-	{}
-
-	inline Shape2D(const Sphere2& sphere)
-	    : _type(SHAPE_SPHERE)
-	    , _shape(new Sphere2(sphere))
-	{}
-
-	inline Shape2D(const AlignedBox2& box)
-	    : _type(SHAPE_ALIGNED_BOX)
-	    , _shape(new AlignedBox2(box))
-	{}
-
-	inline Shape2D(const OrientedBox2& oBox)
-	    : _type(SHAPE_ORIENTED_BOX)
-	    , _shape(new OrientedBox2(oBox))
-	{}
-
-	Shape2D(const Shape2D& other);
-	Shape2D(Shape2D&& other);
-
-	~Shape2D();
-
-	Shape2D& operator=(Shape2D other);
-
-	inline Shape2DType type()   const { return _type; }
-	inline bool isValid()       const { return _type != SHAPE_NONE; }
-	inline bool isSphere()      const { return _type == SHAPE_SPHERE; }
-	inline bool isAlignedBox()  const { return _type == SHAPE_ALIGNED_BOX; }
-	inline bool isOrientedBox() const { return _type == SHAPE_ORIENTED_BOX; }
-
-	inline const Sphere2& asSphere() const {
-		lairAssert(isSphere());
-		return *static_cast<Sphere2*>(_shape);
-	}
-
-	inline const AlignedBox2& asAlignedBox() const {
-		lairAssert(isAlignedBox());
-		return *static_cast<AlignedBox2*>(_shape);
-	}
-
-	inline const OrientedBox2& asOrientedBox() const {
-		lairAssert(isOrientedBox());
-		return *static_cast<OrientedBox2*>(_shape);
-	}
-
-	Shape2D transformed(const Matrix3& transform) const;
-
-	inline Shape2D transformed(const Matrix4& transform) const {
-		Matrix3 m;
-		m << transform.topLeftCorner<2, 2>(), transform.topRightCorner<2, 1>(),
-		     0, 0, 1;
-		return transformed(m);
-	}
-
-	inline Shape2D transformed(const Transform& transform) const {
-		return transformed(transform.matrix());
-	}
-
-	AlignedBox2 boundingBox() const;
-
-	bool intersect(const Shape2D& other, Vector2* position = 0) const;
-
-	void swap(Shape2D& other);
-
-protected:
-	Shape2DType _type;
-	void*       _shape;
-};
-
-std::ostream& operator<<(std::ostream& out, const Shape2D& shape);
-
-typedef std::vector<Shape2D> Shape2DVector;
-
-
-bool ldlRead(LdlParser& parser, Shape2D& value);
-bool ldlWrite(LdlWriter& writer, const Shape2D& value);
-
-bool ldlRead(LdlParser& parser, Shape2DVector& value);
-bool ldlWrite(LdlWriter& writer, const Shape2DVector& value);
 
 
 class CollisionComponent;
@@ -270,10 +178,6 @@ protected:
 
 
 }
-
-
-LAIR_REGISTER_METATYPE(lair::Shape2D, "Shape2D");
-LAIR_REGISTER_METATYPE(lair::Shape2DVector, "Shape2DList");
 
 
 #endif

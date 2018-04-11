@@ -27,7 +27,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/memory_pool.h>
-#include <lair/core/shapes.h>
+
+#include <lair/geometry/aligned_box.h>
+#include <lair/geometry/intersection.h>
 
 
 namespace lair

@@ -93,12 +93,14 @@ set(lair_SOURCES
 	core/asset_manager.cpp
 	core/loader.cpp
 	core/bitmap_font.cpp
-	core/shapes.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp
 	fs/memory_file_system.cpp
 	fs/real_file_system.cpp
+
+	geometry/intersection.cpp
+	geometry/shape_2d.cpp
 
 	utils/input.cpp
 	utils/interp_loop.cpp
