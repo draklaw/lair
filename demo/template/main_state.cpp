@@ -37,7 +37,7 @@ MainState::MainState(Game* game)
       _mainPass(renderer()),
 
       _entities(log(), _game->serializer()),
-      _spriteRenderer(renderer()),
+      _spriteRenderer(loader(), renderer()),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
       _tileLayers(loader(), &_mainPass, &_spriteRenderer),
@@ -182,15 +182,24 @@ void MainState::updateFrame() {
 	_texts.createTextures();
 	_tileLayers.createTextures();
 	renderer()->uploadPendingTextures();
+	_spriteRenderer.finalizeShaders();
 
 	glc->clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
 	_mainPass.clear();
-	_spriteRenderer.clear();
 
-	_sprites.render(_entities.root(), _loop.frameInterp(), _camera);
-	_texts.render(_entities.root(), _loop.frameInterp(), _camera);
-	_tileLayers.render(_entities.root(), _loop.frameInterp(), _camera);
+	bool buffersFilled = false;
+	while(!buffersFilled) {
+		_mainPass.clear();
+
+		_spriteRenderer.beginRender();
+
+		_sprites.render(_entities.root(), _loop.frameInterp(), _camera);
+		_texts.render(_entities.root(), _loop.frameInterp(), _camera);
+		_tileLayers.render(_entities.root(), _loop.frameInterp(), _camera);
+
+		buffersFilled = _spriteRenderer.endRender();
+	}
 
 	_mainPass.render();
 
@@ -219,16 +228,25 @@ bool MainState::loadEntities(const Path& path, EntityRef parent, const Path& cd)
 	Path localPath = makeAbsolute(cd, path);
 	log().info("Load entity \"", localPath, "\"");
 
-	Path realPath = game()->dataPath() / localPath;
-	Path::IStream in(realPath.native().c_str());
-	if(!in.good()) {
-		log().error("Unable to read \"", localPath, "\".");
-		return false;
-	}
-	ErrorList errors;
-	LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
+	lair::VirtualFile file = game()->fileSystem()->file(localPath);
 
-	bool success = _entities.loadEntitiesFromLdl(parser, parent);
+	lair::Path realPath = file.realPath();
+	ErrorList errors;
+	bool success = false;
+	if(!realPath.empty()) {
+		Path::IStream in(realPath.native().c_str());
+		LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
+
+		success = _entities.loadEntitiesFromLdl(parser, parent);
+	}
+	else if(file.fileBuffer()) {
+		const MemFile* memFile = file.fileBuffer();
+		lair::String data((const char*)memFile->data, memFile->size);
+		std::istringstream in(data);
+		LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
+
+		success = _entities.loadEntitiesFromLdl(parser, parent);
+	}
 
 	errors.log(log());
 

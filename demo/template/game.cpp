@@ -19,9 +19,17 @@
  */
 
 
+#include <lair/geometry/shape_2d.h>
+
+#include <lair/render_gl3/texture_set.h>
+
 #include "main_state.h"
 
 #include "game.h"
+
+
+// This function is declared in an auto-generated file
+void registerTemplateResource(lair::MemoryFileSystem& fs);
 
 
 GameConfig::GameConfig()
@@ -46,6 +54,19 @@ const PropertyList& GameConfig::staticProperties() {
 Game::Game(int argc, char** argv)
     : GameBase(argc, argv),
       _mainState() {
+	serializer().registerType<Shape2D>(
+	            static_cast<bool(*)(LdlParser&, Shape2D&)>(ldlRead),
+	            static_cast<bool(*)(LdlWriter&, const Shape2D&)>(ldlWrite));
+	serializer().registerType<Shape2DVector>(
+	            static_cast<bool(*)(LdlParser&, Shape2DVector&)>(ldlRead),
+	            static_cast<bool(*)(LdlWriter&, const Shape2DVector&)>(ldlWrite));
+
+	serializer().registerType<TextureSetCSP>(
+	    [this](LdlParser& parser, TextureSetCSP& ts) {
+		    return ldlRead(parser, ts, _renderer, _loader.get());
+	    },
+	    static_cast<bool(*)(LdlWriter&, const TextureSetCSP&)>(ldlWrite)
+	);
 }
 
 
@@ -56,10 +77,19 @@ Game::~Game() {
 void Game::initialize() {
 	GameBase::initialize(_config);
 
-#ifdef LAIR_DATA_DIR
-	_dataPath = LAIR_DATA_DIR;
-	_loader->setBasePath(_dataPath);
-#endif
+	registerTemplateResource(*_memoryFs);
+
+	typedef std::pair<const lair::Path*, const MemFile*> File;
+	std::vector<File> files;
+	for(const auto& pathFile: *_memoryFs) {
+		files.emplace_back(&pathFile.first, &pathFile.second);
+	}
+	std::sort(files.begin(), files.end(), [](const File& pf0, const File& pf1) {
+		return *pf0.first < *pf1.first;
+	});
+	for(const File& pathFile: files) {
+		log().info("Builtin file: ", *pathFile.first, " (", pathFile.second->size, "B)");
+	}
 
 	window()->setUtf8Title("Lair - template");
 

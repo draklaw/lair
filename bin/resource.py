@@ -35,11 +35,11 @@ def write_file(out, logic_path, real_path):
 	out.write('\t\t;\n')
 	file.close()
 
-	out.write('\t\tfs.addFile(Path("')
+	out.write('\t\tfs.addFile(lair::Path("')
 	out.write(logic_path)
 	out.write('"), ')
 	out.write(format(size, 'd'))
-	out.write(', (const Byte*)data);\n\t}\n')
+	out.write(', (const lair::Byte*)data);\n\t}\n')
 
 def write_file_or_dir(out, logic_path, real_path):
 	if isdir(real_path):
@@ -67,7 +67,7 @@ def write_files(out, fn_name, files, namespace = None):
 
 	out.write('void ')
 	out.write(fn_name)
-	out.write('(MemoryFileSystem& fs) {\n')
+	out.write('(lair::MemoryFileSystem& fs) {\n')
 
 	for logic_path, real_path in files:
 		write_file_or_dir(out, logic_path, real_path)

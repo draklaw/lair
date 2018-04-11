@@ -38,6 +38,16 @@ void MemoryFileSystem::addFile(const Path& logicPath, Size size, const Byte* dat
 }
 
 
+MemoryFileSystem::Iterator MemoryFileSystem::begin() const {
+	return _files.begin();
+}
+
+
+MemoryFileSystem::Iterator MemoryFileSystem::end() const {
+	return _files.end();
+}
+
+
 VirtualFile MemoryFileSystem::file(const Path& logicPath) const {
 	if(_files.find(logicPath) != _files.end())
 		return VirtualFile(this, logicPath);

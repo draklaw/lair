@@ -33,6 +33,12 @@ namespace lair
 
 
 class MemoryFileSystem : public AbstractFileSystem {
+protected:
+	typedef std::unordered_map<Path, MemFile, Hash<Path>> FileMap;
+
+public:
+	typedef FileMap::const_iterator Iterator;
+
 public:
 	MemoryFileSystem();
 	MemoryFileSystem(const MemoryFileSystem&)  = delete;
@@ -44,12 +50,12 @@ public:
 
 	void addFile(const Path& logicPath, Size size, const Byte* data);
 
+	Iterator begin() const;
+	Iterator end() const;
+
 	virtual VirtualFile file(const Path& logicPath) const override;
 
 	virtual const MemFile* _fileBuffer(const Path& logicPath) const override;
-
-protected:
-	typedef std::unordered_map<Path, MemFile, Hash<Path>> FileMap;
 
 protected:
 	FileMap _files;

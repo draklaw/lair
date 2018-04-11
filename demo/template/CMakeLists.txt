@@ -24,14 +24,16 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /SUBSYSTEM:WINDOWS")
 endif()
 
-add_definitions(-D "'LAIR_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"'")
-
 include_directories(
-	"${EIGEN3_INCLUDE_DIR}"
-	"${SDL2_INCLUDE_DIR}"
+)
+
+add_lair_resource(template_resource.cpp ""
+	/ ${CMAKE_CURRENT_SOURCE_DIR}/assets
+	tileset.png assets/lair.png
 )
 
 add_executable(template
+	template_resource.cpp
 	main.cpp
 	game.cpp
 	main_state.cpp
