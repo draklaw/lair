@@ -25,7 +25,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/metatype.h>
 #include <lair/core/json.h>
+#include <lair/core/ldl.h>
 #include <lair/core/loader.h>
 #include <lair/core/image.h>
 
@@ -36,6 +38,7 @@ namespace lair
 
 class TileMap {
 public:
+	// TODO: Support flipped / rotated tiles.
 	typedef unsigned TileIndex;
 
 public:
@@ -54,17 +57,18 @@ public:
 	TileIndex tile(unsigned x, unsigned y, unsigned layer) const;
 	void setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile);
 
-	const Json::Value& properties() const;
+	const Variant& properties() const;
 
 	unsigned nObjectLayer() const;
-	const Json::Value& objectLayer(unsigned layer) const;
+	const Variant& objectLayer(unsigned layer) const;
 
 	const Path&   tileSetPath() const;
 	ImageAspectSP tileSet() const;
 	unsigned      tileSetHTiles() const;
 	unsigned      tileSetVTiles() const;
 
-	bool setFromJson(Logger& log, const Path& path, const Json::Value& value);
+	bool setFromLdl(LdlParser& parser);
+	void setTileSet(AssetSP tileset, unsigned nHTiles, unsigned nVTiles);
 
 	void _setTileSet(ImageAspectSP tileset);
 
@@ -72,14 +76,20 @@ protected:
 	typedef std::vector<TileIndex> Layer;
 	typedef std::vector<Layer>     LayerList;
 
-	typedef std::vector<Json::Value> ObjectLayerList;
+	typedef std::vector<Variant>   ObjectLayerList;
+
+protected:
+	bool _parseTileSets(LdlParser& parser);
+	bool _parseTileSet(LdlParser& parser);
+	bool _parseLayers(LdlParser& parser);
+	bool _parseLayer(LdlParser& parser);
 
 protected:
 	unsigned  _width;
 	unsigned  _height;
 	LayerList _layers;
 
-	Json::Value     _properties;
+	Variant         _properties;
 	ObjectLayerList _objectLayers;
 
 	Path          _tileSetPath;
@@ -112,6 +122,8 @@ public:
 
 protected:
 	virtual void loadSyncImpl(Logger& log);
+
+	void parseMap(std::istream& in, Logger& log);
 
 protected:
 	TileMap _tileMap;

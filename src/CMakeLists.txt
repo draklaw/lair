@@ -80,6 +80,7 @@ add_lair_resource(lair_resource.cpp lair
 set(lair_SOURCES
 	jsoncpp.cpp
 
+	core/lair.cpp
 	core/log.cpp
 	core/metatype.cpp
 	core/path.cpp

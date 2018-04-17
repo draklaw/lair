@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.1.4" orientation="orthogonal" renderorder="right-down" width="16" height="10" tilewidth="32" tileheight="32" infinite="0" nextobjectid="4">
+ <properties>
+  <property name="test" type="color" value="#ffffaa00"/>
+ </properties>
+ <tileset firstgid="1" source="lair.tsx"/>
+ <layer name="Tile Layer 1" width="16" height="10">
+  <properties>
+   <property name="plop" type="int" value="123"/>
+  </properties>
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+1,0,2,0,0,0,3,0,0,4,0,5,5,0,0,1,
+1,0,2,0,0,3,0,3,0,4,0,5,0,5,0,1,
+1,0,2,0,0,3,3,3,0,4,0,5,5,0,0,1,
+1,0,2,2,0,3,0,3,0,4,0,5,0,5,0,1,
+1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+1,0,6,6,6,6,6,6,6,6,6,6,6,6,0,1,
+1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+</data>
+ </layer>
+ <objectgroup name="Object Layer 1">
+  <properties>
+   <property name="ping" type="float" value="123.456"/>
+  </properties>
+  <object id="1" name="Test0" type="test_object" x="64" y="64" width="64" height="128">
+   <properties>
+    <property name="collision.flags" type="int" value="4"/>
+    <property name="custom_name" value="hello_world"/>
+    <property name="sprite.color" type="color" value="#ff55aa00"/>
+    <property name="sprite.tile_index" type="int" value="2"/>
+    <property name="test" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="2" name="Test1" type="test_object" x="160" y="64" width="96" height="128">
+   <properties>
+    <property name="custom_name" value="foobar"/>
+    <property name="test" type="bool" value="false"/>
+   </properties>
+  </object>
+  <object id="3" name="object" type="player" gid="6" x="256" y="128" width="32" height="32"/>
+ </objectgroup>
+</map>

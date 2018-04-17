@@ -43,23 +43,25 @@ namespace lair {
 
 class AssertionFailedError : public std::logic_error {
 public:
-	inline AssertionFailedError(const char* testCode, const char* file, int line)
-	    : std::logic_error(_formatWhat(testCode, file, line)) {
-	}
+	AssertionFailedError(const char* testCode, const char* file, int line);
 
-private:
-	inline static std::string _formatWhat(
-	        const char* testCode, const char* file, int line) {
-		std::ostringstream out;
-		out << file << ":" << line << ": Assertion failed: '" << testCode << "'.\n";
-		return out.str();
-	}
+	static std::string _formatWhat(const char* testCode, const char* file, int line);
 };
+
+
+extern bool throwOnAssert;
+void _assertCrash(const char* testCode, const char* file, int line);
 
 
 inline void _lairAssert(bool result, const char* testCode, const char* file, int line) {
 	if(!result) {
-		throw AssertionFailedError(testCode, file, line);
+		AssertionFailedError error(testCode, file, line);
+		if(throwOnAssert) {
+			throw error;
+		}
+		else {
+			_assertCrash(testCode, file, line);
+		}
 	}
 }
 

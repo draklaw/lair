@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015, 2016 Simon Boyé
+ *  Copyright (C) 2015-2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -39,6 +39,8 @@
 #include <lair/ec/bitmap_text_component.h>
 #include <lair/ec/tile_layer_component.h>
 
+#include "scene.h"
+
 
 using namespace lair;
 
@@ -51,13 +53,22 @@ public:
 	MainState(Game* game);
 	virtual ~MainState();
 
+	Game* game();
+
+	EntityManager& entities();
+	SpriteComponentManager& sprites();
+	BitmapTextComponentManager& texts();
+	TileLayerComponentManager& tileLayers();
+
+	SpriteComponent* sprite(EntityRef entity);
+	BitmapTextComponent* text(EntityRef entity);
+	TileLayerComponent* tileLayer(EntityRef entity);
+
 	virtual void initialize();
 	virtual void shutdown();
 
 	virtual void run();
 	virtual void quit();
-
-	Game* game();
 
 	void startGame();
 	void updateTick();
@@ -72,13 +83,13 @@ protected:
 	// More or less system stuff
 
 	RenderPass                 _mainPass;
+	SpriteRenderer             _spriteRenderer;
 
 	EntityManager              _entities;
-	SpriteRenderer             _spriteRenderer;
 	SpriteComponentManager     _sprites;
 	BitmapTextComponentManager _texts;
 	TileLayerComponentManager  _tileLayers;
-//	AnimationComponentManager  _anims;
+
 	InputManager               _inputs;
 
 	SlotTracker _slotTracker;
@@ -93,10 +104,7 @@ protected:
 
 	Input*      _quitInput;
 
-	TileMapAspectSP _tileMap;
-
-	EntityRef   _modelRoot;
-	EntityRef   _tileLayer;
+	SceneSP _scene;
 };
 
 

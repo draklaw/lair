@@ -25,6 +25,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/parse.h>
+#include <lair/core/metatype.h>
 
 
 namespace lair {
@@ -477,6 +478,7 @@ bool ldlRead(LdlParser& parser, double& value);
 bool ldlRead(LdlParser& parser, String& value);
 bool ldlRead(LdlParser& parser, Path&   value);
 
+
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
 bool ldlRead(LdlParser& parser, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value, unsigned flags) {
 	typedef Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols> Matrix;
@@ -686,6 +688,10 @@ bool ldlRead(LdlParser& parser, Eigen::AlignedBox<Scalar, Dim>& value) {
 	parser.leave();
 	return true;
 }
+
+bool ldlRead(LdlParser& parser, Variant& value);
+bool ldlRead(LdlParser& parser, VarList& value);
+bool ldlRead(LdlParser& parser, VarMap&  value);
 
 
 bool ldlWrite(LdlWriter& writer, const bool&   value);

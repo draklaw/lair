@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016-2018 Simon Boyé
+ *  Copyright (C) 2015-2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,19 +19,32 @@
  */
 
 
-#include <cstdlib>
+#ifndef _LAIR_DEMO_TEMPLATE_SIMPLE_SCENE_H
+#define _LAIR_DEMO_TEMPLATE_SIMPLE_SCENE_H
 
-#include "game.h"
+
 #include "main_state.h"
 
 
-int main(int argc, char** argv) {
-	Game game(argc, argv);
-	game.initialize();
+class SimpleScene : public Scene {
+public:
+	SimpleScene(MainState* mainState);
 
-	game.setNextState(game.mainState());
-	game.run();
+	virtual void load() override;
+	virtual void unload() override;
 
-	game.shutdown();
-	return EXIT_SUCCESS;
-}
+	virtual void start() override;
+	virtual void stop() override;
+
+	virtual void updateTick() override;
+	virtual void updateFrame() override;
+
+protected:
+	TileMapAspectSP _tileMap;
+
+	EntityRef   _modelRoot;
+	EntityRef   _tileLayer;
+};
+
+
+#endif

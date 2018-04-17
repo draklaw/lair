@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016-2018 Simon Boyé
+ *  Copyright (C) 2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,19 +19,33 @@
  */
 
 
-#include <cstdlib>
+#include <lair/core/log.h>
 
-#include "game.h"
-#include "main_state.h"
+#include "lair/core/lair.h"
 
 
-int main(int argc, char** argv) {
-	Game game(argc, argv);
-	game.initialize();
+namespace lair {
 
-	game.setNextState(game.mainState());
-	game.run();
 
-	game.shutdown();
-	return EXIT_SUCCESS;
+AssertionFailedError::AssertionFailedError(const char* testCode, const char* file, int line)
+    : std::logic_error(_formatWhat(testCode, file, line)) {
+}
+
+std::string AssertionFailedError::_formatWhat(
+        const char* testCode, const char* file, int line) {
+	std::ostringstream out;
+	out << file << ":" << line << ": Assertion failed: '" << testCode << "'.";
+	return out.str();
+}
+
+
+bool throwOnAssert = false;
+
+
+void _assertCrash(const char* testCode, const char* file, int line) {
+	dbgLogger.fatal(AssertionFailedError::_formatWhat(testCode, file, line));
+	abort();
+}
+
+
 }

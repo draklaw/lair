@@ -953,6 +953,118 @@ bool ldlRead(LdlParser& parser, Transform& value) {
 }
 
 
+bool ldlRead(LdlParser& parser, Variant& value) {
+	bool success = true;
+
+	switch(parser.valueType()) {
+	case LdlParser::TYPE_ERROR:
+	case LdlParser::TYPE_END:
+		success = false;
+		parser.error("Unexpected type: ", parser.valueTypeName());
+		break;
+	case LdlParser::TYPE_NULL:
+		value.clear();
+		parser.next();
+		break;
+	case LdlParser::TYPE_BOOL:
+		value = Variant(parser.getBool());
+		parser.next();
+		break;
+	case LdlParser::TYPE_INT:
+		value = Variant(parser.getInt());
+		parser.next();
+		break;
+	case LdlParser::TYPE_FLOAT:
+		value = Variant(parser.getFloat());
+		parser.next();
+		break;
+	case LdlParser::TYPE_STRING:
+		value = Variant(parser.getString());
+		parser.next();
+		break;
+	case LdlParser::TYPE_LIST: {
+		VarList list;
+		success = success && ldlRead(parser, list);
+		value = Variant(list);
+		break;
+	}
+	case LdlParser::TYPE_MAP: {
+		VarMap map;
+		success = success && ldlRead(parser, map);
+		value = Variant(map);
+		break;
+	}
+	}
+
+	return success;
+}
+
+
+bool ldlRead(LdlParser& parser, VarList& value) {
+	if(parser.valueType() != LdlParser::TYPE_LIST) {
+		parser.error("Expected VarList, got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+	value.clear();
+
+	parser.enter();
+
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		Variant var;
+		success = success && ldlRead(parser, var);
+		if(success)
+			value.emplace_back(var);
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END) {
+		parser.next();
+	}
+
+	parser.leave();
+
+	return success;
+}
+
+
+bool ldlRead(LdlParser& parser, VarMap&  value) {
+	if(parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected VarMap, got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+	value.clear();
+
+	parser.enter();
+
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		String key = parser.getKey();
+		if(value.count(key)) {
+			parser.warning("Duplicate key \"", key, "\": ignoring");
+		}
+		else {
+			Variant var;
+			success = success && ldlRead(parser, var);
+			if(success) {
+				value.emplace(key, var);
+			}
+		}
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END) {
+		parser.next();
+	}
+
+	parser.leave();
+
+	return success;
+}
+
+
 bool ldlWrite(LdlWriter& writer, const bool& value) {
 	writer.writeBool(value);
 	return true;

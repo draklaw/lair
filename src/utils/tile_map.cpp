@@ -21,6 +21,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/ldl.h>
 
 #include <lair/sys_sdl2/image_loader.h>
 
@@ -73,7 +74,7 @@ void TileMap::setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile) {
 }
 
 
-const Json::Value& TileMap::properties() const {
+const Variant& TileMap::properties() const {
 	return _properties;
 }
 
@@ -83,7 +84,7 @@ unsigned TileMap::nObjectLayer() const {
 }
 
 
-const Json::Value& TileMap::objectLayer(unsigned layer) const {
+const Variant& TileMap::objectLayer(unsigned layer) const {
 	lairAssert(layer < _objectLayers.size());
 	return _objectLayers[layer];
 }
@@ -109,65 +110,193 @@ unsigned TileMap::tileSetVTiles() const {
 }
 
 
-bool TileMap::setFromJson(Logger& log, const Path& path, const Json::Value& value) {
-	_width  = value.get("width",  0).asInt();
-	_height = value.get("height", 0).asInt();
-
-	if(_width == 0 || _height == 0) {
-		log.error("Tile map \"", path, "\" has invalid size.");
+bool TileMap::setFromLdl(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected TileMap (VarMap), got ", parser.valueTypeName());
 		return false;
 	}
 
-	const Json::Value& tilesets = value["tilesets"];
-	if(!tilesets.isArray() || tilesets.size() != 1) {
-		log.error("Tile map \"", path, "\" has invalid number of tilesets.");
-		return false;
-	}
-//	_tileSetPath   = makeAbsolute(path.dir(), tilesets[0].get("image", "").asString());
-//	_tileSetHTiles = tilesets[0].get("imagewidth", 0).asInt()
-//	               / tilesets[0].get("tilewidth", 1).asInt();
-//	_tileSetVTiles = tilesets[0].get("imageheight", 0).asInt()
-//	               / tilesets[0].get("tileheight", 1).asInt();
-	// FIXME: Recent version of Tiled no longer store this in the file...
-	_tileSetPath   = "tileset.png";
-	_tileSetHTiles = 4;
-	_tileSetVTiles = 4;
+	bool success = true;
 
-	_properties = value["properties"];
-
-	_layers.clear();
-	_objectLayers.clear();
-	for(const Json::Value& layer: value["layers"]) {
-		if(layer.get("type", "").asString() == "tilelayer") {
-			unsigned width  = layer.get("width",  0).asInt();
-			unsigned height = layer.get("height", 0).asInt();
-
-			if(width != _width || height != _height) {
-				log.error("Tile map \"", path, "\" has a layer with invalid size");
-				return false;
-			}
-
-			_layers.emplace_back();
-			Layer& map = _layers.back();
-			map.reserve(_width * _height);
-			for(const Json::Value& v: layer["data"]) {
-				if(!v.isIntegral()) {
-					log.error("Tile map \"", path, "\": invalid tile index");
-					return false;
-				}
-				map.push_back(v.asInt());
-			}
-		} else if(layer.get("type", "").asString() == "objectgroup") {
-			_objectLayers.push_back(layer);
+	parser.enter();
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		String key = parser.getKey();
+		if(key == "width") {
+			success = ldlRead(parser, _width);
+		}
+		else if(key == "height") {
+			success = ldlRead(parser, _height);
+		}
+		else if(key == "tilesets") {
+			success = _parseTileSets(parser);
+		}
+		else if(key == "properties") {
+			success = ldlRead(parser, _properties);
+		}
+		else if(key == "layers") {
+			success = _parseLayers(parser);
+		}
+		else {
+			parser.warning("Unknown key \"", key, "\" in TileMap, ignoring.");
+			parser.skip();
 		}
 	}
 
-	return true;
+	if(!success) {
+		while(parser.valueType() != LdlParser::TYPE_END)
+			parser.skip();
+		_width = 0;
+		_height = 0;
+		_layers.clear();
+	}
+	parser.leave();
+
+	return success;
+}
+
+void TileMap::setTileSet(AssetSP tileset, unsigned nHTiles, unsigned nVTiles) {
+	_tileSetPath   = tileset->logicPath();
+	_tileSetHTiles = nHTiles;
+	_tileSetVTiles = nVTiles;
+	_tileSet = tileset->aspect<ImageAspect>();
 }
 
 
 void TileMap::_setTileSet(ImageAspectSP tileset) {
 	_tileSet = tileset;
+}
+
+
+bool TileMap::_parseTileSets(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_LIST) {
+		parser.error("Expected list of tilesets (VarList), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+
+	parser.enter();
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		success = _parseTileSet(parser);
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END)
+		parser.skip();
+	parser.leave();
+
+	return success;
+}
+
+
+bool TileMap::_parseTileSet(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected tileset (VarMap), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+
+	// TODO: Support multiple tilesets
+	parser.enter();
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		String key = parser.getKey();
+		if(key == "image") {
+			success = ldlRead(parser, _tileSetPath);
+		}
+		else if(key == "h_tiles") {
+			success = ldlRead(parser, _tileSetHTiles);
+		}
+		else if(key == "v_tiles") {
+			success = ldlRead(parser, _tileSetVTiles);
+		}
+		else {
+			parser.warning("Unknown key \"", key, "\" in TileSet, ignoring.");
+			parser.skip();
+		}
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END)
+		parser.skip();
+	parser.leave();
+
+	return success;
+}
+
+
+bool TileMap::_parseLayers(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_LIST) {
+		parser.error("Expected list of layers (VarList), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+
+	parser.enter();
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		success = _parseLayer(parser);
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END)
+		parser.skip();
+	parser.leave();
+
+	return success;
+}
+
+
+bool TileMap::_parseLayer(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected layer (VarMap), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+
+	parser.enter();
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		String key = parser.getKey();
+		if(key == "tiles") {
+			if(parser.valueType() != LdlParser::TYPE_LIST) {
+				parser.error("Expected tile list (VarList), got ", parser.valueTypeName());
+				parser.skip();
+				success = false;
+			}
+			else {
+				_layers.emplace_back();
+				Layer& layer = _layers.back();
+				layer.reserve(_width * _height);
+
+				parser.enter();
+				while(parser.valueType() != LdlParser::TYPE_END) {
+					TileIndex index;
+					success = success && ldlRead(parser, index);
+					layer.push_back(index);
+				}
+				parser.leave();
+
+				success = success && layer.size() == _width * _height;
+			}
+		}
+		else if(key == "objects") {
+			_objectLayers.emplace_back();
+			success = ldlRead(parser, _objectLayers.back());
+			success = success && _objectLayers.back().isVarList();
+		}
+		else {
+			parser.warning("Unknown key \"", key, "\" in TileMap layer, ignoring.");
+			parser.skip();
+		}
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END)
+		parser.skip();
+	parser.leave();
+
+	return success;
 }
 
 
@@ -185,22 +314,46 @@ void TileMapLoader::commit() {
 
 
 void TileMapLoader::loadSyncImpl(Logger& log) {
-	Json::Value json;
-	if(!parseJson(json, file(), asset()->logicPath(), log))
-		return;
+	const VirtualFile& vFile = file();
 
-	if(!_tileMap.setFromJson(log, asset()->logicPath(), json))
-		return;
-
-	_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
-		ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
-		if(!tileSetImg) {
-			log.error("Error while loading TileMap \"", asset()->logicPath(),
-			          "\": Failed to load tile set \"", _tileMap.tileSetPath(), "\".");
+	Path realPath = vFile.realPath();
+	if(!realPath.empty()) {
+		Path::IStream in(realPath.native().c_str());
+		if(!in.good()) {
+			log.error("Unable to read \"", asset()->logicPath(), "\".");
 			return;
 		}
-		_tileMap._setTileSet(tileSetImg);
-	}, log);
+		parseMap(in, log);
+		return;
+	}
+
+	const MemFile* memFile = vFile.fileBuffer();
+	if(memFile) {
+		String buffer((const char*)memFile->data, memFile->size);
+		std::istringstream in(buffer);
+		parseMap(in, log);
+		return;
+	}
+}
+
+
+void TileMapLoader::parseMap(std::istream& in, Logger& log) {
+	ErrorList errors;
+	LdlParser parser(&in, asset()->logicPath().utf8String(), &errors, LdlParser::CTX_MAP);
+
+	if(_tileMap.setFromLdl(parser)) {
+		_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
+			ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
+			if(!tileSetImg) {
+				log.error("Error while loading TileMap \"", asset()->logicPath(),
+				          "\": Failed to load tile set \"", _tileMap.tileSetPath(), "\".");
+				return;
+			}
+			_tileMap._setTileSet(tileSetImg);
+		}, log);
+	}
+
+	errors.log(log);
 }
 
 

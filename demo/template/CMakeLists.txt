@@ -29,7 +29,6 @@ include_directories(
 
 add_lair_resource(template_resource.cpp ""
 	/ ${CMAKE_CURRENT_SOURCE_DIR}/assets
-	tileset.png assets/lair.png
 )
 
 add_executable(template
@@ -37,6 +36,8 @@ add_executable(template
 	main.cpp
 	game.cpp
 	main_state.cpp
+	scene.cpp
+	simple_scene.cpp
 )
 
 target_link_libraries(template

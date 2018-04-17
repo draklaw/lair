@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015, 2016 Simon Boyé
+ *  Copyright (C) 2015-2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -24,6 +24,7 @@
 #include <lair/core/json.h>
 
 #include "game.h"
+#include "simple_scene.h"
 
 #include "main_state.h"
 
@@ -35,9 +36,9 @@ MainState::MainState(Game* game)
 	: GameState(game),
 
       _mainPass(renderer()),
+      _spriteRenderer(loader(), renderer()),
 
       _entities(log(), _game->serializer()),
-      _spriteRenderer(loader(), renderer()),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
       _tileLayers(loader(), &_mainPass, &_spriteRenderer),
@@ -52,7 +53,9 @@ MainState::MainState(Game* game)
       _fpsTime(0),
       _fpsCount(0),
 
-      _quitInput(nullptr) {
+      _quitInput(nullptr),
+
+      _scene(std::make_shared<SimpleScene>(this)) {
 
 	_entities.registerComponentManager(&_sprites);
 	_entities.registerComponentManager(&_texts);
@@ -61,6 +64,46 @@ MainState::MainState(Game* game)
 
 
 MainState::~MainState() {
+}
+
+
+Game* MainState::game() {
+	return static_cast<Game*>(_game);
+}
+
+
+EntityManager& MainState::entities() {
+	return _entities;
+}
+
+
+SpriteComponentManager& MainState::sprites() {
+	return _sprites;
+}
+
+
+BitmapTextComponentManager& MainState::texts() {
+	return _texts;
+}
+
+
+TileLayerComponentManager& MainState::tileLayers() {
+	return _tileLayers;
+}
+
+
+SpriteComponent* MainState::sprite(EntityRef entity) {
+	return _sprites.get(entity);
+}
+
+
+BitmapTextComponent* MainState::text(EntityRef entity) {
+	return _texts.get(entity);
+}
+
+
+TileLayerComponent* MainState::tileLayer(EntityRef entity) {
+	return _tileLayers.get(entity);
 }
 
 
@@ -77,29 +120,7 @@ void MainState::initialize() {
 	_quitInput = _inputs.addInput("quit");
 	_inputs.mapScanCode(_quitInput, SDL_SCANCODE_ESCAPE);
 
-	_modelRoot = _entities.createEntity(_entities.root(), "modelRoot");
-
-	// TODO: load stuff.
-	AssetSP tileMapAsset = loader()->load<TileMapLoader>("map.json")->asset();
-	_tileMap = tileMapAsset->aspect<TileMapAspect>();
-
-	_tileLayer = _entities.createEntity(_entities.root(), "tile_layer");
-	TileLayerComponent* tileLayerComp = _tileLayers.addComponent(_tileLayer);
-	tileLayerComp->setTileMap(_tileMap);
-//	_tileLayer.place(Vector3(120, 90, .5));
-
-	loadEntities("entities.ldl", _entities.root());
-
-	EntityRef sprite = _entities.findByName("sprite");
-	EntityRef text   = _entities.findByName("text");
-
-	if(sprite.isValid())
-		log().info("Entity \"", sprite.name(), "\" found.");
-	if(text.isValid())
-		log().info("Entity \"", text.name(), "\" found.");
-
-	loader()->load<SoundLoader>("sound.ogg");
-	//loader()->load<MusicLoader>("music.ogg");
+	_scene->load();
 
 	loader()->waitAll();
 
@@ -111,6 +132,8 @@ void MainState::initialize() {
 
 
 void MainState::shutdown() {
+	_scene->stop();
+
 	_slotTracker.disconnectAll();
 
 	_initialized = false;
@@ -147,15 +170,8 @@ void MainState::quit() {
 }
 
 
-Game* MainState::game() {
-	return static_cast<Game*>(_game);
-}
-
-
 void MainState::startGame() {
-	// TODO: Setup game
-	//audio()->playMusic(assets()->getAsset("music.ogg"));
-	audio()->playSound(assets()->getAsset("sound.ogg"), 2);
+	_scene->start();
 }
 
 
@@ -169,13 +185,15 @@ void MainState::updateTick() {
 		quit();
 	}
 
-	// TODO: Game update.
+	_scene->updateTick();
 
 	_entities.updateWorldTransforms();
 }
 
 
 void MainState::updateFrame() {
+	_scene->updateFrame();
+
 	// Rendering
 	Context* glc = renderer()->context();
 

@@ -54,11 +54,17 @@ namespace lair {
 /// Copy-construct `dst` from `src`.
 typedef void (*CopyConstructorFunc)(void* dst, const void* src);
 
+/// Move-construct `dst` from `src`.
+typedef void (*MoveConstructorFunc)(void* dst, void* src);
+
 /// Destroy `obj`.
 typedef void (*DestructorFunc)(const void* obj);
 
 /// Assign `value` to `obj`.
 typedef void (*AssignFunc)(void* dst, const void* value);
+
+/// Swap two values
+typedef void (*SwapFunc)(void* value0, void* value1);
 
 /// Converts `obj` to `int`.
 typedef int (*ToIntFunc)(const void* obj);
@@ -79,10 +85,12 @@ struct MetaType {
 	unsigned            index;
 	std::string         identifier;
 	size_t              size;
+	bool                isPod;
 	CopyConstructorFunc copyConstruct;
+	MoveConstructorFunc moveConstruct;
 	DestructorFunc      destroy;
 	AssignFunc          assign;
-	// TODO: Add a move operation that calls the move constructor.
+	SwapFunc            swap;
 	ToIntFunc           toInt;
 	FromIntFunc         fromInt;
 	WriteReprFunc       writeRepr;
@@ -159,6 +167,29 @@ CopyConstructorFunc makeCopyConstructor() {
 	return makeCopyConstructor<T>(std::is_copy_constructible<T>());
 }
 
+/// Templates that return a MoveConstructorFunc that calls the move constructor
+/// of T, or null if there is no such constructor.
+template<typename T>
+struct _MoveConstructorFunc {
+	static void move(void* dst, void* src) {
+		T* dstPtr = reinterpret_cast<T*>(dst);
+		T* srcPtr = reinterpret_cast<T*>(src);
+		new(dstPtr) T(std::move(*srcPtr));
+	}
+};
+template<typename T>
+MoveConstructorFunc makeMoveConstructor(std::true_type) {
+	return _MoveConstructorFunc<T>::move;
+}
+template<typename T>
+MoveConstructorFunc makeMoveConstructor(std::false_type) {
+	return nullptr;
+}
+template<typename T>
+MoveConstructorFunc makeMoveConstructor() {
+	return makeMoveConstructor<T>(std::is_move_constructible<T>());
+}
+
 /// Templates that return a DestructorFunc that calls the destructor of T,
 /// or null if the destructor is deleted (who would want to do that ?).
 template<typename T>
@@ -203,6 +234,38 @@ template<typename T>
 AssignFunc makeAssignFunc() {
 	// We need the & so that C++ test lvalue instead of rvalue.
 	return makeAssignFunc<T>(std::is_assignable<T&, T&>());
+}
+
+template<typename T>
+static auto _hasSwap(int)
+    -> decltype(swap(std::declval<T>(), std::declval<T>()), // <- Test this experssion...
+                std::true_type{});                          // <- and return this one.
+template<typename T>
+static std::false_type _hasSwap(long);
+/// A reflection trait that test if writeRepr(std::ostream&, T) exists.
+template<typename T>
+struct HasSwap: decltype(_hasSwap<T>(0)) {};
+
+/// Templates that return a SwapFunc that calls std::swap() on two objects.
+template<typename T>
+struct _SwapFunc {
+	static void swapFunc(void* value0, void* value1) {
+		T* ptr0 = reinterpret_cast<const T*>(value0);
+		T* ptr1 = reinterpret_cast<const T*>(value1);
+		swap(*ptr0, *ptr1);
+	}
+};
+template<typename T>
+SwapFunc makeSwapFunc(std::true_type) {
+	return _SwapFunc<T>::swapFunc;
+}
+template<typename T>
+SwapFunc makeSwapFunc(std::false_type) {
+	return nullptr;
+}
+template<typename T>
+SwapFunc makeSwapFunc() {
+	return makeSwapFunc<T>(HasSwap<T>());
 }
 
 /// Templates that return a ToIntFunc that converts the object to an integer if
@@ -300,9 +363,12 @@ WriteReprFunc makeWriteReprFunc() {
 				0, \
 				_id, \
 				sizeof(_type), \
+				std::is_pod<_type>(), \
 				lair::makeCopyConstructor<_type>(), \
+				lair::makeMoveConstructor<_type>(), \
 				lair::makeDestructor<_type>(), \
 				lair::makeAssignFunc<_type>(), \
+				lair::makeSwapFunc<_type>(), \
 				lair::makeToIntFunc<_type>(), \
 				lair::makeFromIntFunc<_type>(), \
 				lair::makeWriteReprFunc<_type>() \
@@ -527,6 +593,10 @@ private:
 };
 
 
+typedef std::vector<Variant> VarList;
+typedef std::unordered_map<String, Variant> VarMap;
+
+
 /**
  * \brief Variant implement a dynamically-typed variable.
  *
@@ -559,19 +629,21 @@ public:
 		}
 	}
 
-	inline Variant(Variant&& other)
-		: _type(nullptr)
-	{
-		if(other._type) {
-			_type = other._type;
-			std::memcpy(_data, other._data, VARIANT_DATA_SIZE);
-			other._type = nullptr;
-			other._clearData();
-		}
-		else {
-			_clearData();
-		}
-	}
+	// TODO: Implement move contructor using moveConstruct
+//	inline Variant(Variant&& other)
+//		: _type(nullptr)
+//	{
+//		dbgLogger.warning("Move constructor ", this, ", ", &other);
+//		if(other._type) {
+//			_type = other._type;
+//			std::memcpy(_data, other._data, VARIANT_DATA_SIZE);
+//			other._type = nullptr;
+//			other._clearData();
+//		}
+//		else {
+//			_clearData();
+//		}
+//	}
 
 	inline Variant(const VarRef& ref)
 		: _type(nullptr)
@@ -596,23 +668,23 @@ public:
 	}
 
 	template<typename T>
-	Variant(const T& object)
+	inline Variant(const T& object)
 		: _type(nullptr)
 	{
 		_set(metaTypes.get<T>(), &object);
 	}
 
-	~Variant() {
+	inline ~Variant() {
 		clear();
 	}
 
-	Variant& operator=(Variant other) {
+	inline Variant& operator=(Variant other) {
 		other.swap(*this);
 		return *this;
 	}
 
 	template<typename T>
-	Variant& operator=(const ConstVarRef& ref) {
+	inline Variant& operator=(const ConstVarRef& ref) {
 		clear();
 		if(ref._type) {
 			_set(ref._type, ref._data);
@@ -633,6 +705,34 @@ public:
 		return _type == metaTypes.get<T>();
 	}
 
+	inline bool isNull() const {
+		return isEmpty();
+	}
+
+	inline bool isBool() const {
+		return _type && _type->toInt;
+	}
+
+	inline bool isInt() const {
+		return _type && _type->toInt;
+	}
+
+	inline bool isFloat() const {
+		return is<float>() || is<double>();
+	}
+
+	inline bool isString() const {
+		return is<String>();
+	}
+
+	inline bool isVarList() const {
+		return is<VarList>();
+	}
+
+	inline bool isVarMap() const {
+		return is<VarMap>();
+	}
+
 	template<typename T>
 	inline T& as() {
 		lairAssert(is<T>());
@@ -645,9 +745,39 @@ public:
 		return *reinterpret_cast<const T*>(_getDataBlock());
 	}
 
+	inline bool asBool() const {
+		if(is<bool>())
+			return as<bool>();
+		if(isInt())
+			return asInt();
+		lairAssert(false);
+		return false;
+	}
+
 	inline int asInt() const {
 		lairAssert(_type && _type->toInt);
 		return _type->toInt(_getDataBlock());
+	}
+
+	inline double asFloat() const {
+		if(is<float>())
+			return as<float>();
+		if(is<double>())
+			return as<double>();
+		lairAssert(false);
+		return 0;
+	}
+
+	inline const String& asString() const {
+		return as<String>();
+	}
+
+	inline const VarList& asVarList() const {
+		return as<VarList>();
+	}
+
+	inline const VarMap& asVarMap() const {
+		return as<VarMap>();
 	}
 
 	inline void setInt(int i) {
@@ -671,11 +801,13 @@ public:
 
 			if(ptr) {
 				// Seriously, who would delete the destructor ???
-				if(_type->destroy)
+				if(_type->destroy) {
 					_type->destroy(ptr);
+				}
 
-				if(_type->size > VARIANT_DATA_SIZE) {
+				if(useExternalStorage()) {
 					free(ptr);
+					ptr = nullptr;
 				}
 			}
 
@@ -687,13 +819,17 @@ public:
 	void swap(Variant& other) noexcept {
 		std::swap(_type, other._type);
 
-		std::uint8_t tmp[VARIANT_DATA_SIZE];
+		uint8 tmp[VARIANT_DATA_SIZE];
 		std::memcpy(tmp,        _data,        VARIANT_DATA_SIZE);
 		std::memcpy(_data,       other._data, VARIANT_DATA_SIZE);
 		std::memcpy(other._data, tmp,         VARIANT_DATA_SIZE);
 	}
 
 private:
+	inline bool useExternalStorage() const {
+		return !_type || !_type->isPod || _type->size > VARIANT_DATA_SIZE;
+	}
+
 	template<typename T>
 	inline T& _get() {
 		return *reinterpret_cast<T*>(_data);
@@ -705,15 +841,15 @@ private:
 	}
 
 	inline void* _getDataBlock() {
-		if(_type->size > VARIANT_DATA_SIZE)
+		if(useExternalStorage())
 			return _get<void*>();
-		return _data;
+		return (void*)&_data;
 	}
 
 	inline const void* _getDataBlock() const {
-		if(_type->size > VARIANT_DATA_SIZE)
+		if(useExternalStorage())
 			return _get<void*>();
-		return _data;
+		return (void*)&_data;
 	}
 
 	inline void _set(const MetaType* type, const void* obj) {
@@ -721,14 +857,14 @@ private:
 
 		_type = type;
 
-		if(_type->size > VARIANT_DATA_SIZE) {
+		void* ptr = (void*)&_data;
+		if(useExternalStorage()) {
 			// Allocate a memory block to store the object
-			_get<void*>() = malloc(_type->size);
-			if(!_get<void*>())
+			ptr = malloc(_type->size);
+			if(!ptr)
 				throw std::bad_alloc();
+			_get<void*>() = ptr;
 		}
-
-		void* ptr = _getDataBlock();
 
 		lairAssert(_type->copyConstruct);
 		_type->copyConstruct(ptr, obj);
@@ -766,6 +902,7 @@ ConstVarRef::ConstVarRef(const Variant& variant)
 	, _data(_type? variant._getDataBlock(): nullptr)
 {}
 
+
 inline std::ostream& operator<<(std::ostream& out, const VarRef& var) {
 	if(var.isEmpty())
 		out << "null";
@@ -793,6 +930,32 @@ inline std::ostream& operator<<(std::ostream& out, const Variant& var) {
 		var.type()->writeRepr(out, var.data());
 	else
 		out << "<" << var.type()->identifier << " at " << var.data() << ">";
+	return out;
+}
+
+inline std::ostream& operator<<(std::ostream& out, const VarList& list) {
+	out << "VarList(";
+	bool count = 0;
+	for(const Variant& var: list) {
+		if(count)
+			out << ", ";
+		out << var;
+		count += 1;
+	}
+	out << ")";
+	return out;
+}
+
+inline std::ostream& operator<<(std::ostream& out, const VarMap& map) {
+	out << "VarMap(";
+	bool count = 0;
+	for(const auto& var: map) {
+		if(count)
+			out << ", ";
+		out << var.first << " = " << var.second;
+		count += 1;
+	}
+	out << ")";
 	return out;
 }
 
@@ -908,5 +1071,8 @@ LAIR_REGISTER_METATYPE(lair::Box2,  "Box2f");
 LAIR_REGISTER_METATYPE(lair::Box3,  "Box3f");
 LAIR_REGISTER_METATYPE(lair::Box2i, "Box2i");
 LAIR_REGISTER_METATYPE(lair::Box3i, "Box3i");
+
+LAIR_REGISTER_METATYPE(lair::VarList, "VarList");
+LAIR_REGISTER_METATYPE(lair::VarMap,  "VarMap");
 
 #endif
