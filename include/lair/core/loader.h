@@ -66,15 +66,21 @@ public:
 	typedef std::function<void(AspectSP, Logger&)> DoneCallback;
 	typedef std::list<DoneCallback> CallbackList;
 
-	enum State{
+	enum State {
 		IN_QUEUE,
 		LOADING,
 		READY,
 		LOADED,
 	};
 
+	enum Flags {
+		LOAD_FROM_MAIN_THREAD = 0x00,
+		LOAD_FROM_ANY_THREAD  = 0x01,
+	};
+
 public:
-	Loader(LoaderManager* manager, AspectSP aspect);
+	Loader(LoaderManager* manager, AspectSP aspect,
+	       unsigned flags = LOAD_FROM_ANY_THREAD);
 	Loader(const Loader&) = delete;
 	Loader(Loader&&)      = delete;
 	virtual ~Loader();
@@ -85,6 +91,7 @@ public:
 	Loader& operator=(Loader&&)      = delete;
 
 	State              state();
+	unsigned           flags() const { return _flags; }
 	bool               isSuccessful();
 	AssetSP            asset()    const { return _aspect->asset(); }
 	AspectSP           aspect()   const { return _aspect; }
@@ -109,6 +116,7 @@ protected:
 protected:
 	LoaderManager*          _manager;
 	State                   _state;
+	unsigned                _flags;
 	unsigned                _depCount;
 	CallbackList            _onDone;
 	AspectSP                _aspect;
@@ -177,8 +185,24 @@ public:
 		else {
 			loader = std::make_shared<L>(this, aspect,
 			                             std::forward<Args>(args)...);
-			log().info("Request \"", aspect->asset()->logicPath(), "\" loading...");
-			_enqueueLoader(loader);
+			if(loader->flags() & Loader::LOAD_FROM_ANY_THREAD) {
+				log().info("Request \"", aspect->asset()->logicPath(), "\" loading...");
+				_enqueueLoader(loader);
+			}
+			else {
+				// FIXME: This should add the loader to a "main thread" queue,
+				// instead of loading it right now, because this might be called
+				// from a loader thread, which defeat the purpose of sync loader.
+				log().log("Loading \"", aspect->asset()->logicPath(), "\" from thread ",
+				          std::this_thread::get_id(), " (sync)...");
+				loader->loadSync(log());
+				{
+					std::unique_lock<std::mutex> lk(_queueLock);
+					_wipList.push_back(loader);
+				}
+				_notifyReady();
+				return loader;
+			}
 		}
 		aspect->_setLoader(loader);
 		return loader;

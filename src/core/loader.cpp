@@ -31,9 +31,10 @@ namespace lair
 {
 
 
-Loader::Loader(LoaderManager* manager, AspectSP aspect)
+Loader::Loader(LoaderManager* manager, AspectSP aspect, unsigned flags)
     : _manager(manager),
       _state(IN_QUEUE),
+      _flags(flags),
       _depCount(1),
       _aspect(aspect),
       _mutex() {
