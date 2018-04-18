@@ -47,6 +47,9 @@ MetaTypeManager& MetaTypeManager::_getInstance() {
 MetaTypeManager& metaTypes = MetaTypeManager::_getInstance();
 
 
+Variant Variant::null = Variant();
+
+
 EnumInfo::EnumInfo(const String& name)
 	: _name(name)
 {}

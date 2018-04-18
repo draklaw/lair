@@ -384,9 +384,8 @@ WriteReprFunc makeWriteReprFunc() {
  * allocating a new data block.
  */
 union _VariantDataContent {
-	void*       ptr;
-	double      real;
-	std::string str;
+	void*  ptr;
+	double real;
 };
 
 enum {
@@ -612,6 +611,9 @@ typedef std::unordered_map<String, Variant> VarMap;
  */
 class Variant {
 public:
+	static Variant null;
+
+public:
 	inline Variant()
 		: _type(nullptr)
 	{
@@ -776,8 +778,54 @@ public:
 		return as<VarList>();
 	}
 
+	inline VarList& asVarList() {
+		return as<VarList>();
+	}
+
 	inline const VarMap& asVarMap() const {
 		return as<VarMap>();
+	}
+
+	inline VarMap& asVarMap() {
+		return as<VarMap>();
+	}
+
+	inline const Variant& operator[](unsigned i) const {
+		return const_cast<Variant*>(this)->operator[](i);
+	}
+
+	inline Variant& operator[](unsigned i) {
+		lairAssert(isVarList());
+		lairAssert(i < asVarList().size());
+		return asVarList()[i];
+	}
+
+	inline const Variant& operator[](const String& key) const {
+		return const_cast<Variant*>(this)->operator[](key);
+	}
+
+	inline Variant& operator[](const String& key) {
+		lairAssert(isVarMap());
+		auto it = asVarMap().find(key);
+		lairAssert(it != asVarMap().end());
+		return it->second;
+	}
+
+	inline const Variant& get(const String& key) const {
+		lairAssert(isVarMap());
+		auto it = asVarMap().find(key);
+		if(it != asVarMap().end())
+			return it->second;
+		return null;
+	}
+
+	template<typename T>
+	inline const Variant& get(const String& key, const T& defaultValue) const {
+		lairAssert(isVarMap());
+		auto it = asVarMap().find(key);
+		if(it != asVarMap().end())
+			return it->second;
+		return Variant(defaultValue);
 	}
 
 	inline void setInt(int i) {
@@ -824,6 +872,7 @@ public:
 		std::memcpy(_data,       other._data, VARIANT_DATA_SIZE);
 		std::memcpy(other._data, tmp,         VARIANT_DATA_SIZE);
 	}
+
 
 private:
 	inline bool useExternalStorage() const {
