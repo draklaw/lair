@@ -67,8 +67,10 @@ public:
 		_index = index;
 	}
 
+	virtual Component* get(EntityRef entity) = 0;
+	virtual const Component* get(EntityRef entity) const = 0;
 	virtual Component* addComponent(EntityRef entity) = 0;
-	virtual const PropertyList& componentProperties() = 0;
+	virtual const PropertyList& componentProperties() const = 0;
 	virtual Component* cloneComponent(EntityRef base, EntityRef entity) = 0;
 	virtual void removeComponent(EntityRef entity) = 0;
 

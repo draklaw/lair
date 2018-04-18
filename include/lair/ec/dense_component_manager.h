@@ -131,7 +131,11 @@ public:
 
 	virtual const std::string& name() const { return _name; }
 
-	Component* get(EntityRef entity) {
+	virtual const Component* get(EntityRef entity) const {
+		return const_cast<Self*>(this)->get(entity);
+	}
+
+	virtual Component* get(EntityRef entity) {
 		lairAssert(_index >= 0);
 
 		if(_index < LAIR_EC_MAX_DENSE_COMPONENTS) {
@@ -247,7 +251,7 @@ public:
 		_components.resize(lastAlive);
 	}
 
-	virtual const PropertyList& componentProperties() {
+	virtual const PropertyList& componentProperties() const {
 		return Component::properties();
 	}
 
