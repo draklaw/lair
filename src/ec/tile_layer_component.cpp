@@ -107,7 +107,7 @@ const PropertyList& TileLayerComponent::properties() {
 		props.addProperty("layer_index",
 		                  &TileLayerComponent::layerIndex,
 		                  &TileLayerComponent::setLayerIndex);
-		props.addProperty("blend",
+		props.addProperty("blend", blendingModeInfo(),
 		                  &TileLayerComponent::blendingMode,
 		                  &TileLayerComponent::setBlendingMode);
 	}
