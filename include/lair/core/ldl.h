@@ -216,7 +216,7 @@ private:
 	Token                _token;
 
 	Type                 _type;
-	int                  _int;
+	int64                _int;
 	double               _float;
 	String               _string;
 	String               _key;

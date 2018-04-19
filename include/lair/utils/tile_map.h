@@ -40,10 +40,16 @@ namespace lair
 
 class TileMap {
 public:
-	// TODO: Support flipped / rotated tiles.
-	typedef unsigned TileIndex;
+	typedef uint32 TileIndex;
 
 	typedef std::function<bool(LdlParser&)> ObjectsLoader;
+
+	enum {
+		HFLIP_FLAG = 0x80000000,
+		VFLIP_FLAG = 0x40000000,
+		DFLIP_FLAG = 0x20000000,
+		GID_MASK   = 0x1fffffff,
+	};
 
 public:
 	TileMap();

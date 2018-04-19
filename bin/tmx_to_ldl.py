@@ -29,6 +29,7 @@ import re
 from pprint import pprint
 
 from tmx import (
+    HFLIP_FLAG, VFLIP_FLAG, DFLIP_FLAG,
     Color as TmxColor, GroupLayer, Layer, Object, ObjectGroup, Property, TileMap
 )
 
@@ -208,7 +209,17 @@ class TileMapAsDict:
         return d
 
     def tile_layer(self, tile_layer):
-        return Typed(None, list(map(lambda t: t.gid, tile_layer.tiles)), inline = True)
+        return Typed(None, list(map(self.tile_code, tile_layer.tiles)), inline = True)
+
+    def tile_code(self, tile):
+        t = tile.gid
+        if tile.hflip:
+            t |= HFLIP_FLAG
+        if tile.vflip:
+            t |= VFLIP_FLAG
+        if tile.dflip:
+            t |= DFLIP_FLAG
+        return t
 
     def object(self, object):
         d = OrderedDict()
