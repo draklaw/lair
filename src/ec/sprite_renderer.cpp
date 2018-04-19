@@ -218,7 +218,7 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 		Vector4 p;
 		p << coords.corner(Box2::CornerType(corner)), 0, 1;
 		p = trans * p;
-		addVertex(p, color, texCoords.corner(Box2::CornerType(tcCorner)));
+		addVertex(p, linearFromSrgb(color), texCoords.corner(Box2::CornerType(tcCorner)));
 	}
 
 	addIndex(index + 0);

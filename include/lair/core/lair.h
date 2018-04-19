@@ -195,6 +195,34 @@ inline float linearFromSrgb(float coeff) {
 	                            pow((coeff + 0.055f) / 1.055f, 2.4f);
 }
 
+template<typename Derived>
+inline Derived srgbFromLinear(const Eigen::DenseBase<Derived>& color) {
+	typedef typename Derived::Index Index;
+	Derived v = color;
+	Index rows = std::min(Index(3), color.rows());
+	Index cols = color.cols();
+	for(Index c = 0; c < cols; ++c) {
+		for(Index r = 0; r < rows; ++r) {
+			v(r, c) = srgbFromLinear(v(r, c));
+		}
+	}
+	return v;
+}
+
+template<typename Derived>
+inline Derived linearFromSrgb(const Eigen::DenseBase<Derived>& color) {
+	typedef typename Derived::Index Index;
+	Derived v = color;
+	Index rows = std::min(Index(3), color.rows());
+	Index cols = color.cols();
+	for(Index c = 0; c < cols; ++c) {
+		for(Index r = 0; r < rows; ++r) {
+			v(r, c) = linearFromSrgb(v(r, c));
+		}
+	}
+	return v;
+}
+
 inline Vector3 srgb(float r, float g, float b) {
 	return Vector3(linearFromSrgb(r), linearFromSrgb(g), linearFromSrgb(b));
 }
@@ -213,6 +241,27 @@ Eigen::WithFormat<Derived> fmt(const Eigen::DenseBase<Derived>& m) {
 		return m.format(vFormat);
 	return m.format(mFormat);
 }
+
+
+template<typename It>
+class IteratorRange {
+public:
+	inline IteratorRange(It begin, It end)
+	    : _begin(begin), _end(end) {}
+
+	inline It begin() const {
+		return _begin;
+	}
+
+	inline It end() const {
+		return _end;
+	}
+
+private:
+	It _begin;
+	It _end;
+};
+
 
 }
 
