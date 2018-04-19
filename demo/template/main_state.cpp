@@ -39,6 +39,7 @@ MainState::MainState(Game* game)
       _spriteRenderer(loader(), renderer()),
 
       _entities(log(), _game->serializer()),
+      _collisions(),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
       _tileLayers(loader(), &_mainPass, &_spriteRenderer),
@@ -57,6 +58,7 @@ MainState::MainState(Game* game)
 
       _scene(std::make_shared<SimpleScene>(this)) {
 
+	_entities.registerComponentManager(&_collisions);
 	_entities.registerComponentManager(&_sprites);
 	_entities.registerComponentManager(&_texts);
 	_entities.registerComponentManager(&_tileLayers);
@@ -77,6 +79,11 @@ EntityManager& MainState::entities() {
 }
 
 
+CollisionComponentManager& MainState::collisions() {
+	return _collisions;
+}
+
+
 SpriteComponentManager& MainState::sprites() {
 	return _sprites;
 }
@@ -89,6 +96,11 @@ BitmapTextComponentManager& MainState::texts() {
 
 TileLayerComponentManager& MainState::tileLayers() {
 	return _tileLayers;
+}
+
+
+CollisionComponent* MainState::collision(EntityRef entity) {
+	return _collisions.get(entity);
 }
 
 
@@ -236,8 +248,8 @@ void MainState::updateFrame() {
 
 void MainState::resizeEvent() {
 	Box3 viewBox(Vector3::Zero(),
-	             Vector3(window()->width()  / 4., // Big pixels
-	                     window()->height() / 4., 1));
+	             Vector3(window()->width()  / 2., // Big pixels
+	                     window()->height() / 2., 1));
 	_camera.setViewBox(viewBox);
 }
 

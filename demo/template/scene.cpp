@@ -80,6 +80,11 @@ lair::EntityManager& Scene::entities() {
 }
 
 
+lair::CollisionComponentManager& Scene::collisions() {
+	return state->collisions();
+}
+
+
 lair::SpriteComponentManager& Scene::sprites() {
 	return state->sprites();
 }
@@ -92,6 +97,11 @@ lair::BitmapTextComponentManager& Scene::texts() {
 
 lair::TileLayerComponentManager& Scene::tileLayers() {
 	return state->tileLayers();
+}
+
+
+lair::CollisionComponent* Scene::collision(lair::EntityRef entity) {
+	return collisions().get(entity);
 }
 
 
@@ -123,6 +133,21 @@ lair::EntityRef Scene::entity(const lair::String& name, lair::EntityRef from) {
 bool Scene::loadEntities(const lair::Path& path, lair::EntityRef parent,
                          const lair::Path& cd) {
 	return state->loadEntities(path, parent, cd);
+}
+
+
+float Scene::updateDepth(lair::EntityRef entity, float inc, float depth) {
+	Vector3 p = entity.position3() + Vector3(0, 0, depth);
+	entity.moveTo(p);
+
+	EntityRef child = entity.firstChild();
+	float thickness = inc;
+	while(child.isValid()) {
+		thickness += updateDepth(child, inc, thickness);
+		child = child.nextSibling();
+	}
+
+	return thickness;
 }
 
 

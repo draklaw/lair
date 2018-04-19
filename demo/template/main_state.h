@@ -35,6 +35,7 @@
 
 #include <lair/ec/entity.h>
 #include <lair/ec/entity_manager.h>
+#include <lair/ec/collision_component.h>
 #include <lair/ec/sprite_component.h>
 #include <lair/ec/bitmap_text_component.h>
 #include <lair/ec/tile_layer_component.h>
@@ -56,10 +57,12 @@ public:
 	Game* game();
 
 	EntityManager& entities();
+	CollisionComponentManager& collisions();
 	SpriteComponentManager& sprites();
 	BitmapTextComponentManager& texts();
 	TileLayerComponentManager& tileLayers();
 
+	CollisionComponent* collision(EntityRef entity);
 	SpriteComponent* sprite(EntityRef entity);
 	BitmapTextComponent* text(EntityRef entity);
 	TileLayerComponent* tileLayer(EntityRef entity);
@@ -86,6 +89,7 @@ protected:
 	SpriteRenderer             _spriteRenderer;
 
 	EntityManager              _entities;
+	CollisionComponentManager  _collisions;
 	SpriteComponentManager     _sprites;
 	BitmapTextComponentManager _texts;
 	TileLayerComponentManager  _tileLayers;

@@ -44,10 +44,12 @@ class AudioModule;
 
 class EntityManager;
 
+class CollisionComponentManager;
 class SpriteComponentManager;
 class BitmapTextComponentManager;
 class TileLayerComponentManager;
 
+class CollisionComponent;
 class SpriteComponent;
 class BitmapTextComponent;
 class TileLayerComponent;
@@ -79,10 +81,12 @@ public:
 	lair::AssetSP asset(const lair::String& logicPath);
 
 	lair::EntityManager&              entities();
+	lair::CollisionComponentManager&  collisions();
 	lair::SpriteComponentManager&     sprites();
 	lair::BitmapTextComponentManager& texts();
 	lair::TileLayerComponentManager&  tileLayers();
 
+	lair::CollisionComponent*  collision(lair::EntityRef entity);
 	lair::SpriteComponent*     sprite   (lair::EntityRef entity);
 	lair::BitmapTextComponent* text     (lair::EntityRef entity);
 	lair::TileLayerComponent*  tileLayer(lair::EntityRef entity);
@@ -94,6 +98,8 @@ public:
 	bool loadEntities(const lair::Path& path,
 	                  lair::EntityRef parent = lair::EntityRef(),
 	                  const lair::Path& cd = lair::Path());
+
+	float updateDepth(lair::EntityRef entity, float inc = 0.0001, float depth = 0);
 
 	lair::Logger& log();
 
