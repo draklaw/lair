@@ -737,6 +737,8 @@ bool ldlWrite(LdlWriter& writer, const Eigen::Matrix<Scalar, Rows, Cols, Options
 	return success;
 }
 
+bool ldlWrite(LdlWriter& writer, const Transform& value);
+
 template<typename Scalar, int Dim>
 bool ldlWrite(LdlWriter& writer, const Eigen::AlignedBox<Scalar, Dim>& value) {
 	typedef Eigen::AlignedBox<Scalar, Dim> Box;

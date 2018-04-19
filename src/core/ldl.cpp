@@ -1110,5 +1110,54 @@ bool ldlWrite(LdlWriter& writer, const Path& value) {
 	return true;
 }
 
+bool ldlWrite(LdlWriter& writer, const Transform& value) {
+	bool compound = !value.linear().isApprox(Matrix3::Identity());
+	bool success = true;
+
+	if(compound) {
+		writer.openList(LdlWriter::CF_SINGLE_LINE);
+	}
+
+	writer.openList(LdlWriter::CF_SINGLE_LINE, "translate");
+	for(unsigned i = 0; i < 3; ++i)
+		writer.writeFloat(value(i, 3));
+	writer.close();
+
+	if(compound) {
+		Matrix3 rot;
+		Matrix3 scale;
+		value.computeScalingRotation(&scale, &rot);
+
+		if(!rot.isApprox(Matrix3::Identity())) {
+			Eigen::AngleAxisf aa(rot);
+
+			writer.openList(LdlWriter::CF_SINGLE_LINE, "rotate");
+			if(aa.axis().isApprox(Vector3::UnitZ())) {
+				writer.writeFloat(aa.angle() * 180 / M_PI);
+			}
+			else if(aa.axis().isApprox(-Vector3::UnitZ())) {
+				writer.writeFloat(-aa.angle() * 180 / M_PI);
+			}
+			else {
+				writer.writeFloat(aa.angle() * 180 / M_PI);
+				for(unsigned i = 0; i < 3; ++i)
+					writer.writeFloat(aa.axis()(i));
+			}
+			writer.close();
+		}
+
+		if(!rot.isApprox(Matrix3::Identity())) {
+			writer.openList(LdlWriter::CF_SINGLE_LINE, "scale");
+			for(unsigned i = 0; i < 3; ++i)
+				writer.writeFloat(scale(i, i));
+			writer.close();
+		}
+
+		writer.close();
+	}
+
+	return success;
+}
+
 
 }
