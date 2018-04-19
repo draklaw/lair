@@ -5,8 +5,11 @@
 - arch:split-core: Split core in several modules (assets, ldl, etc)
 - arch:ldl-lib: Make LDL a standalone library ?
 - arch:meta-lib: Make meta-type system a standalone library ?
+- arch:shared-lib: Make Lair a dll/so (need to remove a lot of inline stuff)
 
 - log:newlines: Indent new lines and replace tabs by spaces.
+
+- meta:move-construct: Support move constructor (and move assign ?) in Variants
 
 - sys:mouse: Better mouse support
 - sys:gamepad: Support gamepads
@@ -18,6 +21,8 @@
 - assets:group: Create assets groups to automatically follow load progress / release assets
 - assets:autoreload: Track file changes and auto-reload assets
 - assets:race-condition: Fix race-condition when accessing loader callbacks.
+- assets:main-thread-loader-fix: "Main-thread" loader are not guaranteed to be on the main thread if they are started from an other loader.
+- assets:load-deps: Add a way to declare loader dependencies (tile maps must be loaded after models)
 
 - render:shader-error: Improve shader compilation error by showing the right file/line combination.
 - render:fbo: Support FBO
@@ -34,6 +39,15 @@
 - entities:bake-disable: Propagate disabled state to avoid walking the tree to know if an entity is enabled
 - entities:tile-map-culling: Update render so it uses culling instead of static buffers
 - entities:tranforms-helper: Write transforms methods for entities for convenience
+- entities:relative-path: Loading entities from ldl don't support relative paths.
+- entities:pack-tiled: Python script to pack tiled template in a single ldl
+- entities:post-load: Add a callback to update entities after load from ldl, using type and custom properties.
+- entities:thread-safety: Make entities and component creation / destruction thread-safe. Entity/component read/write should be synchronised using some other method.
+- entities:component-manager: Merge ComponentManager and DenseComponentManager ?
+
+- tile-map:infinite: Support Tiled infinite tile-maps
+- tile-map:templates: Support templates (clone model + update only overridden properties)
+- tile-map:tile-flip: Support flipped/rotated tiles
 
 - coll:enhance: Finish & test basic shape collisions
 

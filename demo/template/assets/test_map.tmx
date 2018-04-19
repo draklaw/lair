@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.4" orientation="orthogonal" renderorder="right-down" width="16" height="10" tilewidth="32" tileheight="32" infinite="0" nextobjectid="4">
+<map version="1.0" tiledversion="1.1.4" orientation="orthogonal" renderorder="right-down" width="16" height="10" tilewidth="32" tileheight="32" infinite="0" nextobjectid="5">
  <properties>
   <property name="test" type="color" value="#ffffaa00"/>
  </properties>
  <tileset firstgid="1" source="lair.tsx"/>
- <layer name="Tile Layer 1" width="16" height="10">
+ <layer name="tile_map" width="16" height="10">
   <properties>
    <property name="plop" type="int" value="123"/>
+   <property name="tile_layer.blend" value="alpha"/>
   </properties>
   <data encoding="csv">
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -21,25 +22,47 @@
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 </data>
  </layer>
- <objectgroup name="Object Layer 1">
-  <properties>
-   <property name="ping" type="float" value="123.456"/>
-  </properties>
-  <object id="1" name="Test0" type="test_object" x="64" y="64" width="64" height="128">
+ <group name="test_group">
+  <objectgroup name="triggers">
    <properties>
-    <property name="collision.flags" type="int" value="4"/>
-    <property name="custom_name" value="hello_world"/>
-    <property name="sprite.color" type="color" value="#ff55aa00"/>
-    <property name="sprite.tile_index" type="int" value="2"/>
-    <property name="test" type="bool" value="true"/>
+    <property name="ping" type="float" value="123.456"/>
    </properties>
-  </object>
-  <object id="2" name="Test1" type="test_object" x="160" y="64" width="96" height="128">
-   <properties>
-    <property name="custom_name" value="foobar"/>
-    <property name="test" type="bool" value="false"/>
-   </properties>
-  </object>
-  <object id="3" name="object" type="player" gid="6" x="256" y="128" width="32" height="32"/>
- </objectgroup>
+   <object id="1" name="Test0" type="test_object" x="64" y="64" width="64" height="128">
+    <properties>
+     <property name="collision.hit_mask" type="int" value="4"/>
+     <property name="custom_name" value="hello_world"/>
+     <property name="sprite.anchor_x" type="float" value="0.5"/>
+     <property name="sprite.anchor_y" type="float" value="0.2"/>
+     <property name="sprite.blend" value="alpha"/>
+     <property name="sprite.color" type="color" value="#80ffffff"/>
+     <property name="sprite.texture" type="file" value="lair.png"/>
+     <property name="sprite.tile_grid_x" type="int" value="3"/>
+     <property name="sprite.tile_grid_y" type="int" value="2"/>
+     <property name="sprite.tile_index" type="int" value="2"/>
+     <property name="test" type="bool" value="true"/>
+    </properties>
+   </object>
+   <object id="2" name="Test1" type="test_object" x="160" y="64" width="96" height="128">
+    <properties>
+     <property name="anchor_x" type="float" value="0"/>
+     <property name="anchor_y" type="float" value="1"/>
+     <property name="custom_name" value="foobar"/>
+     <property name="test" type="bool" value="false"/>
+    </properties>
+   </object>
+  </objectgroup>
+  <objectgroup name="objects">
+   <object id="3" name="player" type="player" gid="6" x="266.144" y="133.856" width="32" height="32" rotation="-30">
+    <properties>
+     <property name="sprite.blend" value="alpha"/>
+    </properties>
+   </object>
+   <object id="4" name="text" type="text" x="64" y="224" width="96" height="64">
+    <properties>
+     <property name="text.blend" value="alpha"/>
+    </properties>
+    <text fontfamily="Droid Sans Fallback" pixelsize="19" wrap="1" color="#d3be8a">Hello World</text>
+   </object>
+  </objectgroup>
+ </group>
 </map>

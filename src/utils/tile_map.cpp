@@ -79,17 +79,6 @@ const Variant& TileMap::properties() const {
 }
 
 
-unsigned TileMap::nObjectLayer() const {
-	return _objectLayers.size();
-}
-
-
-const Variant& TileMap::objectLayer(unsigned layer) const {
-	lairAssert(layer < _objectLayers.size());
-	return _objectLayers[layer];
-}
-
-
 const Path& TileMap::tileSetPath() const {
 	return _tileSetPath;
 }
@@ -110,7 +99,7 @@ unsigned TileMap::tileSetVTiles() const {
 }
 
 
-bool TileMap::setFromLdl(LdlParser& parser) {
+bool TileMap::setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects) {
 	if(parser.valueType() != LdlParser::TYPE_MAP) {
 		parser.error("Expected TileMap (VarMap), got ", parser.valueTypeName());
 		return false;
@@ -127,14 +116,20 @@ bool TileMap::setFromLdl(LdlParser& parser) {
 		else if(key == "height") {
 			success = ldlRead(parser, _height);
 		}
-		else if(key == "tilesets") {
-			success = _parseTileSets(parser);
-		}
 		else if(key == "properties") {
 			success = ldlRead(parser, _properties);
 		}
-		else if(key == "layers") {
-			success = _parseLayers(parser);
+		else if(key == "tilesets") {
+			success = _parseTileSets(parser);
+		}
+		else if(key == "tile_layers") {
+			success = _parseTileLayers(parser);
+		}
+		else if(key == "objects") {
+			if(loadObjects)
+				success = loadObjects(parser);
+			else
+				parser.skip();
 		}
 		else {
 			parser.warning("Unknown key \"", key, "\" in TileMap, ignoring.");
@@ -179,6 +174,10 @@ bool TileMap::_parseTileSets(LdlParser& parser) {
 	parser.enter();
 	while(success && parser.valueType() != LdlParser::TYPE_END) {
 		success = _parseTileSet(parser);
+
+		// FIXME: Support more than one tileset. Currently, only take the first
+		// one that should be used with the tile map.
+		break;
 	}
 
 	while(parser.valueType() != LdlParser::TYPE_END)
@@ -225,9 +224,9 @@ bool TileMap::_parseTileSet(LdlParser& parser) {
 }
 
 
-bool TileMap::_parseLayers(LdlParser& parser) {
+bool TileMap::_parseTileLayers(LdlParser& parser) {
 	if(parser.valueType() != LdlParser::TYPE_LIST) {
-		parser.error("Expected list of layers (VarList), got ", parser.valueTypeName());
+		parser.error("Expected list of tile layers (VarList), got ", parser.valueTypeName());
 		parser.skip();
 		return false;
 	}
@@ -236,7 +235,7 @@ bool TileMap::_parseLayers(LdlParser& parser) {
 
 	parser.enter();
 	while(success && parser.valueType() != LdlParser::TYPE_END) {
-		success = _parseLayer(parser);
+		success = _parseTileLayer(parser);
 	}
 
 	while(parser.valueType() != LdlParser::TYPE_END)
@@ -247,62 +246,40 @@ bool TileMap::_parseLayers(LdlParser& parser) {
 }
 
 
-bool TileMap::_parseLayer(LdlParser& parser) {
-	if(parser.valueType() != LdlParser::TYPE_MAP) {
-		parser.error("Expected layer (VarMap), got ", parser.valueTypeName());
+bool TileMap::_parseTileLayer(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_LIST) {
+		parser.error("Expected tile layer (VarList), got ", parser.valueTypeName());
 		parser.skip();
 		return false;
 	}
 
 	bool success = true;
 
+	_layers.emplace_back();
+	Layer& layer = _layers.back();
+	layer.reserve(_width * _height);
+
 	parser.enter();
 	while(success && parser.valueType() != LdlParser::TYPE_END) {
-		String key = parser.getKey();
-		if(key == "tiles") {
-			if(parser.valueType() != LdlParser::TYPE_LIST) {
-				parser.error("Expected tile list (VarList), got ", parser.valueTypeName());
-				parser.skip();
-				success = false;
-			}
-			else {
-				_layers.emplace_back();
-				Layer& layer = _layers.back();
-				layer.reserve(_width * _height);
-
-				parser.enter();
-				while(parser.valueType() != LdlParser::TYPE_END) {
-					TileIndex index;
-					success = success && ldlRead(parser, index);
-					layer.push_back(index);
-				}
-				parser.leave();
-
-				success = success && layer.size() == _width * _height;
-			}
-		}
-		else if(key == "objects") {
-			_objectLayers.emplace_back();
-			success = ldlRead(parser, _objectLayers.back());
-			success = success && _objectLayers.back().isVarList();
-		}
-		else {
-			parser.warning("Unknown key \"", key, "\" in TileMap layer, ignoring.");
-			parser.skip();
-		}
+		TileIndex index;
+		success = success && ldlRead(parser, index);
+		layer.push_back(index);
 	}
 
 	while(parser.valueType() != LdlParser::TYPE_END)
 		parser.skip();
 	parser.leave();
 
-	return success;
+	return success && layer.size() == _width * _height;
 }
 
 
 
-TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect)
-	: Loader(manager, aspect) {
+TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect,
+                             const ObjectsLoader& loadObjects)
+    : Loader(manager, aspect, loadObjects? Loader::LOAD_FROM_MAIN_THREAD:
+                                           Loader::LOAD_FROM_ANY_THREAD),
+      _loadObjects(loadObjects) {
 }
 
 
@@ -341,7 +318,7 @@ void TileMapLoader::parseMap(std::istream& in, Logger& log) {
 	ErrorList errors;
 	LdlParser parser(&in, asset()->logicPath().utf8String(), &errors, LdlParser::CTX_MAP);
 
-	if(_tileMap.setFromLdl(parser)) {
+	if(_tileMap.setFromLdl(parser, _loadObjects)) {
 		_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
 			ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
 			if(!tileSetImg) {

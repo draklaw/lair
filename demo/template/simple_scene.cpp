@@ -30,18 +30,31 @@ SimpleScene::SimpleScene(MainState* mainState)
 
 
 void SimpleScene::load() {
-	AssetSP tileMapAsset = loader()->load<TileMapLoader>("test_map.ldl")->asset();
+	EntityRef test_map = entities().createEntity(root(), "test_map");
+
+	TileMap::ObjectsLoader loadObjects = [this, &test_map](LdlParser& parser) {
+		return entities().loadEntitiesFromLdl(parser, test_map);
+	};
+
+	AssetSP tileMapAsset = loader()->load<TileMapLoader>("test_map.ldl", loadObjects)->asset();
 	_tileMap = tileMapAsset->aspect<TileMapAspect>();
 
-	_tileLayer = entities().createEntity(entities().root(), "tile_layer");
-	TileLayerComponent* tileLayerComp = tileLayers().addComponent(_tileLayer);
-	tileLayerComp->setTileMap(_tileMap);
-//	_tileLayer.place(Vector3(120, 90, .5));
-
-	loadEntities("entities.ldl", root());
+//	loadEntities("entities.ldl", root());
 
 	loader()->load<lair::SoundLoader>("sound.ogg");
 	//loader()->load<MusicLoader>("music.ogg");
+
+	loader()->waitAll();
+
+	updateDepth(root());
+
+	log().log("Done loading, dump entities and go !");
+
+	std::ofstream out("entities.ldl");
+	ErrorList errors;
+	LdlWriter writer(&out, "<debug>", &errors);
+	entities().saveEntitiesToLdl(writer, root());
+	errors.log(log());
 }
 
 
@@ -50,15 +63,7 @@ void SimpleScene::unload() {
 
 
 void SimpleScene::start() {
-	_modelRoot = entities().createEntity(entities().root(), "modelRoot");
-
-	EntityRef sprite = entities().findByName("sprite");
-	EntityRef text   = entities().findByName("text");
-
-	if(sprite.isValid())
-		log().info("Entity \"", sprite.name(), "\" found.");
-	if(text.isValid())
-		log().info("Entity \"", text.name(), "\" found.");
+	_modelRoot = entity("__model__");
 
 	//audio()->playMusic(assets()->getAsset("music.ogg"));
 	audio()->playSound(asset("sound.ogg"), 2);

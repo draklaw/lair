@@ -23,6 +23,8 @@
 #define _LAIR_UTILS_TILE_MAP_H
 
 
+#include <functional>
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/metatype.h>
@@ -40,6 +42,8 @@ class TileMap {
 public:
 	// TODO: Support flipped / rotated tiles.
 	typedef unsigned TileIndex;
+
+	typedef std::function<bool(LdlParser&)> ObjectsLoader;
 
 public:
 	TileMap();
@@ -59,15 +63,12 @@ public:
 
 	const Variant& properties() const;
 
-	unsigned nObjectLayer() const;
-	const Variant& objectLayer(unsigned layer) const;
-
 	const Path&   tileSetPath() const;
 	ImageAspectSP tileSet() const;
 	unsigned      tileSetHTiles() const;
 	unsigned      tileSetVTiles() const;
 
-	bool setFromLdl(LdlParser& parser);
+	bool setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects = ObjectsLoader());
 	void setTileSet(AssetSP tileset, unsigned nHTiles, unsigned nVTiles);
 
 	void _setTileSet(ImageAspectSP tileset);
@@ -76,21 +77,18 @@ protected:
 	typedef std::vector<TileIndex> Layer;
 	typedef std::vector<Layer>     LayerList;
 
-	typedef std::vector<Variant>   ObjectLayerList;
-
 protected:
 	bool _parseTileSets(LdlParser& parser);
 	bool _parseTileSet(LdlParser& parser);
-	bool _parseLayers(LdlParser& parser);
-	bool _parseLayer(LdlParser& parser);
+	bool _parseTileLayers(LdlParser& parser);
+	bool _parseTileLayer(LdlParser& parser);
 
 protected:
 	unsigned  _width;
 	unsigned  _height;
 	LayerList _layers;
 
-	Variant         _properties;
-	ObjectLayerList _objectLayers;
+	Variant _properties;
 
 	Path          _tileSetPath;
 	ImageAspectSP _tileSet;
@@ -109,8 +107,11 @@ class TileMapLoader : public Loader {
 public:
 	typedef TileMapAspect Aspect;
 
+	typedef TileMap::ObjectsLoader ObjectsLoader;
+
 public:
-	TileMapLoader(LoaderManager* manager, AspectSP aspect);
+	TileMapLoader(LoaderManager* manager, AspectSP aspect,
+	              const ObjectsLoader& loadObjects = ObjectsLoader());
 	TileMapLoader(const TileMapLoader&) = delete;
 	TileMapLoader(TileMapLoader&&)      = delete;
 	virtual ~TileMapLoader() = default;
@@ -126,7 +127,8 @@ protected:
 	void parseMap(std::istream& in, Logger& log);
 
 protected:
-	TileMap _tileMap;
+	ObjectsLoader _loadObjects;
+	TileMap       _tileMap;
 };
 
 

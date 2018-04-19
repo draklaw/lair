@@ -135,6 +135,9 @@ class LdlWriter:
 
         self.sep()
 
+        if hasattr(obj, 'as_ldl'):
+            obj = obj.as_ldl()
+
         if isinstance(obj, Typed):
             type = obj.type
             inline = obj.inline
