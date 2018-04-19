@@ -130,6 +130,67 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 }
 
 
+//EntityRef EntityManager::createEntity(const Variant& properties, EntityRef parent,
+//                                      const char* name, int index) {
+//	if(!properties.isVarMap()) {
+//		log().warning("Expected entity (VarMap), got ", properties);
+//		return EntityRef();
+//	}
+
+//	EntityRef entity = createEntity(parent, name, index);
+
+//	for(const auto& prop: properties.asVarMap()) {
+//		const String&  key   = prop.first;
+//		const Variant& value = prop.second;
+
+//		if(key == "name" && !name) {
+//			setEntityName(entity, value.asString());
+//		}
+//		else if(key == "transform") {
+//			// TODO
+//		}
+//		else if(key == "enabled") {
+//			entity.setEnabled(value.asBool());
+//		}
+//		else if(key != "children" && key != "properties") {
+//			ComponentManager* cm = componentManager(key);
+//			if(cm) {
+//				Component* cmp = cm->addComponent(entity);
+//				//_serializer.read(value, cmp);
+//			}
+//			else {
+//				log().warning("Unknown component type \"", key, "\"");
+//			}
+//		}
+//	}
+
+//	return entity;
+//}
+
+
+//EntityRef EntityManager::createEntities(const Variant& properties, EntityRef parent,
+//                                        const char* name, int index) {
+//	EntityRef entity = createEntity(properties, parent, name, index);
+
+//	if(!entity.isValid())
+//		return entity;
+
+//	const Variant& children = properties["children"];
+//	if(children.isVarList()) {
+//		for(const Variant& child: children.asVarList()) {
+//			createEntities(child, entity);
+//		}
+//	}
+//	else if(children.isVarMap()) {
+//		for(const auto& nameChild: children.asVarMap()) {
+//			createEntities(nameChild.second, entity, nameChild.first.c_str());
+//		}
+//	}
+
+//	return entity;
+//}
+
+
 bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 	if(parser.valueType() != LdlParser::TYPE_MAP) {
 		parser.error("Expected entity (VarMap), got ", parser.valueTypeName());
@@ -169,6 +230,14 @@ bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 		}
 		else if(key == "children") {
 			success &= loadEntitiesFromLdl(parser, entity);
+		}
+		else if(key == "type") {
+			// Ignore atm
+			parser.skip();
+		}
+		else if(key == "properties") {
+			// Ignore atm
+			parser.skip();
 		}
 		else {
 			ComponentManager* cm = componentManager(key);
@@ -213,6 +282,49 @@ bool EntityManager::loadEntitiesFromLdl(LdlParser& parser, EntityRef parent) {
 	}
 	parser.leave();
 	return true;
+}
+
+
+bool EntityManager::saveEntitiesToLdl(LdlWriter& writer, EntityRef entity) const {
+	if(!entity.isValid())
+		entity = _root;
+
+	bool success = true;
+
+	writer.openMap();
+
+	writer.writeKey("name");
+	success = success && ldlWrite(writer, String(entity.name()));
+
+	writer.writeKey("enabled");
+	success = success && ldlWrite(writer, entity.isEnabled());
+
+	writer.writeKey("transform");
+	success = success && ldlWrite(writer, entity.transform());
+
+	for(const ComponentManager* cm: _compManagers) {
+		const Component* comp = cm->get(entity);
+		if(comp) {
+			writer.writeKey(cm->name());
+			_serializer._write(writer, cm->componentProperties(), comp);
+		}
+	}
+
+	if(entity.firstChild().isValid()) {
+		writer.writeKey("children");
+		writer.openList();
+
+		EntityRef child = entity.firstChild();
+		while(child.isValid()) {
+			saveEntitiesToLdl(writer, child);
+			child = child.nextSibling();
+		}
+		writer.close();
+	}
+
+	writer.close();
+
+	return success;
 }
 
 

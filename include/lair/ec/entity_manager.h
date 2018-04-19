@@ -79,8 +79,15 @@ public:
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr, int index = -1);
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter);
 
+//	EntityRef createEntity(const Variant& properties, EntityRef parent,
+//	                       const char* name = nullptr, int index = -1);
+//	EntityRef createEntities(const Variant& properties, EntityRef parent,
+//	                         const char* name = nullptr, int index = -1);
+
 	bool initializeFromLdl(EntityRef entity, LdlParser& parser);
 	bool loadEntitiesFromLdl(LdlParser& parser, EntityRef parent);
+
+	bool saveEntitiesToLdl(LdlWriter& writer, EntityRef entity) const;
 
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
