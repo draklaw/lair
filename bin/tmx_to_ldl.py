@@ -24,7 +24,7 @@
 from sys import argv, stderr
 from math import cos, radians, sin
 from collections import OrderedDict
-from pathlib import PurePath
+from pathlib import Path, PurePath
 import re
 from pprint import pprint
 
@@ -287,19 +287,15 @@ class MapAsDict:
         z = properties.get('z', 0.0)
         rotation = -getattr(object, 'rotation', 0.0) # Rotation is inverted
 
-        print(object.name, base_x, base_y)
         # For some reason, tile objects origin is bottom-left instead of top-left
         if gid is None:
             # Move base coordinate bottom-left
             base_y += height
 
-        print(object.name, base_x, base_y, anchor_x, anchor_y, width, height)
         # Tiled origin is top left of the map, Lair is bottom left
         x, y = rotate(-radians(rotation), anchor_x * width, anchor_y * height)
         x += base_x
         y += self._height - base_y
-
-        print(object.name, x, y)
 
         # Set base properties
         if getattr(object, 'template', None) is not None:
@@ -403,7 +399,9 @@ class MapAsDict:
         return property
 
     def path(self, path):
-        return str(path.relative_to(self._target_dir))
+        path = Path(path).resolve()
+        target = Path(self._target_dir).resolve()
+        return str(path.relative_to(target))
 
 
 def usage(ret=1):
