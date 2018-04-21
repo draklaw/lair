@@ -31,7 +31,7 @@ line = parse_line(next(lines))
 json["image"] = line[1][1:-1]
 
 img_file = join(dirname(argv[1]), json["image"])
-check_call(["convert", img_file, "PNG32:"+img_file])
+#check_call(["convert", img_file, "PNG32:"+img_file])
 
 
 line = parse_line(next(lines))

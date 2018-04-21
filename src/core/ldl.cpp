@@ -920,7 +920,7 @@ bool ldlRead(LdlParser& parser, Transform& value) {
 			return false;
 		}
 
-		Vector3  vec;
+		Vector3  vec(1, 1, 1);
 		unsigned index    = 0;
 		bool     vSuccess = true;
 		parser.enter();
@@ -931,17 +931,20 @@ bool ldlRead(LdlParser& parser, Transform& value) {
 		}
 
 		if(vSuccess) {
-			if(index == 1) {
+			switch(index) {
+			case 1:
 				value.setIdentity();
 				value.scale(vec(0));
-			}
-			else if(index == 4) {
+				break;
+			case 2:
+			case 3:
 				value.setIdentity();
 				value.scale(vec);
-			}
-			else {
-				parser.error("Invalid number of arguments in scale transform, expected 1 or 4, got ", index);
+				break;
+			default:
+				parser.error("Invalid number of arguments in scale transform, expected 1 to 3, got ", index);
 				success = false;
+				break;
 			}
 		}
 		success &= vSuccess;
