@@ -191,6 +191,37 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 //}
 
 
+void EntityManager::initializeFromEntity(EntityRef base, EntityRef entity) {
+	lairAssert(base.isValid());
+
+	entity._get()->flags = base._get()->flags;
+	setEntityName(entity, base.name());
+	entity.place(base.transform());
+
+	for(ComponentManager* cm: _compManagers) {
+		Component* comp = cm->get(entity);
+		Component* baseComp = cm->get(base);
+
+		if(baseComp) {
+			cm->cloneComponent(base, entity);
+		}
+		else if(comp) {
+			cm->removeComponent(entity);
+		}
+	}
+
+	while(entity.firstChild().isValid()) {
+		entity.firstChild().destroy();
+	}
+
+	EntityRef child = base.firstChild();
+	while(child.isValid()) {
+		cloneEntity(child, entity);
+		child = child.nextSibling();
+	}
+}
+
+
 bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 	if(parser.valueType() != LdlParser::TYPE_MAP) {
 		parser.error("Expected entity (VarMap), got ", parser.valueTypeName());
@@ -203,7 +234,23 @@ bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 	while(parser.valueType() != LdlParser::TYPE_END) {
 		String key = parser.getKey();
 
-		if(key == "name" && entity.name()[0] == '\0') {
+		if(key == "model") {
+			// FIXME: This breaks if model is not the first property
+			String modelName;
+			if(!ldlRead(parser, modelName)) {
+				log().error("Expected String, got ", parser.valueTypeName());
+				break;
+			}
+
+			EntityRef model = findByName(modelName);
+			if(model.isValid()) {
+				initializeFromEntity(model, entity);
+			}
+			else {
+				log().warning("Model not found: ", modelName);
+			}
+		}
+		else if(key == "name") {
 			if(parser.valueType() == LdlParser::TYPE_STRING) {
 				setEntityName(entity, parser.getString());
 				parser.next();

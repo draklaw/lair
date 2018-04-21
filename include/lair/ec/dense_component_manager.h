@@ -167,10 +167,13 @@ public:
 	virtual Component* addComponent(EntityRef entity) {
 		lairAssert(_index >= 0);
 		lairAssert(entity.isValid());
-		lairAssert(get(entity) == nullptr);
+
+		Component* comp = get(entity);
+		if(comp)
+			return comp;
 
 		_components.emplace_back(static_cast<typename Component::Manager*>(this), entity._get());
-		Component* comp = &_components.back();
+		comp = &_components.back();
 		entity._get()->_addComponent(comp);
 		_setComponent(entity._get(), comp);
 		++_nComponents;

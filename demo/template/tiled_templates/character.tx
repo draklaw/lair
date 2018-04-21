@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <tileset firstgid="1" source="../assets/character.tsx"/>
+ <object name="character" type="character" gid="1" width="48" height="48">
+  <properties>
+   <property name="character.hp" type="float" value="100"/>
+   <property name="character.max_hp" type="float" value="100"/>
+   <property name="character.move_speed" type="float" value="4"/>
+   <property name="character.rot_speed" type="float" value="180"/>
+   <property name="sprite.anchor_x" type="float" value="0.5"/>
+   <property name="sprite.anchor_y" type="float" value="0.5"/>
+   <property name="sprite.color" type="color" value="#ffffaa00"/>
+  </properties>
+ </object>
+</template>

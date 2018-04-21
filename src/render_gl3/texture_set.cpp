@@ -332,9 +332,6 @@ bool ldlWrite(LdlWriter& writer, const TextureSetCSP& textureSet) {
 			success &= ldlWrite(writer, binding.sampler);
 
 		writer.close();
-		dbgLogger.log("Log: ", binding.unit->name,
-		              ", ", binding.texture,
-		              ", ", binding.sampler);
 	}
 	writer.close();
 

@@ -22,34 +22,26 @@
 
 
 from sys import argv, stderr
+from math import cos, radians, sin
 from collections import OrderedDict
-from os.path import basename, dirname, join, relpath, splitext
 from pathlib import PurePath
 import re
 from pprint import pprint
 
-from tmx import (
-    HFLIP_FLAG, VFLIP_FLAG, DFLIP_FLAG,
-    Color as TmxColor, GroupLayer, Layer, Object, ObjectGroup, Property, TileMap
+from tiled import (
+    Color as TiledColor,
+    Loader, Map, Layer, TileLayer, ObjectLayer, GroupLayer, Object,
 )
 
 from ldl import LdlWriter, Typed
 
 
-def properties_as_dict(properties):
-    d = OrderedDict()
-
-    for prop in properties:
-        d[prop.name] = prop.value
-
-    return d
-
-def get_tile_set_from_gid(tile_map, gid):
+def get_tile_set_from_gid(tilemap, gid):
     prev = None
-    for tile_set in tile_map.tilesets:
-        if tile_set.firstgid >= gid:
+    for tileset in tilemap.tilesets:
+        if gid < tileset.firstgid:
             return prev
-        prev = tile_set
+        prev = tileset
     return prev
 
 _vectorize_re = re.compile(r'^(.*)_([xyzw])$')
@@ -70,6 +62,29 @@ def vectorize(properties):
 
     return d
 
+def rotate(angle, x, y):
+    c = cos(angle)
+    s = sin(angle)
+    return x * c + y * s, x * -s + y * c
+
+_align_attr = { 'x': 'halign', 'y': 'valign' }
+_align_anchor = {
+    'left': 0, 'center': .5, 'right': 1,
+    'bottom': 0, 'top': 1
+}
+def get_anchor(obj, axis, default = None):
+    assert axis == 'x' or axis == 'y'
+    prop = 'anchor_' + axis
+
+    anchor = obj.properties.get(prop)
+    if anchor is None:
+        anchor = obj.properties.get('sprite.' + prop)
+    if anchor is None and getattr(obj, 'text', None):
+        anchor = _align_anchor[getattr(obj.text, _align_attr[axis])]
+    if anchor is None:
+        anchor = default
+
+    return anchor
 
 class Vector:
     def __init__(self, *args):
@@ -160,128 +175,137 @@ class Texture:
         return 'Texture({_source!r}, {_sampler!r}, {_target!r})'.format(**self.__dict__)
 
 
-class TileMapAsDict:
-    _halign_anchor = { 'left': 0, 'center': .5, 'right': 1 }
-    _valign_anchor = { 'bottom': 0, 'center': .5, 'top': 1 }
-
-    def __init__(self, tile_map, filename, target_dir, sampler, font):
-        self._tile_map = tile_map
+class MapAsDict:
+    def __init__(self, map_, filename, target_dir, sampler, font, loader):
+        self._map = map_
         self._filename = filename
         self._target_dir = target_dir
         self._sampler = sampler
         self._font = font
+        self._loader = loader
 
         self._height = 0
         self._tile_layers = []
-        self._fetch_tile_layers(self._tile_map.layers)
+        self._fetch_tile_layers(self._map.layers)
 
     def _fetch_tile_layers(self, layers):
         for layer in layers:
-            if isinstance(layer, Layer):
+            if isinstance(layer, TileLayer):
                 self._tile_layers.append(layer)
             elif isinstance(layer, GroupLayer):
-                self._fetch_tile_layers(layer.layers)
+                self._fetch_tile_layers(layer.children)
 
     def convert(self):
-        return self.tile_map(self._tile_map)
+        return self.map(self._map)
 
-    def tile_map(self, tile_map):
+    def map(self, map_):
         d = OrderedDict()
 
-        self._height = tile_map.height * tile_map.tileheight
+        self._height = map_.height * map_.tileheight
 
-        d['width'] = tile_map.width
-        d['height'] = tile_map.height
-        d['properties'] = self.properties(tile_map.properties)
-        d['tilesets'] = list(map(self.tile_set, tile_map.tilesets))
+        d['width'] = map_.width
+        d['height'] = map_.height
+        d['properties'] = self.properties(map_.properties)
+        d['tilesets'] = list(map(self.tile_set, map_.tilesets))
         d['tile_layers'] = list(map(self.tile_layer, self._tile_layers))
-        d['objects'] = list(filter(bool, map(self.object, tile_map.layers)))
+        d['objects'] = list(filter(bool, map(self.object, map_.layers)))
 
         return d
 
-    def tile_set(self, tile_set):
+    def tile_set(self, tileset):
         d = OrderedDict()
 
-        d['h_tiles'] = tile_set.columns
-        d['v_tiles'] = tile_set.tilecount // tile_set.columns
-        d['image'] = self.path(tile_set.image.source)
+        d['h_tiles'] = tileset.columns
+        d['v_tiles'] = tileset.tilecount // max(1, tileset.columns)
+        d['image'] = self.path(tileset.image.source)
 
         return d
 
     def tile_layer(self, tile_layer):
-        return Typed(None, list(map(self.tile_code, tile_layer.tiles)), inline = True)
-
-    def tile_code(self, tile):
-        t = tile.gid
-        if tile.hflip:
-            t |= HFLIP_FLAG
-        if tile.vflip:
-            t |= VFLIP_FLAG
-        if tile.dflip:
-            t |= DFLIP_FLAG
-        return t
+        return Typed(None, tile_layer.tiles, inline = True)
 
     def object(self, object):
         d = OrderedDict()
 
         # Test if the object is in fact a layer
-        if isinstance(object, Layer):
-            d['type'] = 'tile_layer'
-        elif isinstance(object, ObjectGroup) or isinstance(object, GroupLayer):
-            d['type'] = 'group'
+        if isinstance(object, TileLayer):
+            type_ = 'tile_layer'
+        elif isinstance(object, ObjectLayer) or isinstance(object, GroupLayer):
+            type_ = 'group'
         elif isinstance(object, Object):
-            d['type'] = object.type
+            type_ = object.type
         else:
             print("Warning: unsupported object type: {}".format(type(layer)), file = stderr)
             return None
 
         properties = self.properties(object.properties)
 
+        template = None
+        if getattr(object, 'template', None):
+            template = self._loader.load_template(object.template)
+
         text_object = None
         if hasattr(object, 'text'):
             text_object = object.text
 
+        gid = getattr(object, 'gid', None)
+        if gid is None and template:
+            gid = getattr(template.object, 'gid', None)
+
         # Get useful properties
         if isinstance(object, Object):
-            anchor_x = properties.get('anchor_x')
-            if anchor_x is None:
-                anchor_x = properties.get('sprite.anchor_x')
-            if anchor_x is None and text_object:
-                anchor_x = self._halign_anchor[text_object.halign]
+            anchor_x = get_anchor(object, 'x')
+            if anchor_x is None and template:
+                anchor_x = get_anchor(template.object, 'x')
             if anchor_x is None:
                 anchor_x = 0.5
 
-            anchor_y = properties.get('anchor_y')
-            if anchor_y is None:
-                anchor_y = properties.get('sprite.anchor_y')
-            if anchor_y is None and text_object:
-                anchor_y = self._valign_anchor[text_object.valign]
+            anchor_y = get_anchor(object, 'y')
+            if anchor_y is None and template:
+                anchor_y = get_anchor(template.object, 'y')
             if anchor_y is None:
                 anchor_y = 0.5
-            anchor_y = 1 - anchor_y
 
-            base_x = object.__dict__.get('x', 0.0)
-            base_y = object.__dict__.get('y', 0.0)
+            base_x = getattr(object, 'x', 0.0)
+            base_y = getattr(object, 'y', 0.0)
+
+            width  = getattr(object, 'width',  None)
+            if width is None and template:
+                width = template.object.width
+
+            height = getattr(object, 'height', None)
+            if height is None and template:
+                height = template.object.height
         else:
             anchor_x = 0
             anchor_y = 0
-            base_x = object.__dict__.get('offsetx', 0.0)
-            base_y = self._height + object.__dict__.get('offsety', 0.0)
+            base_x = getattr(object, 'offsetx', 0.0)
+            base_y = getattr(object, 'offsety', 0.0)
+            width  = 0 #self._width
+            height = self._height
 
         z = properties.get('z', 0.0)
-        width  = object.__dict__.get('width',  0)
-        height = object.__dict__.get('height', 0)
-        rotation = -object.__dict__.get('rotation', 0.0) # Rotation is inverted
+        rotation = -getattr(object, 'rotation', 0.0) # Rotation is inverted
 
-        if hasattr(object, 'gid') and object.gid:
-            # Sprite object coordinate is bottom-left, for some reason...
-            base_y -= height
+        print(object.name, base_x, base_y)
+        # For some reason, tile objects origin is bottom-left instead of top-left
+        if gid is None:
+            # Move base coordinate bottom-left
+            base_y += height
 
-        # Tiled origin is top left, Lair is bottom left
-        x = base_x + anchor_x * width
-        y = self._height - base_y - anchor_y * height
+        print(object.name, base_x, base_y, anchor_x, anchor_y, width, height)
+        # Tiled origin is top left of the map, Lair is bottom left
+        x, y = rotate(-radians(rotation), anchor_x * width, anchor_y * height)
+        x += base_x
+        y += self._height - base_y
+
+        print(object.name, x, y)
 
         # Set base properties
+        if getattr(object, 'template', None) is not None:
+            d['model'] = object.template.stem
+        if type_ is not None:
+            d['type'] = type_
         d['name'] = object.name
         d['enabled'] = properties.get('enabled', True)
         d['transform'] = Transform([x, y, z], rotation)
@@ -298,15 +322,15 @@ class TileMapAsDict:
 
         # Set sprite properties if object is a sprite object.
         sprite_enabled = properties.get('sprite.enabled', True)
-        if 'gid' in object.__dict__ and object.gid is not None and sprite_enabled:
-            tile_set = get_tile_set_from_gid(self._tile_map, object.gid)
+        if getattr(object, 'gid', 0) and sprite_enabled:
+            tileset = get_tile_set_from_gid(self._map, object.gid)
             sprite = d.setdefault('sprite', OrderedDict())
-            sprite['texture'] = Texture(self.path(tile_set.image.source), self._sampler)
+            sprite['texture'] = Texture(self.path(tileset.image.source), self._sampler)
             sprite['tile_grid'] = Vector(
-                tile_set.columns,
-                tile_set.tilecount // tile_set.columns,
+                tileset.columns,
+                tileset.tilecount // tileset.columns,
             )
-            sprite['tile_index'] = object.gid - tile_set.firstgid
+            sprite['tile_index'] = object.gid - tileset.firstgid
 
         # Add default sprite parameters
         if 'sprite' in d:
@@ -341,20 +365,20 @@ class TileMapAsDict:
                 text['size'] = Vector(width, height)
             text['color'] = self.property(text_object.color)
             text['anchor'] = Vector(
-                self._halign_anchor[text_object.halign],
-                self._valign_anchor[text_object.valign],
+                _align_anchor[text_object.halign],
+                _align_anchor[text_object.valign],
             )
 
         # Tile map
-        if isinstance(object, Layer):
+        if isinstance(object, TileLayer):
             tile_layer = d.setdefault('tile_layer', OrderedDict())
             tile_layer['tile_map'] = self.path(self._filename)
             tile_layer['layer_index'] = self._tile_layers.index(object)
 
         if isinstance(object, GroupLayer):
-            d['children'] = list(map(self.object, object.layers))
-        elif isinstance(object, ObjectGroup):
-            d['children'] = list(map(self.object, object.objects))
+            d['children'] = list(map(self.object, object.children))
+        elif isinstance(object, ObjectLayer):
+            d['children'] = list(map(self.object, object.children))
 
         return d
 
@@ -370,21 +394,16 @@ class TileMapAsDict:
         return d
 
     def property(self, property):
-        if isinstance(property, TmxColor):
-            color = [
-                property.red   / 255,
-                property.green / 255,
-                property.blue  / 255,
-                property.alpha / 255,
-            ]
+        if isinstance(property, TiledColor):
+            color = list(map(lambda c: c / 255, property.color))
             return Color(color)
         elif isinstance(property, PurePath):
-            return self.path(str(property))
+            return self.path(property)
 
         return property
 
     def path(self, path):
-        return relpath(path, self._target_dir)
+        return str(path.relative_to(self._target_dir))
 
 
 def usage(ret=1):
@@ -404,7 +423,7 @@ if __name__ == '__main__':
     for arg in arg_it:
         if arg[0] == '-':
             if arg == '-d':
-                out_dir = next(arg_it)
+                out_dir = PurePath(next(arg_it))
             elif arg == '-f':
                 font = next(arg_it)
             elif arg == '-s':
@@ -413,9 +432,9 @@ if __name__ == '__main__':
                 print("Unknown option {}.".format(arg), file=stderr)
                 usage()
         elif in_filename is None:
-            in_filename = arg
+            in_filename = PurePath(arg)
         elif out_filename is None:
-            out_filename = arg
+            out_filename = PurePath(arg)
         else:
             usage()
 
@@ -423,21 +442,22 @@ if __name__ == '__main__':
         usage()
 
     if out_filename is None:
-        out_filename = splitext(in_filename)[0] + '.ldl'
+        out_filename = in_filename.with_suffix('.ldl')
         if out_dir:
-            out_filename = join(out_dir, basename(out_filename))
+            out_filename = out_dir / out_filename
 
     if out_dir is None:
-        out_dir = dirname(out_filename)
+        out_dir = out_filename.parent
 
-    tile_map = TileMap.load(in_filename)
+    loader = Loader(in_filename)
+    tilemap = loader.load_map(in_filename)
 
-    with open(out_filename, 'w') as out_file:
+    with open(str(out_filename), 'w') as out_file:
         out = LdlWriter(out_file)
 
         sampler = Sampler(sampler)
 
-        converter = TileMapAsDict(tile_map, out_filename, out_dir, sampler, font)
+        converter = MapAsDict(tilemap, out_filename, out_dir, sampler, font, loader)
         tile_map_as_dict = converter.convert()
         for k, v in tile_map_as_dict.items():
             out.write(k, v)

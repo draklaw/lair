@@ -84,6 +84,7 @@ public:
 //	EntityRef createEntities(const Variant& properties, EntityRef parent,
 //	                         const char* name = nullptr, int index = -1);
 
+	void initializeFromEntity(EntityRef base, EntityRef entity);
 	bool initializeFromLdl(EntityRef entity, LdlParser& parser);
 	bool loadEntitiesFromLdl(LdlParser& parser, EntityRef parent);
 

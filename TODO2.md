@@ -46,8 +46,6 @@
 - entities:component-manager: Merge ComponentManager and DenseComponentManager ?
 
 - tile-map:infinite: Support Tiled infinite tile-maps
-- tile-map:templates: Support templates (clone model + update only overridden properties)
-- tile-map:tile-flip: Support flipped/rotated tiles
 
 - coll:enhance: Finish & test basic shape collisions
 
