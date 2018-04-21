@@ -165,6 +165,7 @@ TextLayout BitmapFont::layoutText(const std::string& msg, unsigned maxWidth) con
 			if(cp == '\n') {
 				x = 0;
 				y -= _height;
+				layout.grow(Vector2(x, y - int(_height)));
 			}
 			else {
 				layout.addGlyph(cp, Vector2(x, -y));

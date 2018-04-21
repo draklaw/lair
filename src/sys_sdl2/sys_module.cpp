@@ -228,6 +228,21 @@ uint8 SysModule::getKeyState(unsigned scancode) {
 }
 
 
+bool SysModule::isTextInputActive() const {
+	return SDL_IsTextInputActive();
+}
+
+
+void SysModule::startTextInput() {
+	SDL_StartTextInput();
+}
+
+
+void SysModule::stopTextInput() {
+	SDL_StopTextInput();
+}
+
+
 const Path& SysModule::basePath() {
 	return _basePath;
 }
@@ -350,9 +365,28 @@ void SysModule::_dispatchSystemEvent(const SDL_Event& event)
 
 		/* Keyboard events */
 	case SDL_KEYDOWN:
+		if(onKeyDown)
+			onKeyDown(event.key.keysym.scancode,
+			          event.key.keysym.sym,
+			          event.key.keysym.mod,
+			          event.key.state == SDL_PRESSED,
+			          event.key.repeat);
+		break;
 	case SDL_KEYUP:
+		if(onKeyUp)
+			onKeyUp(event.key.keysym.scancode,
+			        event.key.keysym.sym,
+			        event.key.keysym.mod,
+			        event.key.state == SDL_PRESSED,
+			        event.key.repeat);
+		break;
 	case SDL_TEXTEDITING:
+		if(onTextEdit)
+			onTextEdit(event.edit.text, event.edit.start, event.edit.length);
+		break;
 	case SDL_TEXTINPUT:
+		if(onTextInput)
+			onTextInput(event.text.text);
 		break;
 
 		/* Mouse events */

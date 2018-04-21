@@ -243,6 +243,8 @@ const char* Window::_sdlWindowEventName(unsigned type) const {
 	case SDL_WINDOWEVENT_FOCUS_GAINED: return "SDL_WINDOWEVENT_FOCUS_GAINED";
 	case SDL_WINDOWEVENT_FOCUS_LOST: return "SDL_WINDOWEVENT_FOCUS_LOST";
 	case SDL_WINDOWEVENT_CLOSE: return "SDL_WINDOWEVENT_CLOSE";
+	case SDL_WINDOWEVENT_TAKE_FOCUS: return "SDL_WINDOWEVENT_TAKE_FOCUS";
+	case SDL_WINDOWEVENT_HIT_TEST: return "SDL_WINDOWEVENT_HIT_TEST";
 	default: return "UNKNOWN_WINDOW_EVENT";
 	}
 }
@@ -256,6 +258,7 @@ void Window::_processEvent(const SDL_WindowEvent& event) {
 	case SDL_WINDOWEVENT_HIDDEN:
 	case SDL_WINDOWEVENT_EXPOSED:
 	case SDL_WINDOWEVENT_MOVED:
+	case SDL_WINDOWEVENT_RESIZED:
 	case SDL_WINDOWEVENT_SIZE_CHANGED:
 	case SDL_WINDOWEVENT_MINIMIZED:
 	case SDL_WINDOWEVENT_MAXIMIZED:
@@ -263,16 +266,19 @@ void Window::_processEvent(const SDL_WindowEvent& event) {
 	case SDL_WINDOWEVENT_ENTER:
 	case SDL_WINDOWEVENT_LEAVE:
 	case SDL_WINDOWEVENT_FOCUS_GAINED:
-	case SDL_WINDOWEVENT_RESIZED:
 		onResize();
 		break;
 	case SDL_WINDOWEVENT_FOCUS_LOST:
 		break;
 	case SDL_WINDOWEVENT_CLOSE:
 		break;
+	case SDL_WINDOWEVENT_TAKE_FOCUS:
+		break;
+	case SDL_WINDOWEVENT_HIT_TEST:
+		break;
 
 	default:
-		log().warning("Unknown SDL window event: ", event.type);
+		log().warning("Unknown SDL window event: ", event.event);
 		break;
 	}
 }

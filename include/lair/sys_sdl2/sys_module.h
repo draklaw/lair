@@ -66,6 +66,14 @@ public:
 
 	typedef std::function<void()> QuitCallback;
 
+	typedef std::function<void(unsigned scancode,
+	                           unsigned keycode,
+	                           uint16 mod,
+	                           bool pressed,
+	                           bool repeat)> KeyCallback;
+	typedef std::function<void(const String& text)> TextInputCallback;
+	typedef std::function<void(const String& text, int start, int length)> TextEditCallback;
+
 public:
 	/// \{
 	/// \name Constructor, destructor, initialization and shutdown.
@@ -124,6 +132,10 @@ public:
 
 	uint8 getKeyState(unsigned scancode);
 
+	bool isTextInputActive() const;
+	void startTextInput();
+	void stopTextInput();
+
 	/// \}
 
 	/// \{
@@ -168,6 +180,11 @@ public:
 	MouseWheelCallback  onMouseWheel;
 
 	QuitCallback onQuit;
+
+	KeyCallback       onKeyDown;
+	KeyCallback       onKeyUp;
+	TextInputCallback onTextInput;
+	TextEditCallback  onTextEdit;
 
 
 private:

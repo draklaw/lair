@@ -119,6 +119,55 @@ inline char* utf8FromCodepoint(char* dst, Codepoint cp) {
 	return dst;
 }
 
+inline bool isUtf8StartByte(uint8 c) {
+	return (c & 0x80) == 0 || (c & 0xe0) == 0xc0;
+}
+
+
+inline String::const_iterator nextCharacter(
+        const String& string, String::const_iterator it, unsigned count = 1) {
+	lairAssert(it >= string.begin() && it <= string.end());
+	for(unsigned i = 0; it != string.end() && i < count; ++i) {
+		++it;
+		while(it != string.end() && !isUtf8StartByte(*it))
+			++it;
+	}
+	return it;
+}
+
+
+inline int nextCharacter(const String& string, unsigned from, unsigned count = 1) {
+	return nextCharacter(string, string.begin() + from, count) - string.begin();
+}
+
+
+inline String::const_iterator prevCharacter(
+        const String& string, String::const_iterator it, unsigned count = 1) {
+	lairAssert(it >= string.begin() && it <= string.end());
+	for(unsigned i = 0; it != string.begin() && i < count; ++i) {
+		--it;
+		while(it != string.begin() && !isUtf8StartByte(*it))
+			--it;
+	}
+	return it;
+}
+
+
+inline int prevCharacter(const String& string, unsigned from, unsigned count = 1) {
+	return prevCharacter(string, string.begin() + from, count) - string.begin();
+}
+
+
+inline unsigned charCount(const String& string) {
+	unsigned count = 0;
+	String::const_iterator it = string.begin();
+	while(it != string.end()) {
+		it = nextCharacter(string, it);
+		++count;
+	}
+	return count;
+}
+
 
 }
 
