@@ -720,7 +720,7 @@ public:
 	}
 
 	inline bool isFloat() const {
-		return is<float>() || is<double>();
+		return isInt() || is<float>() || is<double>();
 	}
 
 	inline bool isString() const {
@@ -762,6 +762,8 @@ public:
 	}
 
 	inline double asFloat() const {
+		if(isInt())
+			return asInt();
 		if(is<float>())
 			return as<float>();
 		if(is<double>())
@@ -819,14 +821,14 @@ public:
 		return null;
 	}
 
-	template<typename T>
-	inline const Variant& get(const String& key, const T& defaultValue) const {
-		lairAssert(isVarMap());
-		auto it = asVarMap().find(key);
-		if(it != asVarMap().end())
-			return it->second;
-		return Variant(defaultValue);
-	}
+//	template<typename T>
+//	inline const Variant& get(const String& key, const T& defaultValue) const {
+//		lairAssert(isVarMap());
+//		auto it = asVarMap().find(key);
+//		if(it != asVarMap().end())
+//			return it->second;
+//		return Variant(defaultValue);
+//	}
 
 	inline void setInt(int i) {
 		lairAssert(_type && _type->fromInt);
