@@ -19,6 +19,12 @@
  */
 
 
+#if defined(_WIN32)
+	#include <io.h>
+#else
+	#include <unistd.h>
+#endif
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
@@ -40,8 +46,14 @@ void RealFileSystem::setBasePath(const Path& basePath) {
 
 
 VirtualFile RealFileSystem::file(const Path& logicPath) const {
+#if defined(_WIN32)
+	if(_waccess((_basePath / logicPath).native().c_str(), R_OK) == 0)
+		return VirtualFile(this, logicPath);
+#else
 	if(Path::IStream((_basePath / logicPath).native().c_str()).good())
 		return VirtualFile(this, logicPath);
+#endif
+
 	return VirtualFile();
 }
 

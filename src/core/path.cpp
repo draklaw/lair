@@ -146,7 +146,7 @@ Path& Path::operator/=(const Path& path) {
 		bool needSep = (!empty() && !isDirectorySeparator(_path.back()));
 		_path.reserve(_path.size() + needSep + path.size());
 		if(needSep) {
-			_path.push_back(directory_separator);
+			_path.push_back('/');
 		}
 		_path.append(path._path);
 	}
