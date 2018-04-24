@@ -17,7 +17,7 @@
 ##  along with lair.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.3)
 
 project(lair)
 
@@ -34,9 +34,9 @@ if (DOXYGEN_FOUND)
 	set(DOC_VERSION "0.227")
 	set(DOC_DEST    "${PROJECT_BINARY_DIR}/docs")
 	set(DOC_SOURCES "${PROJECT_SOURCE_DIR}/include/lair")
-	
+
 	configure_file(Doxyfile.in Doxyfile)
-	
+
 	add_custom_target(docs doxygen)
 endif()
 
