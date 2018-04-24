@@ -30,6 +30,10 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#if defined(_WIN32)
+	#define APIENTRY __stdcall
+#endif
+
 
 #ifndef APIENTRY
 #define APIENTRY
@@ -63,7 +67,7 @@ typedef ptrdiff_t GLsizeiptr;
 typedef int64_t GLint64;
 typedef uint64_t GLuint64;
 typedef struct __GLsync *GLsync;
-typedef void ( *GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+typedef void (APIENTRY *GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
 
 namespace gl {
 enum GL {
