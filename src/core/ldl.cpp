@@ -264,6 +264,9 @@ LdlParser::Token LdlParser::parseString() {
 				break;
 			}
 		}
+		else if(c0 == '\r' && _buf[1] == '\n') {
+			// Ignore \r
+		}
 		else if(c0 == -1) {
 			unexpectedEofError();
 			break;
@@ -304,6 +307,11 @@ LdlParser::Token LdlParser::parseToken() {
 		case '"':
 		case '\'':
 			return parseString();
+		case '\r':
+			if(_buf[_buf.pos() + 1] != '\n')
+				break;
+			_buf.get();
+			// Fall-trough
 		case ',':
 		case '\n':
 			_buf.get();
