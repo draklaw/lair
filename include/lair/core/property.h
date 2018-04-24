@@ -54,8 +54,8 @@ public:
 	const FlagsInfo*    flagsInfo() const;
 	const std::string&  name() const;
 
-	virtual ConstVarRef getVar(const void* obj) const = 0;
-	virtual void        setVar(      void* obj, const ConstVarRef& var) const = 0;
+	virtual Variant getVar(const void* obj) const = 0;
+	virtual void    setVar(      void* obj, const Variant& var) const = 0;
 
 	template < typename T >
 	const T& get(const void* obj) const {
@@ -100,11 +100,11 @@ public:
 	GenericPropertyRef& operator=(const GenericPropertyRef&)  = delete;
 	GenericPropertyRef& operator=(      GenericPropertyRef&&) = delete;
 
-	virtual ConstVarRef getVar(const void* obj) const {
+	virtual Variant getVar(const void* obj) const {
 		return (reinterpret_cast<const C*>(obj)->*_get)();
 	}
 
-	virtual void setVar(void* obj, const ConstVarRef& var) const {
+	virtual void setVar(void* obj, const Variant& var) const {
 		(reinterpret_cast<C*>(obj)->*_set)(var.as<T>());
 	}
 
@@ -133,24 +133,15 @@ public:
 	GenericPropertyValue& operator=(const GenericPropertyValue&)  = delete;
 	GenericPropertyValue& operator=(      GenericPropertyValue&&) = delete;
 
-	virtual ConstVarRef getVar(const void* obj) const {
-		// This is a dirty hack to avoid returning a reference to a temporary
-		// It would be better to return an object (Variant ?) that can wrap both
-		// a value and a reference transparently.
-		// Here, the main issue is that if a user store the reference then
-		// change the property's value, the reference will be updated only at
-		// the next call to getVar(). The user is not expected to store
-		// references though, so it should not be too much a problem.
-		_tmpValue = (reinterpret_cast<const C*>(obj)->*_get)();
-		return _tmpValue;
+	virtual Variant getVar(const void* obj) const {
+		return (reinterpret_cast<const C*>(obj)->*_get)();
 	}
 
-	virtual void setVar(void* obj, const ConstVarRef& var) const {
+	virtual void setVar(void* obj, const Variant& var) const {
 		(reinterpret_cast<C*>(obj)->*_set)(var.as<T>());
 	}
 
 protected:
-	mutable T _tmpValue;
 	T (C::*_get)() const;
 	void (C::*_set)(T);
 };
@@ -175,11 +166,11 @@ public:
 	GenericPropertyMember& operator=(const GenericPropertyMember&)  = delete;
 	GenericPropertyMember& operator=(      GenericPropertyMember&&) = delete;
 
-	virtual ConstVarRef getVar(const void* obj) const {
+	virtual Variant getVar(const void* obj) const {
 		return reinterpret_cast<const C*>(obj)->*_member;
 	}
 
-	virtual void setVar(void* obj, const ConstVarRef& var) const {
+	virtual void setVar(void* obj, const Variant& var) const {
 		reinterpret_cast<C*>(obj)->*_member = var.as<T>();
 	}
 
