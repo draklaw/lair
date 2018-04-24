@@ -922,15 +922,16 @@ bool Context::initialize(bool debugGl) {
 	_glTexStorage3D = (_PfnGlTexStorage3D)_getProcAddress("glTexStorage3D");
 	_gl_arb_texture_storage = (_procCount == 3);
 
-	_gl_ext_texture_filter_anisotropic = hasExtension("GL_EXT_texture_filter_anisotropic");
-	_gl_khr_debug = _gl_khr_debug && hasExtension("GL_KHR_debug");
-	_gl_arb_conservative_depth = hasExtension("GL_ARB_conservative_depth");
-	_gl_arb_texture_storage = _gl_arb_texture_storage && hasExtension("GL_ARB_texture_storage");
-
 	if(!_gl_3_3) {
 		log().error("Failed to load gl 3.3.");
 		return false;
 	}
+
+	// Must be done after checking that glGetStringi exists (OpenGL 3)
+	_gl_ext_texture_filter_anisotropic = hasExtension("GL_EXT_texture_filter_anisotropic");
+	_gl_khr_debug = _gl_khr_debug && hasExtension("GL_KHR_debug");
+	_gl_arb_conservative_depth = hasExtension("GL_ARB_conservative_depth");
+	_gl_arb_texture_storage = _gl_arb_texture_storage && hasExtension("GL_ARB_texture_storage");
 
 	log().info("OpenGL version: ",      getString(gl::VERSION));
 	log().info("OpenGL GLSL version: ", getString(gl::SHADING_LANGUAGE_VERSION));

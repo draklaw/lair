@@ -33,9 +33,9 @@ namespace lair
 {
 
 
-void APIENTRY debugCallback(GLenum source, GLenum type, GLuint id,
-                            GLenum severity, GLsizei /*length*/,
-                            const char* message, const void* userParam) {
+void GLAPIENTRY debugCallback(GLenum source, GLenum type, GLuint id,
+                              GLenum severity, GLsizei /*length*/,
+                              const char* message, const void* userParam) {
 	RenderModule* rm = (RenderModule*)userParam;
 
 	LogLevel level = LogLevel::Debug;

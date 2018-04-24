@@ -4,6 +4,7 @@ from sys import stderr
 import re
 from string import ascii_letters
 from itertools import chain
+from io import StringIO
 import xml.etree.ElementTree as ElementTree
 from pprint import pprint
 
@@ -72,15 +73,29 @@ def check_elem(elem, known_elems):
 ###############################################################################
 # Spec objects
 
+def get_type_spec(xml):
+	out = StringIO()
+	if xml.text:
+		out.write(xml.text)
+	for elem in xml:
+		if elem.tag == 'apientry':
+			out.write('GLAPIENTRY')
+		else:
+			out.write(get_text(elem))
+
+		if elem.tail:
+			out.write(elem.tail)
+	return out.getvalue()
+
 class Type:
 	def __init__(self, xml):
-		self.spec = get_text(xml)
+		self.spec = get_type_spec(xml)
 		self.name = get_attr_or_child(xml, 'name')
 		self.api = xml.get('api')
 		self.requires = xml.get('requires')
 		self.comment = xml.get('comment')
 		check_attr(xml, ['name', 'api', 'requires', 'comment'])
-		check_elem(xml, ['name'])
+		check_elem(xml, ['apientry', 'name'])
 
 	def __repr__(self):
 		repr = [ '<Type {name}' ]
@@ -484,12 +499,13 @@ h_template = """>>> header
 #include <lair/core/log.h>
 
 
-#ifndef APIENTRY
-#define APIENTRY
+#if defined(_WIN32)
+	#define GLAPIENTRY __stdcall
+#else
+	#define GLAPIENTRY
 #endif
-#ifndef APIENTRYP
-#define APIENTRYP APIENTRY *
-#endif
+
+#define GLAPIENTRYP GLAPIENTRY *
 
 
 namespace lair {
@@ -645,12 +661,13 @@ bool Context::initialize(bool debugGl) {
 
 	>>> render_commands_ptr_initialize(commands)
 
-	>>> render_double_check_extensions(extensions)
-
 	if(!{{feature_var_name(api_items.main_feature)}}) {
 		log().error("Failed to load {{api}} {{version}}.");
 		return false;
 	}
+
+	// Must be done after checking that glGetStringi exists (OpenGL 3)
+	>>> render_double_check_extensions(extensions)
 
 	log().info("OpenGL version: ",      getString(gl::VERSION));
 	log().info("OpenGL GLSL version: ", getString(gl::SHADING_LANGUAGE_VERSION));
@@ -816,7 +833,7 @@ def render_command_ptr_decl(command):
 	tname = command_ptr_type_name(command.name)
 	fname = command_ptr_name(command.name)
 	params = ', '.join(map(Param.as_c, command.params))
-	return 'typedef {type} (APIENTRYP {tname})({params});\n{tname} {fname};'.format_map(vars())
+	return 'typedef {type} (GLAPIENTRYP {tname})({params});\n{tname} {fname};'.format_map(vars())
 
 
 def render_commands_ptr_constructor(commands):
