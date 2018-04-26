@@ -188,7 +188,9 @@ class LdlWriter:
             self.out.write(repr(obj))
 
 
-_ws_re = re.compile(r'[ \t\n,]+', re.MULTILINE | re.VERBOSE)
+#_ws_re = re.compile(r'[ \t\n,]+ | (?://|\#) [^\n]* \n | /\* (?:[^*]|\*(?!/))* \*/', re.MULTILINE | re.VERBOSE)
+_ws_re = re.compile(r'[ \t]+ | /\* (?:[^*]|\*(?!/))* \*/', re.MULTILINE | re.VERBOSE)
+_sep_re = re.compile(r'[\n,] | (?://|\#) [^\n]* \n', re.MULTILINE | re.VERBOSE)
 _op_re = re.compile(r'[()[\]{}=]', re.MULTILINE | re.VERBOSE)
 _int_re = re.compile(r'(?:[+-] | 0[bBoOxX])? [0-9]+', re.MULTILINE | re.VERBOSE)
 _float_re = re.compile(r'''
@@ -226,6 +228,7 @@ def parse_string(token, n_quotes):
 
 _lexer = [
     (_ws_re, lambda t: ('ws', t)),
+    (_sep_re, lambda t: ('sep', t)),
     (_op_re, lambda t: ('op', t)),
     (_id_re, parse_id),
     (_float_re, lambda t: ('float', float(t))),
@@ -234,49 +237,6 @@ _lexer = [
     (_td_string_re, lambda t: parse_string(t, 3)),
     (_s_string_re, lambda t: parse_string(t, 1)),
     (_d_string_re, lambda t: parse_string(t, 1)),
-]
-
-class Pattern:
-    def __init__(self, types, predicate = None, optional = False, target = None):
-        if isinstance(types, str):
-            types = [ types ]
-        self.types     = types
-        self.predicate = predicate
-        self.optional  = optional
-        self.target    = target
-
-    def opt(self):
-        return Pattern(self.types, self.predicate, True, self.target)
-
-    def tgt(self, target):
-        return Pattern(self.types, self.predicate, self.optional, target)
-
-    def match(self, key, value):
-        return key in self.types and (self.predicate is None or self.predicate(key, value))
-
-    def __repr__(self):
-        return 'Pattern({types!r}, {predicate!r}, {optional!r}, {target!r})'.format(**self.__dict__)
-
-_ws = Pattern('ws', lambda t, v: ',' not in v and '\n' not in v, optional = True)
-_sep = Pattern('ws', optional = True)
-_value = Pattern(
-    ['null', 'bool', 'int', 'float', 'string', 'op'],
-    lambda t, v: t != 'op' or v in '([{',
-)
-_string = Pattern('string')
-_compound_value = Pattern('op', lambda t, v: v in '([{')
-_assign = Pattern('op', lambda t, v: v == '=')
-_end = Pattern('op', lambda t, v: v in ')]}')
-
-_parser = [
-    (_sep, _string.tgt('key'), _ws, _assign,
-        _ws, _string.tgt('type'), _ws, _compound_value.tgt('value')),
-    (_sep, _string.tgt('key'), _ws, _assign,
-        _ws, _value.tgt('value')),
-    (_sep, _string.tgt('type'), _ws, _compound_value.tgt('value')),
-    (_sep, _value.tgt('value')),
-    (_sep, _end.tgt('end')),
-    (_sep,),
 ]
 
 class LdlParser:
@@ -289,106 +249,96 @@ class LdlParser:
         self._pos     = 0
         self._line    = 0
         self._col     = 0
-        self._context = []
         self._value   = None
 
     def token(self, index = 0):
-        while index >= len(self._tokens):
-            if self._pos == len(self._ldl):
-                break
-
-            # Test all tokens in order
-            # TODO: optimize this by looking at the first char and select the
-            #   RE accordingly.
-            for re, parse in _lexer:
-                match = re.match(self._ldl, self._pos)
-                if match:
-                    t, v = parse(match.group(0))
-                    self._push_token(t, v)
-                    self._eat(len(match.group(0)))
-                    break
-            else:
-                raise RuntimeError('{}:{}: Unrecognized token.\n{}'.format(
-                    self._line + 1, self._col + 1, self._lines[self._line]))
+        while index >= len(self._tokens) and self._pos != len(self._ldl):
+            t, v = None, None
+            while t is None and self._pos != len(self._ldl):
+                # Test all tokens in order
+                # TODO: optimize this by looking at the first char and select the
+                #   RE accordingly.
+                for re, parse in _lexer:
+                    match = re.match(self._ldl, self._pos)
+                    if match:
+                        t, v = parse(match.group(0))
+                        if t != 'ws':
+                            self._push_token(t, v)
+                        self._eat(len(match.group(0)))
+                        break
+                else:
+                    raise RuntimeError('{}:{}: Unrecognized token.\n{}'.format(
+                        self._line + 1, self._col + 1, self._lines[self._line]))
 
         if index < len(self._tokens):
             return self._tokens[index]
         return None
 
-    def _parse_value(self):
+    def _parse_value(self, need_sep = True, accept_key = True):
         # print('Parse')
-        for pattern in _parser:
-            i = 0
-            v = {}
-            # print('  Pattern')
-            for p in pattern:
-                tok = self.token(i)
-                if not tok:
-                    break
-                # print('    {}: {}'.format(p, tok))
-                if p.match(tok.type, tok.value):
-                    if p.target:
-                        v[p.target] = tok
-                    i += 1
-                elif not p.optional:
-                    break
-            else:
-                self._pop(i)
-                if v:
-                    return v
+        sep_count = 0
+        # print('TOKEN: {!r}'.format(self.token(0)))
+        while self.token(0) is not None and self.token(0).type == 'sep':
+            # print('SKIP')
+            self._pop()
+            # print('TOKEN: {!r}'.format(self.token(0)))
+            sep_count += 1
 
-        if self.token(0) is None:
+        token = self.token(0)
+
+        if token is None:
             return None
 
-        tok = self.token(0)
         self._pop()
 
-        raise RuntimeError('{}:{}: Parse error: Unexpected token "{}".'.format(
-            tok.line + 1, tok.col + 1, tok.value))
+        # Sep is never required for end
+        if token.type == 'op' and token.value in ')]}':
+            return { 'end': token }
 
-    # def next(self):
-    #     self._value = self._parse_value()
-    #
-    # def enter(self):
-    #     if not self._value:
-    #         self._value = self._parse_value()
-    #
-    #     if self._value is None:
-    #
-    #
-    #     if self._context:
-    #         if self._value['type'] == 'op' and '([' in self._value['value']:
-    #             self._context.append('list')
-    #             self.next()
-    #         elif self._value['type'] == 'op' and '{' in self._value['value']:
-    #             self._context.append('map')
-    #             self.next()
-    #         else:
-    #             tok = self._value.value
-    #             raise RuntimeError('{}:{}: Cannot open non-compound value "{}" of type "{}"''
-    #                 .format(value.line, value.col, value.value, value.type))
-    #     elif 'key' in self._value:
-    #         self._context.append('map')
-    #     else
-    #         self._context.append('list')
-    #
-    # def close(self):
-    #     if self._value['type'] == 'op' and ')]}' in self._value['value']:
-    #         if not self._context:
-    #             raise RuntimeError()
-    #         self._context.pop()
-    #     else:
-    #         raise RuntimeError
+        # Raise error if sep is required but not there
+        if need_sep and sep_count == 0:
+            raise RuntimeError('{}:{}: Expected "," or new line, got {!r}.'.format(
+                token.line + 1, token.col + 1, token.value))
 
-    # def parse_value(self):
-    #     if not self._value:
-    #         self._value = self._parse_value()
+        if token.type == 'string':
+            token1 = self.token(0)
+
+            if token1 is None:
+                return { 'value': token }
+
+            if accept_key and token1.type == 'op' and token1.value == '=':
+                self._pop()
+                token2 = self.token(0)
+
+                if token2 is None:
+                    raise RuntimeError('{}:{}: Unexpected end-of-file.'
+                        .format(self._line + 1, self._col + 1))
+                if token2.type == 'sep':
+                    raise RuntimeError('{}:{}: Expected value, got {!r}.'.format(
+                        token2.line + 1, token2.col + 1, token2.value))
+
+                value = self._parse_value(need_sep = False, accept_key = False)
+                value['key'] = token
+                return value
+
+            if token1.type == 'op' and token1.value in '([{':
+                self._pop()
+                return { 'type': token, 'value': token1}
+
+            return { 'value': token }
+        elif token.type == 'op' and token.value == '=':
+            raise RuntimeError('{}:{}: Expected value, got {!r}.'.format(
+                token.line + 1, token.col + 1, token.value))
+        else:
+            return { 'value': token }
+
+        print(repr(token))
+        raise RuntimeError("Should not happen")
 
     def read(self):
         is_root = self._value is None
         if is_root:
-            self._value = self._parse_value()
-            print('Value 1:', self._value)
+            self._value = self._parse_value(need_sep = False)
 
             if self._value is None:
                 # We could return an empty list or dict, but we don't know which one...
@@ -406,25 +356,21 @@ class LdlParser:
             if tok.type != 'op':
                 value = tok.value
                 self._value = self._parse_value()
-                print('Value 2:', self._value)
                 return value
             elif tok.value in '([{':
                 is_list = tok.value in '(['
                 type_   = None
                 if 'type' in self._value:
                     type_ = self._value.get('type').value
+                self._value = self._parse_value(need_sep = False)
             else:
                 # Should not happen, except if bug in _parse_value()
                 raise RuntimeError()
-            self._value = self._parse_value()
-            print('Value 3:', self._value)
 
         if is_list:
             value = TypedList(type_)
-            print('Open list:', type_)
         else:
             value = TypedDict(type_)
-            print('Open dict:', type_)
 
         while self._value is not None and 'end' not in self._value:
             tok = self._value.get('value')
@@ -432,7 +378,6 @@ class LdlParser:
             if is_list:
                 if key is None:
                     value.append(self.read())
-                    print('Append:', value[-1])
                 else:
                     raise RuntimeError('{}:{}: Unexpected key "{}" in list'
                         .format(key.line + 1, key.col + 1, key.value))
@@ -446,7 +391,6 @@ class LdlParser:
                         .format(key.line + 1, key.col + 1, key.value))
                 else:
                     value[key.value] = self.read()
-                    print('Insert:', key.value, '=', value[key.value])
 
         if not is_root:
             tok = self._value.get('end')
@@ -455,7 +399,6 @@ class LdlParser:
                     .format(tok.line + 1, tok.col + 1, tok.value))
 
             self._value = self._parse_value()
-            print('Value 4:', self._value)
 
         return value
 
@@ -521,16 +464,19 @@ if __name__ == '__main__':
         \'''test \\\''' test\'''
         """test \\""" test"""
 
-        []
-        {}
+        [] # comment
+        {/* comment
+        on several
+        lines*/}
 
-        [ 1, 2 3]
+        [ 1, 2
+          3]
         {
-            foo = 0
+            foo = 0 // Comment
             bar = 1
         }
 
-        foo(3a b)
+        foo(3, a, b)
         bar{ x = 0, y = 1 }
     '''
 
@@ -550,7 +496,7 @@ if __name__ == '__main__':
     print('Values:')
     while True:
         try:
-            p = parser._parse_value()
+            p = parser._parse_value(need_sep = False)
             if p is None:
                 break
             print(p)
