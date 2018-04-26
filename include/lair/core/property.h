@@ -58,7 +58,7 @@ public:
 	virtual void    setVar(      void* obj, const Variant& var) const = 0;
 
 	template < typename T >
-	const T& get(const void* obj) const {
+	T get(const void* obj) const {
 		return getVar(obj).as<T>();
 	}
 
@@ -312,13 +312,13 @@ public:
 	}
 
 	template < typename T >
-	const T& get(unsigned index) const {
+	T get(unsigned index) const {
 		lairAssert(index < nProperties());
 		return property(index).template get<T>(this);
 	}
 
 	template < typename T >
-	const T& get(const std::string& property) const {
+	T get(const std::string& property) const {
 		return get<T>(propertyIndex(property));
 	}
 
