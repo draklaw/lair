@@ -82,7 +82,7 @@ class Map:
         self.staggeraxis     = attr(elem, str, 'staggeraxis')
         self.staggerindex    = attr(elem, str, 'staggerindex')
         self.backgroundcolor = attr(elem, Color, 'backgroundcolor', Color('#000000'))
-        self.infinite        = attr(elem, bool, 'infinite', False)
+        self.infinite        = attr(elem, parse_bool, 'infinite', False)
         self.nextobjectid    = attr(elem, int, 'nextobjectid')
 
         if self.infinite:
@@ -147,7 +147,7 @@ class TileLayer(Layer):
         self.height  = attr(elem, int, 'height')
 
         self.tile_offset_x = 0
-        self.tile_offset_y = 0
+        self.tile_offset_y = -self.height
         self.chunks = None
         self.tiles  = None
 
@@ -402,6 +402,9 @@ def parse_objects(elem, base_path, loader = None):
 def parse_text(elem, base_path, loader = None):
     return Text(elem, base_path, loader = loader)
 
+
+def parse_bool(text):
+    return bool(int(text))
 
 def children(elem, tags):
     if isinstance(tags, str):
