@@ -38,6 +38,66 @@ namespace lair
 {
 
 
+class TileLayer {
+public:
+	typedef uint32 TileIndex;
+
+	enum {
+		HFLIP_FLAG = 0x80000000,
+		VFLIP_FLAG = 0x40000000,
+		DFLIP_FLAG = 0x20000000,
+		GID_MASK   = 0x1fffffff,
+	};
+
+public:
+	TileLayer();
+	TileLayer(const TileLayer&) = delete;
+	TileLayer(TileLayer&&)      = default;
+	~TileLayer();
+
+	TileLayer& operator=(const TileLayer&) = delete;
+	TileLayer& operator=(TileLayer&&)      = default;
+
+	const Vector2i& offsetInTiles() const;
+	Vector2i offsetInPixels() const;
+
+	const Vector2i& sizeInTiles() const;
+	unsigned widthInTiles() const;
+	unsigned heightInTiles() const;
+
+	Box2i boxInTiles() const;
+	Box2i boxInPixels() const;
+
+	Vector2i sizeInPixels() const;
+	unsigned widthInPixels() const;
+	unsigned heightInPixels() const;
+
+	const Vector2i& tileSizeInPixels() const;
+	unsigned tileWidthInPixels() const;
+	unsigned tileHeightInPixels() const;
+
+	TileIndex tile(unsigned x, unsigned y) const;
+	void setTile(unsigned x, unsigned y, TileIndex tile);
+
+	bool setFromLdl(LdlParser& parser);
+
+protected:
+	typedef std::vector<TileIndex> TileVector;
+
+protected:
+	Vector2i   _offsetInTiles;
+	Vector2i   _sizeInTiles;
+	Vector2i   _tileSizeInPixels;
+	TileVector _tiles;
+};
+
+
+typedef std::shared_ptr<      TileLayer> TileLayerSP;
+typedef std::shared_ptr<const TileLayer> TileLayerCSP;
+typedef std::weak_ptr  <      TileLayer> TileLayerWP;
+typedef std::weak_ptr  <const TileLayer> TileLayerCWP;
+
+
 class TileMap {
 public:
 	typedef uint32 TileIndex;
@@ -62,10 +122,11 @@ public:
 
 	bool isValid() const;
 	unsigned nLayers() const;
-	unsigned width(unsigned layer) const;
-	unsigned height(unsigned layer) const;
-	TileIndex tile(unsigned x, unsigned y, unsigned layer) const;
-	void setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile);
+	TileLayerCSP tileLayer(unsigned layerIndex) const;
+	TileLayerSP tileLayer(unsigned layerIndex);
+
+//	const Vector2i& minOffsetInTiles() const;
+//	const Vector2i& maxSizeInTiles() const;
 
 	const Variant& properties() const;
 
@@ -80,19 +141,15 @@ public:
 	void _setTileSet(ImageAspectSP tileset);
 
 protected:
-	typedef std::vector<TileIndex> Layer;
-	typedef std::vector<Layer>     LayerList;
+	typedef std::vector<TileLayerSP> LayerVector;
 
 protected:
 	bool _parseTileSets(LdlParser& parser);
 	bool _parseTileSet(LdlParser& parser);
 	bool _parseTileLayers(LdlParser& parser);
-	bool _parseTileLayer(LdlParser& parser);
 
 protected:
-	unsigned  _width;
-	unsigned  _height;
-	LayerList _layers;
+	LayerVector _tileLayers;
 
 	Variant _properties;
 

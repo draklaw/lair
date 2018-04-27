@@ -185,6 +185,8 @@ class MapAsDict:
         self._loader = loader
 
         self._height = 0
+        self._tile_width = 0
+        self._tile_height = 0
         self._tile_layers = []
         self._fetch_tile_layers(self._map.layers)
 
@@ -202,6 +204,8 @@ class MapAsDict:
         d = OrderedDict()
 
         self._height = map_.height * map_.tileheight
+        self._tile_width  = map_.tilewidth
+        self._tile_height = map_.tileheight
 
         d['width'] = map_.width
         d['height'] = map_.height
@@ -222,7 +226,17 @@ class MapAsDict:
         return d
 
     def tile_layer(self, tile_layer):
-        return Typed(None, tile_layer.tiles, inline = True)
+        d = OrderedDict()
+
+        tile_layer.convert_chunks_to_tiles()
+
+        d['offset']    = Vector(tile_layer.tile_offset_x,
+                                tile_layer.height + tile_layer.tile_offset_y)
+        d['size']      = Vector(tile_layer.width, tile_layer.height)
+        d['tile_size'] = Vector(self._tile_width, self._tile_height)
+        d['tiles']     = Typed(None, tile_layer.tiles, inline = True)
+
+        return d
 
     def object(self, object):
         d = OrderedDict()

@@ -32,6 +32,163 @@ namespace lair
 {
 
 
+TileLayer::TileLayer()
+    : _offsetInTiles(0, 0)
+    , _sizeInTiles(0, 0)
+    , _tileSizeInPixels(0, 0)
+{
+}
+
+
+TileLayer::~TileLayer() {
+}
+
+
+const Vector2i& TileLayer::offsetInTiles() const {
+	return _offsetInTiles;
+}
+
+
+Vector2i TileLayer::offsetInPixels() const {
+	return _offsetInTiles.cwiseProduct(_tileSizeInPixels);
+}
+
+
+const Vector2i& TileLayer::sizeInTiles() const {
+	return _sizeInTiles;
+}
+
+
+unsigned TileLayer::widthInTiles() const {
+	return _sizeInTiles(0);
+}
+
+
+unsigned TileLayer::heightInTiles() const {
+	return _sizeInTiles(1);
+}
+
+
+Box2i TileLayer::boxInTiles() const {
+	return Box2i(offsetInTiles(), offsetInTiles() + sizeInTiles());
+}
+
+
+Box2i TileLayer::boxInPixels() const {
+	return Box2i(offsetInPixels(), offsetInPixels() + sizeInPixels());
+}
+
+
+Vector2i TileLayer::sizeInPixels() const {
+	return _sizeInTiles.cwiseProduct(_tileSizeInPixels);
+}
+
+
+unsigned TileLayer::widthInPixels() const {
+	return _sizeInTiles(0) * _tileSizeInPixels(0);
+}
+
+
+unsigned TileLayer::heightInPixels() const {
+	return _sizeInTiles(1) * _tileSizeInPixels(1);
+}
+
+
+const Vector2i& TileLayer::tileSizeInPixels() const {
+	return _tileSizeInPixels;
+}
+
+
+unsigned TileLayer::tileWidthInPixels() const {
+	return _tileSizeInPixels(0);
+}
+
+
+unsigned TileLayer::tileHeightInPixels() const {
+	return _tileSizeInPixels(1);
+}
+
+
+TileLayer::TileIndex TileLayer::tile(unsigned x, unsigned y) const {
+	lairAssert(x < widthInTiles() && y < widthInTiles());
+	return _tiles[x + y * widthInTiles()];
+}
+
+
+void TileLayer::setTile(unsigned x, unsigned y, TileIndex tile) {
+	lairAssert(x < widthInTiles() && y < widthInTiles());
+	_tiles[x + y * widthInTiles()] = tile;
+}
+
+
+bool TileLayer::setFromLdl(LdlParser& parser) {
+	if(parser.valueType() != LdlParser::TYPE_MAP) {
+		parser.error("Expected tile layer (VarMap), got ", parser.valueTypeName());
+		parser.skip();
+		return false;
+	}
+
+	bool success = true;
+
+	parser.enter();
+	while(success && parser.valueType() != LdlParser::TYPE_END) {
+		String key = parser.getKey();
+		if(key == "offset") {
+			success = ldlRead(parser, _offsetInTiles);
+		}
+		else if(key == "size") {
+			success = ldlRead(parser, _sizeInTiles);
+		}
+		else if(key == "tile_size") {
+			success = ldlRead(parser, _tileSizeInPixels);
+		}
+		else if(key == "tiles") {
+			if(parser.valueType() != LdlParser::TYPE_LIST) {
+				parser.error("Expected tile layer (VarMap), got ", parser.valueTypeName());
+				parser.skip();
+				success = false;
+			}
+			else {
+				unsigned size = _sizeInTiles.prod();
+				_tiles.reserve(size);
+
+				parser.enter();
+				for(unsigned i = 0; i < size && success && parser.valueType() != LdlParser::TYPE_END; ++i) {
+					TileIndex tile;
+					success = ldlRead(parser, tile);
+					_tiles.push_back(tile);
+				}
+
+				if(success && _tiles.size() != size) {
+					parser.error("Not enough tiles it tile layer.");
+					success = false;
+				}
+
+				if(parser.valueType() != LdlParser::TYPE_END) {
+					if(success)
+						parser.warning("Too much tiles in tile layer, ignoring.");
+					while(parser.valueType() != LdlParser::TYPE_END)
+						parser.skip();
+				}
+				parser.leave();
+			}
+		}
+		else {
+			parser.warning("Unknown key \"", key, "\" in TileLayer, ignoring.");
+			parser.skip();
+		}
+	}
+
+	while(parser.valueType() != LdlParser::TYPE_END)
+		parser.skip();
+	parser.leave();
+
+	return success;
+}
+
+
+
+
 TileMap::TileMap() {
 }
 
@@ -41,36 +198,22 @@ TileMap::~TileMap() {
 
 
 bool TileMap::isValid() const {
-	return _layers.size();
+	return nLayers();
 }
 
 
 unsigned TileMap::nLayers() const {
-	return _layers.size();
+	return _tileLayers.size();
 }
 
 
-unsigned TileMap::width(unsigned /*layer*/) const {
-	return _width;
+TileLayerCSP TileMap::tileLayer(unsigned layerIndex) const {
+	return _tileLayers[layerIndex];
 }
 
 
-unsigned TileMap::height(unsigned /*layer*/) const {
-	return _height;
-}
-
-
-TileMap::TileIndex TileMap::tile(unsigned x, unsigned y, unsigned layer) const {
-	unsigned i = y * width(layer) + x;
-	lairAssert(i < _layers[layer].size());
-	return _layers[layer][i];
-}
-
-
-void TileMap::setTile(unsigned x, unsigned y, unsigned layer, TileIndex tile) {
-	unsigned i = y * width(layer) + x;
-	lairAssert(i < _layers[layer].size());
-	_layers[layer][i] = tile;
+TileLayerSP TileMap::tileLayer(unsigned layerIndex) {
+	return _tileLayers[layerIndex];
 }
 
 
@@ -111,10 +254,12 @@ bool TileMap::setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects) {
 	while(success && parser.valueType() != LdlParser::TYPE_END) {
 		String key = parser.getKey();
 		if(key == "width") {
-			success = ldlRead(parser, _width);
+//			success = ldlRead(parser, _width);
+			parser.skip();
 		}
 		else if(key == "height") {
-			success = ldlRead(parser, _height);
+//			success = ldlRead(parser, _height);
+			parser.skip();
 		}
 		else if(key == "properties") {
 			success = ldlRead(parser, _properties);
@@ -140,9 +285,7 @@ bool TileMap::setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects) {
 	if(!success) {
 		while(parser.valueType() != LdlParser::TYPE_END)
 			parser.skip();
-		_width = 0;
-		_height = 0;
-		_layers.clear();
+		_tileLayers.clear();
 	}
 	parser.leave();
 
@@ -235,7 +378,12 @@ bool TileMap::_parseTileLayers(LdlParser& parser) {
 
 	parser.enter();
 	while(success && parser.valueType() != LdlParser::TYPE_END) {
-		success = _parseTileLayer(parser);
+		TileLayerSP tileLayer = std::make_shared<TileLayer>();
+		success = tileLayer->setFromLdl(parser);
+
+		if(success) {
+			_tileLayers.push_back(tileLayer);
+		}
 	}
 
 	while(parser.valueType() != LdlParser::TYPE_END)
@@ -243,34 +391,6 @@ bool TileMap::_parseTileLayers(LdlParser& parser) {
 	parser.leave();
 
 	return success;
-}
-
-
-bool TileMap::_parseTileLayer(LdlParser& parser) {
-	if(parser.valueType() != LdlParser::TYPE_LIST) {
-		parser.error("Expected tile layer (VarList), got ", parser.valueTypeName());
-		parser.skip();
-		return false;
-	}
-
-	bool success = true;
-
-	_layers.emplace_back();
-	Layer& layer = _layers.back();
-	layer.reserve(_width * _height);
-
-	parser.enter();
-	while(success && parser.valueType() != LdlParser::TYPE_END) {
-		TileIndex index;
-		success = success && ldlRead(parser, index);
-		layer.push_back(index);
-	}
-
-	while(parser.valueType() != LdlParser::TYPE_END)
-		parser.skip();
-	parser.leave();
-
-	return success && layer.size() == _width * _height;
 }
 
 

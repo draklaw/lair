@@ -44,8 +44,7 @@
 - entities:post-load: Add a callback to update entities after load from ldl, using type and custom properties.
 - entities:thread-safety: Make entities and component creation / destruction thread-safe. Entity/component read/write should be synchronised using some other method.
 - entities:component-manager: Merge ComponentManager and DenseComponentManager ?
-
-- tile-map:infinite: Support Tiled infinite tile-maps
+- entities:remove-comp-vtable: Remove component v-table.
 
 - coll:enhance: Finish & test basic shape collisions
 

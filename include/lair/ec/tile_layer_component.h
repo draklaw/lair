@@ -124,8 +124,8 @@ public:
 
 protected:
 	unsigned _fillBuffer(BufferObject& vBuffer, BufferObject& iBuffer,
-	                     const TileMap& tileMap, unsigned layer,
-	                     float tileWidth, float tileHeight, const Matrix4& wt) const;
+	                     const TileMap& tileMap, unsigned layerIndex,
+	                     const Matrix4& wt) const;
 	void _render(EntityRef entity, float interp, const OrthographicCamera& camera);
 
 protected:

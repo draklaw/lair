@@ -150,10 +150,18 @@ LoaderManager* TileLayerComponentManager::loader() {
 
 
 unsigned TileLayerComponentManager::_fillBuffer(BufferObject& vBuffer, BufferObject& iBuffer,
-                                                const TileMap& tileMap, unsigned layer,
-                                                float tileWidth, float tileHeight, const Matrix4& wt) const {
-	unsigned width      = tileMap.width (layer);
-	unsigned height     = tileMap.height(layer);
+                                                const TileMap& tileMap, unsigned layerIndex,
+                                                const Matrix4& wt) const {
+	TileLayerCSP layer = tileMap.tileLayer(layerIndex);
+
+	unsigned offsetX = layer->offsetInTiles()(0);
+	unsigned offsetY = layer->offsetInTiles()(1);
+
+	unsigned width   = layer->widthInTiles();
+	unsigned height  = layer->heightInTiles();
+
+	unsigned tileWidth  = layer->tileWidthInPixels();
+	unsigned tileHeight = layer->tileHeightInPixels();
 
 	unsigned nVertices = width * height * 4;
 	unsigned nIndices  = width * height * 6;
@@ -164,7 +172,7 @@ unsigned TileLayerComponentManager::_fillBuffer(BufferObject& vBuffer, BufferObj
 	Vector2i nTiles(tileMap.tileSetHTiles(), tileMap.tileSetVTiles());
 	for(unsigned y = 0; y < height; ++y) {
 		for(unsigned x = 0; x < width; ++x) {
-			TileMap::TileIndex tile = tileMap.tile(x, y, layer);
+			TileMap::TileIndex tile = layer->tile(x, y);
 			TileMap::TileIndex gid  = tile & TileMap::GID_MASK;
 			if(gid == 0)
 				continue;
@@ -184,8 +192,8 @@ unsigned TileLayerComponentManager::_fillBuffer(BufferObject& vBuffer, BufferObj
 					std::swap(tx, ty);
 				}
 
-				Vector4 pos = wt * Vector4((         x + x2) * tileWidth,
-				                           (height - y - y2) * tileHeight, 0, 1);
+				Vector4 pos = wt * Vector4((         x + x2 + offsetX) * tileWidth,
+				                           (height - y - y2 - offsetY) * tileHeight, 0, 1);
 				vBuffer.write(SpriteVertex{ pos, Vector4::Constant(1),
 				                            tc.corner(Box2::CornerType(tx + ty*2)) });
 			}
@@ -252,10 +260,8 @@ void TileLayerComponentManager::_render(EntityRef entity, float interp, const Or
 						  comp->_entity()->worldTransform.matrix());
 
 		if(comp->_bufferDirty) {
-			float tileWidth  = float(texColor->width())  / float(tileMap.tileSetHTiles());
-			float tileHeight = float(texColor->height()) / float(tileMap.tileSetVTiles());
 			comp->_vertexCount = _fillBuffer(*comp->_vBuffer, *comp->_iBuffer,
-			                                 tileMap, layer, tileWidth, tileHeight, wt);
+			                                 tileMap, layer, wt);
 			comp->_bufferDirty = false;
 		}
 

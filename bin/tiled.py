@@ -85,6 +85,10 @@ class Map:
         self.infinite        = attr(elem, bool, 'infinite', False)
         self.nextobjectid    = attr(elem, int, 'nextobjectid')
 
+        if self.infinite:
+            self.width  = 0
+            self.height = 0
+
         self.properties      = read_properties(elem, base_path, loader = loader)
         self.tilesets        = parse_tilesets(elem, base_path, loader = loader)
         self.layers          = parse_layers(elem, base_path, loader = loader)
@@ -138,17 +142,78 @@ class TileLayer(Layer):
 
     def __init__(self, elem, base_path, loader = None):
         super().__init__(elem, base_path)
+
         self.width   = attr(elem, int, 'width')
         self.height  = attr(elem, int, 'height')
 
-        self.tiles = []
+        self.tile_offset_x = 0
+        self.tile_offset_y = 0
+        self.chunks = None
+        self.tiles  = None
 
         data = elem.find('data')
-        if data.get('encoding') == 'csv':
-            self.tiles = list(map(int, data.text.split(',')))
-        else:
-            assert False
+        encoding = data.get('encoding')
 
+        if data.find('chunk') is not None:
+            self.chunks = list(map(lambda e: Chunk(e, encoding), children(data, 'chunk')))
+
+            # Find min and max, update width and height
+            l_min = None
+            l_max = None
+            for coords, tile in self.iter_chunk_tiles():
+                if l_min is None:
+                    l_min, l_max = coords[:], coords[:]
+                else:
+                    for i in range(2):
+                        l_min[i] = min(l_min[i], coords[i])
+                        l_max[i] = max(l_max[i], coords[i])
+
+            if l_min:
+                self.tile_offset_x = l_min[0]
+                self.tile_offset_y = l_min[1]
+                self.width  = l_max[0] - l_min[0] + 1
+                self.height = l_max[1] - l_min[1] + 1
+            else:
+                self.width  = 0
+                self.height = 0
+        else:
+            self.tiles = decode_tiles(data.text, encoding)
+
+    def convert_chunks_to_tiles(self):
+        if self.chunks is None or self.tiles is not None:
+            return
+
+        self.tiles = [ 0 ] * (self.width * self.height)
+        for coords, tile in self.iter_chunk_tiles():
+            x = coords[0] - self.tile_offset_x
+            y = coords[1] - self.tile_offset_y
+            self.tiles[x + y * self.width] = tile
+
+    def iter_chunk_tiles(self):
+        for chunk in self.chunks:
+            for i, tile in enumerate(chunk.tiles):
+                if tile:
+                    x = chunk.x + i %  chunk.width
+                    y = chunk.y + i // chunk.height
+                    yield [x, y], tile
+
+class Chunk:
+    def __init__(self, elem, encoding):
+        self.x      = attr(elem, int, 'x')
+        self.y      = attr(elem, int, 'y')
+        self.width  = attr(elem, int, 'width')
+        self.height = attr(elem, int, 'height')
+        self.tiles  = decode_tiles(elem.text, encoding)
+
+    def __repr__(self):
+        return '<Chunk {}, {} - {}, {}>'.format(self.x, self.y, self.width, self.height)
+
+
+def decode_tiles(tiles, encoding):
+    if encoding == 'csv':
+        return list(map(int, tiles.split(',')))
+    else:
+        raise RuntimeError("Unsupported tile data encoding: {}".format(encoding))
 
 class ObjectLayer(Layer):
     __dump__ = True
