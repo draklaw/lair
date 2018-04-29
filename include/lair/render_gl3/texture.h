@@ -24,8 +24,9 @@
 
 
 #include <lair/core/lair.h>
-#include <lair/core/metatype.h>
 #include <lair/core/asset_manager.h>
+
+#include <lair/meta/metatype.h>
 
 #include <lair/render_gl3/context.h>
 

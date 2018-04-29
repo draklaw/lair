@@ -27,8 +27,9 @@
 #include <unordered_map>
 
 #include <lair/core/lair.h>
-#include <lair/core/metatype.h>
 #include <lair/core/ldl.h>
+
+#include <lair/meta/metatype.h>
 
 
 namespace lair

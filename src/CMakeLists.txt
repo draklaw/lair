@@ -82,7 +82,6 @@ set(lair_SOURCES
 
 	core/lair.cpp
 	core/log.cpp
-	core/metatype.cpp
 	core/path.cpp
 	core/text.cpp
 	core/parse.cpp
@@ -94,6 +93,8 @@ set(lair_SOURCES
 	core/asset_manager.cpp
 	core/loader.cpp
 	core/bitmap_font.cpp
+
+	meta/metatype.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp

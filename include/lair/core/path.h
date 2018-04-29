@@ -35,7 +35,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/hash.h>
-#include <lair/core/metatype.h>
+
+#include <lair/meta/metatype.h>
 
 
 namespace lair

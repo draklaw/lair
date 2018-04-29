@@ -27,11 +27,12 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/metatype.h>
 #include <lair/core/json.h>
 #include <lair/core/ldl.h>
 #include <lair/core/loader.h>
 #include <lair/core/image.h>
+
+#include <lair/meta/metatype.h>
 
 
 namespace lair

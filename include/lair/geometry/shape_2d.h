@@ -24,8 +24,9 @@
 
 
 #include <lair/core/lair.h>
-#include <lair/core/metatype.h>
 #include <lair/core/ldl.h>
+
+#include <lair/meta/metatype.h>
 
 #include <lair/geometry/sphere.h>
 #include <lair/geometry/aligned_box.h>

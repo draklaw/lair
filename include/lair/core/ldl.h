@@ -25,7 +25,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/parse.h>
-#include <lair/core/metatype.h>
+
+#include <lair/meta/metatype.h>
 
 
 namespace lair {
