@@ -93,21 +93,19 @@ public:
 		}
 	}
 
-	// TODO: Implement move contructor using moveConstruct
-//	inline Variant(Variant&& other)
-//		: _type(nullptr)
-//	{
-//		dbgLogger.warning("Move constructor ", this, ", ", &other);
-//		if(other._type) {
-//			_type = other._type;
-//			std::memcpy(_data, other._data, VARIANT_DATA_SIZE);
-//			other._type = nullptr;
-//			other._clearData();
-//		}
-//		else {
-//			_clearData();
-//		}
-//	}
+	inline Variant(Variant&& other)
+	    : _type(nullptr)
+	{
+		if(other._type) {
+			_type = other._type;
+			std::memcpy(_data, other._data, VARIANT_DATA_SIZE);
+			other._type = nullptr;
+			other._clearData();
+		}
+		else {
+			_clearData();
+		}
+	}
 
 	template<typename T>
 	inline Variant(const T& object)
