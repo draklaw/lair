@@ -301,3 +301,5 @@ Path makeAbsolute(const Path& cd, const Path& path) {
 const Path emptyPath;
 
 }
+
+LAIR_IMPLEMENT_METATYPE(lair::Path, "Path");

@@ -64,8 +64,8 @@ public:
 typedef Test<32>  Test32;
 typedef Test<128> Test128;
 
-LAIR_REGISTER_METATYPE(Test32,  "Test32");
-LAIR_REGISTER_METATYPE(Test128, "Test128");
+LAIR_IMPLEMENT_METATYPE(Test32,  "Test32");
+LAIR_IMPLEMENT_METATYPE(Test128, "Test128");
 
 struct NoMethods {
 	NoMethods(int i)
@@ -83,7 +83,7 @@ struct NoMethods {
 	int i;
 };
 
-LAIR_REGISTER_METATYPE(NoMethods, "NoMethods");
+LAIR_IMPLEMENT_METATYPE(NoMethods, "NoMethods");
 
 enum {
 	NO_REPR = 0x01,

@@ -141,7 +141,7 @@ bool ldlWrite(LdlWriter& writer, const TextureSetCSP& textureSet);
 }
 
 
-LAIR_REGISTER_METATYPE(lair::TextureSetCSP, "TextureSet");
+LAIR_DECLARE_METATYPE(lair::TextureSetCSP)
 
 
 #endif

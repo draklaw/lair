@@ -136,8 +136,8 @@ bool ldlWrite(LdlWriter& writer, const Shape2DVector& value);
 }
 
 
-LAIR_REGISTER_METATYPE(lair::Shape2D, "Shape2D");
-LAIR_REGISTER_METATYPE(lair::Shape2DVector, "Shape2DList");
+LAIR_DECLARE_METATYPE(lair::Shape2D)
+LAIR_DECLARE_METATYPE(lair::Shape2DVector)
 
 
 #endif

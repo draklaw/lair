@@ -309,7 +309,7 @@ public:
 
 private:
 	inline bool useExternalStorage() const {
-		return !_type || !_type->isPod || _type->size > VARIANT_DATA_SIZE;
+		return !_type || !_type->isTriviallyCopyable || _type->size > VARIANT_DATA_SIZE;
 	}
 
 	template<typename T>
@@ -373,8 +373,8 @@ std::ostream& operator<<(std::ostream& out, const VarMap& map);
 }
 
 
-LAIR_REGISTER_METATYPE(lair::VarList, "VarList");
-LAIR_REGISTER_METATYPE(lair::VarMap,  "VarMap");
+LAIR_DECLARE_METATYPE(lair::VarList);
+LAIR_DECLARE_METATYPE(lair::VarMap);
 
 
 #endif

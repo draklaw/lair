@@ -72,3 +72,6 @@ std::ostream& operator<<(std::ostream& out, const VarMap& map) {
 
 
 }
+
+LAIR_IMPLEMENT_METATYPE(lair::VarList, "VarList");
+LAIR_IMPLEMENT_METATYPE(lair::VarMap,  "VarMap");

@@ -295,3 +295,6 @@ RenderPass::IndexedCall::IndexedCall(Index index, DrawCall* call)
 
 
 }
+
+
+LAIR_IMPLEMENT_METATYPE(lair::BlendingMode, "BlendingMode");

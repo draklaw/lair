@@ -164,7 +164,7 @@ extern const Path emptyPath;
 
 }
 
-LAIR_REGISTER_METATYPE(lair::Path, "Path");
+LAIR_DECLARE_METATYPE(lair::Path);
 
 
 #endif

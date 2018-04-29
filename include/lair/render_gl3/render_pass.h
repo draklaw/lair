@@ -239,7 +239,7 @@ protected:
 }
 
 
-LAIR_REGISTER_METATYPE(lair::BlendingMode, "BlendingMode");
+LAIR_DECLARE_METATYPE(lair::BlendingMode)
 
 
 #endif

@@ -208,7 +208,7 @@ bool ldlWrite(LdlWriter& writer, const SamplerSP& sampler);
 }
 
 
-LAIR_REGISTER_METATYPE(lair::Sampler, "Sampler");
+LAIR_DECLARE_METATYPE(lair::Sampler)
 
 
 #endif

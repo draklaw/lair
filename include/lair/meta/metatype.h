@@ -36,17 +36,14 @@
 #include <lair/core/lair.h>
 
 
+namespace lair {
+
+
 /**
  * \brief A trait that map a C++ type to a meta-type.
- *
- * Defined outside of the namespace lair so that other software can easily
- * declare new metatypes without adding dubious "namespace lair {...}".
  */
 template<typename T>
 struct _MetaTypeTrait;
-
-
-namespace lair {
 
 
 // Function pointers to implement meta-type functionalities. Mostly like methods.
@@ -60,7 +57,7 @@ typedef void (*MoveConstructorFunc)(void* dst, void* src);
 /// Destroy `obj`.
 typedef void (*DestructorFunc)(const void* obj);
 
-/// Assign `value` to `obj`.
+/// Assign `value` to `dst`.
 typedef void (*AssignFunc)(void* dst, const void* value);
 
 /// Swap two values
@@ -85,7 +82,7 @@ struct MetaType {
 	unsigned            index;
 	std::string         identifier;
 	size_t              size;
-	bool                isPod;
+	bool                isTriviallyCopyable;
 	CopyConstructorFunc copyConstruct;
 	MoveConstructorFunc moveConstruct;
 	DestructorFunc      destroy;
@@ -355,68 +352,73 @@ WriteReprFunc makeWriteReprFunc() {
  *
  * Note that this macro must be called in the global namespace.
  */
-#define LAIR_REGISTER_METATYPE(_type, _id) \
+#define LAIR_DECLARE_METATYPE(_type) \
+	namespace lair { \
 	template<> \
 	struct _MetaTypeTrait<_type> { \
-		static unsigned index() { \
-			static unsigned index = lair::metaTypes._register(lair::MetaType { \
-				0, \
-				_id, \
-				sizeof(_type), \
-				std::is_pod<_type>(), \
-				lair::makeCopyConstructor<_type>(), \
-				lair::makeMoveConstructor<_type>(), \
-				lair::makeDestructor<_type>(), \
-				lair::makeAssignFunc<_type>(), \
-				lair::makeSwapFunc<_type>(), \
-				lair::makeToIntFunc<_type>(), \
-				lair::makeFromIntFunc<_type>(), \
-				lair::makeWriteReprFunc<_type>() \
-			}); \
-			return index; \
-		} \
-	}
+	    static unsigned index(); \
+    }; \
+    }
+
+#define LAIR_IMPLEMENT_METATYPE(_type, _id) \
+	unsigned lair::_MetaTypeTrait<_type>::index() { \
+	    static unsigned index = lair::metaTypes._register(lair::MetaType { \
+	        0, \
+	        _id, \
+	        sizeof(_type), \
+	        std::is_trivially_copyable<_type>(), \
+	        lair::makeCopyConstructor<_type>(), \
+	        lair::makeMoveConstructor<_type>(), \
+	        lair::makeDestructor<_type>(), \
+	        lair::makeAssignFunc<_type>(), \
+	        lair::makeSwapFunc<_type>(), \
+	        lair::makeToIntFunc<_type>(), \
+	        lair::makeFromIntFunc<_type>(), \
+	        lair::makeWriteReprFunc<_type>() \
+        }); \
+	    return index; \
+    }
 
 
 }
 
-LAIR_REGISTER_METATYPE(bool,  "Bool");
+LAIR_DECLARE_METATYPE(bool)
 
-LAIR_REGISTER_METATYPE(lair::int8,  "Int8");
-LAIR_REGISTER_METATYPE(lair::int16, "Int16");
-LAIR_REGISTER_METATYPE(lair::int32, "Int32");
-LAIR_REGISTER_METATYPE(lair::int64, "Int64");
+LAIR_DECLARE_METATYPE(lair::int8)
+LAIR_DECLARE_METATYPE(lair::int16)
+LAIR_DECLARE_METATYPE(lair::int32)
+LAIR_DECLARE_METATYPE(lair::int64)
 
-LAIR_REGISTER_METATYPE(lair::uint8,  "UInt8");
-LAIR_REGISTER_METATYPE(lair::uint16, "UInt16");
-LAIR_REGISTER_METATYPE(lair::uint32, "UInt32");
-LAIR_REGISTER_METATYPE(lair::uint64, "UInt64");
+LAIR_DECLARE_METATYPE(lair::uint8)
+LAIR_DECLARE_METATYPE(lair::uint16)
+LAIR_DECLARE_METATYPE(lair::uint32)
+LAIR_DECLARE_METATYPE(lair::uint64)
 
-LAIR_REGISTER_METATYPE(float,  "Float");
-LAIR_REGISTER_METATYPE(double, "Double");
+LAIR_DECLARE_METATYPE(float)
+LAIR_DECLARE_METATYPE(double)
 
-LAIR_REGISTER_METATYPE(lair::String, "String");
+LAIR_DECLARE_METATYPE(lair::String)
 
-LAIR_REGISTER_METATYPE(lair::Vector2, "Vector2f");
-LAIR_REGISTER_METATYPE(lair::Vector3, "Vector3f");
-LAIR_REGISTER_METATYPE(lair::Vector4, "Vector4f");
+LAIR_DECLARE_METATYPE(lair::Vector2)
+LAIR_DECLARE_METATYPE(lair::Vector3)
+LAIR_DECLARE_METATYPE(lair::Vector4)
 
-LAIR_REGISTER_METATYPE(lair::Vector2i, "Vector2i");
-LAIR_REGISTER_METATYPE(lair::Vector3i, "Vector3i");
-LAIR_REGISTER_METATYPE(lair::Vector4i, "Vector4i");
+LAIR_DECLARE_METATYPE(lair::Vector2i)
+LAIR_DECLARE_METATYPE(lair::Vector3i)
+LAIR_DECLARE_METATYPE(lair::Vector4i)
 
-LAIR_REGISTER_METATYPE(lair::Matrix2, "Matrix2f");
-LAIR_REGISTER_METATYPE(lair::Matrix3, "Matrix3f");
-LAIR_REGISTER_METATYPE(lair::Matrix4, "Matrix4f");
+LAIR_DECLARE_METATYPE(lair::Matrix2)
+LAIR_DECLARE_METATYPE(lair::Matrix3)
+LAIR_DECLARE_METATYPE(lair::Matrix4)
 
-LAIR_REGISTER_METATYPE(lair::Transform,   "Transform");
-LAIR_REGISTER_METATYPE(lair::Quaternion,  "Quaternion");
-LAIR_REGISTER_METATYPE(lair::AngleAxis,   "AngleAxis");
-LAIR_REGISTER_METATYPE(lair::Translation, "Translation");
+LAIR_DECLARE_METATYPE(lair::Transform)
+LAIR_DECLARE_METATYPE(lair::Quaternion)
+LAIR_DECLARE_METATYPE(lair::AngleAxis)
+LAIR_DECLARE_METATYPE(lair::Translation)
 
-LAIR_REGISTER_METATYPE(lair::Box2,  "Box2f");
-LAIR_REGISTER_METATYPE(lair::Box3,  "Box3f");
-LAIR_REGISTER_METATYPE(lair::Box2i, "Box2i");
-LAIR_REGISTER_METATYPE(lair::Box3i, "Box3i");
+LAIR_DECLARE_METATYPE(lair::Box2)
+LAIR_DECLARE_METATYPE(lair::Box3)
+LAIR_DECLARE_METATYPE(lair::Box2i)
+LAIR_DECLARE_METATYPE(lair::Box3i)
 
 #endif

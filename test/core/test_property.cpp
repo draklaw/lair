@@ -46,7 +46,7 @@ const lair::EnumInfo* blendingModeInfo() {
 	return &info;
 }
 
-LAIR_REGISTER_METATYPE(BlendingMode, "BlendingMode");
+LAIR_IMPLEMENT_METATYPE(BlendingMode, "BlendingMode");
 
 enum {
 	MAG_NEAREST        = 0 << 0,

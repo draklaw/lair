@@ -324,3 +324,6 @@ bool ldlWrite(LdlWriter& writer, const SamplerSP& sampler) {
 
 
 }
+
+
+LAIR_IMPLEMENT_METATYPE(lair::Sampler, "Sampler");
