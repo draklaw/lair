@@ -22,7 +22,7 @@
 
 
 from sys import stdout
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 import re
 
 
@@ -30,31 +30,78 @@ _undefined = object()
 
 
 class TypedList(list):
-    def __init__(self, type_, *args, **kwargs):
+    def __init__(self, type_ = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.type = type_
+        self._type   = type_
+        self._inline = False
+        self._style  = '['
+
+    def inline(self):
+        self._inline = True
+        return self
+
+    def function(self):
+        self._inline = True
+        self._style  = '('
+        return self
 
     def __repr__(self):
-        return 'TypedList({!r}, {})'.format(self.type, super().__repr__())
+        return 'TypedList({!r}, {})'.format(self._type, super().__repr__())
 
-class TypedDict(dict):
-    def __init__(self, type_, *args, **kwargs):
+    def pprint(self, indent = '  ', depth = 0, file = stdout, no_indent = False):
+        if not no_indent:
+            file.write(indent * depth)
+        if self._type is not None:
+            file.write(self._type)
+        file.write('[\n')
+
+        depth += 1
+        for v in self:
+            file.write(indent * depth)
+            if hasattr(v, 'pprint'):
+                v.pprint(indent = indent, depth = depth , file = file, no_indent = True)
+            else:
+                file.write(repr(v))
+                file.write('\n')
+        depth -= 1
+
+        file.write(indent * depth)
+        file.write(']\n')
+
+class TypedDict(OrderedDict):
+    def __init__(self, type_ = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.type = type_
+        self._type   = type_
+        self._inline = False
 
     def __repr__(self):
-        return 'TypedDict({!r}, {})'.format(self.type, super().__repr__())
+        return 'TypedDict({!r}, {})'.format(self._type, super().__repr__())
 
-class Typed:
-    def __init__(self, type, value, inline = False):
-        self.type = type
-        self.value = value
-        self.inline = inline
+    def inline(self):
+        self._inline = True
+        return self
 
-    def __repr__(self):
-        if self.inline:
-            return 'Typed({type!r}, {value!r}, inline=True)'.format(**self.__dict__)
-        return 'Typed({type!r}, {value!r})'.format(**self.__dict__)
+    def pprint(self, indent = '  ', depth = 0, file = stdout, no_indent = False):
+        if not no_indent:
+            file.write(indent * depth)
+        if self._type is not None:
+            file.write(self._type)
+        file.write('{\n')
+
+        depth += 1
+        for k, v in self.items():
+            file.write(indent * depth)
+            file.write(repr(k))
+            file.write(' = ')
+            if hasattr(v, 'pprint'):
+                v.pprint(indent = indent, depth = depth , file = file, no_indent = True)
+            else:
+                file.write(repr(v))
+                file.write('\n')
+        depth -= 1
+
+        file.write(indent * depth)
+        file.write('}\n')
 
 class LdlWriter:
     LIST = 'list'
@@ -68,48 +115,65 @@ class LdlWriter:
 
     _id_re = re.compile(r'^[a-zA-Z_][a-zA-Z_0-9]*$')
 
-    def __init__(self, out, type = 'map'):
+    def __init__(self, out, indent = '\t'):
         self.out    = out
+        self.indent_string = indent
         self.indent = 0
-        self.context = [ type ]
+        self.context = []
         self.close_char = []
-        self.inline = [ False ]
-        self.count  = [ 0 ]
+        self.inline = []
+        self.count  = []
 
     def new_line(self):
         self.out.write('\n')
-        self.out.write('\t' * self.indent)
+        self.out.write(self.indent_string * self.indent)
 
     def sep(self):
-        if self.inline[-1]:
-            if self.count[-1]:
-                self.out.write(', ')
-            else:
-                self.out.write(' ')
-        elif self.count[-1] != 0 or self.close_char:
-            self.new_line()
+        if not self.context:
+            return
+
+        if len(self.context) != 1 or self.count[0]:
+            if self.inline[-1]:
+                if self.count[-1]:
+                    self.out.write(', ')
+                elif self.close_char[-1] != ')':
+                    self.out.write(' ')
+            elif self.count[-1] != 0 or self.close_char:
+                self.new_line()
         self.count[-1] += 1
 
-    def open_map(self, inline = False):
-        self.context.append(LdlWriter.MAP)
-        self.out.write('{')
+    def open_map(self, type = None, inline = False):
+        if self.context:
+            if type is not None:
+                self.write_string(type)
+            self.out.write('{')
+            if not inline:
+                self.indent += 1
+            self.close_char.append('}')
+        else:
+            self.close_char.append(None)
 
-        if not inline:
-            self.indent += 1
+        self.context.append(LdlWriter.MAP)
+
         self.count.append(0)
-        self.close_char.append('}')
         self.inline.append(inline)
 
-    def open_list(self, char = '[', inline = False):
-        assert char == '[' or char == '('
+    def open_list(self, type = None, style = '[', inline = False):
+        assert style == '[' or style == '('
+
+        if self.context:
+            if type is not None:
+                self.write_string(type)
+            self.out.write(style)
+            if not inline:
+                self.indent += 1
+            self.close_char.append(']' if style == '[' else ')')
+        else:
+            self.close_char.append(None)
 
         self.context.append(LdlWriter.LIST)
-        self.out.write(char)
 
-        if not inline:
-            self.indent += 1
         self.count.append(0)
-        self.close_char.append(']' if char == '[' else ')')
         self.inline.append(inline)
 
     def close(self):
@@ -118,17 +182,19 @@ class LdlWriter:
             return
 
         inline = self.inline.pop()
+        char = self.close_char.pop()
 
         if not inline:
             self.indent -= 1
 
         if self.count.pop():
-            if inline:
-                self.out.write(' ')
-            else:
+            if not inline:
                 self.new_line()
+            elif char != ')':
+                self.out.write(' ')
 
-        self.out.write(self.close_char.pop())
+        if char:
+            self.out.write(char)
         self.context.pop()
 
     def write_key(self, key):
@@ -145,10 +211,10 @@ class LdlWriter:
     def write(self, obj_or_key, obj = _undefined, type = None, list_style = '[', inline = False):
         key = None
         if obj is _undefined:
-            assert self.context[-1] == LdlWriter.LIST
+            assert not self.context or self.context[-1] == LdlWriter.LIST
             obj = obj_or_key
         else:
-            assert self.context[-1] == LdlWriter.MAP
+            assert not self.context or self.context[-1] == LdlWriter.MAP
             key = obj_or_key
 
         self.sep()
@@ -156,29 +222,26 @@ class LdlWriter:
         if hasattr(obj, 'as_ldl'):
             obj = obj.as_ldl()
 
-        if isinstance(obj, Typed):
-            type = obj.type
-            inline = obj.inline
-            obj = obj.value
-            if inline:
-                list_style = '('
+        if isinstance(obj, TypedList):
+            type       = obj._type
+            inline     = obj._inline
+            list_style = obj._style
+        elif isinstance(obj, TypedDict):
+            type       = obj._type
+            inline     = obj._inline
 
         if key is not None:
             self.write_key(key)
 
         if isinstance(obj, dict):
-            if type is not None:
-                self.write_string(type)
-            self.open_map(inline=inline)
+            self.open_map(type = type, inline = inline)
             for k, v in obj.items():
-                self.write(k, v, inline=inline)
+                self.write(k, v, inline = inline)
             self.close()
         elif isinstance(obj, (list, tuple)):
-            if type is not None:
-                self.write_string(type)
-            self.open_list(char=list_style, inline=inline)
+            self.open_list(type = type, style = list_style, inline = inline)
             for v in obj:
-                self.write(v, inline=inline)
+                self.write(v, inline = inline)
             self.close()
         elif isinstance(obj, str):
             self.write_string(obj)
@@ -239,7 +302,7 @@ _lexer = [
     (_d_string_re, lambda t: parse_string(t, 1)),
 ]
 
-class LdlParser:
+class LdlReader:
     Token = namedtuple('Token', ['line', 'col', 'type', 'value'])
 
     def __init__(self, input_):
@@ -426,7 +489,9 @@ class LdlParser:
 
 
 if __name__ == '__main__':
-    w = LdlWriter(stdout, LdlWriter.LIST)
+    w = LdlWriter(stdout, indent = '  ')
+
+    w.open_list()
 
     w.write(None)
     w.write(True)
@@ -447,6 +512,8 @@ if __name__ == '__main__':
     w.write([
         { 'a': 0, 'b': 1, 'c': 2 }, 1, 2
     ])
+
+    w.write(TypedList('Vector', [1, 2, 3]).function())
 
     w.close()
 
@@ -482,7 +549,7 @@ if __name__ == '__main__':
 
     from io import StringIO
 
-    parser = LdlParser(StringIO(test))
+    parser = LdlReader(StringIO(test))
 
     print('Tokens:')
     i = 0
@@ -504,5 +571,5 @@ if __name__ == '__main__':
             print(e)
 
     print('Read:')
-    parser = LdlParser(StringIO(test))
+    parser = LdlReader(StringIO(test))
     print(parser.read())

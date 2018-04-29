@@ -1,7 +1,7 @@
 width = 0
 height = 0
 properties = {
-	test = Vector( 1.0, 0.6666666666666666, 0.0, 1.0 )
+	test = Vector(1.0, 0.6666666666666666, 0.0, 1.0)
 }
 tilesets = [
 	{
@@ -17,10 +17,10 @@ tilesets = [
 ]
 tile_layers = [
 	{
-		offset = Vector( -2, 2 )
-		size = Vector( 20, 14 )
-		tile_size = Vector( 32, 32 )
-		tiles = ( 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 6, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 4, 0, 5, 5, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 3, 0, 4, 0, 5, 0, 5, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 3, 3, 0, 4, 0, 5, 5, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 2, 0, 3, 0, 3, 0, 4, 0, 5, 0, 5, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 2684354566, 3221225478, 1610612742, 2147483654, 3758096390, 1073741830, 536870918, 6, 6, 6, 6, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6 )
+		offset = Vector(-2, 2)
+		size = Vector(20, 14)
+		tile_size = Vector(32, 32)
+		tiles = [ 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 6, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 4, 0, 5, 5, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 0, 3, 0, 4, 0, 5, 0, 5, 0, 1, 0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 3, 3, 0, 4, 0, 5, 5, 0, 0, 1, 0, 0, 0, 0, 1, 0, 2, 2, 0, 3, 0, 3, 0, 4, 0, 5, 0, 5, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 6, 2684354566, 3221225478, 1610612742, 2147483654, 3758096390, 1073741830, 536870918, 6, 6, 6, 6, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6 ]
 	}
 ]
 objects = [
@@ -28,7 +28,7 @@ objects = [
 		type = tile_layer
 		name = tile_map
 		enabled = true
-		transform = translate( 0.0, 0.0, 0.0 )
+		transform = translate(0.0, 0.0, 0.0)
 		properties = {
 			plop = 123
 		}
@@ -42,13 +42,13 @@ objects = [
 		type = group
 		name = test_group
 		enabled = true
-		transform = translate( 0.0, 0.0, 0.0 )
+		transform = translate(0.0, 0.0, 0.0)
 		children = [
 			{
 				type = group
 				name = triggers
 				enabled = true
-				transform = translate( 0.0, 0.0, 0.0 )
+				transform = translate(0.0, 0.0, 0.0)
 				properties = {
 					ping = 123.456
 				}
@@ -57,21 +57,21 @@ objects = [
 						type = test_object
 						name = Test0
 						enabled = true
-						transform = translate( 96.0, 153.6, 0.0 )
+						transform = translate(96.0, 153.6, 0.0)
 						collision = {
 							hit_mask = 4
-							shape = ABox{ min = Vector( -32.0, -25.6 ), size = Vector( 64.0, 128.0 ) }
+							shape = ABox{ min = Vector(-32.0, -25.6), size = Vector(64.0, 128.0) }
 						}
 						properties = {
 							custom_name = hello_world
 							test = true
 						}
 						sprite = {
-							anchor = Vector( 0.5, 0.2 )
+							anchor = Vector(0.5, 0.2)
 							blend = alpha
-							color = Vector( 1.0, 1.0, 1.0, 0.5019607843137255 )
-							texture = Texture( sprite_color, 'lair.png', Sampler( 'bilinear_no_mipmap|clamp' ) )
-							tile_grid = Vector( 3, 2 )
+							color = Vector(1.0, 1.0, 1.0, 0.5019607843137255)
+							texture = Texture(sprite_color, 'lair.png', Sampler('bilinear_no_mipmap | clamp'))
+							tile_grid = Vector(3, 2)
 							tile_index = 2
 						}
 					}
@@ -79,9 +79,9 @@ objects = [
 						type = test_object
 						name = Test1
 						enabled = true
-						transform = translate( 160.0, 256.0, 0.0 )
+						transform = translate(160.0, 256.0, 0.0)
 						properties = {
-							anchor = Vector( 0.0, 1.0 )
+							anchor = Vector(0.0, 1.0)
 							custom_name = foobar
 							test = true
 						}
@@ -92,40 +92,40 @@ objects = [
 				type = group
 				name = objects
 				enabled = true
-				transform = translate( 0.0, 0.0, 0.0 )
+				transform = translate(0.0, 0.0, 0.0)
 				children = [
 					{
 						type = player
 						name = player
 						enabled = true
-						transform = ( translate( 272.000406460551, 208.00040646055103, 0.0 ), rotate( 30.0 ) )
+						transform = [ translate(272.000406460551, 208.00040646055103, 0.0), rotate(30.0) ]
 						sprite = {
 							blend = alpha
-							texture = Texture( sprite_color, 'lair.png', Sampler( 'bilinear_no_mipmap|clamp' ) )
-							tile_grid = Vector( 3, 2 )
+							texture = Texture(sprite_color, 'lair.png', Sampler('bilinear_no_mipmap | clamp'))
+							tile_grid = Vector(3, 2)
 							tile_index = 5
-							anchor = Vector( 0.5, 0.5 )
+							anchor = Vector(0.5, 0.5)
 						}
 					}
 					{
 						type = text
 						name = text
 						enabled = true
-						transform = translate( 64.0, 128.0, 0.0 )
+						transform = translate(64.0, 128.0, 0.0)
 						text = {
 							blend = alpha
 							font = 'droid_sans_24.json'
 							text = 'Hello World'
-							size = Vector( 96.0, 64.0 )
-							color = Vector( 0.8274509803921568, 0.7450980392156863, 0.5411764705882353, 1.0 )
-							anchor = Vector( 0, 1 )
+							size = Vector(96.0, 64.0)
+							color = Vector(0.8274509803921568, 0.7450980392156863, 0.5411764705882353, 1.0)
+							anchor = Vector(0, 1)
 						}
 					}
 					{
 						type = character
 						name = character
 						enabled = true
-						transform = translate( 312.0, 88.0, 0.0 )
+						transform = translate(312.0, 88.0, 0.0)
 						character = {
 							hp = 100.0
 						}
@@ -135,10 +135,10 @@ objects = [
 							rot_speed = 180.0
 						}
 						sprite = {
-							anchor = Vector( 0.0, 0.0 )
-							color = Vector( 1.0, 0.6666666666666666, 0.0, 1.0 )
-							texture = Texture( sprite_color, 'character.png', Sampler( 'bilinear_no_mipmap|clamp' ) )
-							tile_grid = Vector( 1, 1 )
+							anchor = Vector(0.0, 0.0)
+							color = Vector(1.0, 0.6666666666666666, 0.0, 1.0)
+							texture = Texture(sprite_color, 'character.png', Sampler('bilinear_no_mipmap | clamp'))
+							tile_grid = Vector(1, 1)
 							tile_index = 0
 						}
 					}
@@ -146,13 +146,13 @@ objects = [
 						model = character
 						name = character2
 						enabled = true
-						transform = ( translate( 114.9996810575867, 182.9996124288593, 0.0 ), rotate( 128.89 ) )
+						transform = [ translate(114.9996810575867, 182.9996124288593, 0.0), rotate(128.89) ]
 						character = {
 							move_speed = 2.0
 						}
 						sprite = {
-							color = Vector( 0.6666666666666666, 1.0, 0.4980392156862745, 1.0 )
-							anchor = Vector( 0.5, 0.5 )
+							color = Vector(0.6666666666666666, 1.0, 0.4980392156862745, 1.0)
+							anchor = Vector(0.5, 0.5)
 						}
 					}
 				]

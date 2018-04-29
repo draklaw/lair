@@ -27,6 +27,9 @@ import xml.etree.ElementTree as ET
 
 
 def parse_html_color(html_color):
+    """Parse a color in html format (#rgb, #rgba, #rrggbb or #rrggbbaa) and
+    returns a tuple of ints."""
+
     l = len(html_color)
     assert l == 4 or l == 5 or l == 7 or l == 9
     n = 3 if l == 4 or l == 7 else 4
@@ -44,6 +47,8 @@ def parse_html_color(html_color):
     return c
 
 class Color:
+    """A rgba color, each channel is stored as an int in [0-255]."""
+
     def __init__(self, html_color):
         self.html_color = html_color
         self.color = parse_html_color(html_color)
@@ -55,11 +60,13 @@ class Color:
             self.color.pop(0)
 
     def __repr__(self):
-        # return 'Color({})'.format(self.html_color)
         return 'Color({!r})'.format(list(map(int, self.color)))
 
 
 def attr(etree, type_, attr, default = None):
+    """Reads an attribute from an etree Element and converts it with the type_
+    function. If the attribute is not set, return default without conveting it."""
+
     value = etree.get(attr)
     if value is None:
         return default
@@ -67,6 +74,8 @@ def attr(etree, type_, attr, default = None):
 
 
 class Map:
+    """A Tiled map."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -93,8 +102,15 @@ class Map:
         self.tilesets        = parse_tilesets(elem, base_path, loader = loader)
         self.layers          = parse_layers(elem, base_path, loader = loader)
 
+        self.tiles = [ None ]
+        for tileset in self.tilesets:
+            for i in range(tileset.tilecount):
+                self.tiles.append((tileset, i))
+
 
 class Tileset:
+    """A tiled tileset."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -117,6 +133,8 @@ class Tileset:
 
 
 class Image:
+    """A Tiled image."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -126,6 +144,8 @@ class Image:
 
 
 class Layer:
+    """Base class for all Tiled Layers."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -138,6 +158,8 @@ class Layer:
         self.properties = read_properties(elem, base_path, loader = loader)
 
 class TileLayer(Layer):
+    """A Tiled tile layer."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -180,6 +202,8 @@ class TileLayer(Layer):
             self.tiles = decode_tiles(data.text, encoding)
 
     def convert_chunks_to_tiles(self):
+        """Fill self.tiles with data coming from chunks of an infinite tile map."""
+
         if self.chunks is None or self.tiles is not None:
             return
 
@@ -190,6 +214,9 @@ class TileLayer(Layer):
             self.tiles[x + y * self.width] = tile
 
     def iter_chunk_tiles(self):
+        """A generator that iterate throught non-null tiles stored in chunks,
+        returning a tuple ((x, y), tile_id)."""
+
         for chunk in self.chunks:
             for i, tile in enumerate(chunk.tiles):
                 if tile:
@@ -198,6 +225,8 @@ class TileLayer(Layer):
                     yield [x, y], tile
 
 class Chunk:
+    """A block of tiles that compose an infinite tile map."""
+
     def __init__(self, elem, encoding):
         self.x      = attr(elem, int, 'x')
         self.y      = attr(elem, int, 'y')
@@ -210,12 +239,16 @@ class Chunk:
 
 
 def decode_tiles(tiles, encoding):
+    """Decode a list of tiles stored with a specific format."""
+
     if encoding == 'csv':
         return list(map(int, tiles.split(',')))
     else:
         raise RuntimeError("Unsupported tile data encoding: {}".format(encoding))
 
 class ObjectLayer(Layer):
+    """A Tiled object layer, that contains a bunch of objects."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -227,6 +260,8 @@ class ObjectLayer(Layer):
 
 
 class GroupLayer(Layer):
+    """A Tiled group layer, that contains other layers."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -236,6 +271,8 @@ class GroupLayer(Layer):
 
 
 class Object:
+    """A Tiled object."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -261,6 +298,8 @@ class Object:
 
 
 class Text:
+    """Tiled text, with font-related data."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -279,6 +318,8 @@ class Text:
 
 
 class Template:
+    """A Tiled object template."""
+
     __dump__ = True
 
     def __init__(self, elem, base_path, loader = None):
@@ -287,6 +328,9 @@ class Template:
 
 
 class Loader:
+    """The loader class. Store a cache of each loaded files, so that a file
+    referenced at different places is only loaded once."""
+
     __dump__ = True
 
     def __init__(self, source):
@@ -331,6 +375,8 @@ _tiled_types = {
     'file': PurePath,
 }
 def read_properties(elem, base_path, loader = None):
+    """Read the content of the <properties> tag of elem"""
+
     props = {}
     for properties in children(elem, 'properties'):
         for property in children(properties, 'property'):
@@ -404,9 +450,13 @@ def parse_text(elem, base_path, loader = None):
 
 
 def parse_bool(text):
+    """Converts a textual representation of a bool into a bool."""
+
     return bool(int(text))
 
 def children(elem, tags):
+    """Returns an iterable on the children of elem with a tag in tags."""
+
     if isinstance(tags, str):
         tags = [ tags ]
     return filter(lambda e: e.tag in tags, elem)

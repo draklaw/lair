@@ -33,20 +33,19 @@ from tiled import (
     Loader, Map, Layer, TileLayer, ObjectLayer, GroupLayer, Object,
 )
 
-from ldl import LdlWriter, Typed
+from ldl import LdlWriter, TypedList
+from lair import ABox, Sampler, Texture, Transform, Vector
 
-
-def get_tile_set_from_gid(tilemap, gid):
-    prev = None
-    for tileset in tilemap.tilesets:
-        if gid < tileset.firstgid:
-            return prev
-        prev = tileset
-    return prev
 
 _vectorize_re = re.compile(r'^(.*)_([xyzw])$')
 _vectorize_index = { 'x': 0, 'y': 1, 'z': 2, 'w': 3 }
 def vectorize(properties):
+    """
+    Transfoms properties XXX_x, XXX_y, ... into a vector property XXX.
+
+    Tile does not support vector properties (yet), so this is a workaround.
+    """
+
     d = OrderedDict()
 
     for k, v in sorted(properties.items(), key=lambda t: t[0]):
@@ -63,6 +62,8 @@ def vectorize(properties):
     return d
 
 def rotate(angle, x, y):
+    """Rotate the vector x, y by the angle alpha (in radians)."""
+
     c = cos(angle)
     s = sin(angle)
     return x * c + y * s, x * -s + y * c
@@ -73,6 +74,9 @@ _align_anchor = {
     'bottom': 0, 'top': 1
 }
 def get_anchor(obj, axis, default = None):
+    """Find the anchor point of an object for a given axis. Anchor points can
+    be set at different places."""
+
     assert axis == 'x' or axis == 'y'
     prop = 'anchor_' + axis
 
@@ -86,96 +90,10 @@ def get_anchor(obj, axis, default = None):
 
     return anchor
 
-class Vector:
-    def __init__(self, *args):
-        self.coeffs = list(args)
-        if len(args) == 1:
-            try:
-                iter(args[0])
-                self.coeffs = args[0]
-            except TypeError:
-                pass
 
-    def as_ldl(self):
-        return Typed('Vector', self.coeffs, inline = True)
+class TiledMapConverter:
+    """Convert a Tiled map into a ldl file supported by Lair."""
 
-    def __repr__(self):
-        return 'Vector({})'.format(', '.join(map(repr, self.coeffs)))
-
-Color = Vector
-
-class ABox:
-    def __init__(self, min, size):
-        self.min = min
-        self.size = size
-
-    def as_ldl(self):
-        return Typed('ABox', OrderedDict([
-            ('min', self.min),
-            ('size', self.size),
-        ]), inline = True)
-
-    def __repr__(self):
-        return 'ABox({!r}, {!r})'.format(self.min, self.size)
-
-class Transform:
-    def __init__(self, translation, rotation = 0, scale = None):
-        self.translation = translation
-        self.rotation = rotation
-        self.scale = scale
-
-    def as_ldl(self):
-        ops = []
-        ops.append(Typed('translate', self.translation, inline = True))
-        if self.rotation != 0:
-            ops.append(Typed('rotate', [self.rotation], inline = True))
-        if self.scale is not None:
-            ops.append(Typed('scale', self.scale, inline = True))
-        if len(ops) == 1:
-            return ops[0]
-        return Typed(None, ops, inline = True)
-
-class Sampler:
-    def __init__(self, flags = ['bilinear_no_mipmap', 'clamp'], anisotropy = None,
-                 lod_bias = None, min_lod = None, max_lod = None):
-        if isinstance(flags, str):
-            flags = [ flags ]
-        self._flags = ' | '.join(flags)
-        self._anisotropy = anisotropy
-        self._lod_bias = lod_bias
-        self._min_lod = min_lod
-        self._max_lod = max_lod
-
-        self._params = [ self._flags, self._anisotropy, self._lod_bias,
-                         self._min_lod, self._max_lod ]
-        self._n_params = 0
-        for i, p in enumerate(self._params):
-            if p is not None:
-                self._n_params = i + 1
-            else:
-                # To avoid null values.
-                self._params[i] = 0
-
-    def as_ldl(self):
-        return Typed('Sampler', self._params[:self._n_params], inline = True)
-
-    def __repr__(self):
-        return 'Sampler({})'.format(', '.join(self._params[:self._n_params]))
-
-class Texture:
-    def __init__(self, source, sampler, target = 'sprite_color'):
-        self._target = target
-        self._source = source
-        self._sampler = sampler
-
-    def as_ldl(self):
-        return Typed('Texture', [self._target, self._source, self._sampler], inline = True)
-
-    def __repr__(self):
-        return 'Texture({_source!r}, {_sampler!r}, {_target!r})'.format(**self.__dict__)
-
-
-class MapAsDict:
     def __init__(self, map_, filename, target_dir, sampler, font, loader):
         self._map = map_
         self._filename = filename
@@ -234,7 +152,7 @@ class MapAsDict:
                                 tile_layer.height + tile_layer.tile_offset_y)
         d['size']      = Vector(tile_layer.width, tile_layer.height)
         d['tile_size'] = Vector(self._tile_width, self._tile_height)
-        d['tiles']     = Typed(None, tile_layer.tiles, inline = True)
+        d['tiles']     = TypedList(None, tile_layer.tiles).inline()
 
         return d
 
@@ -333,14 +251,14 @@ class MapAsDict:
         # Set sprite properties if object is a sprite object.
         sprite_enabled = properties.get('sprite.enabled', True)
         if getattr(object, 'gid', 0) and sprite_enabled:
-            tileset = get_tile_set_from_gid(self._map, object.gid)
+            tileset, tileindex = self._map.tiles[object.gid]
             sprite = d.setdefault('sprite', OrderedDict())
             sprite['texture'] = Texture(self.path(tileset.image.source), self._sampler)
             sprite['tile_grid'] = Vector(
                 tileset.columns,
                 tileset.tilecount // tileset.columns,
             )
-            sprite['tile_index'] = object.gid - tileset.firstgid
+            sprite['tile_index'] = tileindex
 
         # Add default sprite parameters
         if 'sprite' in d:
@@ -406,7 +324,7 @@ class MapAsDict:
     def property(self, property):
         if isinstance(property, TiledColor):
             color = list(map(lambda c: c / 255, property.color))
-            return Color(color)
+            return Vector(color)
         elif isinstance(property, PurePath):
             return self.path(property)
 
@@ -424,7 +342,7 @@ Convert a tmx file into a ldl file compatible with Lair.
 """.format(argv[0]))
     exit(ret)
 
-if __name__ == '__main__':
+def main(argv):
     in_filename  = None
     out_dir      = None
     out_filename = None
@@ -469,7 +387,9 @@ if __name__ == '__main__':
 
         sampler = Sampler(sampler)
 
-        converter = MapAsDict(tilemap, out_filename, out_dir, sampler, font, loader)
+        converter = TiledMapConverter(tilemap, out_filename, out_dir, sampler, font, loader)
         tile_map_as_dict = converter.convert()
-        for k, v in tile_map_as_dict.items():
-            out.write(k, v)
+        out.write(tile_map_as_dict)
+
+if __name__ == '__main__':
+    main(argv)
