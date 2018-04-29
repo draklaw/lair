@@ -95,6 +95,9 @@ set(lair_SOURCES
 	core/bitmap_font.cpp
 
 	meta/metatype.cpp
+	meta/variant.cpp
+	meta/enum_info.cpp
+	meta/flags_info.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp

@@ -30,6 +30,8 @@
 #include <lair/core/ldl.h>
 
 #include <lair/meta/metatype.h>
+#include <lair/meta/enum_info.h>
+#include <lair/meta/flags_info.h>
 
 
 namespace lair
@@ -65,7 +67,7 @@ public:
 
 	template < typename T >
 	void set(void* obj, const T& value) const {
-		setVar(obj, ConstVarRef(value));
+		setVar(obj, Variant(value));
 	}
 
 protected:

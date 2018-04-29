@@ -27,6 +27,7 @@
 #include <lair/core/hash.h>
 
 #include <lair/meta/metatype.h>
+#include <lair/meta/flags_info.h>
 
 #include <lair/render_gl3/context.h>
 

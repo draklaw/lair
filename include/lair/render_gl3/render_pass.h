@@ -28,6 +28,7 @@
 #include <lair/core/lair.h>
 
 #include <lair/meta/metatype.h>
+#include <lair/meta/enum_info.h>
 
 #include <lair/render_gl3/context.h>
 
