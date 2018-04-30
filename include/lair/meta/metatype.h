@@ -60,9 +60,6 @@ typedef void (*DestructorFunc)(const void* obj);
 /// Assign `value` to `dst`.
 typedef void (*AssignFunc)(void* dst, const void* value);
 
-/// Swap two values
-typedef void (*SwapFunc)(void* value0, void* value1);
-
 /// Converts `obj` to `int`.
 typedef int (*ToIntFunc)(const void* obj);
 
@@ -87,7 +84,6 @@ struct MetaType {
 	MoveConstructorFunc moveConstruct;
 	DestructorFunc      destroy;
 	AssignFunc          assign;
-	SwapFunc            swap;
 	ToIntFunc           toInt;
 	FromIntFunc         fromInt;
 	WriteReprFunc       writeRepr;
@@ -233,38 +229,6 @@ AssignFunc makeAssignFunc() {
 	return makeAssignFunc<T>(std::is_assignable<T&, T&>());
 }
 
-template<typename T>
-static auto _hasSwap(int)
-    -> decltype(swap(std::declval<T>(), std::declval<T>()), // <- Test this experssion...
-                std::true_type{});                          // <- and return this one.
-template<typename T>
-static std::false_type _hasSwap(long);
-/// A reflection trait that test if writeRepr(std::ostream&, T) exists.
-template<typename T>
-struct HasSwap: decltype(_hasSwap<T>(0)) {};
-
-/// Templates that return a SwapFunc that calls std::swap() on two objects.
-template<typename T>
-struct _SwapFunc {
-	static void swapFunc(void* value0, void* value1) {
-		T* ptr0 = reinterpret_cast<const T*>(value0);
-		T* ptr1 = reinterpret_cast<const T*>(value1);
-		swap(*ptr0, *ptr1);
-	}
-};
-template<typename T>
-SwapFunc makeSwapFunc(std::true_type) {
-	return _SwapFunc<T>::swapFunc;
-}
-template<typename T>
-SwapFunc makeSwapFunc(std::false_type) {
-	return nullptr;
-}
-template<typename T>
-SwapFunc makeSwapFunc() {
-	return makeSwapFunc<T>(HasSwap<T>());
-}
-
 /// Templates that return a ToIntFunc that converts the object to an integer if
 /// T is a number type.
 template<typename T>
@@ -371,7 +335,6 @@ WriteReprFunc makeWriteReprFunc() {
 	        lair::makeMoveConstructor<_type>(), \
 	        lair::makeDestructor<_type>(), \
 	        lair::makeAssignFunc<_type>(), \
-	        lair::makeSwapFunc<_type>(), \
 	        lair::makeToIntFunc<_type>(), \
 	        lair::makeFromIntFunc<_type>(), \
 	        lair::makeWriteReprFunc<_type>() \

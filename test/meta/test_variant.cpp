@@ -165,7 +165,8 @@ TEST(VariantTest, TestNoMethods) {
 }
 
 TEST(VariantTest, TestCopy) {
-	String str = "Hello world !";
+	String str  = "Hello world !";
+	String str2 = "foobar";
 
 	Variant var0 = str;
 
@@ -177,15 +178,23 @@ TEST(VariantTest, TestCopy) {
 	ASSERT_FALSE(var0.isEmpty());
 	ASSERT_TRUE(var1.isString());
 	ASSERT_EQ(var1.asString(), str);
+
+	var1 = str2;
+
+	ASSERT_TRUE(var1.isString());
+	ASSERT_EQ(var1.asString(), str2);
 }
 
 TEST(VariantTest, TestMove) {
 	String str0 = "Hello world !";
 	String str1 = str0;
+	String str2 = "foobar";
+	String str3 = str2;
 
 	Variant var0 = std::move(str0);
 
 	ASSERT_TRUE(var0.isString());
+	ASSERT_TRUE(str0.empty());
 	ASSERT_EQ(var0.asString(), str1);
 
 	Variant var1 = std::move(var0);
@@ -193,4 +202,10 @@ TEST(VariantTest, TestMove) {
 	ASSERT_TRUE(var0.isEmpty());
 	ASSERT_TRUE(var1.isString());
 	ASSERT_EQ(var1.asString(), str1);
+
+	var1 = std::move(str2);
+
+	ASSERT_TRUE(var1.isString());
+	ASSERT_TRUE(str2.empty());
+	ASSERT_EQ(var1.asString(), str3);
 }
