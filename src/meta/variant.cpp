@@ -29,7 +29,7 @@ namespace lair
 {
 
 
-Variant Variant::null = Variant();
+const Variant Variant::null = Variant();
 
 
 std::ostream& operator<<(std::ostream& out, const Variant& var) {

@@ -46,6 +46,7 @@ const lair::EnumInfo* blendingModeInfo() {
 	return &info;
 }
 
+LAIR_DECLARE_METATYPE(BlendingMode);
 LAIR_IMPLEMENT_METATYPE(BlendingMode, "BlendingMode");
 
 enum {

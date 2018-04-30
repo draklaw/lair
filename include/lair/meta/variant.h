@@ -32,23 +32,6 @@ namespace lair
 {
 
 
-/**
- * \brief Union used to compute the size of Variant data block.
- *
- * Any type stored in this union will be storable directly in a Variant, without
- * allocating a new data block.
- */
-union _VariantDataContent {
-	void*  ptr;
-	double real;
-};
-
-enum {
-	/// The size of the data stored in a Variant.
-	VARIANT_DATA_SIZE = sizeof(_VariantDataContent),
-};
-
-
 class Variant;
 
 /// A vector of Variant.
@@ -73,7 +56,9 @@ typedef std::unordered_map<String, Variant> VarMap;
  */
 class Variant {
 public:
-	static Variant null;
+	typedef typename std::aligned_union<16, Byte*, double, Vector4>::type VariantData;
+
+	static const Variant null;
 
 public:
 	inline Variant()
@@ -98,7 +83,7 @@ public:
 	{
 		if(other._type) {
 			_type = other._type;
-			std::memcpy(_data, other._data, VARIANT_DATA_SIZE);
+			std::memcpy(&_data, &other._data, sizeof(VariantData));
 			other._type = nullptr;
 			other._clearData();
 		}
@@ -112,6 +97,25 @@ public:
 	    : _type(nullptr)
 	{
 		_set(metaTypes.get<T>(), &object);
+	}
+
+	// Template T&& is a forwarding reference that accepts any type (T&, const T&, etc.)
+	// This cause this overload to be selected when it should not, for instance
+	// with non-const T&. The enable_if is required to makes sure this overload
+	// is used only if T in an rvalue.
+	template<typename T,
+	         typename std::enable_if<std::is_rvalue_reference<T>::value, int>::type = 0>
+	inline Variant(T&& object)
+	    : _type(nullptr)
+	{
+		const MetaType* type = metaTypes.get<T>();
+		if(type->moveConstruct) {
+			Byte* ptr = _malloc(type);
+			type->moveConstruct(ptr, &object);
+		}
+		else {
+			_set(type, &object);
+		}
 	}
 
 	inline ~Variant() {
@@ -298,68 +302,71 @@ public:
 	void swap(Variant& other) noexcept {
 		std::swap(_type, other._type);
 
-		uint8 tmp[VARIANT_DATA_SIZE];
-		std::memcpy(tmp,        _data,        VARIANT_DATA_SIZE);
-		std::memcpy(_data,       other._data, VARIANT_DATA_SIZE);
-		std::memcpy(other._data, tmp,         VARIANT_DATA_SIZE);
+		VariantData tmp;
+		std::memcpy(&tmp,         &_data,       sizeof(VariantData));
+		std::memcpy(&_data,       &other._data, sizeof(VariantData));
+		std::memcpy(&other._data, &tmp,         sizeof(VariantData));
 	}
 
 
 private:
 	inline bool useExternalStorage() const {
-		return !_type || !_type->isTriviallyCopyable || _type->size > VARIANT_DATA_SIZE;
+		return !_type || !_type->isTriviallyCopyable || _type->size > sizeof(VariantData);
 	}
 
 	template<typename T>
 	inline T& _get() {
-		return *reinterpret_cast<T*>(_data);
+		return *reinterpret_cast<T*>(&_data);
 	}
 
 	template<typename T>
 	inline const T& _get() const {
-		return *reinterpret_cast<const T*>(_data);
+		return *reinterpret_cast<const T*>(&_data);
 	}
 
-	inline void* _getDataBlock() {
+	inline Byte* _getDataBlock() {
 		if(useExternalStorage())
-			return _get<void*>();
-		return (void*)&_data;
+			return _get<Byte*>();
+		return reinterpret_cast<Byte*>(&_data);
 	}
 
-	inline const void* _getDataBlock() const {
+	inline const Byte* _getDataBlock() const {
 		if(useExternalStorage())
-			return _get<void*>();
-		return (void*)&_data;
+			return _get<Byte*>();
+		return reinterpret_cast<const Byte*>(&_data);
 	}
 
-	inline void _set(const MetaType* type, const void* obj) {
+	inline Byte* _malloc(const MetaType* type) {
 		clear();
 
 		_type = type;
 
-		void* ptr = (void*)&_data;
+		Byte* ptr = reinterpret_cast<Byte*>(&_data);
 		if(useExternalStorage()) {
 			// Allocate a memory block to store the object
-			ptr = malloc(_type->size);
+			ptr = reinterpret_cast<Byte*>(malloc(_type->size));
 			if(!ptr)
 				throw std::bad_alloc();
-			_get<void*>() = ptr;
+			_get<Byte*>() = ptr;
 		}
+
+		return ptr;
+	}
+
+	inline void _set(const MetaType* type, const void* obj) {
+		Byte* ptr = _malloc(type);
 
 		lairAssert(_type->copyConstruct);
 		_type->copyConstruct(ptr, obj);
 	}
 
 	inline void _clearData() {
-		std::memset(_data, 0, VARIANT_DATA_SIZE);
+		std::memset(&_data, 0, sizeof(VariantData));
 	}
 
 private:
+	VariantData     _data;
 	const MetaType* _type;
-	std::uint8_t    _data[VARIANT_DATA_SIZE];
-
-	friend class VarRef;
-	friend class ConstVarRef;
 };
 
 

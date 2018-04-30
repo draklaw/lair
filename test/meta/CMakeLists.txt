@@ -18,14 +18,15 @@
 ##
 
 
-add_executable(test_ec
-	test_dense_array.cpp
-	test_entity_manager.cpp
-	test_dense_component_manager.cpp
+add_executable(test_meta
+	test_metatype.cpp
+	test_variant.cpp
+	test_enum_info.cpp
+	test_flags_info.cpp
 )
 
-target_link_libraries(test_ec
+target_link_libraries(test_meta
 	gtest_main
 	lair
 )
-add_dependencies(buildtests test_ec)
+add_dependencies(buildtests test_meta)

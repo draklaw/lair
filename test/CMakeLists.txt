@@ -18,11 +18,11 @@
 ##
 
 
-add_custom_target(buildtests)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
+	add_subdirectory(googletest)
 
-find_package(GTest)
+	add_custom_target(buildtests)
 
-if(${GTEST_FOUND})
 	include_directories(
 		"${PROJECT_SOURCE_DIR}/include"
 		${GTEST_INCLUDE_DIRS}
@@ -32,6 +32,7 @@ if(${GTEST_FOUND})
 	)
 
 	add_subdirectory(core)
-#	add_subdirectory(utils)
-	add_subdirectory(ec)
+	add_subdirectory(meta)
+	#add_subdirectory(utils)
+	#add_subdirectory(ec)
 endif()

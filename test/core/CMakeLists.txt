@@ -20,7 +20,6 @@
 
 add_executable(test_core
 	test_path.cpp
-	test_metatype.cpp
 	test_text.cpp
 	test_ldl.cpp
 	test_property.cpp
@@ -28,8 +27,7 @@ add_executable(test_core
 )
 
 target_link_libraries(test_core
-	${GTEST_BOTH_LIBRARIES}
-	pthread # Seems required by GTest
+	gtest_main
 	lair
 )
 add_dependencies(buildtests test_core)
