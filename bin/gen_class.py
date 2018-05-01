@@ -36,6 +36,9 @@ from os.path import (
 from io import (
 	StringIO,
 )
+from datetime import (
+	date
+)
 
 from jinja2 import (
 	Environment,
@@ -147,6 +150,7 @@ if __name__ == '__main__':
 
 	# Templates environment
 	env = Environment(loader=FileSystemLoader(tmpl_dir))
+	env.globals["year"]        = date.today().year
 	env.globals["module"]      = module
 	env.globals["class_camel"] = class_camel
 	env.globals["class_snake"] = class_snake
