@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -24,6 +24,7 @@
 
 
 #include <lair/core/lair.h>
+#include <lair/core/parse.h>
 
 #include <lair/meta/metatype.h>
 
@@ -75,18 +76,32 @@ class Variant {
 public:
 	typedef typename std::aligned_union<16, Byte*, double, Vector4, String>::type VariantData;
 
+
 	static const Variant null;
+	static const String  _nullTypename;
+
+
+	struct ParseInfo {
+		String   filename;
+		unsigned line;
+		unsigned col;
+		String   type;
+	};
+
 
 public:
 	inline Variant()
 	    : _type(nullptr)
+	    , _parseInfo(nullptr)
 	{
 		LAIR_VARIANT_PRINT(this, "Variant()")
 		_clearData();
 	}
 
+
 	inline Variant(const Variant& other)
 	    : _type(nullptr)
+	    , _parseInfo(nullptr)
 	{
 		LAIR_VARIANT_PRINT(this, "Variant(const " << LAIR_VARIANT_ID(&other) << ">&)")
 		if(other._type) {
@@ -95,14 +110,20 @@ public:
 		else {
 			_clearData();
 		}
+
+		if(other._parseInfo) {
+			_parseInfo = new ParseInfo(*other._parseInfo);
+		}
 	}
+
 
 	inline Variant(Variant&& other)
 	    : _type(nullptr)
+	    , _parseInfo(nullptr)
 	{
 		if(!other._type) {
 			LAIR_VARIANT_PRINT(this, "Variant(" << LAIR_VARIANT_ID(&other) << "&&)")
-			clear();
+			_clearData();
 		}
 		else if(useExternalStorage() || other._type->isTriviallyCopyable) {
 			LAIR_VARIANT_PRINT(this, "Variant(" << LAIR_VARIANT_ID(&other) << "&&) -> memcpy data")
@@ -115,22 +136,30 @@ public:
 			LAIR_VARIANT_PRINT(this, "Variant(" << LAIR_VARIANT_ID(&other) << "&&) -> moveConstruct")
 			_malloc(other._type);
 			_type->moveConstruct(_getDataBlock(), other._getDataBlock());
-			other.clear();
+			other._clear();
 		}
 		else {
 			LAIR_VARIANT_PRINT(this, "Variant(" << LAIR_VARIANT_ID(&other) << "&&) -> copyConstruct")
 			_set(other._type, other._getDataBlock());
-			other.clear();
+			other._clear();
+		}
+
+		if(other._parseInfo) {
+			_parseInfo = other._parseInfo;
+			other._parseInfo = nullptr;
 		}
 	}
+
 
 	template<typename T>
 	inline Variant(const T& object)
 	    : _type(nullptr)
+	    , _parseInfo(nullptr)
 	{
 		LAIR_VARIANT_PRINT(this, "Variant(const " << metaTypes.get<T>()->identifier << "&)")
 		_set(metaTypes.get<T>(), &object);
 	}
+
 
 	// Template T&& is a forwarding reference that accepts any type (T&, const T&, etc.)
 	// This cause this overload to be selected when it should not, for instance
@@ -140,6 +169,7 @@ public:
 	         typename std::enable_if<std::is_rvalue_reference<T&&>::value, int>::type = 0>
 	inline Variant(T&& object)
 	    : _type(nullptr)
+	    , _parseInfo(nullptr)
 	{
 		const MetaType* type = metaTypes.get<T>();
 		if(type->moveConstruct) {
@@ -153,10 +183,12 @@ public:
 		}
 	}
 
+
 	inline ~Variant() {
 		LAIR_VARIANT_PRINT(this, "~Variant()")
 		clear();
 	}
+
 
 	inline Variant& operator=(const Variant& other) {
 		if(&other == this)
@@ -170,8 +202,15 @@ public:
 			clear();
 		}
 
+		delete _parseInfo;
+		_parseInfo = nullptr;
+		if(other._parseInfo) {
+			_parseInfo = new ParseInfo(*other._parseInfo);
+		}
+
 		return *this;
 	}
+
 
 	inline Variant& operator=(Variant&& other) {
 		if(&other == this)
@@ -192,16 +231,21 @@ public:
 			LAIR_VARIANT_PRINT(this, "= " << LAIR_VARIANT_ID(&other) << "&& -> moveConstruct")
 			_malloc(other._type);
 			_type->moveConstruct(_getDataBlock(), other._getDataBlock());
-			other.clear();
+			other._clear();
 		}
 		else {
 			LAIR_VARIANT_PRINT(this, "= " << LAIR_VARIANT_ID(&other) << "&& -> copyConstruct")
 			_set(other._type, other._getDataBlock());
-			other.clear();
+			other._clear();
 		}
+
+		delete _parseInfo;
+		_parseInfo = other._parseInfo;
+		other._parseInfo = nullptr;
 
 		return *this;
 	}
+
 
 	template<typename T>
 	inline Variant& operator=(const T& object)
@@ -209,8 +253,12 @@ public:
 		LAIR_VARIANT_PRINT(this, "= const " << metaTypes.get<T>()->identifier << "&")
 		_set(metaTypes.get<T>(), &object);
 
+		delete _parseInfo;
+		_parseInfo = nullptr;
+
 		return *this;
 	}
+
 
 	template<typename T,
 	         typename std::enable_if<std::is_rvalue_reference<T&&>::value, int>::type = 0>
@@ -227,49 +275,71 @@ public:
 			_set(type, &object);
 		}
 
+		delete _parseInfo;
+		_parseInfo = nullptr;
+
 		return *this;
 	}
+
 
 	inline const MetaType* type() const {
 		return _type;
 	}
 
-	inline bool isEmpty() const {
-		return !_type || !_getDataBlock();
+
+	inline const String& typeName() const {
+		if(_type) {
+			return _type->identifier;
+		}
+		return _nullTypename;
 	}
+
+
+	inline bool isValid() const {
+		return _type && _getDataBlock();
+	}
+
 
 	template<typename T>
 	inline bool is() const {
 		return _type == metaTypes.get<T>();
 	}
 
+
 	inline bool isNull() const {
-		return isEmpty();
+		return !isValid();
 	}
+
 
 	inline bool isBool() const {
 		return _type && _type->toInt;
 	}
 
+
 	inline bool isInt() const {
 		return _type && _type->toInt;
 	}
+
 
 	inline bool isFloat() const {
 		return isInt() || is<float>() || is<double>();
 	}
 
+
 	inline bool isString() const {
 		return is<String>();
 	}
+
 
 	inline bool isVarList() const {
 		return is<VarList>();
 	}
 
+
 	inline bool isVarMap() const {
 		return is<VarMap>();
 	}
+
 
 	template<typename T>
 	inline T& as() {
@@ -277,11 +347,13 @@ public:
 		return *reinterpret_cast<T*>(_getDataBlock());
 	}
 
+
 	template<typename T>
 	inline const T& as() const {
 		lairAssert(is<T>());
 		return *reinterpret_cast<const T*>(_getDataBlock());
 	}
+
 
 	inline bool asBool() const {
 		if(is<bool>())
@@ -292,10 +364,12 @@ public:
 		return false;
 	}
 
+
 	inline int asInt() const {
 		lairAssert(_type && _type->toInt);
 		return _type->toInt(_getDataBlock());
 	}
+
 
 	inline double asFloat() const {
 		if(isInt())
@@ -308,29 +382,36 @@ public:
 		return 0;
 	}
 
+
 	inline const String& asString() const {
 		return as<String>();
 	}
+
 
 	inline const VarList& asVarList() const {
 		return as<VarList>();
 	}
 
+
 	inline VarList& asVarList() {
 		return as<VarList>();
 	}
+
 
 	inline const VarMap& asVarMap() const {
 		return as<VarMap>();
 	}
 
+
 	inline VarMap& asVarMap() {
 		return as<VarMap>();
 	}
 
+
 	inline const Variant& operator[](unsigned i) const {
 		return const_cast<Variant*>(this)->operator[](i);
 	}
+
 
 	inline Variant& operator[](unsigned i) {
 		lairAssert(isVarList());
@@ -338,9 +419,11 @@ public:
 		return asVarList()[i];
 	}
 
+
 	inline const Variant& operator[](const String& key) const {
 		return const_cast<Variant*>(this)->operator[](key);
 	}
+
 
 	inline Variant& operator[](const String& key) {
 		lairAssert(isVarMap());
@@ -349,6 +432,7 @@ public:
 		return it->second;
 	}
 
+
 	inline const Variant& get(const String& key) const {
 		lairAssert(isVarMap());
 		auto it = asVarMap().find(key);
@@ -356,6 +440,7 @@ public:
 			return it->second;
 		return null;
 	}
+
 
 //	template<typename T>
 //	inline const Variant& get(const String& key, const T& defaultValue) const {
@@ -366,40 +451,60 @@ public:
 //		return Variant(defaultValue);
 //	}
 
+
 	inline void setInt(int i) {
 		lairAssert(_type && _type->fromInt);
 		_type->fromInt(_getDataBlock(), i);
 	}
 
+
 	inline void* data() {
-		lairAssert(!isEmpty());
+		lairAssert(isValid());
 		return _getDataBlock();
 	}
+
 
 	inline const void* data() const {
-		lairAssert(!isEmpty());
+		lairAssert(isValid());
 		return _getDataBlock();
 	}
 
+
 	void clear() {
-		if(_type) {
-			void* ptr = _getDataBlock();
+		_clear();
 
-			if(ptr) {
-				// Seriously, who would delete the destructor ???
-				if(_type->destroy) {
-					_type->destroy(ptr);
-				}
+		delete _parseInfo;
+		_parseInfo = nullptr;
+	}
 
-				if(useExternalStorage()) {
-					free(ptr);
-					ptr = nullptr;
-				}
-			}
 
-			_type = nullptr;
-			_clearData();
+	void setParseInfo(const ParseInfo& parseInfo) {
+		if(!_parseInfo) {
+			_parseInfo = new ParseInfo(parseInfo);
 		}
+		else {
+			*_parseInfo = parseInfo;
+		}
+	}
+
+
+	void setParseInfo(const String& filename, unsigned line, unsigned col = 0,
+	                  const String& type = String()) {
+		setParseInfo(ParseInfo{ filename, line, col, type  });
+	}
+
+
+	const ParseInfo* parseInfo() const {
+		return _parseInfo;
+	}
+
+
+	String parseInfoDesc() const {
+		if(_parseInfo) {
+			return cat(_parseInfo->filename, ": ", _parseInfo->line,
+			           ": ", _parseInfo->col, ": ");
+		}
+		return String();
 	}
 
 
@@ -431,7 +536,7 @@ private:
 	}
 
 	inline Byte* _malloc(const MetaType* type) {
-		clear();
+		_clear();
 
 		_type = type;
 
@@ -454,6 +559,27 @@ private:
 		_type->copyConstruct(ptr, obj);
 	}
 
+	void _clear() {
+		if(_type) {
+			void* ptr = _getDataBlock();
+
+			if(ptr) {
+				// Seriously, who would delete the destructor ???
+				if(_type->destroy) {
+					_type->destroy(ptr);
+				}
+
+				if(useExternalStorage()) {
+					free(ptr);
+					ptr = nullptr;
+				}
+			}
+
+			_type = nullptr;
+			_clearData();
+		}
+	}
+
 	inline void _clearData() {
 		std::memset(&_data, 0, sizeof(VariantData));
 	}
@@ -461,6 +587,7 @@ private:
 private:
 	VariantData     _data;
 	const MetaType* _type;
+	ParseInfo*      _parseInfo;
 };
 
 

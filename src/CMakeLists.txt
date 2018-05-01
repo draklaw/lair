@@ -96,6 +96,7 @@ set(lair_SOURCES
 
 	meta/metatype.cpp
 	meta/variant.cpp
+	meta/variant_reader.cpp
 	meta/enum_info.cpp
 	meta/flags_info.cpp
 

@@ -127,6 +127,18 @@ public:
 		_next();
 	}
 
+	inline const String& streamName() const {
+		return _buf.streamName();
+	}
+
+	inline unsigned line() const {
+		return _buf.line();
+	}
+
+	inline unsigned col() const {
+		return _buf.col();
+	}
+
 	inline void error(const String& message) override {
 		_errors->error(_buf.streamName(), ": ", _buf.line(), ": ",
 		               _buf.col(), ": ", message);

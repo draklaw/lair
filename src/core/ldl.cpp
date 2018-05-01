@@ -967,6 +967,13 @@ bool ldlRead(LdlParser& parser, Transform& value) {
 bool ldlRead(LdlParser& parser, Variant& value) {
 	bool success = true;
 
+	Variant::ParseInfo parseInfo = {
+	    parser.streamName(),
+	    parser.line(),
+	    parser.col(),
+	    parser.isValueTyped()? parser.getValueTypeName(): String()
+	};
+
 	switch(parser.valueType()) {
 	case LdlParser::TYPE_ERROR:
 	case LdlParser::TYPE_END:
@@ -996,16 +1003,18 @@ bool ldlRead(LdlParser& parser, Variant& value) {
 	case LdlParser::TYPE_LIST: {
 		VarList list;
 		success = success && ldlRead(parser, list);
-		value = Variant(list);
+		value = Variant(std::move(list));
 		break;
 	}
 	case LdlParser::TYPE_MAP: {
 		VarMap map;
 		success = success && ldlRead(parser, map);
-		value = Variant(map);
+		value = Variant(std::move(map));
 		break;
 	}
 	}
+
+	value.setParseInfo(parseInfo);
 
 	return success;
 }
@@ -1027,7 +1036,7 @@ bool ldlRead(LdlParser& parser, VarList& value) {
 		Variant var;
 		success = success && ldlRead(parser, var);
 		if(success)
-			value.emplace_back(var);
+			value.emplace_back(std::move(var));
 	}
 
 	while(parser.valueType() != LdlParser::TYPE_END) {
@@ -1061,7 +1070,7 @@ bool ldlRead(LdlParser& parser, VarMap&  value) {
 			Variant var;
 			success = success && ldlRead(parser, var);
 			if(success) {
-				value.emplace(key, var);
+				value.emplace(key, std::move(var));
 			}
 		}
 	}

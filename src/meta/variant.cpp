@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -30,10 +30,10 @@ namespace lair
 
 
 const Variant Variant::null = Variant();
-
+const String Variant::_nullTypename = "null";
 
 std::ostream& operator<<(std::ostream& out, const Variant& var) {
-	if(var.isEmpty())
+	if(var.isNull())
 		out << "null";
 	else if(var.type()->writeRepr)
 		var.type()->writeRepr(out, var.data());

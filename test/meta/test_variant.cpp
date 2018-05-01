@@ -108,26 +108,26 @@ void testType(const T& value0, const T& value1, unsigned flags = 0) {
 	Variant var0;
 	var0 = Variant(value0);
 
-	ASSERT_FALSE(var0.isEmpty());
+	ASSERT_TRUE(var0.isValid());
 	ASSERT_TRUE(var0.is<T>());
 	ASSERT_EQ(value0, var0.as<T>());
 
 	Variant var1(value1);
 	var0 = std::move(var1);
-	ASSERT_TRUE(var1.isEmpty());
-	ASSERT_FALSE(var0.isEmpty());
+	ASSERT_FALSE(var1.isValid());
+	ASSERT_TRUE(var0.isValid());
 	ASSERT_TRUE(var0.is<T>());
 	ASSERT_EQ(value1, var0.as<T>());
 
 	var0 = value0;
-	ASSERT_FALSE(var0.isEmpty());
+	ASSERT_TRUE(var0.isValid());
 	ASSERT_TRUE(var0.is<T>());
 	ASSERT_EQ(value0, var0.as<T>());
 }
 
 TEST(VariantTest, TestEmpty) {
 	Variant var;
-	ASSERT_TRUE(var.isEmpty());
+	ASSERT_FALSE(var.isValid());
 	ASSERT_FALSE(var.is<int>());
 }
 
@@ -169,20 +169,26 @@ TEST(VariantTest, TestCopy) {
 	String str2 = "foobar";
 
 	Variant var0 = str;
+	var0.setParseInfo("test", 10, 20, "foo");
 
 	ASSERT_TRUE(var0.isString());
 	ASSERT_EQ(var0.asString(), str);
+	ASSERT_TRUE(var0.parseInfo());
+	ASSERT_EQ(var0.parseInfo()->filename, "test");
 
 	Variant var1 = var0;
 
-	ASSERT_FALSE(var0.isEmpty());
+	ASSERT_TRUE(var0.isValid());
 	ASSERT_TRUE(var1.isString());
 	ASSERT_EQ(var1.asString(), str);
+	ASSERT_TRUE(var1.parseInfo());
+	ASSERT_EQ(var1.parseInfo()->filename, "test");
 
 	var1 = str2;
 
 	ASSERT_TRUE(var1.isString());
 	ASSERT_EQ(var1.asString(), str2);
+	ASSERT_FALSE(var1.parseInfo());
 }
 
 TEST(VariantTest, TestMove) {
@@ -192,20 +198,26 @@ TEST(VariantTest, TestMove) {
 	String str3 = str2;
 
 	Variant var0 = std::move(str0);
+	var0.setParseInfo("test", 10, 20, "foo");
 
 	ASSERT_TRUE(var0.isString());
 	ASSERT_TRUE(str0.empty());
 	ASSERT_EQ(var0.asString(), str1);
+	ASSERT_TRUE(var0.parseInfo());
+	ASSERT_EQ(var0.parseInfo()->filename, "test");
 
 	Variant var1 = std::move(var0);
 
-	ASSERT_TRUE(var0.isEmpty());
+	ASSERT_FALSE(var0.isValid());
 	ASSERT_TRUE(var1.isString());
 	ASSERT_EQ(var1.asString(), str1);
+	ASSERT_TRUE(var1.parseInfo());
+	ASSERT_EQ(var1.parseInfo()->filename, "test");
 
 	var1 = std::move(str2);
 
 	ASSERT_TRUE(var1.isString());
 	ASSERT_TRUE(str2.empty());
 	ASSERT_EQ(var1.asString(), str3);
+	ASSERT_FALSE(var1.parseInfo());
 }

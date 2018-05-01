@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017 Simon Boyé
+ *  Copyright (C) 2017-2018 Simon Boyé
  *
  *  This file is part of lair.
  *

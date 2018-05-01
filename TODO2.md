@@ -9,7 +9,8 @@
 
 - log:newlines: Indent new lines and replace tabs by spaces.
 
-- meta:move-construct: Support move constructor (and move assign ?) in Variants
+- ldl:rewrite: Rewrite a more readable and maintainable version of LdlParser ?
+- ldl:fix-line-number: Line/col number do not match the current token but the position of the buffer object.
 
 - sys:mouse: Better mouse support
 - sys:gamepad: Support gamepads
