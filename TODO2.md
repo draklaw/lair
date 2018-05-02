@@ -24,6 +24,7 @@
 - assets:race-condition: Fix race-condition when accessing loader callbacks.
 - assets:main-thread-loader-fix: "Main-thread" loader are not guaranteed to be on the main thread if they are started from an other loader.
 - assets:load-deps: Add a way to declare loader dependencies (tile maps must be loaded after models)
+- assets:coroutine: Create a worker-thread / coroutine ordonnancer and use it in loader.
 
 - render:shader-error: Improve shader compilation error by showing the right file/line combination.
 - render:fbo: Support FBO
@@ -54,3 +55,7 @@
 - audio:rewrite: Better audio support (OpenAL ?)
 
 - ui:proto: Prototype a UI framework
+
+- framework:create: Framework module: include GameBase and stuff to reduce boilerplace in Lair projects. Also make them more robust to changes ?
+
+- vector:create: Create custom vector / matrix primitives to replace eigen's one by default. The goal is to reduce dependency on template stuff, improve compile time and hopefully improve perfs in debug.

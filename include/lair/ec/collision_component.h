@@ -26,6 +26,10 @@
 #include <lair/core/lair.h>
 #include <lair/core/ldl.h>
 
+#include <lair/meta/property.h>
+#include <lair/meta/property_list.h>
+#include <lair/meta/with_properties.h>
+
 #include <lair/geometry/shape_2d.h>
 #include <lair/geometry/octree.h>
 

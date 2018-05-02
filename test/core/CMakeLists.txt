@@ -22,7 +22,6 @@ add_executable(test_core
 	test_path.cpp
 	test_text.cpp
 	test_ldl.cpp
-	test_property.cpp
 	test_signal.cpp
 )
 

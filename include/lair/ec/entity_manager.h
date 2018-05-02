@@ -32,9 +32,11 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/path.h>
-#include <lair/core/property.h>
 #include <lair/core/loader.h>
 #include <lair/core/block_array.h>
+
+#include <lair/meta/property.h>
+#include <lair/meta/ldl_property_serializer.h>
 
 #include <lair/ec/component_manager.h>
 #include <lair/ec/entity.h>

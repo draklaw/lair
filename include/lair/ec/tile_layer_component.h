@@ -25,6 +25,10 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/meta/property.h>
+#include <lair/meta/property_list.h>
+#include <lair/meta/with_properties.h>
+
 #include <lair/render_gl3/render_pass.h>
 #include <lair/render_gl3/texture.h>
 #include <lair/render_gl3/texture_set.h>

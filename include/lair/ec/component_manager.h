@@ -29,7 +29,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/path.h>
-#include <lair/core/property.h>
+
+#include <lair/meta/property.h>
+#include <lair/meta/property_list.h>
 
 #include <lair/ec/entity.h>
 

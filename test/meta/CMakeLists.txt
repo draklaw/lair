@@ -23,6 +23,7 @@ add_executable(test_meta
 	test_variant.cpp
 	test_enum_info.cpp
 	test_flags_info.cpp
+	test_property.cpp
 )
 
 target_link_libraries(test_meta

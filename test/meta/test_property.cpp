@@ -22,7 +22,11 @@
 #include <gtest/gtest.h>
 
 #include <lair/core/path.h>
-#include <lair/core/property.h>
+
+#include <lair/meta/property.h>
+#include <lair/meta/property_list.h>
+#include <lair/meta/with_properties.h>
+#include <lair/meta/ldl_property_serializer.h>
 
 
 //using namespace lair;
@@ -340,8 +344,8 @@ TEST(PropertyTest, TestGetSet) {
 	ASSERT_EQ(member,   obj.get<lair::Vector2>(TestClass::P_MEMBER));
 	ASSERT_EQ(member,   obj.get<lair::Vector2>("member"));
 
-	ASSERT_THROW(obj.get<float>(TestClass::P_COUNT), lair::AssertionFailedError);
-	ASSERT_THROW(obj.set(TestClass::P_COUNT, 1.5f), lair::AssertionFailedError);
+	ASSERT_DEATH(obj.get<float>(TestClass::P_COUNT), ".*");
+	ASSERT_DEATH(obj.set(TestClass::P_COUNT, 1.5f), ".*");
 }
 
 TEST(PropertyTest, TestIO) {

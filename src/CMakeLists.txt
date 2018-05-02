@@ -86,7 +86,6 @@ set(lair_SOURCES
 	core/text.cpp
 	core/parse.cpp
 	core/ldl.cpp
-	core/property.cpp
 	core/json.cpp
 	core/image.cpp
 	core/signal.cpp
@@ -99,6 +98,10 @@ set(lair_SOURCES
 	meta/variant_reader.cpp
 	meta/enum_info.cpp
 	meta/flags_info.cpp
+	meta/property.cpp
+	meta/property_list.cpp
+	meta/with_properties.cpp
+	meta/ldl_property_serializer.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp

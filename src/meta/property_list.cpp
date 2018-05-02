@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -21,38 +21,28 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include "lair/core/path.h"
-#include "lair/meta/property.h"
 
+#include <lair/meta/property.h>
+
+#include "lair/meta/property_list.h"
 
 
 namespace lair
 {
 
 
-Property::Property(const MetaType* type, const std::string& name,
-                   const EnumInfo* enumInfo, const FlagsInfo* flagsInfo)
-    : _type     (type)
-    , _enumInfo (enumInfo)
-    , _flagsInfo(flagsInfo)
-    , _name     (name)
-{
+unsigned PropertyList::nProperties() const {
+	return _properties.size();
 }
 
-const MetaType* Property::type() const {
-	return _type;
+int PropertyList::propertyIndex(const std::string& propertyName) const {
+	auto it = _propertyMap.find(propertyName);
+	return (it == _propertyMap.end())? -1: it->second;
 }
 
-const EnumInfo* Property::enumInfo() const {
-	return _enumInfo;
-}
-
-const FlagsInfo* Property::flagsInfo() const {
-	return _flagsInfo;
-}
-
-const std::string& Property::name() const {
-	return _name;
+const Property& PropertyList::property(unsigned index) const {
+	lairAssert(index < _properties.size());
+	return *_properties[index];
 }
 
 

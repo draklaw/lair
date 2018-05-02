@@ -24,7 +24,7 @@
 
 
 #include <lair/core/lair.h>
-#include <lair/core/property.h>
+#include <lair/meta/property.h>
 #include <lair/core/block_array.h>
 
 #include <lair/ec/entity.h>
