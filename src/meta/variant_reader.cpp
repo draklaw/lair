@@ -23,6 +23,9 @@
 #include <lair/core/log.h>
 #include <lair/core/path.h>
 
+#include <lair/meta/var_list.h>
+#include <lair/meta/var_map.h>
+
 #include "lair/meta/variant_reader.h"
 
 
@@ -122,17 +125,17 @@ bool varRead(Transform& value, const Variant& var, Logger& logger) {
 		return false;
 	}
 
-	if(!var.parseInfo() || var.parseInfo()->type.empty()
-	        || var.parseInfo()->type == "Transform") {
+	const VarList& varList = var.asVarList();
+	if(varList.type().empty() || varList.type() == "Transform") {
 		value = Transform::Identity();
-		for(const Variant& v: var.asVarList()) {
+		for(const Variant& v: varList) {
 			Transform t;
 			if(!varRead(t, v, logger))
 				return false;
 			value = value * t;
 		}
 	}
-	else if(var.parseInfo()->type == "translate") {
+	else if(varList.type() == "translate") {
 		Vector3 vec;
 		if(!varRead(vec, var, logger, false))
 			return false;
@@ -140,10 +143,10 @@ bool varRead(Transform& value, const Variant& var, Logger& logger) {
 		value.setIdentity();
 		value.translate(vec);
 	}
-	else if(var.parseInfo()->type == "rotate") {
+	else if(varList.type() == "rotate") {
 		Vector4 vec(0, 0, 0, 1);
 
-		unsigned size = var.asVarList().size();
+		unsigned size = varList.size();
 		if(size == 1) {
 			if(!varRead(vec.head<1>(), var, logger, false))
 				return false;
@@ -160,10 +163,10 @@ bool varRead(Transform& value, const Variant& var, Logger& logger) {
 		value.setIdentity();
 		value.rotate(AngleAxis(vec(0), vec.tail<3>()));
 	}
-	else if(var.parseInfo()->type == "scale") {
+	else if(varList.type() == "scale") {
 		Vector3 vec(1, 1, 1);
 
-		unsigned size = var.asVarList().size();
+		unsigned size = varList.size();
 		if(size == 1) {
 			if(!varRead(vec.head<1>(), var, logger, false))
 				return false;
@@ -186,7 +189,7 @@ bool varRead(Transform& value, const Variant& var, Logger& logger) {
 		value.scale(vec);
 	}
 	else {
-		logger.error(var.parseInfoDesc(), "Unknown Transform type ", var.parseInfo()->type, ".");
+		logger.error(var.parseInfoDesc(), "Unknown Transform type ", varList.type(), ".");
 		return false;
 	}
 

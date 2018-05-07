@@ -4,7 +4,6 @@
 
 - arch:split-core: Split core in several modules (assets, ldl, etc)
 - arch:ldl-lib: Make LDL a standalone library ?
-- arch:meta-lib: Make meta-type system a standalone library ?
 - arch:shared-lib: Make Lair a dll/so (need to remove a lot of inline stuff)
 
 - log:newlines: Indent new lines and replace tabs by spaces.

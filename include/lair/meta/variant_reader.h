@@ -99,7 +99,11 @@ bool varRead(String& value, const Variant& var, Logger& logger = noopLogger);
 bool varRead(Path& value, const Variant& var, Logger& logger = noopLogger);
 
 template<typename Derived>
-bool varRead(Eigen::DenseBase<Derived> const & value, const Variant& var, Logger& logger = noopLogger, bool annotationWarning = false);
+bool varRead(const Eigen::DenseBase<Derived>& value, const Variant& var, Logger& logger, bool annotationWarning);
+template<typename Derived>
+bool varRead(const Eigen::DenseBase<Derived>& value, const Variant& var, Logger& logger = noopLogger);
+template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+bool varRead(Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value, const Variant& var, Logger& logger = noopLogger);
 
 bool varRead(Transform& value, const Variant& var, Logger& logger = noopLogger);
 
@@ -109,14 +113,15 @@ bool varRead(Eigen::AlignedBox<Scalar, Dim>& value, const Variant& var, Logger& 
 
 
 template<typename Derived>
-bool varRead(Eigen::DenseBase<Derived> const & value_, const Variant& var, Logger& logger, bool annotationWarning) {
+bool varRead(const Eigen::DenseBase<Derived>& value_, const Variant& var, Logger& logger, bool annotationWarning) {
 	if(!var.isVarList()) {
 		logger.error(var.parseInfoDesc(), "Expected Vector, got ", var.typeName(), ".");
 		return false;
 	}
 
-	if(annotationWarning && var.parseInfo() && var.parseInfo()->type != "Vector") {
-		logger.warning("Invalid type annotation while reading Vector: ", var.parseInfo()->type, ".");
+	const VarList& varList = var.asVarList();
+	if(annotationWarning && varList.type().size() && varList.type() != "Vector") {
+		logger.warning("Invalid type annotation while reading Vector: ", varList.type(), ".");
 	}
 
 	Eigen::DenseBase<Derived>& value = const_cast<Eigen::DenseBase<Derived>&>(value_);
@@ -124,7 +129,6 @@ bool varRead(Eigen::DenseBase<Derived> const & value_, const Variant& var, Logge
 	unsigned rows = value.rows();
 	unsigned cols = value.cols();
 
-	const VarList& varList = var.asVarList();
 	if(varList.size() == rows * cols) {
 		unsigned i = 0;
 		for(const Variant& v: varList) {
@@ -143,6 +147,18 @@ bool varRead(Eigen::DenseBase<Derived> const & value_, const Variant& var, Logge
 }
 
 
+template<typename Derived>
+bool varRead(const Eigen::DenseBase<Derived>& value, const Variant& var, Logger& logger) {
+	return varRead(value, var, logger, true);
+}
+
+
+template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+bool varRead(Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value, const Variant& var, Logger& logger) {
+	return varRead(value, var, logger, true);
+}
+
+
 template<typename Scalar, int Dim>
 bool varRead(Eigen::AlignedBox<Scalar, Dim>& value, const Variant& var, Logger& logger) {
 	if(!var.isVarMap()) {
@@ -150,11 +166,16 @@ bool varRead(Eigen::AlignedBox<Scalar, Dim>& value, const Variant& var, Logger& 
 		return false;
 	}
 
+	const VarMap& varMap = var.asVarMap();
+	if(varMap.type().size() && varMap.type() != "Box") {
+		logger.warning("Invalid type annotation while reading Box: ", varMap.type(), ".");
+	}
+
 	typedef Eigen::Matrix<Scalar, Dim, 1> Vector;
 
-	const Variant& minVar  = var.get("min");
-	const Variant& maxVar  = var.get("max");
-	const Variant& sizeVar = var.get("size");
+	const Variant& minVar  = varMap.get("min");
+	const Variant& maxVar  = varMap.get("max");
+	const Variant& sizeVar = varMap.get("size");
 
 	if(!minVar.isValid()) {
 		logger.error(var.parseInfoDesc(), "Error while reading Box: missing field \"min\".");

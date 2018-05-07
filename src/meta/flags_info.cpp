@@ -116,6 +116,20 @@ unsigned FlagsInfo::parse(const String& in, ErrorOutput* errors) const {
 	return parse(inStream, errors);
 }
 
+unsigned FlagsInfo::parse(std::istream& in, Logger& logger) const {
+	ErrorList errors;
+	unsigned flags = parse(in, &errors);
+	errors.log(logger);
+	return flags;
+}
+
+unsigned FlagsInfo::parse(const String& in, Logger& logger) const {
+	ErrorList errors;
+	unsigned flags = parse(in, &errors);
+	errors.log(logger);
+	return flags;
+}
+
 void FlagsInfo::write(std::ostream& out, unsigned flags) const {
 	out << format(flags);
 }

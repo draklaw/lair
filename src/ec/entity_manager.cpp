@@ -304,6 +304,90 @@ bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
 }
 
 
+//bool EntityManager::initialize(EntityRef entity, const Variant& var) {
+//	if(!var.isVarMap()) {
+//		parser.error("Expected entity (VarMap), got ", var.typeName());
+//		return false;
+//	}
+
+//	bool success = true;
+//	for(auto&& pair: var.asVarMap()) {
+
+//	}
+//	parser.enter();
+//	while(parser.valueType() != LdlParser::TYPE_END) {
+//		String key = parser.getKey();
+
+//		if(key == "model") {
+//			// FIXME: This breaks if model is not the first property
+//			String modelName;
+//			if(!ldlRead(parser, modelName)) {
+//				log().error("Expected String, got ", parser.valueTypeName());
+//				break;
+//			}
+
+//			EntityRef model = findByName(modelName);
+//			if(model.isValid()) {
+//				initializeFromEntity(model, entity);
+//			}
+//			else {
+//				log().warning("Model not found: ", modelName);
+//			}
+//		}
+//		else if(key == "name") {
+//			if(parser.valueType() == LdlParser::TYPE_STRING) {
+//				setEntityName(entity, parser.getString());
+//				parser.next();
+//			}
+//			else {
+//				parser.error("Entity name must be a String, got ", parser.valueTypeName());
+//				parser.skip();
+//				success = false;
+//			}
+//		}
+//		else if(key == "transform") {
+//			Transform transform;
+//			if(ldlRead(parser, transform)) {
+//				entity.place(transform);
+//			}
+//			else {
+//				success = false;
+//			}
+//		}
+//		else if(key == "enabled") {
+//			bool enabled = true;
+//			if(ldlRead(parser, enabled))
+//				entity.setEnabled(enabled);
+//		}
+//		else if(key == "children") {
+//			success &= loadEntitiesFromLdl(parser, entity);
+//		}
+//		else if(key == "type") {
+//			// Ignore atm
+//			parser.skip();
+//		}
+//		else if(key == "properties") {
+//			// Ignore atm
+//			parser.skip();
+//		}
+//		else {
+//			ComponentManager* cm = componentManager(key);
+//			if(cm) {
+//				Component* cmp = cm->addComponent(entity);
+//				_serializer._read(parser, cm->componentProperties(), cmp);
+//			}
+//			else {
+//				parser.warning("Unknown component type \"", key, "\"");
+//				parser.skip();
+//			}
+//		}
+//	}
+//	parser.leave();
+
+//	return success;
+//}
+
+
 bool EntityManager::loadEntitiesFromLdl(LdlParser& parser, EntityRef parent) {
 	if(parser.valueType() != LdlParser::TYPE_LIST && parser.valueType() != LdlParser::TYPE_MAP) {
 		parser.error("Expected entity list (VarList or VarMap), got ", parser.valueTypeName());
@@ -330,6 +414,30 @@ bool EntityManager::loadEntitiesFromLdl(LdlParser& parser, EntityRef parent) {
 	parser.leave();
 	return true;
 }
+
+
+//bool EntityManager::loadEntities(const Variant& var, EntityRef parent) {
+//	success = true;
+//	if(var.isVarList()) {
+//		const VarList varList = var.asVarList();
+//		for(auto&& v: varList) {
+//			EntityRef entity = createEntity(parent);
+//			success &= initialize(entity, v);
+//		}
+//	}
+//	else if(var.isVarMap()) {
+//		const VarList varMap = var.asVarMap();
+//		for(auto&& pair: varMap) {
+//			EntityRef entity = createEntity(parent, pair.first.c_str());
+//			success &= initialize(entity, pair.second);
+//		}
+//	}
+//	else {
+//		parser.error("Expected entity list (VarList or VarMap), got ", var.typeName());
+//		return false;
+//	}
+//	return success;
+//}
 
 
 bool EntityManager::saveEntitiesToLdl(LdlWriter& writer, EntityRef entity) const {

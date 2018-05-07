@@ -14,6 +14,9 @@
 #include <lair/core/path.h>
 #include <lair/core/text.h>
 
+#include <lair/meta/var_list.h>
+#include <lair/meta/var_map.h>
+
 #include <lair/core/ldl.h>
 
 
@@ -971,8 +974,8 @@ bool ldlRead(LdlParser& parser, Variant& value) {
 	    parser.streamName(),
 	    parser.line(),
 	    parser.col(),
-	    parser.isValueTyped()? parser.getValueTypeName(): String()
 	};
+	String type = parser.isValueTyped()? parser.getValueTypeName(): String();
 
 	switch(parser.valueType()) {
 	case LdlParser::TYPE_ERROR:
@@ -1015,6 +1018,10 @@ bool ldlRead(LdlParser& parser, Variant& value) {
 	}
 
 	value.setParseInfo(parseInfo);
+	if(value.isVarList())
+		value.asVarList().type() = type;
+	if(value.isVarMap())
+		value.asVarMap().type() = type;
 
 	return success;
 }
@@ -1166,7 +1173,7 @@ bool ldlWrite(LdlWriter& writer, const Transform& value) {
 			writer.close();
 		}
 
-		if(!rot.isApprox(Matrix3::Identity())) {
+		if(!scale.isApprox(Matrix3::Identity())) {
 			writer.openList(LdlWriter::CF_SINGLE_LINE, "scale");
 			for(unsigned i = 0; i < 3; ++i)
 				writer.writeFloat(scale(i, i));

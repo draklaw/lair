@@ -88,7 +88,9 @@ public:
 
 	void initializeFromEntity(EntityRef base, EntityRef entity);
 	bool initializeFromLdl(EntityRef entity, LdlParser& parser);
+//	bool initialize(EntityRef entity, const Variant& var);
 	bool loadEntitiesFromLdl(LdlParser& parser, EntityRef parent);
+//	bool loadEntities(const Variant& var, EntityRef parent);
 
 	bool saveEntitiesToLdl(LdlWriter& writer, EntityRef entity) const;
 

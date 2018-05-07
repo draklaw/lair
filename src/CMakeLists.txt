@@ -95,13 +95,17 @@ set(lair_SOURCES
 
 	meta/metatype.cpp
 	meta/variant.cpp
+	meta/var_list.cpp
+	meta/var_map.cpp
 	meta/variant_reader.cpp
+	meta/variant_writer.cpp
 	meta/enum_info.cpp
 	meta/flags_info.cpp
 	meta/property.cpp
 	meta/property_list.cpp
 	meta/with_properties.cpp
 	meta/ldl_property_serializer.cpp
+	meta/property_serializer.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp

@@ -76,6 +76,12 @@ public:
 	void set(const std::string& property, const T& value) {
 		return set<T>(propertyIndex(property), value);
 	}
+
+	/// Set a property from a variant. Warning: the variant must be of the
+	/// exact same type than the property.
+	void set(unsigned index, const Variant& var) {
+		return property(index).setVar(this, var);
+	}
 };
 
 

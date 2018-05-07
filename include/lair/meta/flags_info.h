@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include <lair/core/lair.h>
+#include <lair/core/log.h>
 
 
 namespace lair
@@ -59,6 +60,8 @@ public:
 
 	unsigned parse(std::istream& in, ErrorOutput* errors = 0) const;
 	unsigned parse(const String& in, ErrorOutput* errors = 0) const;
+	unsigned parse(std::istream& in, Logger& logger = noopLogger) const;
+	unsigned parse(const String& in, Logger& logger = noopLogger) const;
 	void write(std::ostream& out, unsigned flags) const;
 	String format(unsigned flags) const;
 
