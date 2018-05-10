@@ -19,7 +19,7 @@
  */
 
 
-uniform sampler2D texture;
+uniform sampler2D sprite;
 uniform vec4      tileInfo;
 
 in highp   vec4 position;
@@ -39,7 +39,7 @@ void main() {
 	tileCoord      = clamp(tileCoord, margin, vec2(1.0) - margin);
 	texCoord2      = (tile + tileCoord) / nTiles;
 
-	vec4 fcolor = color * texture2D(texture, texCoord2);
+	vec4 fcolor = color * texture(sprite, texCoord2);
 	if(fcolor.a < .01){
 		discard;
 	}
@@ -47,4 +47,4 @@ void main() {
 //	out_color = vec4(texCoord, 0., 1.);
 //	out_color = vec4(1., 0., 0., 1.);
 //	out_color = vec4(tileCoord, 0., 1.);
-};
+}

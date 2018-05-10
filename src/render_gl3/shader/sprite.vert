@@ -34,4 +34,4 @@ void main() {
 	position    = vx_position;
 	color       = vx_color;
 	texCoord    = vx_texCoord;
-};
+}
