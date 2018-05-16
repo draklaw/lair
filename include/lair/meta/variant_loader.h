@@ -33,11 +33,6 @@ namespace lair
 {
 
 
-bool parseLdl(Variant& value, std::istream& in, const Path& localPath, Logger& log);
-bool parseLdl(Variant& value, const Path& realPath, const Path& localPath, Logger& log);
-bool parseLdl(Variant& value, const VirtualFile& file, const Path& localPath, Logger& log);
-
-
 typedef GenericAspect  <Variant>       VariantAspect;
 typedef std::shared_ptr<VariantAspect> VariantAspectSP;
 typedef std::weak_ptr  <VariantAspect> VariantAspectWP;

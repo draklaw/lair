@@ -24,8 +24,7 @@
 
 #include <SDL_mixer.h>
 
-#include <lair/meta/variant_loader.h>
-
+#include <lair/ldl/read.h>
 #include <lair/ldl/write.h>
 
 #include <lair/utils/game_state.h>

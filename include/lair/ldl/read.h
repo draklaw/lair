@@ -27,11 +27,18 @@
 
 #include <lair/meta/variant.h>
 
+#include <lair/fs/abstract_file_system.h>
+
 #include <lair/ldl/ldl_parser.h>
 
 
 namespace lair
 {
+
+
+bool parseLdl(Variant& value, std::istream& in, const Path& localPath, Logger& log);
+bool parseLdl(Variant& value, const Path& realPath, const Path& localPath, Logger& log);
+bool parseLdl(Variant& value, const VirtualFile& file, const Path& localPath, Logger& log);
 
 
 bool ldlRead(LdlParser& parser, bool&   value);

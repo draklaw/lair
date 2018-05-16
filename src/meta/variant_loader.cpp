@@ -31,49 +31,6 @@ namespace lair
 {
 
 
-bool parseLdl(Variant& value, std::istream& in, const Path& localPath, Logger& log) {
-	ErrorList errors;
-	LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
-	bool success = ldlRead(parser, value);
-	errors.log(log);
-	return success;
-}
-
-
-bool parseLdl(Variant& value, const Path& realPath, const Path& localPath, Logger& log) {
-	Path::IStream in(realPath.native().c_str());
-	if(!in.good()) {
-		log.error("Unable to read \"", localPath, "\" (", realPath, ").");
-		return false;
-	}
-	return parseLdl(value, in, localPath, log);
-}
-
-
-bool parseLdl(Variant& value, const VirtualFile& file, const Path& localPath, Logger& log) {
-	if(!file) {
-		log.error("Invalid file: \"", localPath, "\".");
-		return false;
-	}
-
-	Path realPath = file.realPath();
-	if(!realPath.empty()) {
-		return parseLdl(value, realPath, localPath, log);
-	}
-
-	const MemFile* memFile = file.fileBuffer();
-	if(memFile) {
-		String buffer((const char*)memFile->data, memFile->size);
-		std::istringstream in(buffer);
-		return parseLdl(value, in, localPath, log);
-	}
-
-	lairAssert(false);
-	return false;
-}
-
-
-
 VariantLoader::VariantLoader(LoaderManager* manager, AspectSP aspect)
     : Loader(manager, aspect) {
 }
