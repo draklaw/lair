@@ -103,7 +103,6 @@ set(lair_SOURCES
 	meta/property.cpp
 	meta/property_list.cpp
 	meta/with_properties.cpp
-	meta/variant_loader.cpp
 	meta/property_serializer.cpp
 
 	ldl/ldl_parser.cpp
@@ -111,6 +110,7 @@ set(lair_SOURCES
 	ldl/read.cpp
 	ldl/write.cpp
 	ldl/ldl_property_serializer.cpp
+	ldl/ldl_variant_loader.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp

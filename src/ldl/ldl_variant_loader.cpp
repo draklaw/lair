@@ -24,26 +24,26 @@
 
 #include <lair/ldl/read.h>
 
-#include "lair/meta/variant_loader.h"
+#include "lair/ldl/ldl_variant_loader.h"
 
 
 namespace lair
 {
 
 
-VariantLoader::VariantLoader(LoaderManager* manager, AspectSP aspect)
+LdlVariantLoader::LdlVariantLoader(LoaderManager* manager, AspectSP aspect)
     : Loader(manager, aspect) {
 }
 
 
-void VariantLoader::commit() {
+void LdlVariantLoader::commit() {
 	VariantAspectSP aspect = std::static_pointer_cast<VariantAspect>(_aspect);
 	aspect->_get() = std::move(_variant);
 	Loader::commit();
 }
 
 
-void VariantLoader::loadSyncImpl(Logger& log) {
+void LdlVariantLoader::loadSyncImpl(Logger& log) {
 	parseLdl(_variant, file(), asset()->logicPath(), log);
 }
 

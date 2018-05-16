@@ -19,8 +19,8 @@
  */
 
 
-#ifndef LAIR_META_VARIANT_LOADER_H
-#define LAIR_META_VARIANT_LOADER_H
+#ifndef LAIR_LDL_LDL_VARIANT_LOADER_H
+#define LAIR_LDL_LDL_VARIANT_LOADER_H
 
 
 #include <lair/core/lair.h>
@@ -38,18 +38,18 @@ typedef std::shared_ptr<VariantAspect> VariantAspectSP;
 typedef std::weak_ptr  <VariantAspect> VariantAspectWP;
 
 
-class VariantLoader : public Loader {
+class LdlVariantLoader : public Loader {
 public:
 	typedef VariantAspect Aspect;
 
 public:
-	VariantLoader(LoaderManager* manager, AspectSP aspect);
-	VariantLoader(const VariantLoader&) = delete;
-	VariantLoader(VariantLoader&&)      = delete;
-	virtual ~VariantLoader() = default;
+	LdlVariantLoader(LoaderManager* manager, AspectSP aspect);
+	LdlVariantLoader(const LdlVariantLoader&) = delete;
+	LdlVariantLoader(LdlVariantLoader&&)      = delete;
+	virtual ~LdlVariantLoader() = default;
 
-	VariantLoader& operator=(const VariantLoader&) = delete;
-	VariantLoader& operator=(VariantLoader&&)      = delete;
+	LdlVariantLoader& operator=(const LdlVariantLoader&) = delete;
+	LdlVariantLoader& operator=(LdlVariantLoader&&)      = delete;
 
 	virtual void commit();
 
