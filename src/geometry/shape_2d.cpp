@@ -28,6 +28,9 @@
 #include <lair/meta/variant_reader.h>
 #include <lair/meta/variant_writer.h>
 
+#include <lair/ldl/read.h>
+#include <lair/ldl/write.h>
+
 #include <lair/geometry/intersection.h>
 
 #include "lair/geometry/shape_2d.h"

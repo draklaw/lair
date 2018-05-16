@@ -31,7 +31,7 @@
 #include <lair/core/loader.h>
 #include <lair/core/image.h>
 
-#include <lair/ldl/ldl.h>
+#include <lair/ldl/ldl_parser.h>
 
 #include <lair/meta/variant.h>
 

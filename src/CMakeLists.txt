@@ -92,7 +92,10 @@ set(lair_SOURCES
 	core/bitmap_font.cpp
 
 	ldl/parse.cpp
-	ldl/ldl.cpp
+	ldl/ldl_parser.cpp
+	ldl/ldl_writer.cpp
+	ldl/read.cpp
+	ldl/write.cpp
 
 	meta/metatype.cpp
 	meta/variant.cpp

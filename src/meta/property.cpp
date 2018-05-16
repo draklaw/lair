@@ -21,9 +21,9 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include "lair/core/path.h"
-#include "lair/meta/property.h"
+#include <lair/core/path.h>
 
+#include "lair/meta/property.h"
 
 
 namespace lair

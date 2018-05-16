@@ -26,6 +26,8 @@
 
 #include <lair/meta/variant_loader.h>
 
+#include <lair/ldl/write.h>
+
 #include <lair/utils/game_state.h>
 
 #include "lair/utils/game_base.h"

@@ -25,9 +25,11 @@
 
 #include <lair/core/lair.h>
 
-#include <lair/ldl/ldl.h>
+#include <lair/ldl/ldl_parser.h>
+#include <lair/ldl/ldl_writer.h>
 
 #include <lair/meta/metatype.h>
+#include <lair/meta/variant.h>
 
 #include <lair/geometry/sphere.h>
 #include <lair/geometry/aligned_box.h>

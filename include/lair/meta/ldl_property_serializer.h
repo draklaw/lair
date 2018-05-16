@@ -25,7 +25,8 @@
 
 #include <lair/core/lair.h>
 
-#include <lair/ldl/ldl.h>
+#include <lair/ldl/read.h>
+#include <lair/ldl/write.h>
 
 #include <lair/meta/metatype.h>
 #include <lair/meta/property.h>

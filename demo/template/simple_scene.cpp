@@ -19,6 +19,8 @@
  */
 
 
+#include <lair/ldl/write.h>
+
 #include <lair/sys_sdl2/audio_module.h>
 
 #include "simple_scene.h"

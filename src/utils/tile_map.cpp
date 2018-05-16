@@ -22,7 +22,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include <lair/ldl/ldl.h>
+#include <lair/ldl/read.h>
 
 #include <lair/sys_sdl2/image_loader.h>
 

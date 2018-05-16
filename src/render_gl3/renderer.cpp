@@ -26,6 +26,8 @@
 #include <lair/core/log.h>
 #include <lair/core/image.h>
 
+#include <lair/ldl/write.h>
+
 #include <lair/sys_sdl2/image_loader.h>
 
 #include <lair/render_gl3/vertex_attrib_set.h>
@@ -115,7 +117,7 @@ SamplerSP Renderer::getSampler(const SamplerParams& params) {
 		sp = std::make_shared<Sampler>(_context, params);
 		wp = sp;
 
-		log().info("Create Sampler: ", ldlToString(sp));
+		log().info("Create Sampler: ", toLdlString(sp));
 	}
 
 	return sp;
@@ -173,7 +175,7 @@ TextureSetCSP Renderer::getTextureSet(const TextureSet& texSet, const String& na
 		sp->_setIndex(_textureSetIndex++);
 		wp = sp;
 
-		log().info("Create texture set: ", ldlToString(TextureSetCSP(sp)));
+		log().info("Create texture set: ", toLdlString(TextureSetCSP(sp)));
 	}
 
 	if(name.size()) {

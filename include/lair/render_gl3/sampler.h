@@ -30,6 +30,9 @@
 #include <lair/meta/flags_info.h>
 #include <lair/meta/variant.h>
 
+#include <lair/ldl/ldl_parser.h>
+#include <lair/ldl/ldl_writer.h>
+
 #include <lair/render_gl3/context.h>
 
 

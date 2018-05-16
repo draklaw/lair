@@ -21,7 +21,8 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/ldl/ldl.h>
+#include <lair/ldl/read.h>
+#include <lair/ldl/write.h>
 
 
 using namespace lair;
