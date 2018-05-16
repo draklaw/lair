@@ -89,7 +89,7 @@ public:
 	Variant(Variant&& other);
 
 	template<typename T>
-	Variant(const T& object);
+	explicit Variant(const T& object);
 
 	// Template T&& is a forwarding reference that accepts any type (T&, const T&, etc.)
 	// This cause this overload to be selected when it should not, for instance

@@ -168,7 +168,7 @@ TEST(VariantTest, TestCopy) {
 	String str  = "Hello world !";
 	String str2 = "foobar";
 
-	Variant var0 = str;
+	Variant var0(str);
 	var0.setParseInfo("test", 10, 20);
 
 	ASSERT_TRUE(var0.isString());
@@ -197,7 +197,7 @@ TEST(VariantTest, TestMove) {
 	String str2 = "foobar";
 	String str3 = str2;
 
-	Variant var0 = std::move(str0);
+	Variant var0(std::move(str0));
 	var0.setParseInfo("test", 10, 20);
 
 	ASSERT_TRUE(var0.isString());

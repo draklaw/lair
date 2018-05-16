@@ -104,7 +104,7 @@ public:
 	GenericPropertyRef& operator=(      GenericPropertyRef&&) = delete;
 
 	virtual Variant getVar(const void* obj) const {
-		return (reinterpret_cast<const C*>(obj)->*_get)();
+		return Variant((reinterpret_cast<const C*>(obj)->*_get)());
 	}
 
 	virtual void setVar(void* obj, const Variant& var) const {
@@ -137,7 +137,7 @@ public:
 	GenericPropertyValue& operator=(      GenericPropertyValue&&) = delete;
 
 	virtual Variant getVar(const void* obj) const {
-		return (reinterpret_cast<const C*>(obj)->*_get)();
+		return Variant((reinterpret_cast<const C*>(obj)->*_get)());
 	}
 
 	virtual void setVar(void* obj, const Variant& var) const {
@@ -170,7 +170,7 @@ public:
 	GenericPropertyMember& operator=(      GenericPropertyMember&&) = delete;
 
 	virtual Variant getVar(const void* obj) const {
-		return reinterpret_cast<const C*>(obj)->*_member;
+		return Variant(reinterpret_cast<const C*>(obj)->*_member);
 	}
 
 	virtual void setVar(void* obj, const Variant& var) const {
