@@ -21,8 +21,6 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/ldl/parse.h>
-
 #include <lair/meta/metatype.h>
 #include <lair/meta/variant.h>
 

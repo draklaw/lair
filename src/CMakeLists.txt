@@ -84,6 +84,7 @@ set(lair_SOURCES
 	core/log.cpp
 	core/path.cpp
 	core/text.cpp
+	core/parse.cpp
 	core/json.cpp
 	core/image.cpp
 	core/signal.cpp
@@ -91,7 +92,6 @@ set(lair_SOURCES
 	core/loader.cpp
 	core/bitmap_font.cpp
 
-	ldl/parse.cpp
 	ldl/ldl_parser.cpp
 	ldl/ldl_writer.cpp
 	ldl/read.cpp

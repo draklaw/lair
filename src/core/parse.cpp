@@ -22,7 +22,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/ldl/parse.h"
+#include "lair/core/parse.h"
 
 
 namespace lair
