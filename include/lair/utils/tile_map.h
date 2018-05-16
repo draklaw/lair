@@ -103,8 +103,6 @@ class TileMap {
 public:
 	typedef uint32 TileIndex;
 
-	typedef std::function<bool(LdlParser&)> ObjectsLoader;
-
 	enum {
 		HFLIP_FLAG = 0x80000000,
 		VFLIP_FLAG = 0x40000000,
@@ -130,13 +128,14 @@ public:
 //	const Vector2i& maxSizeInTiles() const;
 
 	const Variant& properties() const;
+	const Variant& objects() const;
 
 	const Path&   tileSetPath() const;
 	ImageAspectSP tileSet() const;
 	unsigned      tileSetHTiles() const;
 	unsigned      tileSetVTiles() const;
 
-	bool setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects = ObjectsLoader());
+	bool setFromLdl(LdlParser& parser);
 	void setTileSet(AssetSP tileset, unsigned nHTiles, unsigned nVTiles);
 
 	void _setTileSet(ImageAspectSP tileset);
@@ -153,6 +152,7 @@ protected:
 	LayerVector _tileLayers;
 
 	Variant _properties;
+	Variant _objects;
 
 	Path          _tileSetPath;
 	ImageAspectSP _tileSet;
@@ -171,11 +171,8 @@ class TileMapLoader : public Loader {
 public:
 	typedef TileMapAspect Aspect;
 
-	typedef TileMap::ObjectsLoader ObjectsLoader;
-
 public:
-	TileMapLoader(LoaderManager* manager, AspectSP aspect,
-	              const ObjectsLoader& loadObjects = ObjectsLoader());
+	TileMapLoader(LoaderManager* manager, AspectSP aspect);
 	TileMapLoader(const TileMapLoader&) = delete;
 	TileMapLoader(TileMapLoader&&)      = delete;
 	virtual ~TileMapLoader() = default;
@@ -191,7 +188,6 @@ protected:
 	void parseMap(std::istream& in, Logger& log);
 
 protected:
-	ObjectsLoader _loadObjects;
 	TileMap       _tileMap;
 };
 

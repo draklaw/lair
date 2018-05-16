@@ -32,21 +32,16 @@ SimpleScene::SimpleScene(MainState* mainState)
 void SimpleScene::load() {
 	EntityRef test_map = entities().createEntity(root(), "test_map");
 
-	TileMap::ObjectsLoader loadObjects = [this, &test_map](LdlParser& parser) {
-		Variant var;
-		if(ldlRead(parser, var)) {
-			return entities().loadEntities(var, test_map);
-		}
-		return false;
-	};
-
-	AssetSP tileMapAsset = loader()->load<TileMapLoader>("test_map.ldl", loadObjects)->asset();
-	_tileMap = tileMapAsset->aspect<TileMapAspect>();
+	LoaderSP tileMapLoader = loader()->load<TileMapLoader>("test_map.ldl");
 
 //	loadEntities("entities.ldl", root());
 
 	loader()->load<lair::SoundLoader>("sound.ogg");
 	//loader()->load<MusicLoader>("music.ogg");
+
+	loader()->waitAll();
+	_tileMap = tileMapLoader->asset()->aspect<TileMapAspect>();
+	entities().loadEntities(_tileMap->get().objects(), root());
 
 	loader()->waitAll();
 

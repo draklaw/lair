@@ -222,6 +222,11 @@ const Variant& TileMap::properties() const {
 }
 
 
+const Variant& TileMap::objects() const {
+	return _objects;
+}
+
+
 const Path& TileMap::tileSetPath() const {
 	return _tileSetPath;
 }
@@ -242,7 +247,7 @@ unsigned TileMap::tileSetVTiles() const {
 }
 
 
-bool TileMap::setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects) {
+bool TileMap::setFromLdl(LdlParser& parser) {
 	if(parser.valueType() != LdlParser::TYPE_MAP) {
 		parser.error("Expected TileMap (VarMap), got ", parser.valueTypeName());
 		return false;
@@ -271,10 +276,7 @@ bool TileMap::setFromLdl(LdlParser& parser, const ObjectsLoader& loadObjects) {
 			success = _parseTileLayers(parser);
 		}
 		else if(key == "objects") {
-			if(loadObjects)
-				success = loadObjects(parser);
-			else
-				parser.skip();
+			success = ldlRead(parser, _objects);
 		}
 		else {
 			parser.warning("Unknown key \"", key, "\" in TileMap, ignoring.");
@@ -395,11 +397,8 @@ bool TileMap::_parseTileLayers(LdlParser& parser) {
 
 
 
-TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect,
-                             const ObjectsLoader& loadObjects)
-    : Loader(manager, aspect, loadObjects? Loader::LOAD_FROM_MAIN_THREAD:
-                                           Loader::LOAD_FROM_ANY_THREAD),
-      _loadObjects(loadObjects) {
+TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect)
+    : Loader(manager, aspect) {
 }
 
 
@@ -438,7 +437,7 @@ void TileMapLoader::parseMap(std::istream& in, Logger& log) {
 	ErrorList errors;
 	LdlParser parser(&in, asset()->logicPath().utf8String(), &errors, LdlParser::CTX_MAP);
 
-	if(_tileMap.setFromLdl(parser, _loadObjects)) {
+	if(_tileMap.setFromLdl(parser)) {
 		_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
 			ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
 			if(!tileSetImg) {
