@@ -19,12 +19,13 @@
  */
 
 
-#ifndef _LAIR_CORE_LDL_H
-#define _LAIR_CORE_LDL_H
+#ifndef _LAIR_LDL_LDL_H
+#define _LAIR_LDL_LDL_H
 
 
 #include <lair/core/lair.h>
-#include <lair/core/parse.h>
+
+#include <lair/ldl/parse.h>
 
 #include <lair/meta/metatype.h>
 #include <lair/meta/variant.h>

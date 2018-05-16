@@ -21,7 +21,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/ldl.h>
+
+#include <lair/ldl/ldl.h>
 
 #include <lair/meta/variant_reader.h>
 #include <lair/meta/variant_writer.h>

@@ -24,7 +24,6 @@
 
 
 #include <lair/core/lair.h>
-#include <lair/core/ldl.h>
 
 #include <lair/meta/property.h>
 #include <lair/meta/property_list.h>

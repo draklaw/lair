@@ -32,6 +32,7 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
 	)
 
 	add_subdirectory(core)
+	add_subdirectory(ldl)
 	add_subdirectory(meta)
 	#add_subdirectory(utils)
 	#add_subdirectory(ec)

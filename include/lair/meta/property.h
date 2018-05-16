@@ -27,9 +27,9 @@
 #include <unordered_map>
 
 #include <lair/core/lair.h>
-#include <lair/core/ldl.h>
 
 #include <lair/meta/metatype.h>
+#include <lair/meta/variant.h>
 #include <lair/meta/enum_info.h>
 #include <lair/meta/flags_info.h>
 

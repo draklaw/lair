@@ -28,9 +28,12 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/json.h>
-#include <lair/core/ldl.h>
 #include <lair/core/loader.h>
 #include <lair/core/image.h>
+
+#include <lair/ldl/ldl.h>
+
+#include <lair/meta/variant.h>
 
 #include <lair/meta/metatype.h>
 

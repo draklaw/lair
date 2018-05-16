@@ -17,7 +17,7 @@
 #include <lair/meta/var_list.h>
 #include <lair/meta/var_map.h>
 
-#include <lair/core/ldl.h>
+#include "lair/ldl/ldl.h"
 
 
 namespace lair {

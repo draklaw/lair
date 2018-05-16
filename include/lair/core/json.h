@@ -28,9 +28,10 @@
 #include <json/json.h>
 
 #include <lair/core/lair.h>
-#include <lair/core/parse.h>
 #include <lair/core/log.h>
 #include <lair/core/path.h>
+
+#include <lair/ldl/parse.h>
 
 #include <lair/fs/abstract_file_system.h>
 

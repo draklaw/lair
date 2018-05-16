@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/core/parse.h>
+#include <lair/ldl/parse.h>
 
 #include <lair/meta/metatype.h>
 #include <lair/meta/variant.h>
@@ -169,7 +169,7 @@ TEST(VariantTest, TestCopy) {
 	String str2 = "foobar";
 
 	Variant var0 = str;
-	var0.setParseInfo("test", 10, 20, "foo");
+	var0.setParseInfo("test", 10, 20);
 
 	ASSERT_TRUE(var0.isString());
 	ASSERT_EQ(var0.asString(), str);
@@ -198,7 +198,7 @@ TEST(VariantTest, TestMove) {
 	String str3 = str2;
 
 	Variant var0 = std::move(str0);
-	var0.setParseInfo("test", 10, 20, "foo");
+	var0.setParseInfo("test", 10, 20);
 
 	ASSERT_TRUE(var0.isString());
 	ASSERT_TRUE(str0.empty());

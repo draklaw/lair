@@ -84,14 +84,15 @@ set(lair_SOURCES
 	core/log.cpp
 	core/path.cpp
 	core/text.cpp
-	core/parse.cpp
-	core/ldl.cpp
 	core/json.cpp
 	core/image.cpp
 	core/signal.cpp
 	core/asset_manager.cpp
 	core/loader.cpp
 	core/bitmap_font.cpp
+
+	ldl/parse.cpp
+	ldl/ldl.cpp
 
 	meta/metatype.cpp
 	meta/variant.cpp

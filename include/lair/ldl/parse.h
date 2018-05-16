@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_CORE_PARSE_H
-#define _LAIR_CORE_PARSE_H
+#ifndef _LAIR_LDL_PARSE_H
+#define _LAIR_LDL_PARSE_H
 
 
 #include <lair/core/lair.h>

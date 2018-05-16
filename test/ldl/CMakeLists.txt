@@ -1,5 +1,5 @@
 ##
-##  Copyright (C) 2015 Simon Boyé
+##  Copyright (C) 2018 Simon Boyé
 ##
 ##  This file is part of lair.
 ##
@@ -18,14 +18,12 @@
 ##
 
 
-add_executable(test_core
-	test_path.cpp
-	test_text.cpp
-	test_signal.cpp
+add_executable(test_ldl
+	test_ldl.cpp
 )
 
-target_link_libraries(test_core
+target_link_libraries(test_ldl
 	gtest_main
 	lair
 )
-add_dependencies(buildtests test_core)
+add_dependencies(buildtests test_ldl)

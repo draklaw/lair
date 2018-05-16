@@ -23,7 +23,7 @@
 #include <memory>
 #include <functional>
 
-#include <lair/core/ldl.h>
+#include <lair/ldl/ldl.h>
 
 #include <lair/render_gl3/context.h>
 #include <lair/render_gl3/renderer.h>

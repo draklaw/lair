@@ -21,7 +21,7 @@
 
 #include <gtest/gtest.h>
 
-#include <lair/core/ldl.h>
+#include <lair/ldl/ldl.h>
 
 
 using namespace lair;
