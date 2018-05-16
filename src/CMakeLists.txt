@@ -86,9 +86,7 @@ set(lair_SOURCES
 	core/text.cpp
 	core/parse.cpp
 	core/json.cpp
-	core/image.cpp
 	core/signal.cpp
-	core/bitmap_font.cpp
 
 	meta/metatype.cpp
 	meta/variant.cpp
@@ -110,6 +108,8 @@ set(lair_SOURCES
 
 	asset/asset_manager.cpp
 	asset/loader.cpp
+	asset/image.cpp
+	asset/bitmap_font.cpp
 
 	ldl/ldl_parser.cpp
 	ldl/ldl_writer.cpp

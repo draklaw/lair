@@ -20,7 +20,8 @@
 
 
 #include <lair/core/json.h>
-#include <lair/core/bitmap_font.h>
+
+#include <lair/asset/bitmap_font.h>
 
 #include <lair/sys_sdl2/image_loader.h>
 
@@ -61,7 +62,33 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 
 	_load<ImageLoader>(imgPath, [this](AspectSP imgAspect, Logger& log) {
 		if(imgAspect->isValid()) {
-			_font = std::move(BitmapFont(_fontDesc, imgAspect->asset()));
+			auto aspect = std::dynamic_pointer_cast<ImageAspect>(imgAspect);
+			lairAssert(bool(aspect));
+
+			_font.setFontSize(_fontDesc.get("size", 0).asInt());
+			_font.setHeight(_fontDesc.get("height", 0).asInt());
+			_font.setBaselineToTop(_fontDesc.get("base", _font.height() / 2).asInt());
+			_font.setImage(aspect->asset());
+
+			Vector2 texSize(aspect->get().width(), aspect->get().height());
+			for(const Json::Value& c: _fontDesc.get("chars", Json::nullValue)) {
+				unsigned cp = c[0].asInt();
+				BitmapFont::Glyph g;
+				Vector2 pos = Vector2(c[1].asInt(), c[2].asInt()).array()
+				        / texSize.array();
+				g.size = Vector2(c[3].asInt(), c[4].asInt());
+				g.region = Box2(pos, pos + (g.size.array()
+				                            / texSize.array()).matrix());
+				g.offset = Vector2(c[5].asInt(), c[6].asInt());
+				g.advance = c[7].asInt();
+				_font.setGlyph(cp, g);
+			}
+			for(const Json::Value& k: _fontDesc.get("kern", Json::nullValue)) {
+				unsigned cp0  = k[0].asInt();
+				unsigned cp1  = k[1].asInt();
+				unsigned kern = k[2].asInt();
+				_font.setKerning(cp0, cp1, kern);
+			}
 		}
 		else {
 			log.error("Error while loading BitmapFont \"", asset()->logicPath(),

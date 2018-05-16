@@ -24,7 +24,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/image.h>
+
+#include <lair/asset/image.h>
 
 #include <lair/ldl/write.h>
 

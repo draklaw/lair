@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_CORE_BITMAP_FONT_H
-#define _LAIR_CORE_BITMAP_FONT_H
+#ifndef _LAIR_ASSET_BITMAP_FONT_H
+#define _LAIR_ASSET_BITMAP_FONT_H
 
 
 #include <unordered_map>
@@ -80,7 +80,6 @@ public:
 
 public:
 	BitmapFont();
-	BitmapFont(const Json::Value& json, AssetSP image);
 	BitmapFont(const BitmapFont&)  = delete;
 	BitmapFont(      BitmapFont&&) = default;
 	~BitmapFont() = default;
@@ -88,16 +87,22 @@ public:
 	BitmapFont& operator=(const BitmapFont&)  = delete;
 	BitmapFont& operator=(      BitmapFont&&) = default;
 
-	bool     isValid()  const { return bool(_image); }
-	unsigned fontSize() const { return _fontSize; }
-	unsigned height()   const { return _height; }
-	AssetSP  image()    const { return _image; }
+	inline bool    isValid()       const { return bool(_image); }
+	inline int     fontSize()      const { return _fontSize; }
+	inline int     height()        const { return _height; }
+	inline int     baselineToTop() const { return _baselineToTop; }
+	inline AssetSP image()         const { return _image; }
+
+	inline void setFontSize     (int     fontSize)      { _fontSize = fontSize; }
+	inline void setHeight       (int     height)        { _height = height; }
+	inline void setBaselineToTop(int     baselineToTop) { _baselineToTop = baselineToTop; }
+	inline void setImage        (AssetSP image)         { _image = image; }
 
 	const Glyph& glyph(int cp) const;
-	int kerning(int cp0, int cp1) const;
+	void setGlyph(int cp, const Glyph& glyph);
 
-	void setFromJson(const Json::Value& json);
-	void setImage(AssetSP image);
+	int kerning(int cp0, int cp1) const;
+	void setKerning(int cp0, int cp1, int kern);
 
 	unsigned textWidth(const std::string& msg) const;
 	TextLayout layoutText(const std::string& msg, unsigned maxWidth = 999999) const;

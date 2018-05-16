@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_CORE_IMAGE_H
-#define _LAIR_CORE_IMAGE_H
+#ifndef _LAIR_ASSET_IMAGE_H
+#define _LAIR_ASSET_IMAGE_H
 
 
 #include <cstdint>

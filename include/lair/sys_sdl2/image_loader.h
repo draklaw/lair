@@ -24,11 +24,11 @@
 
 
 #include <lair/core/lair.h>
-#include <lair/core/image.h>
 #include <lair/core/path.h>
 
 #include <lair/asset/asset_manager.h>
 #include <lair/asset/loader.h>
+#include <lair/asset/image.h>
 
 
 namespace lair

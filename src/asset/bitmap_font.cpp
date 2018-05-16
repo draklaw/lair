@@ -22,10 +22,11 @@
 #include <cctype>
 
 #include <lair/core/json.h>
-#include <lair/core/image.h>
 #include <lair/core/text.h>
 
-#include "lair/core/bitmap_font.h"
+#include <lair/asset/image.h>
+
+#include "lair/asset/bitmap_font.h"
 
 
 namespace lair {
@@ -63,15 +64,6 @@ BitmapFont::BitmapFont()
       _glyphMap() {
 }
 
-BitmapFont::BitmapFont(const Json::Value& json, AssetSP image)
-    : _image(image),
-      _fontSize(),
-      _height(),
-      _baselineToTop(),
-      _glyphMap() {
-	setFromJson(json);
-}
-
 
 const BitmapFont::Glyph& BitmapFont::glyph(int cp) const {
 	auto git = _glyphMap.find(cp);
@@ -79,6 +71,11 @@ const BitmapFont::Glyph& BitmapFont::glyph(int cp) const {
 		return git->second;
 	}
 	return _glyphMap.find(-1)->second;
+}
+
+
+void BitmapFont::setGlyph(int cp, const Glyph& glyph) {
+	_glyphMap[cp] = glyph;
 }
 
 
@@ -91,37 +88,8 @@ int BitmapFont::kerning(int cp0, int cp1) const {
 }
 
 
-void BitmapFont::setFromJson(const Json::Value& json) {
-	auto aspect = _image->aspect<ImageAspect>();
-	lairAssert(bool(aspect));
-
-	_fontSize = json.get("size", 0).asInt();
-	_height = json.get("height", 0).asInt();
-	_baselineToTop = json.get("base", _height / 2).asInt();
-
-	Vector2 texSize(aspect->get().width(), aspect->get().height());
-	for(const Json::Value& c: json.get("chars", Json::nullValue)) {
-		unsigned cp = c[0].asInt();
-		Glyph g;
-		Vector2 pos = Vector2(c[1].asInt(), c[2].asInt()).array()
-		        / texSize.array();
-		g.size = Vector2(c[3].asInt(), c[4].asInt());
-		g.region = Box2(pos, pos + (g.size.array()
-		                            / texSize.array()).matrix());
-		g.offset = Vector2(c[5].asInt(), c[6].asInt());
-		g.advance = c[7].asInt();
-		_glyphMap.emplace(cp, g);
-	}
-	for(const Json::Value& k: json.get("kern", Json::nullValue)) {
-		unsigned cp0  = k[0].asInt();
-		unsigned cp1  = k[1].asInt();
-		unsigned kern = k[2].asInt();
-		_kerning.emplace(CharPair(cp0, cp1), kern);
-	}
-}
-
-void BitmapFont::setImage(AssetSP image) {
-	_image = image;
+void BitmapFont::setKerning(int cp0, int cp1, int kern) {
+	_kerning[CharPair(cp0, cp1)] = kern;
 }
 
 

@@ -30,10 +30,10 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/image.h>
 #include <lair/core/path.h>
 
 #include <lair/asset/loader.h>
+#include <lair/asset/image.h>
 
 #include <lair/utils/input.h>
 #include <lair/utils/interp_loop.h>

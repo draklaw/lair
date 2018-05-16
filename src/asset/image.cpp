@@ -19,7 +19,7 @@
  */
 
 
-#include "lair/core/image.h"
+#include "lair/asset/image.h"
 
 
 namespace lair {
