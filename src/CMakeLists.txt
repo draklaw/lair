@@ -92,11 +92,6 @@ set(lair_SOURCES
 	core/loader.cpp
 	core/bitmap_font.cpp
 
-	ldl/ldl_parser.cpp
-	ldl/ldl_writer.cpp
-	ldl/read.cpp
-	ldl/write.cpp
-
 	meta/metatype.cpp
 	meta/variant.cpp
 	meta/var_list.cpp
@@ -109,8 +104,13 @@ set(lair_SOURCES
 	meta/property_list.cpp
 	meta/with_properties.cpp
 	meta/variant_loader.cpp
-	meta/ldl_property_serializer.cpp
 	meta/property_serializer.cpp
+
+	ldl/ldl_parser.cpp
+	ldl/ldl_writer.cpp
+	ldl/read.cpp
+	ldl/write.cpp
+	ldl/ldl_property_serializer.cpp
 
 	fs/abstract_file_system.cpp
 	fs/file_system.cpp

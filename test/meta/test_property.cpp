@@ -26,7 +26,8 @@
 #include <lair/meta/property.h>
 #include <lair/meta/property_list.h>
 #include <lair/meta/with_properties.h>
-#include <lair/meta/ldl_property_serializer.h>
+
+#include <lair/ldl/ldl_property_serializer.h>
 
 
 //using namespace lair;
