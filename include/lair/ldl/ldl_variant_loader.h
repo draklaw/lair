@@ -24,9 +24,10 @@
 
 
 #include <lair/core/lair.h>
-#include <lair/core/loader.h>
 
 #include <lair/meta/variant.h>
+
+#include <lair/asset/loader.h>
 
 
 namespace lair

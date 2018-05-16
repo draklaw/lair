@@ -88,8 +88,6 @@ set(lair_SOURCES
 	core/json.cpp
 	core/image.cpp
 	core/signal.cpp
-	core/asset_manager.cpp
-	core/loader.cpp
 	core/bitmap_font.cpp
 
 	meta/metatype.cpp
@@ -105,17 +103,20 @@ set(lair_SOURCES
 	meta/with_properties.cpp
 	meta/property_serializer.cpp
 
+	fs/abstract_file_system.cpp
+	fs/file_system.cpp
+	fs/memory_file_system.cpp
+	fs/real_file_system.cpp
+
+	asset/asset_manager.cpp
+	asset/loader.cpp
+
 	ldl/ldl_parser.cpp
 	ldl/ldl_writer.cpp
 	ldl/read.cpp
 	ldl/write.cpp
 	ldl/ldl_property_serializer.cpp
 	ldl/ldl_variant_loader.cpp
-
-	fs/abstract_file_system.cpp
-	fs/file_system.cpp
-	fs/memory_file_system.cpp
-	fs/real_file_system.cpp
 
 	geometry/intersection.cpp
 	geometry/shape_2d.cpp

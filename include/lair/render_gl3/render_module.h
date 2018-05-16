@@ -28,7 +28,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/asset_manager.h>
+
+#include <lair/asset/asset_manager.h>
 
 #include <lair/render_gl3/context.h>
 

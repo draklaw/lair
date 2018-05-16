@@ -23,7 +23,8 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/loader.h>
+
+#include <lair/asset/loader.h>
 
 #include "lair/ec/sprite_renderer.h"
 

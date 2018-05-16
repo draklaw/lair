@@ -21,10 +21,11 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/loader.h>
 
 #include <lair/meta/variant_reader.h>
 #include <lair/meta/variant_writer.h>
+
+#include <lair/asset/loader.h>
 
 #include <lair/sys_sdl2/image_loader.h>
 

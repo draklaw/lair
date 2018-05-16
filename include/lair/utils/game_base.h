@@ -30,8 +30,9 @@
 #include <lair/core/log.h>
 #include <lair/core/json.h>
 #include <lair/core/path.h>
-#include <lair/core/asset_manager.h>
-#include <lair/core/loader.h>
+
+#include <lair/asset/asset_manager.h>
+#include <lair/asset/loader.h>
 
 #include <lair/meta/property.h>
 #include <lair/meta/property_serializer.h>

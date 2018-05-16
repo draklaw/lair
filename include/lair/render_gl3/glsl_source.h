@@ -25,7 +25,7 @@
 
 #include <istream>
 
-#include <lair/core/loader.h>
+#include <lair/asset/loader.h>
 
 #include <lair/render_gl3/context.h>
 

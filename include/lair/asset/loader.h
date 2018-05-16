@@ -19,8 +19,8 @@
  */
 
 
-#ifndef _LAIR_CORE_LOADER_H
-#define _LAIR_CORE_LOADER_H
+#ifndef _LAIR_ASSET_LOADER_H
+#define _LAIR_ASSET_LOADER_H
 
 
 #include <memory>
@@ -41,9 +41,10 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 #include <lair/core/path.h>
-#include <lair/core/asset_manager.h>
 
 #include <lair/fs/abstract_file_system.h>
+
+#include <lair/asset/asset_manager.h>
 
 
 namespace lair

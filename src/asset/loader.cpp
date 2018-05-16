@@ -24,7 +24,7 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
-#include "lair/core/loader.h"
+#include "lair/asset/loader.h"
 
 
 namespace lair
