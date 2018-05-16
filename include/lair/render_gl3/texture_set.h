@@ -27,6 +27,7 @@
 #include <lair/core/ldl.h>
 
 #include <lair/meta/metatype.h>
+#include <lair/meta/variant.h>
 
 #include <lair/render_gl3/sampler.h>
 #include <lair/render_gl3/texture.h>
@@ -93,6 +94,8 @@ public:
 	 */
 	bool checkTexturesValidity(Logger& logger) const;
 
+	inline unsigned size() const { return _bindings.size(); }
+
 	inline unsigned index() const { return _index; }
 	inline void _setIndex(unsigned index) { _index = index; }
 
@@ -136,6 +139,10 @@ typedef std::weak_ptr<TextureSet>         TextureSetWP;
 bool ldlRead(LdlParser& parser, TextureSetCSP& textureSet, Renderer* renderer,
              LoaderManager* loader);
 bool ldlWrite(LdlWriter& writer, const TextureSetCSP& textureSet);
+
+bool varRead(TextureSetCSP& value, const Variant& var, Renderer* renderer,
+             LoaderManager* loader, Logger& logger = noopLogger);
+bool varWrite(Variant& var, const TextureSetCSP& value, Logger& logger = noopLogger);
 
 
 }

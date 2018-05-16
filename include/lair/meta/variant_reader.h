@@ -27,6 +27,8 @@
 #include <lair/core/log.h>
 
 #include <lair/meta/variant.h>
+#include <lair/meta/var_list.h>
+#include <lair/meta/var_map.h>
 
 
 namespace lair
@@ -129,16 +131,19 @@ bool varRead(const Eigen::DenseBase<Derived>& value_, const Variant& var, Logger
 	unsigned rows = value.rows();
 	unsigned cols = value.cols();
 
-	if(varList.size() == rows * cols) {
-		unsigned i = 0;
-		for(const Variant& v: varList) {
-			if(!varRead(value(i++), v, logger)) {
-				return false;
-			}
+	unsigned nCoeffs = std::min<unsigned>(varList.size(), rows * cols);
+	for(unsigned i = 0; i < nCoeffs; ++i) {
+		if(!varRead(value(i), varList[i], logger)) {
+			return false;
 		}
 	}
-	else {
-		logger.error(var.parseInfoDesc(), "Incorrect number of coefficient in Vector/Matrix, expected ",
+
+	for(unsigned i = nCoeffs; i < rows * cols; ++i) {
+		value(i) = (i == 3)? 1: 0;
+	}
+
+	if(varList.size() > rows * cols) {
+		logger.error(var.parseInfoDesc(), "Too much coefficients in Vector/Matrix, expected ",
 		             rows * cols, ", got ", varList.size(), ".");
 		return false;
 	}

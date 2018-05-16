@@ -161,7 +161,7 @@ bool varRead(Transform& value, const Variant& var, Logger& logger) {
 		}
 
 		value.setIdentity();
-		value.rotate(AngleAxis(vec(0), vec.tail<3>()));
+		value.rotate(AngleAxis(vec(0) * M_PI / 180, vec.tail<3>()));
 	}
 	else if(varList.type() == "scale") {
 		Vector3 vec(1, 1, 1);

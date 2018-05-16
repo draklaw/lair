@@ -129,7 +129,7 @@ bool varWrite(Variant& var, const Eigen::AlignedBox<Scalar, Dim>& value, Logger&
 	success &= varWrite(v, value.min(), logger);
 	varMap.emplace("min", std::move(v));
 
-	success &= varWrite(v, value.sizes(), logger);
+	success &= varWrite(v, Eigen::Matrix<Scalar, Dim, 1>(value.sizes()), logger);
 	varMap.emplace("size", std::move(v));
 
 	var = std::move(varMap);

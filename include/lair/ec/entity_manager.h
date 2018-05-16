@@ -36,7 +36,7 @@
 #include <lair/core/block_array.h>
 
 #include <lair/meta/property.h>
-#include <lair/meta/ldl_property_serializer.h>
+#include <lair/meta/property_serializer.h>
 
 #include <lair/ec/component_manager.h>
 #include <lair/ec/entity.h>
@@ -58,7 +58,7 @@ class ComponentManager;
 
 class EntityManager {
 public:
-	EntityManager(Logger& logger, LdlPropertySerializer& serializer, size_t entityBlockSize = 1024);
+	EntityManager(Logger& logger, PropertySerializer& serializer, size_t entityBlockSize = 1024);
 	EntityManager(const EntityManager&) = delete;
 	EntityManager(EntityManager&&)      = delete;
 	~EntityManager();
@@ -81,18 +81,11 @@ public:
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name = nullptr, int index = -1);
 	EntityRef cloneEntity(EntityRef base, EntityRef newParent, const char* name, EntityRef insertAfter);
 
-//	EntityRef createEntity(const Variant& properties, EntityRef parent,
-//	                       const char* name = nullptr, int index = -1);
-//	EntityRef createEntities(const Variant& properties, EntityRef parent,
-//	                         const char* name = nullptr, int index = -1);
-
 	void initializeFromEntity(EntityRef base, EntityRef entity);
-	bool initializeFromLdl(EntityRef entity, LdlParser& parser);
-//	bool initialize(EntityRef entity, const Variant& var);
-	bool loadEntitiesFromLdl(LdlParser& parser, EntityRef parent);
-//	bool loadEntities(const Variant& var, EntityRef parent);
+	bool initialize(EntityRef entity, const Variant& var);
+	bool loadEntities(const Variant& var, EntityRef parent);
 
-	bool saveEntitiesToLdl(LdlWriter& writer, EntityRef entity) const;
+	bool saveEntities(Variant& var, EntityRef entity) const;
 
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
@@ -107,7 +100,7 @@ public:
 	void setPrevWorldTransforms();
 	void updateWorldTransforms();
 
-	Logger& log() { return _logger; }
+	Logger& log() const { return _logger; }
 
 protected:
 	typedef BlockArray<_Entity> EntityArray;
@@ -119,9 +112,9 @@ protected:
 	void _updateWorldTransformsHelper(_Entity* entity, const Transform& parentTransform);
 
 protected:
-	Logger           _logger;
+	mutable Logger           _logger;
 
-	LdlPropertySerializer& _serializer;
+	PropertySerializer& _serializer;
 
 	CompManagerArray _compManagers;
 	CompManagerMap   _compManagerMap;

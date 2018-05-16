@@ -34,7 +34,7 @@
 #include <lair/core/loader.h>
 
 #include <lair/meta/property.h>
-#include <lair/meta/ldl_property_serializer.h>
+#include <lair/meta/property_serializer.h>
 
 #include <lair/fs/file_system.h>
 #include <lair/fs/memory_file_system.h>
@@ -89,7 +89,7 @@ public:
 	Path dataPath() const;
 	FileSystemSP fileSystem() const;
 
-	LdlPropertySerializer& serializer();
+	PropertySerializer& serializer();
 
 	SysModule*     sys();
 	Window*        window();
@@ -132,7 +132,7 @@ protected:
 	RealFileSystemSP   _realFs;
 	MemoryFileSystemSP _memoryFs;
 
-	LdlPropertySerializer _serializer;
+	PropertySerializer _serializer;
 
 	std::unique_ptr<SysModule>
 	              _sys;

@@ -782,6 +782,11 @@ String ldlToString(const T& value) {
 	return out.str();
 }
 
+bool ldlWrite(LdlWriter& writer, const Variant& value);
+bool ldlWrite(LdlWriter& writer, const VarList& value);
+bool ldlWrite(LdlWriter& writer, const VarMap&  value);
+
+
 }
 
 #endif

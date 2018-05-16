@@ -97,7 +97,7 @@ public:
 	// is used only if T in an rvalue.
 	template<typename T,
 	         typename std::enable_if<std::is_rvalue_reference<T&&>::value, int>::type = 0>
-	Variant(T&& object);
+	explicit Variant(T&& object);
 
 
 	~Variant();

@@ -27,6 +27,10 @@
 #include <lair/core/json.h>
 #include <lair/core/log.h>
 
+#include <lair/meta/var_list.h>
+#include <lair/meta/var_map.h>
+#include <lair/meta/variant_reader.h>
+
 #include <lair/ec/component.h>
 #include <lair/ec/component_manager.h>
 
@@ -37,7 +41,7 @@ namespace lair
 {
 
 
-EntityManager::EntityManager(Logger& logger, LdlPropertySerializer& serializer, size_t entityBlockSize)
+EntityManager::EntityManager(Logger& logger, PropertySerializer& serializer, size_t entityBlockSize)
     : _logger             (&logger),
       _serializer         (serializer),
       _compManagerMap     (),
@@ -130,67 +134,6 @@ EntityRef EntityManager::cloneEntity(EntityRef base, EntityRef newParent, const 
 }
 
 
-//EntityRef EntityManager::createEntity(const Variant& properties, EntityRef parent,
-//                                      const char* name, int index) {
-//	if(!properties.isVarMap()) {
-//		log().warning("Expected entity (VarMap), got ", properties);
-//		return EntityRef();
-//	}
-
-//	EntityRef entity = createEntity(parent, name, index);
-
-//	for(const auto& prop: properties.asVarMap()) {
-//		const String&  key   = prop.first;
-//		const Variant& value = prop.second;
-
-//		if(key == "name" && !name) {
-//			setEntityName(entity, value.asString());
-//		}
-//		else if(key == "transform") {
-//			// TODO
-//		}
-//		else if(key == "enabled") {
-//			entity.setEnabled(value.asBool());
-//		}
-//		else if(key != "children" && key != "properties") {
-//			ComponentManager* cm = componentManager(key);
-//			if(cm) {
-//				Component* cmp = cm->addComponent(entity);
-//				//_serializer.read(value, cmp);
-//			}
-//			else {
-//				log().warning("Unknown component type \"", key, "\"");
-//			}
-//		}
-//	}
-
-//	return entity;
-//}
-
-
-//EntityRef EntityManager::createEntities(const Variant& properties, EntityRef parent,
-//                                        const char* name, int index) {
-//	EntityRef entity = createEntity(properties, parent, name, index);
-
-//	if(!entity.isValid())
-//		return entity;
-
-//	const Variant& children = properties["children"];
-//	if(children.isVarList()) {
-//		for(const Variant& child: children.asVarList()) {
-//			createEntities(child, entity);
-//		}
-//	}
-//	else if(children.isVarMap()) {
-//		for(const auto& nameChild: children.asVarMap()) {
-//			createEntities(nameChild.second, entity, nameChild.first.c_str());
-//		}
-//	}
-
-//	return entity;
-//}
-
-
 void EntityManager::initializeFromEntity(EntityRef base, EntityRef entity) {
 	lairAssert(base.isValid());
 
@@ -222,263 +165,145 @@ void EntityManager::initializeFromEntity(EntityRef base, EntityRef entity) {
 }
 
 
-bool EntityManager::initializeFromLdl(EntityRef entity, LdlParser& parser) {
-	if(parser.valueType() != LdlParser::TYPE_MAP) {
-		parser.error("Expected entity (VarMap), got ", parser.valueTypeName());
-		parser.skip();
+bool EntityManager::initialize(EntityRef entity, const Variant& var) {
+	if(!var.isVarMap()) {
+		log().error(var.parseInfoDesc(), "Expected entity (VarMap), got ", var.typeName());
 		return false;
 	}
 
 	bool success = true;
-	parser.enter();
-	while(parser.valueType() != LdlParser::TYPE_END) {
-		String key = parser.getKey();
 
-		if(key == "model") {
-			// FIXME: This breaks if model is not the first property
-			String modelName;
-			if(!ldlRead(parser, modelName)) {
-				log().error("Expected String, got ", parser.valueTypeName());
-				break;
-			}
-
-			EntityRef model = findByName(modelName);
-			if(model.isValid()) {
-				initializeFromEntity(model, entity);
-			}
-			else {
-				log().warning("Model not found: ", modelName);
-			}
-		}
-		else if(key == "name") {
-			if(parser.valueType() == LdlParser::TYPE_STRING) {
-				setEntityName(entity, parser.getString());
-				parser.next();
-			}
-			else {
-				parser.error("Entity name must be a String, got ", parser.valueTypeName());
-				parser.skip();
-				success = false;
-			}
-		}
-		else if(key == "transform") {
-			Transform transform;
-			if(ldlRead(parser, transform)) {
-				entity.place(transform);
-			}
-			else {
-				success = false;
-			}
-		}
-		else if(key == "enabled") {
-			bool enabled = true;
-			if(ldlRead(parser, enabled))
-				entity.setEnabled(enabled);
-		}
-		else if(key == "children") {
-			success &= loadEntitiesFromLdl(parser, entity);
-		}
-		else if(key == "type") {
-			// Ignore atm
-			parser.skip();
-		}
-		else if(key == "properties") {
-			// Ignore atm
-			parser.skip();
+	const Variant& modelVar = var.get("model");
+	if(success && modelVar.isValid()) {
+		String modelName;
+		success = varRead(modelName, modelVar);
+		EntityRef model = success? findByName(modelName): EntityRef();
+		if(model.isValid()) {
+			initializeFromEntity(model, entity);
 		}
 		else {
-			ComponentManager* cm = componentManager(key);
-			if(cm) {
-				Component* cmp = cm->addComponent(entity);
-				_serializer._read(parser, cm->componentProperties(), cmp);
-			}
-			else {
-				parser.warning("Unknown component type \"", key, "\"");
-				parser.skip();
-			}
+			log().warning(modelVar.parseInfoDesc(), "Model not found: \"", modelName, "\".");
 		}
 	}
-	parser.leave();
+
+	const Variant& nameVar = var.get("name");
+	if(success && nameVar.isValid()) {
+		String name;
+		success = varRead(name, nameVar);
+		if(success) {
+			setEntityName(entity, name);
+		}
+	}
+
+	const Variant& transVar = var.get("transform");
+	if(success && transVar.isValid()) {
+		Transform trans;
+		success = varRead(trans, transVar);
+		if(success) {
+			entity.place(trans);
+		}
+	}
+
+	const Variant& enabledVar = var.get("enabled");
+	if(success && enabledVar.isValid()) {
+		bool enabled;
+		success = varRead(enabled, enabledVar);
+		if(success) {
+			entity.setEnabled(enabled);
+		}
+	}
+
+	for(auto&& pair: var.asVarMap()) {
+		const String&  key = pair.first;
+		const Variant& v = pair.second;
+
+		if(key == "model" || key == "name" || key == "transform" ||
+		        key == "enabled" || key == "children" ||
+		        key == "type" || key == "properties")
+			continue;
+
+		ComponentManager* cm = componentManager(key);
+		if(cm) {
+			Component* cmp = cm->addComponent(entity);
+			_serializer._read(cmp, cm->componentProperties(), v, log());
+		}
+		else {
+			log().warning(v.parseInfoDesc(), "Unknown component type \"", key, "\"");
+		}
+	}
+
+	const Variant& children = var.get("children");
+	if(success && children.isValid()) {
+		success = loadEntities(children, entity);
+	}
 
 	return success;
 }
 
 
-//bool EntityManager::initialize(EntityRef entity, const Variant& var) {
-//	if(!var.isVarMap()) {
-//		parser.error("Expected entity (VarMap), got ", var.typeName());
-//		return false;
-//	}
-
-//	bool success = true;
-//	for(auto&& pair: var.asVarMap()) {
-
-//	}
-//	parser.enter();
-//	while(parser.valueType() != LdlParser::TYPE_END) {
-//		String key = parser.getKey();
-
-//		if(key == "model") {
-//			// FIXME: This breaks if model is not the first property
-//			String modelName;
-//			if(!ldlRead(parser, modelName)) {
-//				log().error("Expected String, got ", parser.valueTypeName());
-//				break;
-//			}
-
-//			EntityRef model = findByName(modelName);
-//			if(model.isValid()) {
-//				initializeFromEntity(model, entity);
-//			}
-//			else {
-//				log().warning("Model not found: ", modelName);
-//			}
-//		}
-//		else if(key == "name") {
-//			if(parser.valueType() == LdlParser::TYPE_STRING) {
-//				setEntityName(entity, parser.getString());
-//				parser.next();
-//			}
-//			else {
-//				parser.error("Entity name must be a String, got ", parser.valueTypeName());
-//				parser.skip();
-//				success = false;
-//			}
-//		}
-//		else if(key == "transform") {
-//			Transform transform;
-//			if(ldlRead(parser, transform)) {
-//				entity.place(transform);
-//			}
-//			else {
-//				success = false;
-//			}
-//		}
-//		else if(key == "enabled") {
-//			bool enabled = true;
-//			if(ldlRead(parser, enabled))
-//				entity.setEnabled(enabled);
-//		}
-//		else if(key == "children") {
-//			success &= loadEntitiesFromLdl(parser, entity);
-//		}
-//		else if(key == "type") {
-//			// Ignore atm
-//			parser.skip();
-//		}
-//		else if(key == "properties") {
-//			// Ignore atm
-//			parser.skip();
-//		}
-//		else {
-//			ComponentManager* cm = componentManager(key);
-//			if(cm) {
-//				Component* cmp = cm->addComponent(entity);
-//				_serializer._read(parser, cm->componentProperties(), cmp);
-//			}
-//			else {
-//				parser.warning("Unknown component type \"", key, "\"");
-//				parser.skip();
-//			}
-//		}
-//	}
-//	parser.leave();
-
-//	return success;
-//}
-
-
-bool EntityManager::loadEntitiesFromLdl(LdlParser& parser, EntityRef parent) {
-	if(parser.valueType() != LdlParser::TYPE_LIST && parser.valueType() != LdlParser::TYPE_MAP) {
-		parser.error("Expected entity list (VarList or VarMap), got ", parser.valueTypeName());
-		parser.skip();
+bool EntityManager::loadEntities(const Variant& var, EntityRef parent) {
+	bool success = true;
+	if(var.isVarList()) {
+		const VarList varList = var.asVarList();
+		for(auto&& v: varList) {
+			EntityRef entity = createEntity(parent);
+			success &= initialize(entity, v);
+		}
+	}
+	else if(var.isVarMap()) {
+		const VarMap varMap = var.asVarMap();
+		for(auto&& pair: varMap) {
+			EntityRef entity = createEntity(parent, pair.first.c_str());
+			if(initialize(entity, pair.second)) {
+				setEntityName(entity, pair.first);
+			}
+			else {
+				success = false;
+			}
+		}
+	}
+	else {
+		log().error(var.parseInfoDesc(), "Expected entity list (VarList or VarMap), got ", var.typeName());
 		return false;
 	}
-
-	bool isList = parser.valueType() == LdlParser::TYPE_LIST;
-	parser.enter();
-	while(parser.valueType() != LdlParser::TYPE_END) {
-		if(parser.valueType() == LdlParser::TYPE_LIST
-		|| parser.valueType() == LdlParser::TYPE_MAP) {
-			if(parser.isValueTyped() && parser.getValueTypeName() != "Entity") {
-				parser.warning("Unexpected type annotation \"", parser.valueType(), "\" when reading an Entity");
-			}
-			EntityRef entity = createEntity(parent, isList? nullptr: parser.getKey().c_str());
-			initializeFromLdl(entity, parser);
-		}
-		else {
-			parser.error("Expected Entity (VarList or VarMap), got ", parser.valueTypeName());
-			parser.skip();
-		}
-	}
-	parser.leave();
-	return true;
+	return success;
 }
 
 
-//bool EntityManager::loadEntities(const Variant& var, EntityRef parent) {
-//	success = true;
-//	if(var.isVarList()) {
-//		const VarList varList = var.asVarList();
-//		for(auto&& v: varList) {
-//			EntityRef entity = createEntity(parent);
-//			success &= initialize(entity, v);
-//		}
-//	}
-//	else if(var.isVarMap()) {
-//		const VarList varMap = var.asVarMap();
-//		for(auto&& pair: varMap) {
-//			EntityRef entity = createEntity(parent, pair.first.c_str());
-//			success &= initialize(entity, pair.second);
-//		}
-//	}
-//	else {
-//		parser.error("Expected entity list (VarList or VarMap), got ", var.typeName());
-//		return false;
-//	}
-//	return success;
-//}
-
-
-bool EntityManager::saveEntitiesToLdl(LdlWriter& writer, EntityRef entity) const {
-	if(!entity.isValid())
-		entity = _root;
-
+bool EntityManager::saveEntities(Variant& var, EntityRef entity) const {
 	bool success = true;
+	Variant v;
+	VarMap varMap;
 
-	writer.openMap();
+	success &= varWrite(v, String(entity.name()), log());
+	varMap.emplace("name", std::move(v));
 
-	writer.writeKey("name");
-	success = success && ldlWrite(writer, String(entity.name()));
+	success &= varWrite(v, entity.isEnabled(), log());
+	varMap.emplace("enabled", std::move(v));
 
-	writer.writeKey("enabled");
-	success = success && ldlWrite(writer, entity.isEnabled());
-
-	writer.writeKey("transform");
-	success = success && ldlWrite(writer, entity.transform());
+	success &= varWrite(v, entity.transform(), log());
+	varMap.emplace("transform", std::move(v));
 
 	for(const ComponentManager* cm: _compManagers) {
 		const Component* comp = cm->get(entity);
 		if(comp) {
-			writer.writeKey(cm->name());
-			_serializer._write(writer, cm->componentProperties(), comp);
+			_serializer._write(v, comp, cm->componentProperties(), log());
+			varMap.emplace(cm->name(), std::move(v));
 		}
 	}
 
 	if(entity.firstChild().isValid()) {
-		writer.writeKey("children");
-		writer.openList();
-
+		VarList children;
 		EntityRef child = entity.firstChild();
 		while(child.isValid()) {
-			saveEntitiesToLdl(writer, child);
+			success &= saveEntities(v, child);
+			children.emplace_back(std::move(v));
 			child = child.nextSibling();
 		}
-		writer.close();
+		varMap.emplace("children", std::move(children));
 	}
 
-	writer.close();
-
+	var = std::move(varMap);
 	return success;
 }
 

@@ -23,6 +23,10 @@
 #include <lair/core/log.h>
 #include <lair/core/ldl.h>
 
+#include <lair/meta/variant_reader.h>
+#include <lair/meta/variant_writer.h>
+#include <lair/meta/var_list.h>
+
 #include <lair/render_gl3/renderer.h>
 
 #include "lair/render_gl3/sampler.h"
@@ -320,6 +324,99 @@ bool ldlWrite(LdlWriter& writer, const SamplerSP& sampler) {
 	writer.close();
 
 	return true;
+}
+
+
+bool varRead(SamplerSP& value, const Variant& var, Renderer* renderer, Logger& logger) {
+	if(!var.isVarList()) {
+		logger.error(var.parseInfoDesc(), "Invalid type: expected Sampler (VarList), got ", var.typeName());
+		return false;
+	}
+
+	bool success = true;
+	const VarList& varList = var.asVarList();
+	SamplerParams params;
+
+	if(varList.type() != "Sampler") {
+		logger.warning(var.parseInfoDesc(), "Expected type annotation \"Sampler\", got \"", varList.type(), "\".");
+	}
+
+	if(varList.size() < 1) {
+		logger.error(var.parseInfoDesc(), "Sampler take at least one parameter, got ", varList.size(), ".");
+		success = false;
+	}
+
+	unsigned p = 0;
+	if(varList.size() > p) {
+		String flagsString;
+		success &= varRead(flagsString, varList[p], logger);
+		params.flags = SamplerParams::flagsInfo()->parse(flagsString, logger);
+	}
+
+	p += 1;
+	if(varList.size() > p) {
+		success &= varRead(params.maxAnisotropy, varList[p], logger);
+	}
+
+	p += 1;
+	if(varList.size() > p) {
+		success &= varRead(params.lodBias, varList[p], logger);
+	}
+
+	p += 1;
+	if(varList.size() > p) {
+		success &= varRead(params.minLod, varList[p], logger);
+	}
+
+	p += 1;
+	if(varList.size() > p) {
+		success &= varRead(params.maxLod, varList[p], logger);
+	}
+
+	p += 1;
+	if(varList.size() > p) {
+		logger.warning(varList[p], "Too much paramater in Sampler, ignoring.");
+	}
+
+	if(success) {
+		value = renderer->getSampler(params);
+	}
+
+	return success;
+}
+
+
+bool varWrite(Variant& var, const SamplerSP& value, Logger& logger) {
+	bool success = true;
+
+	Variant v;
+	VarList varList("Sampler");
+	const SamplerParams& params = value->params();
+
+	{
+		std::ostringstream flags;
+		SamplerParams::flagsInfo()->write(flags, params.flags);
+		success &= varWrite(v, flags.str(), logger);
+		varList.emplace_back(std::move(v));
+	}
+
+	success &= varWrite(v, params.maxAnisotropy, logger);
+	varList.emplace_back(std::move(v));
+
+	success &= varWrite(v, params.lodBias, logger);
+	varList.emplace_back(std::move(v));
+
+	success &= varWrite(v, params.minLod, logger);
+	varList.emplace_back(std::move(v));
+
+	success &= varWrite(v, params.maxLod, logger);
+	varList.emplace_back(std::move(v));
+
+	if(success) {
+		var = std::move(varList);
+	}
+
+	return success;
 }
 
 

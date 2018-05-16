@@ -28,6 +28,7 @@
 
 #include <lair/meta/metatype.h>
 #include <lair/meta/flags_info.h>
+#include <lair/meta/variant.h>
 
 #include <lair/render_gl3/context.h>
 
@@ -203,6 +204,9 @@ typedef std::weak_ptr  <Sampler> SamplerWP;
 
 bool ldlRead(LdlParser& parser, SamplerSP& sampler, Renderer* renderer);
 bool ldlWrite(LdlWriter& writer, const SamplerSP& sampler);
+
+bool varRead(SamplerSP& value, const Variant& var, Renderer* renderer, Logger& logger = noopLogger);
+bool varWrite(Variant& var, const SamplerSP& value, Logger& logger = noopLogger);
 
 
 }

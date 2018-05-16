@@ -33,7 +33,11 @@ void SimpleScene::load() {
 	EntityRef test_map = entities().createEntity(root(), "test_map");
 
 	TileMap::ObjectsLoader loadObjects = [this, &test_map](LdlParser& parser) {
-		return entities().loadEntitiesFromLdl(parser, test_map);
+		Variant var;
+		if(ldlRead(parser, var)) {
+			return entities().loadEntities(var, test_map);
+		}
+		return false;
 	};
 
 	AssetSP tileMapAsset = loader()->load<TileMapLoader>("test_map.ldl", loadObjects)->asset();
@@ -50,10 +54,13 @@ void SimpleScene::load() {
 
 	log().log("Done loading, dump entities and go !");
 
+	Variant var;
+	entities().saveEntities(var, root());
+
 	std::ofstream out("entities.ldl");
 	ErrorList errors;
 	LdlWriter writer(&out, "<debug>", &errors);
-	entities().saveEntitiesToLdl(writer, root());
+	ldlWrite(writer, var);
 	errors.log(log());
 }
 

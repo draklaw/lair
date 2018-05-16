@@ -1187,4 +1187,62 @@ bool ldlWrite(LdlWriter& writer, const Transform& value) {
 }
 
 
+bool ldlWrite(LdlWriter& writer, const Variant& value) {
+	if(value.isNull()) {
+		writer.writeNull();
+		return true;
+	}
+	if(value.is<bool>()) {
+		return ldlWrite(writer, value.asBool());
+	}
+	if(value.isInt()) {
+		return ldlWrite(writer, value.asInt());
+	}
+	if(value.isFloat()) {
+		return ldlWrite(writer, value.asFloat());
+	}
+	if(value.isString()) {
+		return ldlWrite(writer, value.asString());
+	}
+	if(value.isVarList()) {
+		return ldlWrite(writer, value.asVarList());
+	}
+	if(value.isVarMap()) {
+		return ldlWrite(writer, value.asVarMap());
+	}
+
+	writer.error("Cannot write variant containing type \"", value.typeName(), "\", write null instead.");
+	writer.writeNull();
+
+	return false;
+}
+
+
+bool ldlWrite(LdlWriter& writer, const VarList& value) {
+	bool success = true;
+
+	writer.openList(LdlWriter::CF_MULTI_LINE, value.type());
+	for(auto&& var: value) {
+		success = success && ldlWrite(writer, var);
+	}
+	writer.close();
+
+	return success;
+}
+
+
+bool ldlWrite(LdlWriter& writer, const VarMap&  value) {
+	bool success = true;
+
+	writer.openMap(LdlWriter::CF_MULTI_LINE, value.type());
+	for(auto&& pair: value) {
+		writer.writeKey(pair.first);
+		success = success && ldlWrite(writer, pair.second);
+	}
+	writer.close();
+
+	return success;
+}
+
+
 }

@@ -104,6 +104,7 @@ set(lair_SOURCES
 	meta/property.cpp
 	meta/property_list.cpp
 	meta/with_properties.cpp
+	meta/variant_loader.cpp
 	meta/ldl_property_serializer.cpp
 	meta/property_serializer.cpp
 

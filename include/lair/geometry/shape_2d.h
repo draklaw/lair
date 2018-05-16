@@ -133,6 +133,13 @@ bool ldlRead(LdlParser& parser, Shape2DVector& value);
 bool ldlWrite(LdlWriter& writer, const Shape2DVector& value);
 
 
+bool varRead(Shape2D& value, const Variant& var, Logger& logger = noopLogger);
+bool varWrite(Variant& var, const Shape2D& value, Logger& logger = noopLogger);
+
+bool varRead(Shape2DVector& value, const Variant& var, Logger& logger = noopLogger);
+bool varWrite(Variant& var, const Shape2DVector& value, Logger& logger = noopLogger);
+
+
 }
 
 

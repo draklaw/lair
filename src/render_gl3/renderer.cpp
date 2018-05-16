@@ -173,7 +173,7 @@ TextureSetCSP Renderer::getTextureSet(const TextureSet& texSet, const String& na
 		sp->_setIndex(_textureSetIndex++);
 		wp = sp;
 
-		log().info("Create texture set: ", ldlToString(sp));
+		log().info("Create texture set: ", ldlToString(TextureSetCSP(sp)));
 	}
 
 	if(name.size()) {

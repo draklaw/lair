@@ -23,6 +23,9 @@
 #include <lair/core/log.h>
 #include <lair/core/loader.h>
 
+#include <lair/meta/variant_reader.h>
+#include <lair/meta/variant_writer.h>
+
 #include <lair/sys_sdl2/image_loader.h>
 
 #include <lair/render_gl3/renderer.h>
@@ -304,7 +307,7 @@ bool ldlRead(LdlParser& parser, TextureSetCSP& textureSet, Renderer* renderer,
 		}
 	}
 	else {
-		parser.error("Unepected type annotation: expected TextureSet or Texture, got ",
+		parser.error("Unexpected type annotation: expected TextureSet or Texture, got ",
 		             typed? parser.getValueTypeName(): "none");
 		parser.skip();
 		success = false;
@@ -334,6 +337,156 @@ bool ldlWrite(LdlWriter& writer, const TextureSetCSP& textureSet) {
 		writer.close();
 	}
 	writer.close();
+
+	return success;
+}
+
+
+bool varRead(TextureBinding& value, const Variant& var, Renderer* renderer,
+             LoaderManager* loader, Logger& logger) {
+	bool success = true;
+
+	if(var.isVarList()) {
+		const VarList& varList = var.asVarList();
+
+		if(varList.type() != "Texture") {
+			logger.warning(var.parseInfoDesc(), "Unexpected type annotation: expected Texture, got ",
+			               varList.type());
+		}
+
+		if(varList.size() < 2) {
+			logger.error(var.parseInfoDesc(), "Texture binding takes at least 2 parameters, got ", varList.size(), ".");
+			success = false;
+		}
+
+		if(varList.size() > 0) {
+			String unitName;
+			success &= varRead(unitName, varList[0], logger);
+			value.unit = renderer->getTextureUnit(unitName);
+			if(!value.unit) {
+				logger.error(varList[0].parseInfoDesc(), "Unknown texture unit \"", unitName, "\".");
+				success = false;
+			}
+		}
+
+		if(varList.size() > 1) {
+			String path;
+			success &= varRead(path, varList[1], logger);
+			if(success) {
+				AssetSP asset = loader->loadAsset<ImageLoader>(path);
+				value.texture = renderer->createTexture(asset);
+			}
+		}
+
+		if(varList.size() > 2) {
+			success &= varRead(value.sampler, varList[2], renderer, logger);
+		}
+
+		if(varList.size() > 3) {
+			logger.warning(varList[3].parseInfoDesc(), "Too many parameters in texture binding, ignoring.");
+		}
+	}
+	else {
+		logger.error(var.parseInfoDesc(), "Invalid type: expected TextureBinding (VarList), got ", var.typeName());
+		success = false;
+	}
+
+	return success;
+}
+
+
+bool varWrite(Variant& var, const TextureBinding& value, Logger& logger) {
+	bool success = true;
+	Variant v;
+
+	VarList varList("Texture");
+
+	success &= varWrite(v, String(value.unit->name), logger);
+	varList.emplace_back(std::move(v));
+
+	success &= varWrite(v, value.texture->asset()->logicPath().utf8String(), logger);
+	varList.emplace_back(std::move(v));
+
+	if(value.sampler) {
+		success &= varWrite(v, value.sampler, logger);
+		varList.emplace_back(std::move(v));
+	}
+
+	if(success)
+		var = std::move(varList);
+
+	return success;
+}
+
+
+bool varRead(TextureSetCSP& value, const Variant& var, Renderer* renderer,
+             LoaderManager* loader, Logger& logger) {
+	bool success = true;
+
+	if(var.isString()) {
+		value = renderer->getTextureSet(var.asString());
+		success = bool(value);
+	}
+	else if(var.isVarList()) {
+		const VarList& varList = var.asVarList();
+		if(varList.type() == "Texture") {
+			TextureBinding bindings[] = {
+			    { nullptr, nullptr, nullptr },
+			    LAIR_TEXTURE_BINDING_END
+			};
+
+			success = varRead(bindings[0], var, renderer, loader, logger);
+			if(success) {
+				value = renderer->getTextureSet(TextureSet(bindings));
+			}
+		}
+		else if(varList.type() == "TextureSet") {
+			std::vector<TextureBinding> bindings;
+			bindings.emplace_back(TextureBinding{nullptr, nullptr, nullptr});
+
+			for(auto&& v: varList) {
+				bool ok = varRead(bindings.back(), v, renderer, loader, logger);
+				if(ok) {
+					bindings.emplace_back(TextureBinding{nullptr, nullptr, nullptr});
+				}
+			}
+
+			value = renderer->getTextureSet(TextureSet(bindings.data()));
+
+			success = bool(value);
+		}
+		else {
+			logger.error(var.parseInfoDesc(), "Unexpected type annotation: expected TextureSet or Texture, got \"",
+			             varList.type(), "\".");
+			success = false;
+		}
+	}
+	else {
+		logger.error(var.parseInfoDesc(), "Invalid type: expected identifier (String) or a list "
+		             "of textures (VarList), got ", var.typeName());
+		success = false;
+	}
+
+	return success;
+}
+
+
+bool varWrite(Variant& var, const TextureSetCSP& value, Logger& logger) {
+	bool success = true;
+
+	if(value->size() == 1) {
+		const TextureBinding& binding = *value->begin();
+		success = varWrite(var, binding, logger);
+	}
+	else {
+		VarList varList("TextureSet");
+		for(auto&& binding: *value) {
+			if(binding.texture)
+				 success &= varWrite(var, binding, logger);
+		}
+		if(success)
+			var = std::move(varList);
+	}
 
 	return success;
 }

@@ -24,6 +24,8 @@
 
 #include <SDL_mixer.h>
 
+#include <lair/meta/variant_loader.h>
+
 #include <lair/utils/game_state.h>
 
 #include "lair/utils/game_base.h"
@@ -153,7 +155,7 @@ FileSystemSP GameBase::fileSystem() const {
 }
 
 
-LdlPropertySerializer& GameBase::serializer() {
+PropertySerializer& GameBase::serializer() {
 	return _serializer;
 }
 
@@ -218,10 +220,9 @@ void GameBase::initialize(GameConfigBase& config) {
 	Path::IStream in(configRealPath.native().c_str());
 	if(in.good()) {
 		log().info("Read config \"", configRealPath, "\"...");
-		ErrorList errors;
-		LdlParser parser(&in, configLogicPath.utf8String(), &errors, LdlParser::CTX_MAP);
-		_serializer.read(parser, config);
-		errors.log(log());
+		Variant confVar;
+		parseLdl(confVar, configRealPath, configLogicPath, log());
+		_serializer.read(config, confVar, log());
 	}
 	else {
 		log().info("Config not found, create one: \"", configLogicPath, "\"...");
@@ -229,7 +230,9 @@ void GameBase::initialize(GameConfigBase& config) {
 		Path::OStream out(configRealPath.native().c_str());
 		if(out.good()) {
 			LdlWriter writer(&out, configLogicPath.utf8String(), &errors);
-			_serializer.write(writer, config);
+			Variant confVar;
+			_serializer.write(confVar, config, log());
+			ldlWrite(writer, confVar);
 			errors.log(log());
 		}
 		else {

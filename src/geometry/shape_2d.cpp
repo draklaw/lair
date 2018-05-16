@@ -22,6 +22,12 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/meta/variant.h>
+#include <lair/meta/var_list.h>
+#include <lair/meta/var_map.h>
+#include <lair/meta/variant_reader.h>
+#include <lair/meta/variant_writer.h>
+
 #include <lair/geometry/intersection.h>
 
 #include "lair/geometry/shape_2d.h"
@@ -365,6 +371,152 @@ bool ldlWrite(LdlWriter& writer, const Shape2DVector& value) {
 		for(const Shape2D& shape: value)
 			success &= ldlWrite(writer, shape);
 		writer.close();
+	}
+
+	return success;
+}
+
+
+bool varRead(Shape2D& value, const Variant& var, Logger& logger) {
+	if(!var.isVarMap()) {
+		logger.error(var.parseInfoDesc(), "Expected shape (VarMap), got \"", var.typeName(), "\".");
+		return false;
+	}
+
+	bool success = true;
+	const VarMap& varMap = var.asVarMap();
+
+	if(varMap.type().empty()) {
+		logger.error(var.parseInfoDesc(), "Expected type annotation for Shape object.");
+		return false;
+	}
+
+	if(varMap.type() == "Circle") {
+		Vector2 center;
+		float radius;
+
+		success &= varRead(center, varMap.get("center"), logger);
+		success &= varRead(radius, varMap.get("radius"), logger);
+
+		if(success) {
+			value = Sphere2(center, radius);
+		}
+	}
+	else if(varMap.type() == "ABox") {
+		Vector2 min;
+		Vector2 max;
+
+		success &= varRead(min, varMap.get("min"), logger);
+
+		const Variant& sizeVar = varMap.get("size");
+		const Variant& maxVar  = varMap.get("max");
+		if(sizeVar.isValid() && maxVar.isValid()) {
+			logger.warning("Both \"size\" and \"max\" defined for ABox. Ignoring \"size\".");
+		}
+
+		if(maxVar.isValid()) {
+			success &= varRead(max, maxVar, logger);
+		}
+		if(sizeVar.isValid()) {
+			success &= varRead(max, sizeVar, logger);
+			max += min;
+		}
+
+		if(success) {
+			value = AlignedBox2(min, max);
+		}
+	}
+	else {
+		logger.error("Unknown shape type: ", varMap.type());
+		success = false;
+	}
+
+	return success;
+}
+
+
+bool varWrite(Variant& var, const Shape2D& value, Logger& logger) {
+	bool success = true;
+
+	switch(value.type()) {
+	case SHAPE_SPHERE: {
+		VarMap varMap("Circle");
+		Variant v;
+
+		success &= varWrite(v, value.asSphere().center(), logger);
+		varMap.emplace("center", std::move(v));
+
+		success &= varWrite(v, value.asSphere().radius(), logger);
+		varMap.emplace("radius", std::move(v));
+
+		if(success) {
+			var = std::move(varMap);
+		}
+
+		break;
+	}
+	case SHAPE_ALIGNED_BOX: {
+		VarMap varMap("ABox");
+		Variant v;
+
+		success &= varWrite(v, value.asAlignedBox().min(), logger);
+		varMap.emplace("min", std::move(v));
+
+		success &= varWrite(v, Vector2(value.asAlignedBox().sizes()), logger);
+		varMap.emplace("size", std::move(v));
+
+		if(success) {
+			var = std::move(varMap);
+		}
+
+		break;
+	}
+	default:
+		lairAssert(false);
+	}
+
+	return success;
+}
+
+
+bool varRead(Shape2DVector& value, const Variant& var, Logger& logger) {
+	bool success = true;
+
+	if(var.isVarList()) {
+		for(auto&& v: var.asVarList()) {
+			Shape2D shape;
+			success &= varRead(shape, v, logger);
+			if(shape.isValid()) {
+				value.push_back(shape);
+			}
+		}
+	}
+	else {
+		Shape2D shape;
+		success &= varRead(shape, var, logger);
+		if(shape.isValid()) {
+			value.push_back(shape);
+		}
+	}
+
+	return success;
+}
+
+
+bool varWrite(Variant& var, const Shape2DVector& value, Logger& logger) {
+	bool success = true;
+
+	if(value.size() == 1) {
+		success &= varWrite(var, value[0], logger);
+	}
+	else {
+		VarList varList;
+		for(const Shape2D& shape: value) {
+			Variant v;
+			success &= varWrite(v, shape, logger);
+			varList.emplace_back(std::move(v));
+		}
+		var = std::move(varList);
 	}
 
 	return success;

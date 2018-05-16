@@ -230,12 +230,12 @@ int Variant::asInt() const {
 
 
 double Variant::asFloat() const {
-	if(isInt())
-		return asInt();
 	if(is<float>())
 		return as<float>();
 	if(is<double>())
 		return as<double>();
+	if(isInt())
+		return asInt();
 	lairAssert(false);
 	return 0;
 }

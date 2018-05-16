@@ -55,30 +55,30 @@ PropertySerializer::PropertySerializer() {
 	registerType<Path>();
 
 	registerType<Vector2>();
-//	registerType<Vector3>();
-//	registerType<Vector4>();
+	registerType<Vector3>();
+	registerType<Vector4>();
 
-//	registerType<Vector2i>();
-//	registerType<Vector3i>();
-//	registerType<Vector4i>();
+	registerType<Vector2i>();
+	registerType<Vector3i>();
+	registerType<Vector4i>();
 
-//	registerType<Matrix2>();
-//	registerType<Matrix3>();
-//	registerType<Matrix4>();
+	registerType<Matrix2>();
+	registerType<Matrix3>();
+	registerType<Matrix4>();
 
-////	registerType<Transform>();
-////	registerType<Quaternion>();
-////	registerType<AngleAxis>();
-////	registerType<Translation>();
+//	registerType<Transform>();
+//	registerType<Quaternion>();
+//	registerType<AngleAxis>();
+//	registerType<Translation>();
 
-//	registerType<Box2>();
-//	registerType<Box3>();
-//	registerType<Box2i>();
-//	registerType<Box3i>();
+	registerType<Box2>();
+	registerType<Box3>();
+	registerType<Box2i>();
+	registerType<Box3i>();
 
-////	registerType<Path>();
+//	registerType<Path>();
 
-////	registerType<BlendingMode>();
+//	registerType<BlendingMode>();
 }
 
 bool PropertySerializer::_read(void* obj, const PropertyList& properties, const Variant& var, Logger& logger) {

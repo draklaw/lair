@@ -23,6 +23,8 @@
 
 #include <lair/core/json.h>
 
+#include <lair/meta/variant_loader.h>
+
 #include "game.h"
 #include "simple_scene.h"
 
@@ -258,27 +260,11 @@ bool MainState::loadEntities(const Path& path, EntityRef parent, const Path& cd)
 	Path localPath = makeAbsolute(cd, path);
 	log().info("Load entity \"", localPath, "\"");
 
-	lair::VirtualFile file = game()->fileSystem()->file(localPath);
+	Path realPath = game()->dataPath() / localPath;
 
-	lair::Path realPath = file.realPath();
-	ErrorList errors;
-	bool success = false;
-	if(!realPath.empty()) {
-		Path::IStream in(realPath.native().c_str());
-		LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
-
-		success = _entities.loadEntitiesFromLdl(parser, parent);
-	}
-	else if(file.fileBuffer()) {
-		const MemFile* memFile = file.fileBuffer();
-		lair::String data((const char*)memFile->data, memFile->size);
-		std::istringstream in(data);
-		LdlParser parser(&in, localPath.utf8String(), &errors, LdlParser::CTX_MAP);
-
-		success = _entities.loadEntitiesFromLdl(parser, parent);
-	}
-
-	errors.log(log());
-
-	return success;
+	LoaderSP varLoader = loader()->load<VariantLoader>(localPath);
+	varLoader->wait();
+	AssetSP asset = varLoader->asset();
+	VariantAspectSP aspect = asset->aspect<VariantAspect>();
+	return _entities.loadEntities(aspect->get(), parent);
 }
