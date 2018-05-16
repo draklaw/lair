@@ -59,103 +59,39 @@ public:
 	LdlParser& operator=(const LdlParser&) = delete;
 	LdlParser& operator=(LdlParser&&) = delete;
 
-	inline Context context() const {
-		return _contextStack.back();
-	}
+	Context context() const;
 
-	inline bool isValueTyped() const {
-		return _valueType.size();
-	}
+	bool isValueTyped() const;
+	String getValueTypeName() const;
 
-	inline String getValueTypeName() const {
-		lairAssert(isValueTyped());
-		return _valueType;
-	}
+	String getKey() const;
+	Type valueType() const;
+	const char* valueTypeName() const;
 
-	inline String getKey() const {
-		lairAssert(!isContextList());
-		return _key;
-	}
-
-	inline Type valueType() const {
-		return _type;
-	}
-
-	inline const char* valueTypeName() const {
-		return typeName(valueType());
-	}
-
-	inline void enter() {
-		lairAssert(_type == TYPE_LIST || _type == TYPE_MAP);
-		_contextStack.push_back((_type == TYPE_LIST)? CTX_LIST: CTX_MAP);
-		_valueType.clear();
-		_next();
-	}
-
+	void enter();
+	void leave();
 	void skip();
 
-	inline void leave() {
-		lairAssert(_type == TYPE_END);
-		lairAssert(_contextStack.size() != 0);
-		_contextStack.pop_back();
-		_next();
-	}
+	bool getBool() const;
+	int64 getInt() const;
+	double getFloat() const;
+	String getString() const;
 
-	inline bool getBool() const {
-		lairAssert(_type == TYPE_BOOL);
-		return _int;
-	}
+	void next();
 
-	int64 getInt() const {
-		lairAssert(_type == TYPE_INT);
-		return _int;
-	}
+	const String& streamName() const;
+	unsigned line() const;
+	unsigned col() const;
 
-	double getFloat() const {
-		lairAssert(_type == TYPE_FLOAT);
-		return _float;
-	}
-
-	String getString() const {
-		lairAssert(_type == TYPE_STRING);
-		return _string;
-	}
-
-	inline void next() {
-		lairAssert(_type != TYPE_LIST && _type != TYPE_MAP && _type != TYPE_END);
-		_next();
-	}
-
-	inline const String& streamName() const {
-		return _buf.streamName();
-	}
-
-	inline unsigned line() const {
-		return _buf.line();
-	}
-
-	inline unsigned col() const {
-		return _buf.col();
-	}
-
-	inline void error(const String& message) override {
-		_errors->error(_buf.streamName(), ": ", _buf.line(), ": ",
-		               _buf.col(), ": ", message);
-	}
-
-	inline void warning(const String& message) override {
-		_errors->warning(_buf.streamName(), ": ", _buf.line(), ": ",
-		                 _buf.col(), ": ", message);
-	}
+	void error(const String& message) override;
+	void warning(const String& message) override;
 
 	using ErrorOutput::error;
 	using ErrorOutput::warning;
 
 	static const char* typeName(Type type);
 
-	inline ErrorList* errorList() {
-		return _errors;
-	}
+	ErrorList* errorList();
 
 private:
 	enum Token {
@@ -198,23 +134,7 @@ private:
 	bool isParentContextList() const;
 
 	bool nextState();
-	void _next() {
-//		static const char* s[] = {
-//				"ST_EXPECT_VALUE",
-//				"ST_EXPECT_SEP_END",
-//				"ST_EXPECT_KEY",
-//				"ST_EXPECT_ASSIGN",
-//				"ST_CHECK_IF_TYPE",
-//				"ST_END_NOW"
-//		};
-
-// 		dbgLogger.error("State from: ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
-		while(!nextState()) {
-// 			dbgLogger.error("State step: ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
-		}
-// 		dbgLogger.error("State end : ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
-// 		dbgLogger.warning(_buf.line(), ": ", _buf.col(), ": ", typeName(_type));
-	}
+	void _next();
 
 	// Errors:
 	void unexpectedEofError();

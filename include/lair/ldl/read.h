@@ -48,6 +48,24 @@ bool ldlRead(LdlParser& parser, double& value);
 bool ldlRead(LdlParser& parser, String& value);
 bool ldlRead(LdlParser& parser, Path&   value);
 
+template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+bool ldlRead(LdlParser& parser, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value, unsigned flags);
+
+template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+bool ldlRead(LdlParser& parser, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value);
+
+bool ldlRead(LdlParser& parser, Transform& value);
+
+template<typename Scalar, int Dim>
+bool ldlRead(LdlParser& parser, Eigen::AlignedBox<Scalar, Dim>& value);
+
+bool ldlRead(LdlParser& parser, Variant& value);
+bool ldlRead(LdlParser& parser, VarList& value);
+bool ldlRead(LdlParser& parser, VarMap&  value);
+
+
+// ////////////////////////////////////////////////////////////////////////////
+
 
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
 bool ldlRead(LdlParser& parser, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value, unsigned flags) {
@@ -164,12 +182,12 @@ bool ldlRead(LdlParser& parser, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRo
 	return true;
 }
 
+
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
 bool ldlRead(LdlParser& parser, Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value) {
 	return ldlRead(parser, value, WITH_ANNOTATION_WARNING);
 }
 
-bool ldlRead(LdlParser& parser, Transform& value);
 
 template<typename Scalar, int Dim>
 bool ldlRead(LdlParser& parser, Eigen::AlignedBox<Scalar, Dim>& value) {
@@ -258,10 +276,6 @@ bool ldlRead(LdlParser& parser, Eigen::AlignedBox<Scalar, Dim>& value) {
 	parser.leave();
 	return true;
 }
-
-bool ldlRead(LdlParser& parser, Variant& value);
-bool ldlRead(LdlParser& parser, VarList& value);
-bool ldlRead(LdlParser& parser, VarMap&  value);
 
 
 }

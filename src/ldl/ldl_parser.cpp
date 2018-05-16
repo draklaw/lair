@@ -44,6 +44,55 @@ LdlParser::LdlParser(std::istream* stream, const String& streamName, ErrorList* 
 {
 }
 
+
+LdlParser::Context LdlParser::context() const {
+	return _contextStack.back();
+}
+
+
+bool LdlParser::isValueTyped() const {
+	return _valueType.size();
+}
+
+
+String LdlParser::getValueTypeName() const {
+	lairAssert(isValueTyped());
+	return _valueType;
+}
+
+
+String LdlParser::getKey() const {
+	lairAssert(!isContextList());
+	return _key;
+}
+
+
+LdlParser::Type LdlParser::valueType() const {
+	return _type;
+}
+
+
+const char* LdlParser::valueTypeName() const {
+	return typeName(valueType());
+}
+
+
+void LdlParser::enter() {
+	lairAssert(_type == TYPE_LIST || _type == TYPE_MAP);
+	_contextStack.push_back((_type == TYPE_LIST)? CTX_LIST: CTX_MAP);
+	_valueType.clear();
+	_next();
+}
+
+
+void LdlParser::leave() {
+	lairAssert(_type == TYPE_END);
+	lairAssert(_contextStack.size() != 0);
+	_contextStack.pop_back();
+	_next();
+}
+
+
 void LdlParser::skip() {
 	if(_type == TYPE_LIST || _type == TYPE_MAP) {
 		enter();
@@ -55,6 +104,85 @@ void LdlParser::skip() {
 		next();
 	}
 }
+
+
+bool LdlParser::getBool() const {
+	lairAssert(_type == TYPE_BOOL);
+	return _int;
+}
+
+
+int64 LdlParser::getInt() const {
+	lairAssert(_type == TYPE_INT);
+	return _int;
+}
+
+
+double LdlParser::getFloat() const {
+	lairAssert(_type == TYPE_FLOAT);
+	return _float;
+}
+
+
+String LdlParser::getString() const {
+	lairAssert(_type == TYPE_STRING);
+	return _string;
+}
+
+
+void LdlParser::next() {
+	lairAssert(_type != TYPE_LIST && _type != TYPE_MAP && _type != TYPE_END);
+	_next();
+}
+
+
+const String& LdlParser::streamName() const {
+	return _buf.streamName();
+}
+
+
+unsigned LdlParser::line() const {
+	return _buf.line();
+}
+
+
+unsigned LdlParser::col() const {
+	return _buf.col();
+}
+
+
+void LdlParser::error(const String& message) {
+	_errors->error(_buf.streamName(), ": ", _buf.line(), ": ",
+	               _buf.col(), ": ", message);
+}
+
+
+void LdlParser::warning(const String& message) {
+	_errors->warning(_buf.streamName(), ": ", _buf.line(), ": ",
+	                 _buf.col(), ": ", message);
+}
+
+
+const char* LdlParser::typeName(Type type) {
+	static const char* typeName[] = {
+	"<Error>",
+	"<End>",
+	"Null",
+	"Bool",
+	"Int64",
+	"Double",
+	"String",
+	"VarList",
+	"VarMap",
+	};
+	return typeName[type];
+}
+
+
+ErrorList* LdlParser::errorList() {
+	return _errors;
+}
+
 
 void LdlParser::eatSpaceTabs() {
 	while(true) {
@@ -69,6 +197,7 @@ void LdlParser::eatSpaceTabs() {
 		}
 	}
 }
+
 
 bool LdlParser::parseComment() {
 	_buf.get();
@@ -88,6 +217,7 @@ bool LdlParser::parseComment() {
 	}
 	return false;
 }
+
 
 LdlParser::Token LdlParser::parseNumber() {
 	// Is this a non-decimal litteral ?
@@ -163,6 +293,7 @@ LdlParser::Token LdlParser::parseNumber() {
 	return token;
 }
 
+
 LdlParser::Token LdlParser::parseIdentifier() {
 	_buf.get();
 	if(!asciiAlpha(_buf[0]) && _buf[0] != '_')
@@ -186,6 +317,7 @@ LdlParser::Token LdlParser::parseIdentifier() {
 
 	return TOK_STRING;
 }
+
 
 LdlParser::Token LdlParser::parseString() {
 	_buf.get();
@@ -362,10 +494,12 @@ bool LdlParser::isContextList() const {
 	return _contextStack.empty() || _contextStack.back() == CTX_LIST;
 }
 
+
 bool LdlParser::isParentContextList() const {
 	unsigned size = _contextStack.size();
 	return size < 2 || _contextStack[size - 2] == CTX_LIST;
 }
+
 
 bool LdlParser::nextState() {
 	if(_state == ST_END_NOW) {
@@ -546,19 +680,23 @@ bool LdlParser::nextState() {
 	return false;
 }
 
-const char* LdlParser::typeName(Type type) {
-	static const char* typeName[] = {
-	"<Error>",
-	"<End>",
-	"Null",
-	"Bool",
-	"Int64",
-	"Double",
-	"String",
-	"VarList",
-	"VarMap",
-	};
-	return typeName[type];
+
+void LdlParser::_next() {
+//		static const char* s[] = {
+//				"ST_EXPECT_VALUE",
+//				"ST_EXPECT_SEP_END",
+//				"ST_EXPECT_KEY",
+//				"ST_EXPECT_ASSIGN",
+//				"ST_CHECK_IF_TYPE",
+//				"ST_END_NOW"
+//		};
+
+// 		dbgLogger.error("State from: ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
+	while(!nextState()) {
+// 			dbgLogger.error("State step: ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
+	}
+// 		dbgLogger.error("State end : ", s[_state], ", ", typeName(_type), ", \"", _buf.str(), "\"");
+// 		dbgLogger.warning(_buf.line(), ": ", _buf.col(), ": ", typeName(_type));
 }
 
 
@@ -566,6 +704,7 @@ void LdlParser::unexpectedEofError() {
 	_buf.flush();
 	error("Unexpected end-of-file");
 }
+
 
 void LdlParser::unexpectedTokenError() {
 	switch(_token) {

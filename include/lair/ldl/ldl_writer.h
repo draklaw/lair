@@ -56,129 +56,23 @@ public:
 public:
 	LdlWriter(std::ostream* out, const String& streamName, ErrorList* errors);
 
-	inline void writeKey(const String& key, StringFormat format = SF_AUTO) {
-		lairAssert(_acceptKey());
-		_writeSepIfRequired();
-		_writeString(key, format);
-		*_out << " = ";
-		_state = ST_POST_KEY;
-	}
+	void writeKey(const String& key, StringFormat format = SF_AUTO);
 
-	inline void writeNull() {
-		lairAssert(_acceptValue());
-		_writeSepIfRequired();
-		*_out << "null";
-		_nextState();
-	}
+	void writeNull();
+	void writeBool(bool b);
+	void writeInt(int64 i, IntFormat format = IF_DECIMAL);
+	void writeFloat(double d);
+	void writeString(const String& str, StringFormat format = SF_AUTO);
 
-	inline void writeBool(bool b) {
-		lairAssert(_acceptValue());
-		_writeSepIfRequired();
-		if(b)
-			*_out << "true";
-		else
-			*_out << "false";
-		_nextState();
-	}
+	void openList(CompoundFormat format = CF_MULTI_LINE,
+	                     const String& type = String(),
+	              StringFormat typeFormat = SF_AUTO);
 
-	inline void writeInt(int64 i, IntFormat format = IF_DECIMAL) {
-		lairAssert(_acceptValue());
-		_writeSepIfRequired();
-		switch(format) {
-		case IF_BINARY:
-//			*_out << "0b" << std::bin << i;
-//			break;
-		case IF_DECIMAL:
-			*_out << std::dec << i;
-			break;
-		case IF_OCTAL:
-			*_out << "0o" << std::oct << i;
-			break;
-		case IF_HEX:
-			*_out << "0x" << std::hex << i;
-			break;
-		}
-		_nextState();
-	}
+	void openMap(CompoundFormat format = CF_MULTI_LINE,
+	                    const String& type = String(),
+	             StringFormat typeFormat = SF_AUTO);
 
-	inline void writeFloat(double d) {
-		lairAssert(_acceptValue());
-		_writeSepIfRequired();
-		*_out << d;
-		_nextState();
-	}
-
-	inline void writeString(const String& str, StringFormat format = SF_AUTO) {
-		lairAssert(_acceptValue());
-		_writeSepIfRequired();
-		_writeString(str, format);
-		_nextState();
-	}
-
-	inline void openList(CompoundFormat format = CF_MULTI_LINE,
-	                     const String& type = String(), StringFormat typeFormat = SF_AUTO) {
-		lairAssert(_state == ST_START || _acceptValue());
-
-		char closeChar = '\0';
-		if(_contextStack.size()) {
-			_writeSepIfRequired();
-
-			if(type.size()) {
-				_writeString(type, typeFormat);
-				*_out << "(";
-				closeChar = ')';
-			}
-			else {
-				*_out << "[ ";
-				closeChar = ']';
-			}
-			if(format == CF_MULTI_LINE)
-				_writeNewLine(1);
-		}
-
-		_contextStack.push_back(CInfo{ CTX_LIST, format, closeChar });
-		_state = ST_BEGIN_BLOCK;
-	}
-
-	inline void openMap(CompoundFormat format = CF_MULTI_LINE,
-	                    const String& type = String(), StringFormat typeFormat = SF_AUTO) {
-		lairAssert(_state == ST_START || _acceptValue());
-
-		char closeChar = '\0';
-		if(_contextStack.size()) {
-			_writeSepIfRequired();
-
-			if(type.size()) {
-				_writeString(type, typeFormat);
-			}
-			*_out << "{ ";
-			if(format == CF_MULTI_LINE)
-				_writeNewLine(1);
-			closeChar = '}';
-		}
-
-		_contextStack.push_back(CInfo{ CTX_MAP, format, closeChar });
-		_state = ST_BEGIN_BLOCK;
-	}
-
-	inline void close() {
-		lairAssert(_contextStack.size() != 0);
-		lairAssert(_state == ST_BEGIN_BLOCK || _state == ST_POST_VALUE);
-
-		if(_contextStack.size() > 1) {
-			char closeChar = _contextStack.back().closeChar;
-			if(_contextStack.back().format == CF_MULTI_LINE)
-				_writeNewLine(-1);
-			else if(closeChar != ')')
-				*_out << " ";
-			*_out << closeChar;
-			_state = ST_POST_VALUE;
-		}
-		else
-			_state = ST_CLOSED;
-
-		_contextStack.pop_back();
-	}
+	void close();
 
 	template<typename... Args>
 	inline void error(const Args&... args) {
@@ -216,42 +110,13 @@ private:
 	};
 
 private:
-	inline bool _acceptKey() const {
-		return _contextStack.size()
-		    && _contextStack.back().context == CTX_MAP
-		    && (_state == ST_BEGIN_BLOCK || _state == ST_POST_VALUE);
-	}
+	bool _acceptKey() const;
+	bool _acceptValue() const;
 
-	inline bool _acceptValue() const {
-		return _contextStack.size()
-		    && (_contextStack.back().context == CTX_LIST
-		        || _state == ST_POST_KEY);
-	}
+	void _nextState();
 
-	inline void _nextState() {
-		lairAssert(_contextStack.size());
-		_state = (_contextStack.back().context == CTX_LIST || _state != ST_POST_VALUE)?
-		             ST_POST_VALUE:
-		             ST_POST_KEY;
-	}
-
-	inline void _writeSepIfRequired() {
-		if(_state == ST_POST_VALUE) {
-			if(_contextStack.back().format == CF_MULTI_LINE) {
-				_writeNewLine();
-			}
-			else {
-				*_out << ", ";
-			}
-		}
-	}
-
-	inline void _writeNewLine(int offset = 0) {
-		*_out << "\n";
-		for(int i = 0; i < int(_contextStack.size()) - 1 + offset; ++i)
-			*_out << "\t";
-	}
-
+	void _writeSepIfRequired();
+	void _writeNewLine(int offset = 0);
 	void _writeString(const String& str, StringFormat format);
 
 private:

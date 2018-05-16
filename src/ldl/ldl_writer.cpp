@@ -41,6 +41,179 @@ LdlWriter::LdlWriter(std::ostream* out, const String& streamName, ErrorList* err
 {
 }
 
+
+void LdlWriter::writeKey(const String& key, StringFormat format) {
+	lairAssert(_acceptKey());
+	_writeSepIfRequired();
+	_writeString(key, format);
+	*_out << " = ";
+	_state = ST_POST_KEY;
+}
+
+
+void LdlWriter::writeNull() {
+	lairAssert(_acceptValue());
+	_writeSepIfRequired();
+	*_out << "null";
+	_nextState();
+}
+
+
+void LdlWriter::writeBool(bool b) {
+	lairAssert(_acceptValue());
+	_writeSepIfRequired();
+	if(b)
+		*_out << "true";
+	else
+		*_out << "false";
+	_nextState();
+}
+
+
+void LdlWriter::writeInt(int64 i, IntFormat format) {
+	lairAssert(_acceptValue());
+	_writeSepIfRequired();
+	switch(format) {
+	case IF_BINARY:
+//			*_out << "0b" << std::bin << i;
+//			break;
+	case IF_DECIMAL:
+		*_out << std::dec << i;
+		break;
+	case IF_OCTAL:
+		*_out << "0o" << std::oct << i;
+		break;
+	case IF_HEX:
+		*_out << "0x" << std::hex << i;
+		break;
+	}
+	_nextState();
+}
+
+
+void LdlWriter::writeFloat(double d) {
+	lairAssert(_acceptValue());
+	_writeSepIfRequired();
+	*_out << d;
+	_nextState();
+}
+
+
+void LdlWriter::writeString(const String& str, StringFormat format) {
+	lairAssert(_acceptValue());
+	_writeSepIfRequired();
+	_writeString(str, format);
+	_nextState();
+}
+
+
+void LdlWriter::openList(CompoundFormat format, const String& type, StringFormat typeFormat) {
+	lairAssert(_state == ST_START || _acceptValue());
+
+	char closeChar = '\0';
+	if(_contextStack.size()) {
+		_writeSepIfRequired();
+
+		if(type.size()) {
+			_writeString(type, typeFormat);
+			*_out << "(";
+			closeChar = ')';
+		}
+		else {
+			*_out << "[ ";
+			closeChar = ']';
+		}
+		if(format == CF_MULTI_LINE)
+			_writeNewLine(1);
+	}
+
+	_contextStack.push_back(CInfo{ CTX_LIST, format, closeChar });
+	_state = ST_BEGIN_BLOCK;
+}
+
+
+void LdlWriter::openMap(CompoundFormat format, const String& type, StringFormat typeFormat) {
+	lairAssert(_state == ST_START || _acceptValue());
+
+	char closeChar = '\0';
+	if(_contextStack.size()) {
+		_writeSepIfRequired();
+
+		if(type.size()) {
+			_writeString(type, typeFormat);
+		}
+		*_out << "{ ";
+		if(format == CF_MULTI_LINE)
+			_writeNewLine(1);
+		closeChar = '}';
+	}
+
+	_contextStack.push_back(CInfo{ CTX_MAP, format, closeChar });
+	_state = ST_BEGIN_BLOCK;
+}
+
+
+void LdlWriter::close() {
+	lairAssert(_contextStack.size() != 0);
+	lairAssert(_state == ST_BEGIN_BLOCK || _state == ST_POST_VALUE);
+
+	if(_contextStack.size() > 1) {
+		char closeChar = _contextStack.back().closeChar;
+		if(_contextStack.back().format == CF_MULTI_LINE)
+			_writeNewLine(-1);
+		else if(closeChar != ')')
+			*_out << " ";
+		*_out << closeChar;
+		_state = ST_POST_VALUE;
+	}
+	else
+		_state = ST_CLOSED;
+
+	_contextStack.pop_back();
+}
+
+
+bool LdlWriter::_acceptKey() const {
+	return _contextStack.size()
+	    && _contextStack.back().context == CTX_MAP
+	    && (_state == ST_BEGIN_BLOCK || _state == ST_POST_VALUE);
+}
+
+
+bool LdlWriter::_acceptValue() const {
+	return _contextStack.size()
+	    && (_contextStack.back().context == CTX_LIST
+	        || _state == ST_POST_KEY);
+}
+
+
+void LdlWriter::_nextState() {
+	lairAssert(_contextStack.size());
+	_state = (_contextStack.back().context == CTX_LIST || _state != ST_POST_VALUE)?
+	             ST_POST_VALUE:
+	             ST_POST_KEY;
+}
+
+
+void LdlWriter::_writeSepIfRequired() {
+	if(_state == ST_POST_VALUE) {
+		if(_contextStack.back().format == CF_MULTI_LINE) {
+			_writeNewLine();
+		}
+		else {
+			*_out << ", ";
+		}
+	}
+}
+
+
+void LdlWriter::_writeNewLine(int offset) {
+	*_out << "\n";
+	for(int i = 0; i < int(_contextStack.size()) - 1 + offset; ++i)
+		*_out << "\t";
+}
+
+
 void LdlWriter::_writeString(const String& str, StringFormat format) {
 	if(format == SF_AUTO || format == SF_ID) {
 		bool hasNonId  = str.empty() || asciiDigit(str[0]);

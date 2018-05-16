@@ -35,14 +35,7 @@ namespace lair
 
 
 template<typename T>
-String toLdlString(const T& value) {
-	std::ostringstream out;
-	LdlWriter writer(&out, "<string>", nullptr);
-	writer.openList();
-	ldlWrite(writer, value);
-	writer.close();
-	return out.str();
-}
+String toLdlString(const T& value);
 
 
 bool ldlWrite(LdlWriter& writer, const bool&   value);
@@ -58,6 +51,33 @@ bool ldlWrite(LdlWriter& writer, const float&  value);
 bool ldlWrite(LdlWriter& writer, const double& value);
 bool ldlWrite(LdlWriter& writer, const String& value);
 bool ldlWrite(LdlWriter& writer, const Path&   value);
+
+template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
+bool ldlWrite(LdlWriter& writer, const Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value);
+
+bool ldlWrite(LdlWriter& writer, const Transform& value);
+
+template<typename Scalar, int Dim>
+bool ldlWrite(LdlWriter& writer, const Eigen::AlignedBox<Scalar, Dim>& value);
+
+bool ldlWrite(LdlWriter& writer, const Variant& value);
+bool ldlWrite(LdlWriter& writer, const VarList& value);
+bool ldlWrite(LdlWriter& writer, const VarMap&  value);
+
+
+// ////////////////////////////////////////////////////////////////////////////
+
+
+template<typename T>
+String toLdlString(const T& value) {
+	std::ostringstream out;
+	LdlWriter writer(&out, "<string>", nullptr);
+	writer.openList();
+	ldlWrite(writer, value);
+	writer.close();
+	return out.str();
+}
+
 
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
 bool ldlWrite(LdlWriter& writer, const Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value) {
@@ -88,7 +108,6 @@ bool ldlWrite(LdlWriter& writer, const Eigen::Matrix<Scalar, Rows, Cols, Options
 	return success;
 }
 
-bool ldlWrite(LdlWriter& writer, const Transform& value);
 
 template<typename Scalar, int Dim>
 bool ldlWrite(LdlWriter& writer, const Eigen::AlignedBox<Scalar, Dim>& value) {
@@ -108,10 +127,6 @@ bool ldlWrite(LdlWriter& writer, const Eigen::AlignedBox<Scalar, Dim>& value) {
 
 	return true;
 }
-
-bool ldlWrite(LdlWriter& writer, const Variant& value);
-bool ldlWrite(LdlWriter& writer, const VarList& value);
-bool ldlWrite(LdlWriter& writer, const VarMap&  value);
 
 
 }
