@@ -28,7 +28,6 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/json.h>
 
 
 #ifndef LAIR_EC_MAX_DENSE_COMPONENTS

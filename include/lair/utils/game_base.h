@@ -28,7 +28,6 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/json.h>
 #include <lair/core/path.h>
 
 #include <lair/asset/asset_manager.h>

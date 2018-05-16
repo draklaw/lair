@@ -21,8 +21,6 @@
 
 #include <functional>
 
-#include <lair/core/json.h>
-
 #include <lair/ldl/ldl_variant_loader.h>
 
 #include "game.h"

@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include <lair/core/lair.h>
-#include <lair/core/json.h>
 #include <lair/core/log.h>
 
 #include <lair/meta/var_list.h>

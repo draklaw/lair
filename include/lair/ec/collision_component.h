@@ -23,6 +23,8 @@
 #define _LAIR_EC_COLLISION_COMPONENT_H
 
 
+#include <deque>
+
 #include <lair/core/lair.h>
 
 #include <lair/meta/property.h>

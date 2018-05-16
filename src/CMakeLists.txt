@@ -85,7 +85,6 @@ set(lair_SOURCES
 	core/path.cpp
 	core/text.cpp
 	core/parse.cpp
-	core/json.cpp
 	core/signal.cpp
 
 	meta/metatype.cpp

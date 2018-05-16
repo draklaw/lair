@@ -21,7 +21,6 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
-#include <lair/core/json.h>
 
 #include "lair/ec/collision_component.h"
 

@@ -23,6 +23,8 @@
 #define _LAIR_EC_BITMAP_TEXT_COMPONENT_H
 
 
+#include <json/json.h>
+
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
@@ -49,6 +51,11 @@ namespace lair {
 
 class SpriteRenderer;
 class BitmapTextComponentManager;
+
+
+bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log);
+bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, Logger& log);
+bool parseJson(Json::Value& value, const VirtualFile& file, const Path& localPath, Logger& log);
 
 
 class BitmapFontLoader : public Loader {

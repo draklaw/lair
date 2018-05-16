@@ -21,7 +21,6 @@
 
 #include <cctype>
 
-#include <lair/core/json.h>
 #include <lair/core/text.h>
 
 #include <lair/asset/image.h>

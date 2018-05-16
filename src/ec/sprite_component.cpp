@@ -19,7 +19,6 @@
  */
 
 #include <lair/core/lair.h>
-#include <lair/core/json.h>
 #include <lair/core/log.h>
 
 #include <lair/render_gl3/orthographic_camera.h>

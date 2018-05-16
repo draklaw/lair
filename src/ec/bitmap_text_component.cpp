@@ -19,7 +19,7 @@
  */
 
 
-#include <lair/core/json.h>
+#include <json/json.h>
 
 #include <lair/asset/bitmap_font.h>
 
@@ -33,6 +33,49 @@
 
 
 namespace lair {
+
+
+bool parseJson(Json::Value& value, std::istream& in, const Path& localPath, Logger& log) {
+	Json::Reader reader;
+	if(reader.parse(in, value)) {
+		return true;
+	}
+	log.error("Error while parsing json \"", localPath, "\": ",
+	          reader.getFormattedErrorMessages());
+	return false;
+}
+
+bool parseJson(Json::Value& value, const Path& realPath, const Path& localPath, Logger& log) {
+	Path::IStream in(realPath.native().c_str());
+	if(!in.good()) {
+		log.error("Unable to read \"", localPath, "\".");
+		return false;
+	}
+	return parseJson(value, in, localPath, log);
+}
+
+bool parseJson(Json::Value& value, const VirtualFile& file, const Path& localPath, Logger& log) {
+	if(!file) {
+		log.error("Invalid file: \"", localPath, "\".");
+		return false;
+	}
+
+	Path realPath = file.realPath();
+	if(!realPath.empty()) {
+		return parseJson(value, realPath, localPath, log);
+	}
+
+	const MemFile* memFile = file.fileBuffer();
+	if(memFile) {
+		String buffer((const char*)memFile->data, memFile->size);
+		std::istringstream in(buffer);
+		return parseJson(value, in, localPath, log);
+	}
+
+	lairAssert(false);
+	return false;
+}
+
 
 
 BitmapFontLoader::BitmapFontLoader(LoaderManager* manager, AspectSP aspect)
