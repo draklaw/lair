@@ -2,7 +2,6 @@
 - build:standalone: Inculde third-party packages and build statically
 - build:wasm: Test with wasm [req: build:standalone]
 
-- arch:split-core: Split core in several modules (assets, ldl, etc)
 - arch:ldl-lib: Make LDL a standalone library ?
 - arch:shared-lib: Make Lair a dll/so (need to remove a lot of inline stuff)
 
