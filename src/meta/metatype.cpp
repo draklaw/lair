@@ -64,6 +64,7 @@ LAIR_IMPLEMENT_METATYPE(float,  "Float");
 LAIR_IMPLEMENT_METATYPE(double, "Double");
 
 LAIR_IMPLEMENT_METATYPE(lair::String, "String");
+LAIR_IMPLEMENT_METATYPE(lair::Path,   "Path");
 
 LAIR_IMPLEMENT_METATYPE(lair::Vector2, "Vector2f");
 LAIR_IMPLEMENT_METATYPE(lair::Vector3, "Vector3f");

@@ -23,6 +23,8 @@
 #define LAIR_FS_MEMORY_FILE_SYSTEM_H
 
 
+#include <unordered_map>
+
 #include <lair/core/lair.h>
 
 #include <lair/fs/abstract_file_system.h>

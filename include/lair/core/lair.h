@@ -35,8 +35,6 @@
 #define EIGEN_DONT_ALIGN_STATICALLY
 #include <Eigen/Geometry>
 
-#include <json/json-forwards.h>
-
 
 namespace lair {
 

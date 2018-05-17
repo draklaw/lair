@@ -34,6 +34,7 @@
 #include <ostream>
 
 #include <lair/core/lair.h>
+#include <lair/core/path.h>
 
 
 namespace lair {
@@ -361,6 +362,7 @@ LAIR_DECLARE_METATYPE(float)
 LAIR_DECLARE_METATYPE(double)
 
 LAIR_DECLARE_METATYPE(lair::String)
+LAIR_DECLARE_METATYPE(lair::Path)
 
 LAIR_DECLARE_METATYPE(lair::Vector2)
 LAIR_DECLARE_METATYPE(lair::Vector3)

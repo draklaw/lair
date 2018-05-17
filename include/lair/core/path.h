@@ -36,8 +36,6 @@
 #include <lair/core/lair.h>
 #include <lair/core/hash.h>
 
-#include <lair/meta/metatype.h>
-
 
 namespace lair
 {
@@ -163,8 +161,6 @@ inline std::ostream& operator<<(std::ostream& out, const Path& path) {
 extern const Path emptyPath;
 
 }
-
-LAIR_DECLARE_METATYPE(lair::Path);
 
 
 #endif
