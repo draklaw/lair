@@ -25,6 +25,8 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/meta/property_serializer.h>
+
 #include <lair/asset/image.h>
 
 #include <lair/ldl/write.h>
@@ -206,6 +208,16 @@ const TextureUnit* Renderer::getTextureUnit(const String& name) const {
 	if(it == _textureUnitMap.end())
 		return nullptr;
 	return it->second;
+}
+
+
+void Renderer::registerSerializableTypes(PropertySerializer& serializer, LoaderManager* loader) {
+	serializer.registerType<TextureSetCSP>(
+	    [this, loader](TextureSetCSP& value, const Variant& var, Logger& logger) {
+		    return varRead(value, var, this, loader, logger);
+	    },
+	    static_cast<bool(*)(Variant&, const TextureSetCSP&, Logger&)>(varWrite)
+	);
 }
 
 

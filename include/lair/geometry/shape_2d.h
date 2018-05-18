@@ -40,6 +40,9 @@ namespace lair
 {
 
 
+class PropertySerializer;
+
+
 enum Shape2DType {
 	SHAPE_NONE,
 	SHAPE_SPHERE,
@@ -116,6 +119,8 @@ public:
 	bool intersect(const Shape2D& other, Vector2* position = 0) const;
 
 	void swap(Shape2D& other);
+
+	static void registerSerializableTypes(PropertySerializer& serializer);
 
 protected:
 	Shape2DType _type;

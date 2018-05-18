@@ -27,6 +27,7 @@
 #include <lair/meta/var_map.h>
 #include <lair/meta/variant_reader.h>
 #include <lair/meta/variant_writer.h>
+#include <lair/meta/property_serializer.h>
 
 #include <lair/ldl/read.h>
 #include <lair/ldl/write.h>
@@ -153,6 +154,16 @@ bool Shape2D::intersect(const Shape2D& other, Vector2* position) const {
 void Shape2D::swap(Shape2D& other) {
 	std::swap(_type,  other._type);
 	std::swap(_shape, other._shape);
+}
+
+
+void Shape2D::registerSerializableTypes(PropertySerializer& serializer) {
+	serializer.registerType<Shape2D>(
+	            static_cast<bool (*)(Shape2D&, const Variant&, Logger&)>(varRead),
+	            static_cast<bool (*)(Variant&, const Shape2D&, Logger&)>(varWrite));
+	serializer.registerType<Shape2DVector>(
+	            static_cast<bool (*)(Shape2DVector&, const Variant&, Logger&)>(varRead),
+	            static_cast<bool (*)(Variant&, const Shape2DVector&, Logger&)>(varWrite));
 }
 
 

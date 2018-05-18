@@ -49,6 +49,8 @@ namespace lair
 
 class Image;
 
+class PropertySerializer;
+
 class VertexAttribSet;
 class RenderModule;
 
@@ -96,6 +98,8 @@ public:
 
 	void registerTextureUnit(const TextureUnit* unit);
 	const TextureUnit* getTextureUnit(const String& name) const;
+
+	void registerSerializableTypes(PropertySerializer& serializer, LoaderManager* loader);
 
 	Logger& log();
 
