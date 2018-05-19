@@ -80,7 +80,7 @@ void SimpleScene::stop() {
 
 
 void SimpleScene::updateTick() {
-
+	collisions().findCollisions();
 }
 
 

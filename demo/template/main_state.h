@@ -109,6 +109,8 @@ protected:
 	Input*      _quitInput;
 
 	SceneSP _scene;
+
+	TextureSetCSP _whiteTexture;
 };
 
 

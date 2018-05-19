@@ -165,7 +165,7 @@ public:
 	// Stuff that is unlikely to be the same even for contiguous draw calls
 	struct DrawCall {
 		DrawCall(const DrawStates& states, const ShaderParameter* params,
-		         unsigned depth, unsigned index, unsigned count);
+		         unsigned depth, unsigned index, unsigned count, GLenum primitive);
 
 		// TODO: Test if using a pointer to avoid state duplication helps in any way.
 		DrawStates              states;
@@ -173,6 +173,7 @@ public:
 		unsigned                depth; // Used for sorting
 		unsigned                index;
 		unsigned                count;
+		GLenum                  primitive;
 	};
 	typedef std::vector<DrawCall> DrawCallList;
 
@@ -201,7 +202,8 @@ public:
 
 	void clear();
 	void addDrawCall(const DrawStates& states, const ShaderParameter* param,
-	                 float depth, unsigned index, unsigned count);
+	                 float depth, unsigned index, unsigned count,
+	                 GLenum primitive = gl::TRIANGLES);
 	void render();
 
 	static void setBits(Index& index, Index value, unsigned loBit, unsigned bitCount);

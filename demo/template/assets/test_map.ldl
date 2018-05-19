@@ -60,7 +60,7 @@ objects = [
 						transform = translate(96.0, 153.6, 0.0)
 						collision = {
 							hit_mask = 4
-							shape = ABox{ min = Vector(-32.0, -25.6), size = Vector(64.0, 128.0) }
+							shape = OBox{ center = Vector(0.0, 38.4), size = Vector(64.0, 128.0), rotation = 0 }
 						}
 						properties = {
 							custom_name = hello_world
@@ -99,6 +99,10 @@ objects = [
 						name = player
 						enabled = true
 						transform = [ translate(272.000406460551, 208.00040646055103, 0.0), rotate(30.0) ]
+						collision = {
+							hit_mask = 1
+							shape = OBox{ center = Vector(0.0, 0.0), size = Vector(32.0, 32.0), rotation = 0 }
+						}
 						sprite = {
 							blend = alpha
 							texture = Texture(sprite_color, 'lair.png', Sampler('bilinear_no_mipmap | clamp'))

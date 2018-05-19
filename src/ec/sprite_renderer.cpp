@@ -231,6 +231,79 @@ void SpriteRenderer::addSprite(const Matrix4& trans, const Box2& coords,
 }
 
 
+void SpriteRenderer::addShape(const Matrix4& trans, const Sphere2& sphere, const Vector4& color) {
+	unsigned vi    = vertexCount();
+	unsigned count = 64;
+	for(unsigned i = 0; i < count; ++i) {
+		float alpha = 2 * M_PI * float(i) / float(count);
+		Vector2 v(cos(alpha), sin(alpha));
+		Vector4 p;
+		p << sphere.center() + v * sphere.radius(), 0, 1;
+		p = trans * p;
+		addVertex(p, color, v / 2 + Vector2(.5, .5));
+
+		if(i > 1) {
+			addIndex(vi);
+			addIndex(vi + i - 1);
+			addIndex(vi + i);
+		}
+	}
+}
+
+
+void SpriteRenderer::addShape(const Matrix4& trans, const AlignedBox2& box, const Vector4& color) {
+	unsigned vi    = vertexCount();
+	for(unsigned i = 0; i < 4; ++i) {
+		Vector4 p;
+		p << box.corner(i), 0, 1;
+		p = trans * p;
+		addVertex(p, color, Vector2((i&1)? 1: 0, (i&2)? 1: 0));
+	}
+
+	addIndex(vi + 0);
+	addIndex(vi + 1);
+	addIndex(vi + 2);
+	addIndex(vi + 2);
+	addIndex(vi + 1);
+	addIndex(vi + 3);
+}
+
+
+void SpriteRenderer::addShape(const Matrix4& trans, const OrientedBox2& box, const Vector4& color) {
+	unsigned vi = vertexCount();
+	for(unsigned i = 0; i < 4; ++i) {
+		Vector4 p;
+		p << box.corner(i), 0, 1;
+		p = trans * p;
+		addVertex(p, color, Vector2((i&1)? 1: 0, (i&2)? 1: 0));
+	}
+
+	addIndex(vi + 0);
+	addIndex(vi + 1);
+	addIndex(vi + 2);
+	addIndex(vi + 2);
+	addIndex(vi + 1);
+	addIndex(vi + 3);
+}
+
+
+void SpriteRenderer::addShape(const Matrix4& trans, const Shape2D& shape, const Vector4& color) {
+	switch(shape.type()) {
+	case SHAPE_SPHERE:
+		addShape(trans, shape.asSphere(), color);
+		break;
+	case SHAPE_ALIGNED_BOX:
+		addShape(trans, shape.asAlignedBox(), color);
+		break;
+	case SHAPE_ORIENTED_BOX:
+		addShape(trans, shape.asOrientedBox(), color);
+		break;
+	default:
+		break;
+	}
+}
+
+
 SpriteShaderSP SpriteRenderer::loadShader(const Path& logicPath) {
 	auto loader = _loader->load<ShaderLoader>(logicPath, _renderer, &_attribSet);
 	auto shader = std::make_shared<SpriteShader>(loader->asset()->aspect<ShaderAspect>());

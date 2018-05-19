@@ -25,12 +25,7 @@
 namespace lair {
 
 
-bool intersect(const AlignedBox2& box0, const AlignedBox2& box1, Vector2* position) {
-	if(position) {
-		Eigen::AlignedBox2f inter = box0.intersection(box1);
-		*position = inter.center();
-		return !inter.isEmpty();
-	}
+bool intersect(const AlignedBox2& box0, const AlignedBox2& box1) {
 	return box0.intersects(box1);
 }
 

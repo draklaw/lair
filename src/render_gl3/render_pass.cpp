@@ -48,12 +48,15 @@ const EnumInfo* blendingModeInfo() {
 
 
 RenderPass::DrawCall::DrawCall(const DrawStates& states, const ShaderParameter* params,
-                               unsigned depth, unsigned index, unsigned count)
+                               unsigned depth, unsigned index, unsigned count,
+                               GLenum primitive)
     : states(states),
       params(params),
       depth(depth),
       index(index),
-      count(count) {
+      count(count),
+      primitive(primitive)
+{
 }
 
 
@@ -92,10 +95,10 @@ void RenderPass::clear() {
 
 
 void RenderPass::addDrawCall(const DrawStates& states, const ShaderParameter* param,
-                             float depth, unsigned index, unsigned count) {
+                             float depth, unsigned index, unsigned count, GLenum primitive) {
 	unsigned maxDepth = 0x00ffffffu;
 	unsigned idepth = clamp(unsigned(depth * maxDepth), 0u, maxDepth);
-	_drawCalls.emplace_back(states, param, idepth, index, count);
+	_drawCalls.emplace_back(states, param, idepth, index, count, primitive);
 	transparentIndex(_drawCalls.back());
 }
 
@@ -216,11 +219,11 @@ void RenderPass::render() {
 		}
 
 		if(states.vertices->indices()) {
-			glc->drawElements(gl::TRIANGLES, call.count, gl::UNSIGNED_INT,
+			glc->drawElements(call.primitive, call.count, gl::UNSIGNED_INT,
 			                  reinterpret_cast<void*>(call.index*sizeof(unsigned)));
 		}
 		else {
-			glc->drawArrays(gl::TRIANGLES, call.index, call.count);
+			glc->drawArrays(call.primitive, call.index, call.count);
 		}
 		_stats.drawCallCount += 1;
 

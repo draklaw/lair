@@ -116,7 +116,7 @@ public:
 
 	AlignedBox2 boundingBox() const;
 
-	bool intersect(const Shape2D& other, Vector2* position = 0) const;
+	bool intersect(const Shape2D& other) const;
 
 	void swap(Shape2D& other);
 

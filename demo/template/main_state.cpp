@@ -132,12 +132,19 @@ void MainState::initialize() {
 	_quitInput = _inputs.addInput("quit");
 	_inputs.mapScanCode(_quitInput, SDL_SCANCODE_ESCAPE);
 
+	AssetSP whiteAsset = loader()->load<ImageLoader>("white.png")->asset();
+
 	_scene->load();
 
 	loader()->waitAll();
 
 	// Set to true to debug OpenGL calls
 	renderer()->context()->setLogCalls(false);
+
+	SamplerSP sampler = renderer()->getSampler(SamplerParams(
+	            SamplerParams::NEAREST | SamplerParams::CLAMP));
+	_whiteTexture = renderer()->getTextureSet(
+	            renderer()->getTextureUnit("sprite_color"), whiteAsset, sampler);
 
 	_initialized = true;
 }
@@ -227,6 +234,7 @@ void MainState::updateFrame() {
 		_sprites.render(_entities.root(), _loop.frameInterp(), _camera);
 		_texts.render(_entities.root(), _loop.frameInterp(), _camera);
 		_tileLayers.render(_entities.root(), _loop.frameInterp(), _camera);
+		_collisions.render(&_spriteRenderer, &_mainPass, _whiteTexture, _camera);
 
 		buffersFilled = _spriteRenderer.endRender();
 	}

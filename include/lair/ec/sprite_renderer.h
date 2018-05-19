@@ -26,6 +26,8 @@
 
 #include <lair/core/lair.h>
 
+#include <lair/geometry/shape_2d.h>
+
 #include <lair/render_gl3/context.h>
 #include <lair/render_gl3/texture.h>
 #include <lair/render_gl3/buffer_object.h>
@@ -133,6 +135,11 @@ public:
 	void addIndex(unsigned index);
 	void addSprite(const Matrix4& trans, const Box2& coords,
 	               const Vector4& color, const Box2& texCoords);
+
+	void addShape(const Matrix4& trans, const Sphere2& sphere, const Vector4& color);
+	void addShape(const Matrix4& trans, const AlignedBox2& box, const Vector4& color);
+	void addShape(const Matrix4& trans, const OrientedBox2& box, const Vector4& color);
+	void addShape(const Matrix4& trans, const Shape2D& shape, const Vector4& color);
 
 	SpriteShaderSP loadShader(const Path& logicPath);
 	void finalizeShaders();

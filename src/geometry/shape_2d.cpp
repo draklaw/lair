@@ -115,7 +115,7 @@ AlignedBox2 Shape2D::boundingBox() const {
 	return AlignedBox2();
 }
 
-bool Shape2D::intersect(const Shape2D& other, Vector2* position) const {
+bool Shape2D::intersect(const Shape2D& other) const {
 	const Shape2D* shape0 = this;
 	const Shape2D* shape1 = &other;
 
@@ -136,8 +136,7 @@ bool Shape2D::intersect(const Shape2D& other, Vector2* position) const {
 			lairAssert(false);
 			break;
 		case SHAPE_ALIGNED_BOX:
-			inter = lair::intersect(shape0->asAlignedBox(), shape1->asAlignedBox(),
-			                        position);
+			inter = lair::intersect(shape0->asAlignedBox(), shape1->asAlignedBox());
 			break;
 		case SHAPE_ORIENTED_BOX:
 			break;
@@ -440,6 +439,28 @@ bool varRead(Shape2D& value, const Variant& var, Logger& logger) {
 			value = AlignedBox2(min, max);
 		}
 	}
+	else if(varMap.type() == "OBox") {
+		Vector2 center;
+		Vector2 sizes;
+		float   rot = 0;
+
+		success &= varRead(center, varMap.get("center"), logger);
+		success &= varRead(sizes, varMap.get("size"), logger);
+
+		const Variant& rotVar = varMap.get("rotation");
+		if(rotVar.isValid()) {
+			success &= varRead(rot, rotVar, logger);
+			rot *= M_PI / 180;
+		}
+
+		if(success) {
+			float cos = std::cos(rot);
+			float sin = std::sin(rot);
+			Matrix2 basis;
+			basis << cos, sin, -sin, cos;
+			value = OrientedBox2(center, sizes, basis);
+		}
+	}
 	else {
 		logger.error("Unknown shape type: ", varMap.type());
 		success = false;
@@ -478,6 +499,27 @@ bool varWrite(Variant& var, const Shape2D& value, Logger& logger) {
 
 		success &= varWrite(v, Vector2(value.asAlignedBox().sizes()), logger);
 		varMap.emplace("size", std::move(v));
+
+		if(success) {
+			var = std::move(varMap);
+		}
+
+		break;
+	}
+	case SHAPE_ORIENTED_BOX: {
+		VarMap varMap("OBox");
+		Variant v;
+
+		success &= varWrite(v, value.asOrientedBox().center(), logger);
+		varMap.emplace("center", std::move(v));
+
+		success &= varWrite(v, Vector2(value.asOrientedBox().sizes()), logger);
+		varMap.emplace("size", std::move(v));
+
+		Vector2 x = value.asOrientedBox().basis().col(0);
+		float rot = atan2(x(1), x(0)) * 180 / M_PI;
+		success &= varWrite(v, rot, logger);
+		varMap.emplace("rotation", std::move(v));
 
 		if(success) {
 			var = std::move(varMap);

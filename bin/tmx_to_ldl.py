@@ -34,7 +34,7 @@ from tiled import (
 )
 
 from ldl import LdlWriter, TypedList
-from lair import ABox, Sampler, Texture, Transform, Vector
+from lair import ABox, OBox, Sampler, Texture, Transform, Vector
 
 
 _vectorize_re = re.compile(r'^(.*)_([xyzw])$')
@@ -273,10 +273,10 @@ class TiledMapConverter:
         if 'collision' in d:
             collision = d['collision']
             if 'shape' not in collision:
-                collision['shape'] = ABox(
+                collision['shape'] = OBox(
                     Vector(
-                        - object.width  * anchor_x,
-                        - object.height * anchor_y,
+                        object.width  * (0.5 - anchor_x),
+                        object.height * (0.5 - anchor_y),
                     ),
                     Vector(
                         object.width,

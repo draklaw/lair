@@ -22,6 +22,12 @@
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
 
+#include <lair/render_gl3/orthographic_camera.h>
+#include <lair/render_gl3/texture.h>
+#include <lair/render_gl3/renderer.h>
+
+#include <lair/ec/sprite_renderer.h>
+
 #include "lair/ec/collision_component.h"
 
 
@@ -120,7 +126,7 @@ void CollisionComponentManager::findCollisions() {
 				&& (comp0->hitMask() & comp1->hitMask())    != 0
 				&& (comp0->hitMask() & comp1->ignoreMask()) == 0
 				&& (comp0->hitMask() & comp1->ignoreMask()) == 0
-				&& e0.shape.intersect(e1.shape, &hit.position)) {
+				&& e0.shape.intersect(e1.shape)) {
 					hit.entities[0] = e0.entity;
 					hit.entities[1] = e1.entity;
 					_hitEvents.push_back(hit);
@@ -190,5 +196,40 @@ void CollisionComponentManager::update(EntityRef entity) {
 		}
 	}
 }
+
+
+void CollisionComponentManager::render(
+        SpriteRenderer* spriteRenderer, RenderPass* renderPass,
+        TextureSetCSP texture, const OrthographicCamera& camera) {
+	RenderPass::DrawStates states;
+	states.shader     = spriteRenderer->shader()->get();
+	states.vertices   = spriteRenderer->vertexArray();
+	states.textureSet = texture;
+	states.blendingMode = BLEND_ALPHA;
+
+	for(unsigned ci = 0; ci < nComponents(); ++ci) {
+		CollisionComponent& comp = _components[ci];
+
+		const Transform& wt = comp.entity().worldTransform();
+		float z = wt(2, 3) + 0.0001;
+		float depth = 1.f - normalize(z, camera.viewBox().min()(2),
+		                                 camera.viewBox().max()(2));
+		const ShaderParameter* params = spriteRenderer->addShaderParameters(
+		            spriteRenderer->shader(), camera.transform(), 0, Vector4i(1, 1, 1, 1));
+
+		Vector4 color(0, 1, 0, .25);
+
+		Matrix4 trans = Matrix4::Identity();
+		trans(2, 3) = z;
+
+		for(_CollisionComponentElement* elem = comp._firstElem; elem; elem = elem->next) {
+			unsigned index = spriteRenderer->indexCount();
+			spriteRenderer->addShape(trans, elem->shape, color);
+			unsigned count = spriteRenderer->indexCount() - index;
+			renderPass->addDrawCall(states, params, depth, index, count);
+		}
+	}
+}
+
 
 }

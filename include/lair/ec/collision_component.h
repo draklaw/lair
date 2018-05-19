@@ -42,6 +42,13 @@ namespace lair
 {
 
 
+class OrthographicCamera;
+class RenderPass;
+class TextureSet;
+typedef std::shared_ptr<const TextureSet> TextureSetCSP;
+class SpriteRenderer;
+
+
 enum Direction {
 	UP,
 	LEFT,
@@ -141,6 +148,10 @@ public:
 	             unsigned hitMask = 0x01, EntityRef dontPick = EntityRef());
 
 	void update(EntityRef entity);
+
+	void render(SpriteRenderer* spriteRenderer, RenderPass* renderPass,
+	            TextureSetCSP texture, const OrthographicCamera& camera);
+
 
 protected:
 	typedef _CollisionComponentElement _Element;

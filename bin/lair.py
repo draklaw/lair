@@ -74,6 +74,27 @@ class ABox(Box):
     _ldl_type = 'ABox'
 
 
+class OBox(Box):
+    """A lair OBox."""
+
+    _ldl_type = 'OBox'
+
+    def __init__(self, center, size, rotation = 0):
+        self.center   = center
+        self.size     = size
+        self.rotation = rotation
+
+    def as_ldl(self):
+        return TypedDict(self._ldl_type, [
+            ('center',   self.center),
+            ('size',     self.size),
+            ('rotation', self.rotation),
+        ]).inline()
+
+    def __repr__(self):
+        return 'OBox({!r}, {!r}, {!r})'.format(self.center, self.size, self.rotation)
+
+
 class Transform:
     """A transform that can be converted to ldl. Converting ldl to transform is
     not supported yet."""

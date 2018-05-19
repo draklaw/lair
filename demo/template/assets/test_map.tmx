@@ -153,6 +153,7 @@
   <objectgroup name="objects">
    <object id="3" name="player" type="player" gid="6" x="266.144" y="-186.144" width="32" height="32" rotation="-30">
     <properties>
+     <property name="collision.hit_mask" type="int" value="1"/>
      <property name="sprite.blend" value="alpha"/>
     </properties>
    </object>
