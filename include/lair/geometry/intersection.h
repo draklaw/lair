@@ -37,24 +37,24 @@ namespace lair
 // Distance to point
 
 template<typename Scalar, int Dim>
-float distance(const Sphere<Scalar, Dim>& sphere,
-               const Eigen::Matrix<Scalar, Dim, 1>& p);
+Scalar distance(const Sphere<Scalar, Dim>& sphere,
+                const Eigen::Matrix<Scalar, Dim, 1>& p);
 
 template<typename Scalar, int Dim>
-float squaredDistance(const AlignedBox<Scalar, Dim>& box,
-                      const Eigen::Matrix<Scalar, Dim, 1>& p);
+Scalar squaredDistance(const AlignedBox<Scalar, Dim>& box,
+                       const Eigen::Matrix<Scalar, Dim, 1>& p);
 
 template<typename Scalar, int Dim>
-float distance(const AlignedBox<Scalar, Dim>& box,
-               const Eigen::Matrix<Scalar, Dim, 1>& p);
+Scalar distance(const AlignedBox<Scalar, Dim>& box,
+                const Eigen::Matrix<Scalar, Dim, 1>& p);
 
 template<typename Scalar, int Dim>
-float squaredDistance(const OrientedBox<Scalar, Dim>& box,
-                      const Eigen::Matrix<Scalar, Dim, 1>& p);
+Scalar squaredDistance(const OrientedBox<Scalar, Dim>& box,
+                       const Eigen::Matrix<Scalar, Dim, 1>& p);
 
 template<typename Scalar, int Dim>
-float distance(const OrientedBox<Scalar, Dim>& box,
-               const Eigen::Matrix<Scalar, Dim, 1>& p);
+Scalar distance(const OrientedBox<Scalar, Dim>& box,
+                const Eigen::Matrix<Scalar, Dim, 1>& p);
 
 
 // Closest point to point
@@ -78,8 +78,14 @@ template<typename Scalar, int Dim>
 bool intersect(const Sphere<Scalar, Dim>& sphere0,
                const Sphere<Scalar, Dim>& sphere1);
 
-bool intersect(const Sphere2& box0, const AlignedBox2& box1);
-bool intersect(const Sphere2& box0, const OrientedBox2& box1);
+template<typename Scalar, int Dim>
+bool intersect(const Sphere<Scalar, Dim>& sphere,
+               const AlignedBox<Scalar, Dim>& box);
+
+template<typename Scalar, int Dim>
+bool intersect(const Sphere<Scalar, Dim>& sphere,
+               const OrientedBox<Scalar, Dim>& box);
+
 bool intersect(const AlignedBox2& box0, const AlignedBox2& box1);
 bool intersect(const AlignedBox2& box0, const OrientedBox2& box1);
 bool intersect(const OrientedBox2& box0, const OrientedBox2& box1);
@@ -88,11 +94,17 @@ bool intersect(const OrientedBox2& box0, const OrientedBox2& box1);
 // Distance to object
 
 template<typename Scalar, int Dim>
-float distance(const Sphere<Scalar, Dim>& sphere0,
-               const Sphere<Scalar, Dim>& sphere1);
+Scalar distance(const Sphere<Scalar, Dim>& sphere0,
+                const Sphere<Scalar, Dim>& sphere1);
 
-float distance(const Sphere2& box0, const AlignedBox2& box1);
-float distance(const Sphere2& box0, const OrientedBox2& box1);
+template<typename Scalar, int Dim>
+Scalar distance(const Sphere<Scalar, Dim>& sphere,
+                const AlignedBox<Scalar, Dim>& box);
+
+template<typename Scalar, int Dim>
+Scalar distance(const Sphere<Scalar, Dim>& sphere,
+                const OrientedBox<Scalar, Dim>& box);
+
 float distance(const AlignedBox2& box0, const AlignedBox2& box1);
 float distance(const AlignedBox2& box0, const OrientedBox2& box1);
 float distance(const OrientedBox2& box0, const OrientedBox2& box1);
@@ -110,7 +122,7 @@ inline Scalar distance(const Sphere<Scalar, Dim>& sphere,
 
 
 template<typename Scalar, int Dim>
-inline float squaredDistance(const AlignedBox<Scalar, Dim>& box,
+inline Scalar squaredDistance(const AlignedBox<Scalar, Dim>& box,
                              const Eigen::Matrix<Scalar, Dim, 1>& p) {
 	Scalar sqDist = Scalar(0);
 	for(int i = 0; i < Dim; ++i) {
@@ -128,21 +140,21 @@ inline float squaredDistance(const AlignedBox<Scalar, Dim>& box,
 
 
 template<typename Scalar, int Dim>
-inline float distance(const AlignedBox<Scalar, Dim>& box,
+inline Scalar distance(const AlignedBox<Scalar, Dim>& box,
                       const Eigen::Matrix<Scalar, Dim, 1>& p) {
 	return std::sqrt(squaredDistance(box, p));
 }
 
 
 template<typename Scalar, int Dim>
-inline float squaredDistance(const OrientedBox<Scalar, Dim>& box,
+inline Scalar squaredDistance(const OrientedBox<Scalar, Dim>& box,
                              const Eigen::Matrix<Scalar, Dim, 1>& p) {
 	Eigen::Matrix<Scalar, Dim, 1> q = box.basis().transpose() * (p - box.center());
 	Scalar sqDist = Scalar(0);
 	for(int i = 0; i < Dim; ++i) {
 		Scalar c = std::abs(q(i));
-		if(box.sizes()(i) < c) {
-			float d = c - box.sizes()(i);
+		if(box.halfSize()(i) < c) {
+			float d = c - box.halfSize()(i);
 			sqDist += d * d;
 		}
 	}
@@ -151,7 +163,7 @@ inline float squaredDistance(const OrientedBox<Scalar, Dim>& box,
 
 
 template<typename Scalar, int Dim>
-inline float distance(const OrientedBox<Scalar, Dim>& box,
+inline Scalar distance(const OrientedBox<Scalar, Dim>& box,
                       const Eigen::Matrix<Scalar, Dim, 1>& p) {
 	return std::sqrt(squaredDistance(box, p));
 }
@@ -161,8 +173,10 @@ template<typename Scalar, int Dim>
 inline Eigen::Matrix<Scalar, Dim, 1> closestPoint(
         const Sphere<Scalar, Dim>& sphere,
         const Eigen::Matrix<Scalar, Dim, 1>& p) {
-	Eigen::Matrix<Scalar, Dim, 1> v = (p - sphere.center()).normalized();
-	return sphere.center() + v * sphere.radius();
+	Eigen::Matrix<Scalar, Dim, 1> v = p - sphere.center();
+	Scalar sqNorm = v.squaredNorm();
+	Scalar r2 = sphere.radius() * sphere.radius();
+	return (sqNorm > r2)? sphere.center() + v * (sphere.radius() / std::sqrt(sqNorm)): p;
 }
 
 
@@ -185,24 +199,52 @@ inline Eigen::Matrix<Scalar, Dim, 1> closestPoint(
 	Eigen::Matrix<Scalar, Dim, 1> q = box.basis().transpose() * (p - box.center());
 	Eigen::Matrix<Scalar, Dim, 1> r;
 	for(int i = 0; i < Dim; ++i) {
-		r(i) = clamp(q(i), box.min()(i), box.max()(i));
+		r(i) = clamp(q(i), - box.halfSize()(i), box.halfSize()(i));
 	}
-	return box.basis() * r;
+	return box.basis() * r + box.center();
 }
 
 
 template<typename Scalar, int Dim>
 inline bool intersect(const Sphere<Scalar, Dim>& sphere0,
                       const Sphere<Scalar, Dim>& sphere1) {
-	return distance(sphere0, sphere1) < Scalar(0);
+	return distance(sphere0, sphere1) <= Scalar(0);
 }
 
 
 template<typename Scalar, int Dim>
-Scalar distance(const Sphere<Scalar, Dim>& sphere0,
-                const Sphere<Scalar, Dim>& sphere1) {
+inline bool intersect(const Sphere<Scalar, Dim>& sphere,
+                      const AlignedBox<Scalar, Dim>& box) {
+	return distance(sphere, box) <= Scalar(0);
+}
+
+
+template<typename Scalar, int Dim>
+inline bool intersect(const Sphere<Scalar, Dim>& sphere,
+                      const OrientedBox<Scalar, Dim>& box) {
+	return distance(sphere, box) <= Scalar(0);
+}
+
+
+template<typename Scalar, int Dim>
+inline Scalar distance(const Sphere<Scalar, Dim>& sphere0,
+                       const Sphere<Scalar, Dim>& sphere1) {
 	Scalar d = (sphere0.center() - sphere1.center()).norm();
 	return d - sphere0.radius() - sphere1.radius();
+}
+
+
+template<typename Scalar, int Dim>
+inline Scalar distance(const Sphere<Scalar, Dim>& sphere,
+                       const AlignedBox<Scalar, Dim>& box) {
+	return distance(box, sphere.center()) - sphere.radius();
+}
+
+
+template<typename Scalar, int Dim>
+inline Scalar distance(const Sphere<Scalar, Dim>& sphere,
+                       const OrientedBox<Scalar, Dim>& box) {
+	return distance(box, sphere.center()) - sphere.radius();
 }
 
 

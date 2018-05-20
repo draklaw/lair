@@ -37,6 +37,7 @@ namespace lair {
 CollisionComponent::CollisionComponent(Manager* manager, _Entity* entity, const Shape2DVector& shapes)
 	: Component   (manager, entity)
 	, _shapes     (shapes)
+    , _debugColor (0, 1, 0, .2)
 	, _hitMask    (1u)
 	, _ignoreMask (0u)
 	, _dirty      (true)
@@ -51,6 +52,9 @@ const PropertyList& CollisionComponent::properties() {
 		props.addProperty("shape",
 		                  &CollisionComponent::shapes,
 		                  &CollisionComponent::setShapes);
+		props.addProperty("debug_color",
+		                  &CollisionComponent::debugColor,
+		                  &CollisionComponent::setDebugColor);
 		props.addProperty("hit_mask",
 		                  &CollisionComponent::hitMask,
 		                  &CollisionComponent::setHitMask);
@@ -210,6 +214,9 @@ void CollisionComponentManager::render(
 	for(unsigned ci = 0; ci < nComponents(); ++ci) {
 		CollisionComponent& comp = _components[ci];
 
+		if(!comp.isAlive() || !comp.isEnabled() || !comp.entity().isEnabledRec())
+			continue;
+
 		const Transform& wt = comp.entity().worldTransform();
 		float z = wt(2, 3) + 0.0001;
 		float depth = 1.f - normalize(z, camera.viewBox().min()(2),
@@ -217,14 +224,12 @@ void CollisionComponentManager::render(
 		const ShaderParameter* params = spriteRenderer->addShaderParameters(
 		            spriteRenderer->shader(), camera.transform(), 0, Vector4i(1, 1, 1, 1));
 
-		Vector4 color(0, 1, 0, .25);
-
 		Matrix4 trans = Matrix4::Identity();
 		trans(2, 3) = z;
 
 		for(_CollisionComponentElement* elem = comp._firstElem; elem; elem = elem->next) {
 			unsigned index = spriteRenderer->indexCount();
-			spriteRenderer->addShape(trans, elem->shape, color);
+			spriteRenderer->addShape(trans, elem->shape, comp.debugColor());
 			unsigned count = spriteRenderer->indexCount() - index;
 			renderPass->addDrawCall(states, params, depth, index, count);
 		}

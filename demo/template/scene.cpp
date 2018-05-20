@@ -178,3 +178,7 @@ void Scene::updateTick() {
 
 void Scene::updateFrame() {
 }
+
+
+void Scene::render() {
+}

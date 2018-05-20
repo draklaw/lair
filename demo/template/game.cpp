@@ -62,6 +62,8 @@ Game::Game(int argc, char** argv)
 	    },
 	    static_cast<bool(*)(Variant&, const TextureSetCSP&, Logger&)>(varWrite)
 	);
+
+	_sceneName = (argc > 1)? argv[1]: "simple";
 }
 
 
@@ -90,6 +92,8 @@ void Game::initialize() {
 
 	_mainState.reset(new MainState(this));
 	_mainState->initialize();
+	if(_sceneName.size())
+		_mainState->setScene(_sceneName);
 }
 
 

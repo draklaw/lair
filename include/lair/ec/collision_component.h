@@ -94,6 +94,9 @@ public:
 	inline void setShapes(const Shape2DVector& shapes) { _shapes = shapes; }
 	inline void addShape(const Shape2D& shape) { _shapes.push_back(shape); }
 
+	inline const Vector4& debugColor() const { return _debugColor; }
+	inline void setDebugColor(const Vector4& color) { _debugColor = color; }
+
 	inline unsigned hitMask() const          { return _hitMask; }
 	inline void setHitMask(unsigned hitMask) { _hitMask = hitMask; }
 
@@ -107,6 +110,7 @@ public:
 
 protected:
 	Shape2DVector _shapes;
+	Vector4       _debugColor;
 	unsigned      _hitMask;
 	unsigned      _ignoreMask;
 	bool          _dirty;

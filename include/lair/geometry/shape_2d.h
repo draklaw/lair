@@ -116,6 +116,9 @@ public:
 
 	AlignedBox2 boundingBox() const;
 
+	float distance(const Vector2& p) const;
+	Vector2 closestPoint(const Vector2& p) const;
+
 	bool intersect(const Shape2D& other) const;
 
 	void swap(Shape2D& other);

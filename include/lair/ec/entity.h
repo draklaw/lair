@@ -341,6 +341,12 @@ public:
 //		return _entity->extra;
 //	}
 
+	inline void destroyChildren() {
+		while(nextSibling().isValid()) {
+			nextSibling().destroy();
+		}
+	}
+
 	EntityRef clone(EntityRef newParent, const char* newName = nullptr) const;
 
 	inline _Entity* _get() {

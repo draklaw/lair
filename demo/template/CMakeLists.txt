@@ -38,6 +38,7 @@ add_executable(template
 	main_state.cpp
 	scene.cpp
 	simple_scene.cpp
+	collision_scene.cpp
 )
 
 target_link_libraries(template

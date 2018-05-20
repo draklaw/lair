@@ -29,12 +29,16 @@ namespace lair
 {
 
 
-VarList::VarList() {
+VarList::VarList(unsigned style)
+    : _type()
+    , _style(style)
+{
 }
 
 
-VarList::VarList(const String& type)
+VarList::VarList(const String& type, unsigned style)
     : _type(type)
+    , _style(style)
 {
 }
 
@@ -50,6 +54,21 @@ const String& VarList::type() const {
 
 String& VarList::type() {
 	return _type;
+}
+
+
+unsigned VarList::style() const {
+	return _style;
+}
+
+
+bool VarList::isInline() const {
+	return _style & INLINE;
+}
+
+
+bool VarList::isCall() const {
+	return _style & CALL;
 }
 
 

@@ -80,28 +80,23 @@ public:
 	}
 
 	inline Self rotated(const Matrix& rotation) const {
-		Self other;
-		for(unsigned i = 0; i < (1 << Dim); ++i)
-			other.extend(rotation * corner(i));
-		return other;
+		return *this;
 	}
 
-	inline void scale(const Vector& scale) {
-		this->min() = this->min().cwiseProduct(scale);
-		this->max() = this->max().cwiseProduct(scale);
-	}
+//	inline void scale(const Vector& scale) {
+//		this->min() = this->min().cwiseProduct(scale);
+//		this->max() = this->max().cwiseProduct(scale);
+//	}
 
-	inline Self scaled(const Vector& scale) const {
-		Self other = *this;
-		other.scale(scale);
-		return other;
-	}
+//	inline Self scaled(const Vector& scale) const {
+//		Self other = *this;
+//		other.scale(scale);
+//		return other;
+//	}
 
 	inline Self rigidTransformed(const HMatrix& transform) const {
-		Self other;
-		for(unsigned i = 0; i < (1 << Dim); ++i)
-			other.extend((transform * corner(i).homogeneous()).template head<Dim>());
-		return other;
+		Vector t = transform.template topRightCorner<Dim, 1>();
+		return Self(this->min() + t, this->max() + t);
 	}
 };
 

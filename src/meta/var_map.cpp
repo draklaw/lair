@@ -29,12 +29,15 @@ namespace lair
 {
 
 
-VarMap::VarMap() {
+VarMap::VarMap(unsigned style)
+    : _type()
+    , _style(style) {
 }
 
 
-VarMap::VarMap(const String& type)
-    : _type(type) {
+VarMap::VarMap(const String& type, unsigned style)
+    : _type(type)
+    , _style(style) {
 }
 
 
@@ -57,6 +60,16 @@ const String& VarMap::type() const {
 
 String& VarMap::type() {
 	return _type;
+}
+
+
+unsigned VarMap::style() const {
+	return _style;
+}
+
+
+bool VarMap::isInline() const {
+	return _style & INLINE;
 }
 
 

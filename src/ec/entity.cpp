@@ -180,7 +180,7 @@ bool _Entity::_hasComponent(Component* target) const {
 
 
 bool EntityRef::isEnabledRec() const {
-	return isEnabled() && parent().isValid()? parent().isEnabled(): true;
+	return isEnabled() && (parent().isValid()? parent().isEnabledRec(): true);
 }
 
 

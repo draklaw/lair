@@ -59,12 +59,14 @@ Shape2D::Shape2D(const Shape2D& other)
 	}
 }
 
+
 Shape2D::Shape2D(Shape2D&& other)
     : _type(other._type)
     , _shape(other._shape){
 	other._type = SHAPE_NONE;
 	other._shape = nullptr;
 }
+
 
 Shape2D::~Shape2D() {
 	switch(type()) {
@@ -82,10 +84,12 @@ Shape2D::~Shape2D() {
 	}
 }
 
+
 Shape2D& Shape2D::operator=(Shape2D other) {
 	swap(other);
 	return *this;
 }
+
 
 Shape2D Shape2D::transformed(const Matrix3& transform) const {
 	switch(type()) {
@@ -101,6 +105,7 @@ Shape2D Shape2D::transformed(const Matrix3& transform) const {
 	return Shape2D();
 }
 
+
 AlignedBox2 Shape2D::boundingBox() const {
 	switch(type()) {
 	case SHAPE_NONE:
@@ -115,6 +120,37 @@ AlignedBox2 Shape2D::boundingBox() const {
 	return AlignedBox2();
 }
 
+
+float Shape2D::distance(const Vector2& p) const {
+	switch(type()) {
+	case SHAPE_NONE:
+		break;
+	case SHAPE_SPHERE:
+		return lair::distance(asSphere(), p);
+	case SHAPE_ALIGNED_BOX:
+		return lair::distance(asAlignedBox(), p);
+	case SHAPE_ORIENTED_BOX:
+		return lair::distance(asOrientedBox(), p);
+	}
+	return 0;
+}
+
+
+Vector2 Shape2D::closestPoint(const Vector2& p) const {
+	switch(type()) {
+	case SHAPE_NONE:
+		break;
+	case SHAPE_SPHERE:
+		return lair::closestPoint(asSphere(), p);
+	case SHAPE_ALIGNED_BOX:
+		return lair::closestPoint(asAlignedBox(), p);
+	case SHAPE_ORIENTED_BOX:
+		return lair::closestPoint(asOrientedBox(), p);
+	}
+	return p;
+}
+
+
 bool Shape2D::intersect(const Shape2D& other) const {
 	const Shape2D* shape0 = this;
 	const Shape2D* shape1 = &other;
@@ -122,11 +158,19 @@ bool Shape2D::intersect(const Shape2D& other) const {
 	if(shape0->_type > shape1->_type)
 		std::swap(shape0, shape1);
 
-	bool inter = false;
 	switch(shape0->_type) {
 	case SHAPE_NONE:
 		break;
 	case SHAPE_SPHERE: {
+		switch(shape1->_type) {
+		case SHAPE_NONE:
+		case SHAPE_SPHERE:
+			return lair::intersect(shape0->asSphere(), shape1->asSphere());
+		case SHAPE_ALIGNED_BOX:
+			return lair::intersect(shape0->asSphere(), shape1->asAlignedBox());
+		case SHAPE_ORIENTED_BOX:
+			return lair::intersect(shape0->asSphere(), shape1->asOrientedBox());
+		}
 		break;
 	}
 	case SHAPE_ALIGNED_BOX: {
@@ -136,19 +180,28 @@ bool Shape2D::intersect(const Shape2D& other) const {
 			lairAssert(false);
 			break;
 		case SHAPE_ALIGNED_BOX:
-			inter = lair::intersect(shape0->asAlignedBox(), shape1->asAlignedBox());
-			break;
+			return lair::intersect(shape0->asAlignedBox(), shape1->asAlignedBox());
 		case SHAPE_ORIENTED_BOX:
-			break;
+			return lair::intersect(shape0->asAlignedBox(), shape1->asOrientedBox());
 		}
 	}
 	case SHAPE_ORIENTED_BOX: {
+		switch(shape1->_type) {
+		case SHAPE_NONE:
+		case SHAPE_SPHERE:
+		case SHAPE_ALIGNED_BOX:
+			lairAssert(false);
+		case SHAPE_ORIENTED_BOX:
+			return lair::intersect(shape0->asOrientedBox(), shape1->asOrientedBox());
+		}
 		break;
 	}
 	}
 
-	return inter;
+	lairAssert(false);
+	return false;
 }
+
 
 void Shape2D::swap(Shape2D& other) {
 	std::swap(_type,  other._type);
@@ -475,7 +528,7 @@ bool varWrite(Variant& var, const Shape2D& value, Logger& logger) {
 
 	switch(value.type()) {
 	case SHAPE_SPHERE: {
-		VarMap varMap("Circle");
+		VarMap varMap("Circle", VarMap::INLINE);
 		Variant v;
 
 		success &= varWrite(v, value.asSphere().center(), logger);
@@ -491,7 +544,7 @@ bool varWrite(Variant& var, const Shape2D& value, Logger& logger) {
 		break;
 	}
 	case SHAPE_ALIGNED_BOX: {
-		VarMap varMap("ABox");
+		VarMap varMap("ABox", VarMap::INLINE);
 		Variant v;
 
 		success &= varWrite(v, value.asAlignedBox().min(), logger);
@@ -507,7 +560,7 @@ bool varWrite(Variant& var, const Shape2D& value, Logger& logger) {
 		break;
 	}
 	case SHAPE_ORIENTED_BOX: {
-		VarMap varMap("OBox");
+		VarMap varMap("OBox", VarMap::INLINE);
 		Variant v;
 
 		success &= varWrite(v, value.asOrientedBox().center(), logger);

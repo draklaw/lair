@@ -19,16 +19,24 @@
  */
 
 
-#ifndef _LAIR_DEMO_TEMPLATE_SIMPLE_SCENE_H
-#define _LAIR_DEMO_TEMPLATE_SIMPLE_SCENE_H
+#ifndef _LAIR_DEMO_TEMPLATE_COLLISION_SCENE_H
+#define _LAIR_DEMO_TEMPLATE_COLLISION_SCENE_H
 
 
 #include "main_state.h"
 
 
-class SimpleScene : public Scene {
+class CollisionScene : public Scene {
 public:
-	SimpleScene(MainState* mainState);
+	enum ShapeType {
+		DOT,
+		CIRCLE,
+		ABOX,
+		OBOX,
+	};
+
+public:
+	CollisionScene(MainState* mainState);
 
 	virtual void load() override;
 	virtual void unload() override;
@@ -38,13 +46,18 @@ public:
 
 	virtual void updateTick() override;
 	virtual void updateFrame() override;
+	virtual void render() override;
 
 protected:
-	TileMapAspectSP _tileMap;
+	ShapeType   _shapeType;
+	float       _rotation;
 
 	EntityRef   _sceneRoot;
-	EntityRef   _modelRoot;
-	EntityRef   _tileLayer;
+	EntityRef   _models;
+	EntityRef   _dotModel;
+	EntityRef   _shapes;
+	EntityRef   _player;
+	EntityRef   _dotRoot;
 };
 
 

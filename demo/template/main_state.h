@@ -73,6 +73,8 @@ public:
 	virtual void run();
 	virtual void quit();
 
+	void setScene(const String& scene);
+
 	void startGame();
 	void updateTick();
 	void updateFrame();
@@ -81,6 +83,9 @@ public:
 
 	bool loadEntities(const Path& path, EntityRef parent = EntityRef(),
 	                  const Path& cd = Path());
+
+protected:
+	typedef std::unordered_map<String, SceneSP> SceneMap;
 
 protected:
 	// More or less system stuff
@@ -108,7 +113,8 @@ protected:
 
 	Input*      _quitInput;
 
-	SceneSP _scene;
+	SceneMap _sceneMap;
+	SceneSP  _scene;
 
 	TextureSetCSP _whiteTexture;
 };

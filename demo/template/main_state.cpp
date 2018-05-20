@@ -22,15 +22,28 @@
 #include <functional>
 
 #include <lair/ldl/ldl_variant_loader.h>
+#include <lair/ldl/write.h>
 
 #include "game.h"
 #include "simple_scene.h"
+#include "collision_scene.h"
 
 #include "main_state.h"
 
 
 #define ONE_SEC (1000000000)
 
+
+void dumpEntity(EntityRef entity, unsigned depth = 0) {
+	dbgLogger.debug(std::string(depth*2, ' '), entity.name(), ": ",
+	                entity.isEnabled(), ", ", entity.isEnabledRec());
+
+	EntityRef child = entity.firstChild();
+	while(child.isValid()) {
+		dumpEntity(child, depth + 1);
+		child = child.nextSibling();
+	}
+}
 
 MainState::MainState(Game* game)
 	: GameState(game),
@@ -56,12 +69,15 @@ MainState::MainState(Game* game)
 
       _quitInput(nullptr),
 
-      _scene(std::make_shared<SimpleScene>(this)) {
+      _scene() {
 
 	_entities.registerComponentManager(&_collisions);
 	_entities.registerComponentManager(&_sprites);
 	_entities.registerComponentManager(&_texts);
 	_entities.registerComponentManager(&_tileLayers);
+
+	_sceneMap.emplace("simple", std::make_shared<SimpleScene>(this));
+	_sceneMap.emplace("collision", std::make_shared<CollisionScene>(this));
 }
 
 
@@ -134,7 +150,9 @@ void MainState::initialize() {
 
 	AssetSP whiteAsset = loader()->load<ImageLoader>("white.png")->asset();
 
-	_scene->load();
+	for(auto&& pair: _sceneMap) {
+		pair.second->load();
+	}
 
 	loader()->waitAll();
 
@@ -146,12 +164,28 @@ void MainState::initialize() {
 	_whiteTexture = renderer()->getTextureSet(
 	            renderer()->getTextureUnit("sprite_color"), whiteAsset, sampler);
 
+	dumpEntity(_entities.root());
+	{
+		log().log("Done loading, dump entities and go !");
+
+		Variant var;
+		_entities.saveEntities(var, _entities.root());
+
+		std::ofstream out("entities.ldl");
+		ErrorList errors;
+		LdlWriter writer(&out, "<debug>", &errors);
+		ldlWrite(writer, var);
+		errors.log(log());
+	}
+
 	_initialized = true;
 }
 
 
 void MainState::shutdown() {
-	_scene->stop();
+	if(_scene) {
+		_scene->stop();
+	}
 
 	_slotTracker.disconnectAll();
 
@@ -189,8 +223,24 @@ void MainState::quit() {
 }
 
 
+void MainState::setScene(const String& scene) {
+	if(_scene) {
+		log().info("Stop scene...");
+		_scene->stop();
+	}
+	_scene.reset();
+	if(_sceneMap.count(scene)) {
+		log().info("Start scene ", scene, "...");
+		_scene = _sceneMap[scene];
+		_scene->start();
+	}
+}
+
+
 void MainState::startGame() {
-	_scene->start();
+	if(_scene) {
+		_scene->start();
+	}
 }
 
 
@@ -204,14 +254,18 @@ void MainState::updateTick() {
 		quit();
 	}
 
-	_scene->updateTick();
+	if(_scene) {
+		_scene->updateTick();
+	}
 
 	_entities.updateWorldTransforms();
 }
 
 
 void MainState::updateFrame() {
-	_scene->updateFrame();
+	if(_scene) {
+		_scene->updateFrame();
+	}
 
 	// Rendering
 	Context* glc = renderer()->context();
@@ -235,6 +289,10 @@ void MainState::updateFrame() {
 		_texts.render(_entities.root(), _loop.frameInterp(), _camera);
 		_tileLayers.render(_entities.root(), _loop.frameInterp(), _camera);
 		_collisions.render(&_spriteRenderer, &_mainPass, _whiteTexture, _camera);
+
+		if(_scene) {
+			_scene->render();
+		}
 
 		buffersFilled = _spriteRenderer.endRender();
 	}

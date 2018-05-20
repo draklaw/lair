@@ -38,8 +38,14 @@ class Variant;
 
 class VarList : public std::vector<Variant> {
 public:
-	VarList();
-	VarList(const String& type);
+	enum Style {
+		INLINE = 0x01,
+		CALL   = 0x02,
+	};
+
+public:
+	VarList(unsigned style = 0);
+	VarList(const String& type, unsigned style = 0);
 	VarList(const VarList&) = default;
 	VarList(VarList&&)      = default;
 	~VarList();
@@ -50,8 +56,13 @@ public:
 	const String& type() const;
 	String& type();
 
+	unsigned style() const;
+	bool isInline() const;
+	bool isCall() const;
+
 protected:
-	String _type;
+	String   _type;
+	unsigned _style;
 };
 
 

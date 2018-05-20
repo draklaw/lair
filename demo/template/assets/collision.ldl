@@ -1,0 +1,53 @@
+__model__ = {
+	enabled = false
+	children = {
+		dot = {
+			collision = {
+				hit_mask = 0x01
+				shape = Circle{ center = Vector(0, 0), radius = 2 }
+				debug_color = Vector(1, 0, 0, 1)
+			}
+		}
+	}
+}
+
+
+shapes = {
+	children = {
+		sphere = {
+			transform = [ translate(100, 100, 0) ]
+			collision = {
+				hit_mask = 0x01
+				shape = Circle{ center = Vector(0, 0), radius = 32 }
+			}
+		}
+
+		abox = {
+			transform = [ translate(200, 100, 0) ]
+			collision = {
+				hit_mask = 0x01
+				shape = ABox{ min = Vector(-24, -32), size = Vector(48, 64) }
+			}
+		}
+
+		obox = {
+			transform = [ translate(300, 100, 0), rotate(30) ]
+			collision = {
+				hit_mask = 0x01
+				shape = OBox{ center = Vector(0, 0), size = Vector(48, 64) }
+			}
+		}
+	}
+}
+
+player = {
+	transform = [ translate(200, 200, 0) ]
+	collision = {
+		hit_mask = 0x01
+		shape = Circle{ center = Vector(0, 0), radius = 4 }
+		debug_color = Vector(0, 0, 1, 1)
+	}
+}
+
+dot_root = {
+}

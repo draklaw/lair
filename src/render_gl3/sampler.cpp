@@ -389,7 +389,7 @@ bool varWrite(Variant& var, const SamplerSP& value, Logger& logger) {
 	bool success = true;
 
 	Variant v;
-	VarList varList("Sampler");
+	VarList varList("Sampler", VarList::INLINE | VarList::CALL);
 	const SamplerParams& params = value->params();
 
 	{

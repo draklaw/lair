@@ -66,6 +66,7 @@ protected:
 	GameConfig _config;
 
 	std::unique_ptr<MainState> _mainState;
+	String _sceneName;
 };
 
 

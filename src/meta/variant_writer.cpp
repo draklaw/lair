@@ -100,7 +100,7 @@ bool varWrite(Variant& var, const Transform& value, Logger& logger) {
 		return success;
 	}
 
-	VarList varList;
+	VarList varList(VarList::INLINE);
 	varList.emplace_back(std::move(trans));
 
 	Matrix3 rot;

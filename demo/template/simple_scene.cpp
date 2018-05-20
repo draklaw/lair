@@ -19,8 +19,6 @@
  */
 
 
-#include <lair/ldl/write.h>
-
 #include <lair/sys_sdl2/audio_module.h>
 
 #include "simple_scene.h"
@@ -32,33 +30,21 @@ SimpleScene::SimpleScene(MainState* mainState)
 
 
 void SimpleScene::load() {
-	EntityRef test_map = entities().createEntity(root(), "test_map");
+	_sceneRoot = entities().createEntity(root(), "simple_scene");
+	_sceneRoot.setEnabled(false);
 
 	LoaderSP tileMapLoader = loader()->load<TileMapLoader>("test_map.ldl");
 
-//	loadEntities("entities.ldl", root());
-
-	loader()->load<lair::SoundLoader>("sound.ogg");
+//	loader()->load<lair::SoundLoader>("sound.ogg");
 	//loader()->load<MusicLoader>("music.ogg");
 
 	loader()->waitAll();
 	_tileMap = tileMapLoader->asset()->aspect<TileMapAspect>();
-	entities().loadEntities(_tileMap->get().objects(), root());
+	entities().loadEntities(_tileMap->get().objects(), _sceneRoot);
 
 	loader()->waitAll();
 
-	updateDepth(root());
-
-	log().log("Done loading, dump entities and go !");
-
-	Variant var;
-	entities().saveEntities(var, root());
-
-	std::ofstream out("entities.ldl");
-	ErrorList errors;
-	LdlWriter writer(&out, "<debug>", &errors);
-	ldlWrite(writer, var);
-	errors.log(log());
+	updateDepth(_sceneRoot);
 }
 
 
@@ -69,13 +55,15 @@ void SimpleScene::unload() {
 void SimpleScene::start() {
 	_modelRoot = entity("__model__");
 
+	_sceneRoot.setEnabled(true);
+
 	//audio()->playMusic(assets()->getAsset("music.ogg"));
-	audio()->playSound(asset("sound.ogg"), 2);
+//	audio()->playSound(asset("sound.ogg"), 2);
 }
 
 
 void SimpleScene::stop() {
-
+	_sceneRoot.setEnabled(false);
 }
 
 

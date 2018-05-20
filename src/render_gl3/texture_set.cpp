@@ -400,7 +400,7 @@ bool varWrite(Variant& var, const TextureBinding& value, Logger& logger) {
 	bool success = true;
 	Variant v;
 
-	VarList varList("Texture");
+	VarList varList("Texture", VarList::INLINE | VarList::CALL);
 
 	success &= varWrite(v, String(value.unit->name), logger);
 	varList.emplace_back(std::move(v));
@@ -480,7 +480,7 @@ bool varWrite(Variant& var, const TextureSetCSP& value, Logger& logger) {
 		success = varWrite(var, binding, logger);
 	}
 	else {
-		VarList varList("TextureSet");
+		VarList varList("TextureSet", VarList::CALL);
 		for(auto&& binding: *value) {
 			if(binding.texture)
 				 success &= varWrite(var, binding, logger);

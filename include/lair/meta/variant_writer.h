@@ -109,7 +109,7 @@ bool varWrite(Variant& var, const Eigen::AlignedBox<Scalar, Dim>& value, Logger&
 
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
 bool varWrite(Variant& var, const Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& value, Logger& /*logger*/) {
-	VarList varList;
+	VarList varList(VarList::INLINE | VarList::CALL);
 	varList.type() = "Vector";
 	for(unsigned i = 0; i < value.size(); ++i)
 		varList.emplace_back(value(i));
@@ -120,7 +120,7 @@ bool varWrite(Variant& var, const Eigen::Matrix<Scalar, Rows, Cols, Options, Max
 
 template<typename Scalar, int Dim>
 bool varWrite(Variant& var, const Eigen::AlignedBox<Scalar, Dim>& value, Logger& logger) {
-	VarMap varMap;
+	VarMap varMap(VarMap::INLINE);
 	varMap.type() = "Box";
 
 	bool success = true;

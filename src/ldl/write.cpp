@@ -162,7 +162,10 @@ bool ldlWrite(LdlWriter& writer, const Variant& value) {
 bool ldlWrite(LdlWriter& writer, const VarList& value) {
 	bool success = true;
 
-	writer.openList(LdlWriter::CF_MULTI_LINE, value.type());
+	LdlWriter::CompoundFormat format = value.isInline()?
+	                                       LdlWriter::CF_SINGLE_LINE:
+	                                       LdlWriter::CF_MULTI_LINE;
+	writer.openList(format, value.type());
 	for(auto&& var: value) {
 		success = success && ldlWrite(writer, var);
 	}
@@ -175,7 +178,10 @@ bool ldlWrite(LdlWriter& writer, const VarList& value) {
 bool ldlWrite(LdlWriter& writer, const VarMap&  value) {
 	bool success = true;
 
-	writer.openMap(LdlWriter::CF_MULTI_LINE, value.type());
+	LdlWriter::CompoundFormat format = value.isInline()?
+	                                       LdlWriter::CF_SINGLE_LINE:
+	                                       LdlWriter::CF_MULTI_LINE;
+	writer.openMap(format, value.type());
 	for(auto&& pair: value) {
 		writer.writeKey(pair.first);
 		success = success && ldlWrite(writer, pair.second);

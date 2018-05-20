@@ -111,6 +111,7 @@ public:
 
 	virtual void updateTick();
 	virtual void updateFrame();
+	virtual void render();
 
 protected:
 	MainState* state;

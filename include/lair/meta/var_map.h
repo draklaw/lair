@@ -41,9 +41,13 @@ public:
 	using Base::iterator;
 	using Base::const_iterator;
 
+	enum Style {
+		INLINE = 0x01,
+	};
+
 public:
-	VarMap();
-	VarMap(const String& type);
+	VarMap(unsigned style = 0);
+	VarMap(const String& type, unsigned style = 0);
 	VarMap(const VarMap&) = default;
 	VarMap(VarMap&&)      = default;
 	~VarMap();
@@ -56,8 +60,12 @@ public:
 	const String& type() const;
 	String& type();
 
+	unsigned style() const;
+	bool isInline() const;
+
 protected:
-	String _type;
+	String   _type;
+	unsigned _style;
 };
 
 
