@@ -9,7 +9,6 @@
 
 - ldl:rewrite: Rewrite a more readable and maintainable version of LdlParser ?
 - ldl:fix-line-number: Line/col number do not match the current token but the position of the buffer object.
-- ldl:var-inline: Add an inline flag to VarMap and VarList and maybe a list style ?
 
 - sys:mouse: Better mouse support
 - sys:gamepad: Support gamepads

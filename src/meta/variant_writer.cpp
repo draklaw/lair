@@ -110,7 +110,7 @@ bool varWrite(Variant& var, const Transform& value, Logger& logger) {
 	if(!rot.isApprox(Matrix3::Identity())) {
 		Eigen::AngleAxisf aa(rot);
 
-		VarList rot;
+		VarList rot(VarList::INLINE | VarList::CALL);
 		if(aa.axis().isApprox(Vector3::UnitZ())) {
 			rot.emplace_back(aa.angle() * 180 / M_PI);
 		}
@@ -127,7 +127,7 @@ bool varWrite(Variant& var, const Transform& value, Logger& logger) {
 	}
 
 	if(!scale.isApprox(Matrix3::Identity())) {
-		VarList scl;
+		VarList scl(VarList::INLINE | VarList::CALL);
 		for(unsigned i = 0; i < 3; ++i)
 			scl.emplace_back(scale(i, i));
 		scl.type() = "scale";
