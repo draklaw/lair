@@ -447,7 +447,7 @@ void TileMapLoader::parseMap(std::istream& in, Logger& log) {
 				return;
 			}
 			_tileMap._setTileSet(tileSetImg);
-		}, log);
+		});
 	}
 
 	errors.log(log);

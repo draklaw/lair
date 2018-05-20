@@ -313,7 +313,7 @@ void GlslSourceLoader::loadSyncImpl(Logger& log) {
 		if(match) {
 			_chunks.back().end = lineStart;
 			auto loader = _load<GlslSourceLoader>(Path(String(begin, end)),
-			                                      [](AspectSP, Logger&){}, log);
+			                                      [](AspectSP, Logger&){});
 			auto aspect = std::static_pointer_cast<GlslSourceAspect>(loader->aspect());
 			_chunks.push_back(Chunk{INCLUDE, begin, end, line, aspect});
 			_chunks.push_back(Chunk{CODE, p, p, line, GlslSourceAspectSP()});

@@ -9,6 +9,7 @@
 
 - ldl:rewrite: Rewrite a more readable and maintainable version of LdlParser ?
 - ldl:fix-line-number: Line/col number do not match the current token but the position of the buffer object.
+- ldl:var-inline: Add an inline flag to VarMap and VarList and maybe a list style ?
 
 - sys:mouse: Better mouse support
 - sys:gamepad: Support gamepads
@@ -19,7 +20,6 @@
 - assets:cleanup: Remove cached objects when possible
 - assets:group: Create assets groups to automatically follow load progress / release assets
 - assets:autoreload: Track file changes and auto-reload assets
-- assets:race-condition: Fix race-condition when accessing loader callbacks.
 - assets:main-thread-loader-fix: "Main-thread" loader are not guaranteed to be on the main thread if they are started from an other loader.
 - assets:load-deps: Add a way to declare loader dependencies (tile maps must be loaded after models)
 - assets:coroutine: Create a worker-thread / coroutine ordonnancer and use it in loader.

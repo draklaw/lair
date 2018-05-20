@@ -51,6 +51,15 @@ namespace lair
 {
 
 
+// Uncomment this for a very verbose debug output.
+//#define LAIR_DEBUG_LOADER
+#ifdef LAIR_DEBUG_LOADER
+    #define LAIR_LOADER_PRINT(...) do { std::ostringstream out; out << __VA_ARGS__ << "\n"; std::cout << out.str(); } while(false);
+#else
+    #define LAIR_LOADER_PRINT(...)
+#endif
+
+
 enum {
 	MAX_LOADER_THREADS = 8
 };
@@ -62,7 +71,7 @@ class LoaderManager;
 typedef std::shared_ptr<Loader> LoaderSP;
 
 
-class Loader {
+class Loader : public std::enable_shared_from_this<Loader> {
 public:
 	typedef std::function<void(AspectSP, Logger&)> DoneCallback;
 	typedef std::list<DoneCallback> CallbackList;
@@ -72,6 +81,7 @@ public:
 		LOADING,
 		READY,
 		LOADED,
+		POST_LOAD, /// Used to trigger callback after load
 	};
 
 	enum Flags {
@@ -99,7 +109,7 @@ public:
 	VirtualFile        file() const;
 
 	void registerCallback(DoneCallback&& callback);
-	void stealCallbacks(CallbackList& callbacks);
+	void _finalize(CallbackList& callbacks, std::list<LoaderSP>::iterator it);
 
 	void wait();
 
@@ -110,7 +120,7 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 	template <typename L>
-	LoaderSP _load(const Path& logicPath, DoneCallback callback, Logger& log);
+	LoaderSP _load(const Path& logicPath, DoneCallback callback);
 
 	void _done();
 
@@ -176,11 +186,6 @@ public:
 		}
 		else if(aspect->isValid()) {
 			loader = Loader::newLoaderDone(this, aspect);
-			{
-				std::unique_lock<std::mutex> lk(_queueLock);
-				_wipList.push_back(loader);
-			}
-			_notifyReady();
 			return loader;
 		}
 		else {
@@ -264,6 +269,8 @@ public:
 	void _enqueueLoader(LoaderSP loader);
 	LoaderSP _popLoader();
 
+	void _addToWip(LoaderSP loader);
+	void _removeFromWip(std::list<LoaderSP>::iterator it);
 	void _notifyReady();
 	void _waitLoadEvent();
 
@@ -296,22 +303,22 @@ private:
 
 
 template <typename L>
-LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback, Logger& log) {
-	auto loader = _manager->load<L>(makeAbsolute(asset()->logicPath().dir(), logicPath));
-	if(loader && loader->state() != LOADED) {
-		{
-			std::unique_lock<std::mutex> lk(_mutex);
-			++_depCount;
-		}
+LoaderSP Loader::_load(const Path& logicPath, DoneCallback callback) {
+	LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Load " << logicPath)
 
-		loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
-			callback(aspect, log);
-			_done();
-		});
+	auto loader = _manager->load<L>(makeAbsolute(asset()->logicPath().dir(), logicPath));
+
+	{
+		std::unique_lock<std::mutex> lk(_mutex);
+		++_depCount;
 	}
-	else {
-		callback(loader->aspect(), log);
-	}
+
+	loader->registerCallback([this, callback](AspectSP aspect, Logger& log) {
+		LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Execute "
+		                  << aspect->asset()->logicPath().utf8String() << ", deps: " << _depCount)
+		callback(aspect, log);
+		_done();
+	});
 
 	return loader;
 }

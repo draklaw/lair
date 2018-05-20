@@ -38,12 +38,14 @@ Loader::Loader(LoaderManager* manager, AspectSP aspect, unsigned flags)
       _depCount(1),
       _aspect(aspect),
       _mutex() {
+	LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Create")
 }
 
 
 LoaderSP Loader::newLoaderDone(LoaderManager* manager, AspectSP aspect) {
 	LoaderSP loader   = std::make_shared<Loader>(manager, aspect);
-	loader->_state    = READY;
+	LAIR_LOADER_PRINT("Loader " << loader->asset()->logicPath().utf8String() << ": Create LOADED")
+	loader->_state    = LOADED;
 	loader->_depCount = 0;
 	return loader;
 }
@@ -70,13 +72,29 @@ VirtualFile Loader::file() const {
 
 
 void Loader::registerCallback(DoneCallback&& callback) {
-	lairAssert(state() != LOADED);
+	std::unique_lock<std::mutex> lk(_mutex);
+
+	LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Register callback" << ((_state == LOADED)? " LOADED": ""))
+
 	_onDone.emplace_back(callback);
+
+	if(_state == LOADED) {
+		_state = POST_LOAD;
+		_manager->_addToWip(shared_from_this());
+	}
 }
 
 
-void Loader::stealCallbacks(CallbackList& callbacks)
+void Loader::_finalize(CallbackList& callbacks, std::list<LoaderSP>::iterator it)
 {
+	LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Finalize")
+
+	std::unique_lock<std::mutex> lk(_mutex);
+
+	_state = LOADED;
+
+	_manager->_removeFromWip(it);
+
 	_onDone.swap(callbacks);
 	_onDone.clear();
 }
@@ -93,6 +111,8 @@ void Loader::wait() {
 
 
 void Loader::loadSync(Logger& log) {
+	LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Load sync")
+
 	{
 		std::unique_lock<std::mutex>(_mutex);
 		lairAssert(_state == IN_QUEUE);
@@ -113,9 +133,7 @@ void Loader::loadSync(Logger& log) {
 
 
 void Loader::commit() {
-	std::unique_lock<std::mutex>(_mutex);
-	lairAssert(_state == READY);
-	_state = LOADED;
+	lairAssert(state() == READY);
 }
 
 
@@ -126,9 +144,12 @@ void Loader::loadSyncImpl(Logger&) {
 void Loader::_done() {
 	std::unique_lock<std::mutex> lk(_mutex);
 
+	LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": Step done (" << _depCount << " -> " << _depCount - 1 << ")")
+
 	if(_depCount > 0) {
 		--_depCount;
 		if(_depCount == 0) {
+			LAIR_LOADER_PRINT("Loader " << asset()->logicPath().utf8String() << ": READY")
 			_state = READY;
 			_manager->_notifyReady();
 		}
@@ -262,6 +283,8 @@ void LoaderManager::setFileSystem(AbstractFileSystemSP fileSystem) {
 
 
 void LoaderManager::finalizePending() {
+	LAIR_LOADER_PRINT("Loader manager: Finalize pending")
+
 	std::unique_lock<std::mutex> lk(_queueLock);
 
 	auto begin = _wipList.begin();
@@ -274,9 +297,13 @@ void LoaderManager::finalizePending() {
 
 
 void LoaderManager::waitAll() {
+	LAIR_LOADER_PRINT("Loader manager: Wait all")
+
 	std::unique_lock<std::mutex> lk(_queueLock);
 	while(!_queue.empty() || !_wipList.empty()) {
-		_loaderCv.wait(lk, [this]{ return _nReady; });
+		if(_nReady == 0) {
+			_loaderCv.wait(lk, [this]{ return _nReady; });
+		}
 
 		auto begin = _wipList.begin();
 		auto end   = _wipList.end();
@@ -289,6 +316,7 @@ void LoaderManager::waitAll() {
 
 
 void LoaderManager::_enqueueLoader(LoaderSP loader) {
+	LAIR_LOADER_PRINT("Loader manager: Enqueue " << loader->asset()->logicPath().utf8String())
 	{
 		std::unique_lock<std::mutex> lk(_queueLock);
 		_queue.push_back(loader);
@@ -306,10 +334,32 @@ LoaderSP LoaderManager::_popLoader() {
 	LoaderSP loader;
 	if(_queue.size()) {
 		loader = _queue.front();
+		LAIR_LOADER_PRINT("Loader manager: Move " << loader->asset()->logicPath().utf8String() << " to WIP")
 		_queue.pop_front();
 		_wipList.push_back(loader);
 	}
 	return loader;
+}
+
+
+void LoaderManager::_addToWip(LoaderSP loader) {
+	LAIR_LOADER_PRINT("Loader manager: Add " << loader->asset()->logicPath().utf8String() << " to WIP (post-load)")
+
+	{
+		std::unique_lock<std::mutex> lk(_queueLock);
+		++_nReady;
+		_wipList.emplace_back(loader);
+	}
+	_loaderCv.notify_all();
+}
+
+
+void LoaderManager::_removeFromWip(std::list<LoaderSP>::iterator it) {
+	LAIR_LOADER_PRINT("Loader manager: Remove " << (*it)->asset()->logicPath().utf8String() << " from WIP")
+
+	std::unique_lock<std::mutex> lk(_queueLock);
+	--_nReady;
+	_wipList.erase(it);
 }
 
 
@@ -321,22 +371,35 @@ void LoaderManager::_notifyReady() {
 
 
 void LoaderManager::_waitLoadEvent() {
-	{
-		std::unique_lock<std::mutex> lk(_queueLock);
-		_loaderCv.wait(lk);
+	std::unique_lock<std::mutex> lk(_queueLock);
+	if(!_queue.empty() || !_wipList.empty()) {
+		if(_nReady == 0) {
+			_loaderCv.wait(lk, [this]{ return _nReady; });
+		}
+
+		auto begin = _wipList.begin();
+		auto end   = _wipList.end();
+
+		lk.unlock();
+		_finalizePending(begin, end);
+		lk.lock();
 	}
-	finalizePending();
 }
 
 
 void LoaderManager::_finalize(LoaderList::iterator loaderIt) {
 	LoaderSP loader = *loaderIt;
 
-//	log().info("Finalize \"", loader->asset()->logicPath(), "\"...");
-	loader->commit();
+	LAIR_LOADER_PRINT("Loader manager: Finalize " << loader->asset()->logicPath().utf8String())
+
+	// This is thread-safe because only the main thread can set the LOADED state.
+	if(loader->state() == Loader::READY) {
+		//log().info("Finalize \"", loader->asset()->logicPath(), "\"...");
+		loader->commit();
+	}
 
 	Loader::CallbackList callbacks;
-	loader->stealCallbacks(callbacks);
+	loader->_finalize(callbacks, loaderIt);
 
 	for(Loader::DoneCallback& callback: callbacks) {
 		callback(loader->aspect(), log());
@@ -344,11 +407,7 @@ void LoaderManager::_finalize(LoaderList::iterator loaderIt) {
 
 	loader->aspect()->_setLoader(LoaderSP());
 
-	{
-		std::unique_lock<std::mutex> lk(_queueLock);
-		--_nReady;
-		_wipList.erase(loaderIt);
-	}
+	LAIR_LOADER_PRINT("Loader manager: Finalize " << loader->asset()->logicPath().utf8String() << " DONE")
 }
 
 
