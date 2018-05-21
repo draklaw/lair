@@ -34,12 +34,14 @@ namespace lair
 {
 
 
-class VarMap : public std::unordered_map<String, Variant> {
+class VarMap {
 public:
-	typedef std::unordered_map<String, Variant> Base;
+	typedef std::pair<String, Variant> Pair;
+	typedef std::unordered_map<String, unsigned> Map;
+	typedef std::vector<Pair> List;
 
-	using Base::iterator;
-	using Base::const_iterator;
+	typedef List::iterator iterator;
+	typedef List::const_iterator const_iterator;
 
 	enum Style {
 		INLINE = 0x01,
@@ -55,6 +57,37 @@ public:
 	VarMap& operator=(const VarMap&) = default;
 	VarMap& operator=(VarMap&&)      = default;
 
+	iterator begin();
+	iterator end();
+	const_iterator begin() const;
+	const_iterator end() const;
+
+	unsigned empty() const;
+	unsigned size() const;
+
+	void clear();
+
+	std::pair<iterator,bool> insert(const Pair& pair);
+	std::pair<iterator,bool> insert(Pair&& pair);
+
+	template<typename... Args>
+	std::pair<iterator, bool> emplace(Args&&... args);
+
+	iterator erase(const_iterator pos);
+	unsigned erase(const String& key);
+
+	void swap(VarMap& other);
+
+	Variant& at(const String& key);
+	const Variant& at(const String& key) const;
+
+	Variant& operator[](const String& key);
+
+	unsigned count(const String& key) const;
+
+	iterator find(const String& key);
+	const_iterator find(const String& key) const;
+
 	const Variant& get(const String& id) const;
 
 	const String& type() const;
@@ -64,9 +97,20 @@ public:
 	bool isInline() const;
 
 protected:
+	iterator _erase(Map::iterator it);
+
+protected:
+	Map _map;
+	List _list;
 	String   _type;
 	unsigned _style;
 };
+
+
+template<typename... Args>
+std::pair<VarMap::iterator, bool> VarMap::emplace(Args&&... args) {
+	return insert(Pair(std::forward<Args>(args)...));
+}
 
 
 }
