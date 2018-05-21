@@ -49,7 +49,7 @@ public:
 
 	~MemoryPool() {
 		for(Byte* block: _blocks)
-			delete block;
+			delete[] block;
 	}
 
 	MemoryPool& operator=(const MemoryPool& ) = delete;
