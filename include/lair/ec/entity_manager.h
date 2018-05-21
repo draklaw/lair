@@ -91,6 +91,7 @@ public:
 	// Operates in linear time wrt the number of siblings
 	// O(1) if entity is the first child.
 	void destroyEntity(EntityRef entity);
+	void _destroyEntity(EntityRef entity);
 	void _releaseEntity(_Entity* entity);
 
 	void setEntityName(EntityRef entity, const String& name);

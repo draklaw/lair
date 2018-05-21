@@ -53,7 +53,7 @@ EntityManager::EntityManager(Logger& logger, PropertySerializer& serializer, siz
 
 
 EntityManager::~EntityManager() {
-	_root.release();
+	_destroyEntity(_root);
 }
 
 
@@ -308,7 +308,10 @@ bool EntityManager::saveEntities(Variant& var, EntityRef entity) const {
 
 void EntityManager::destroyEntity(EntityRef entity) {
 	lairAssert(entity.isValid() && entity != _root);
+	_destroyEntity(entity);
+}
 
+void EntityManager::_destroyEntity(EntityRef entity) {
 	while(entity.firstChild().isValid()) {
 		destroyEntity(entity.firstChild());
 	}
@@ -318,7 +321,10 @@ void EntityManager::destroyEntity(EntityRef entity) {
 		entity._get()->firstComponent->manager()->removeComponent(entity);
 	}
 
-	entity._get()->parent->removeChild(entity._get());
+	if(entity._get()->parent) {
+		entity._get()->parent->removeChild(entity._get());
+	}
+
 	delete[] entity._get()->name;
 	entity._get()->reset();
 	--_nEntities;
