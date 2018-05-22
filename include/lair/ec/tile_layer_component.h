@@ -59,7 +59,7 @@ public:
 	TileLayerComponent(Manager* manager, _Entity* entity);
 	TileLayerComponent(const TileLayerComponent&) = delete;
 	TileLayerComponent(TileLayerComponent&&)      = default;
-	virtual ~TileLayerComponent() = default;
+	~TileLayerComponent() = default;
 
 	TileLayerComponent& operator=(const TileLayerComponent&) = delete;
 	TileLayerComponent& operator=(TileLayerComponent&&)      = default;
@@ -88,6 +88,7 @@ public:
 	inline void setBlendingMode(BlendingMode bm) { _blendingMode = bm; }
 
 	static const PropertyList& properties();
+
 
 protected:
 	TileMapAspectSP _tileMap;

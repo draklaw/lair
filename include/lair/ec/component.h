@@ -47,7 +47,7 @@ public:
 	explicit Component(ComponentManager* manager, _Entity* entity);
 	Component(const Component&) = delete;
 	Component(Component&&)      = default;
-	virtual ~Component();
+	~Component();
 
 	Component& operator=(const Component&) = delete;
 	Component& operator=(Component&&)      = default;
