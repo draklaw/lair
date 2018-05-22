@@ -342,8 +342,8 @@ public:
 //	}
 
 	inline void destroyChildren() {
-		while(nextSibling().isValid()) {
-			nextSibling().destroy();
+		while(firstChild().isValid()) {
+			firstChild().destroy();
 		}
 	}
 

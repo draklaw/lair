@@ -51,12 +51,11 @@ MainState::MainState(Game* game)
       _mainPass(renderer()),
       _spriteRenderer(loader(), renderer()),
 
+      _entities(log(), _game->serializer()),
       _collisions(),
       _sprites(assets(), loader(), &_mainPass, &_spriteRenderer),
       _texts(loader(), &_mainPass, &_spriteRenderer),
       _tileLayers(loader(), &_mainPass, &_spriteRenderer),
-
-      _entities(log(), _game->serializer()),
 
       _inputs(sys(), &log()),
 

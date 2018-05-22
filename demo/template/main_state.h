@@ -93,14 +93,11 @@ protected:
 	RenderPass                 _mainPass;
 	SpriteRenderer             _spriteRenderer;
 
+	EntityManager              _entities;
 	CollisionComponentManager  _collisions;
 	SpriteComponentManager     _sprites;
 	BitmapTextComponentManager _texts;
 	TileLayerComponentManager  _tileLayers;
-
-	// Entities must be declared after component managers so it is destroyed first.
-	// This make sure that components are properly destroyed.
-	EntityManager              _entities;
 
 	InputManager               _inputs;
 

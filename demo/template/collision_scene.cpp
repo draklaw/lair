@@ -68,8 +68,10 @@ void CollisionScene::updateTick() {
 	float offset = 1;
 	float rotAngle = M_PI / 60;
 	Vector2 p = _player.position2();
+	CollisionComponent* pc = collision(_player);
 
 	// Movement
+	float prevRotation = _rotation;
 	if(sys()->getKeyState(SDL_SCANCODE_A))
 		p(0) -= offset;
 	if(sys()->getKeyState(SDL_SCANCODE_D))
@@ -83,6 +85,10 @@ void CollisionScene::updateTick() {
 	if(sys()->getKeyState(SDL_SCANCODE_Q))
 		_rotation += rotAngle;
 
+	if(p != _player.position2() || _rotation != prevRotation) {
+		pc->setDirty();
+	}
+
 	log().warning(fmt(p), ", ", _rotation * 180 / M_PI);
 	Transform trans = Transform::Identity();
 	trans.translate((Vector3() << p, _player.position3()(2)).finished());
@@ -90,24 +96,26 @@ void CollisionScene::updateTick() {
 	_player.place(trans);
 
 	// Shape type
-	CollisionComponent* pc = collision(_player);
 	if(sys()->getKeyState(SDL_SCANCODE_1)) {
 		_shapeType = DOT;
 		pc->setShapes(Shape2DVector{ Sphere2(Vector2(0, 0), 4) });
+		pc->setDirty();
 	}
 	if(sys()->getKeyState(SDL_SCANCODE_2)) {
 		_shapeType = CIRCLE;
 		pc->setShapes(Shape2DVector{ Sphere2(Vector2(0, 0), 32) });
+		pc->setDirty();
 	}
 	if(sys()->getKeyState(SDL_SCANCODE_3)) {
 		_shapeType = ABOX;
 		pc->setShapes(Shape2DVector{ AlignedBox2(Vector2(-32, -48), Vector2(32, 48)) });
+		pc->setDirty();
 	}
 	if(sys()->getKeyState(SDL_SCANCODE_4)) {
 		_shapeType = ABOX;
 		pc->setShapes(Shape2DVector{ OrientedBox2(Vector2(0, 0), Vector2(64, 96)) });
+		pc->setDirty();
 	}
-	pc->setDirty();
 
 	// Clear dots
 	EntityRef dot = _dotRoot.firstChild();
