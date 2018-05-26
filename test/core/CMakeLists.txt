@@ -22,6 +22,7 @@ add_executable(test_core
 	test_path.cpp
 	test_text.cpp
 	test_signal.cpp
+	test_intrusive_pointer.cpp
 )
 
 target_link_libraries(test_core
