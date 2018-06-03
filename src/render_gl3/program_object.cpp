@@ -255,7 +255,7 @@ ShaderLoader::ShaderLoader(LoaderManager* manager, AspectSP aspect,
 
 
 void ShaderLoader::commit() {
-	ShaderAspectSP aspect = std::static_pointer_cast<ShaderAspect>(_aspect);
+	ShaderAspectSP aspect = static_pointer_cast<ShaderAspect>(_aspect);
 
 	if(_vertexShader.isValid() && _fragmentShader.isValid()) {
 		ProgramObject shader = _renderer->compileProgram(
@@ -362,7 +362,7 @@ void ShaderLoader::loadSyncImpl(Logger& log) {
 
 void ShaderLoader::loadShader(AspectSP aspect, Logger& log, GLenum type) {
 	if(aspect->isValid()) {
-		GlslSourceAspectSP sourceAspect = std::static_pointer_cast<GlslSourceAspect>(aspect);
+		GlslSourceAspectSP sourceAspect = static_pointer_cast<GlslSourceAspect>(aspect);
 
 		ShaderObject* shader = (type == gl::VERTEX_SHADER)?   &_vertexShader:
 		                       (type == gl::FRAGMENT_SHADER)? &_fragmentShader:

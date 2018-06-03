@@ -47,10 +47,32 @@ void Aspect::warnIfInvalid(Logger& log) {
 }
 
 
+void Aspect::_destroy() {
+	_asset->manager()->_destroy(this);
+}
+
+
+void Aspect::_delete() {
+	_asset->manager()->_delete(this);
+}
+
+
+
 Asset::Asset(AssetManager* manager, const Path& logicPath)
     : _manager(manager),
-      _logicPath   (logicPath) {
+      _logicPath(logicPath) {
 }
+
+
+void Asset::_destroy() {
+	_manager->_destroy(this);
+}
+
+
+void Asset::_delete() {
+	_manager->_delete(this);
+}
+
 
 
 AssetManager::AssetManager() {
@@ -60,7 +82,7 @@ AssetManager::AssetManager() {
 AssetSP AssetManager::createAsset(const Path& logicPath) {
 	std::unique_lock<std::mutex> lock(_lock);
 	assert(!_assetMap.count(logicPath));
-	auto it = _assetMap.emplace(logicPath, std::make_shared<Asset>(this, logicPath)).first;
+	auto it = _assetMap.emplace(logicPath, makeIntrusive<Asset>(this, logicPath)).first;
 	return it->second;
 }
 
@@ -79,7 +101,7 @@ AssetSP AssetManager::getOrCreateAsset(const Path& logicPath) {
 	std::unique_lock<std::mutex> lock(_lock);
 	auto it = _assetMap.find(logicPath);
 	if(it == _assetMap.end()) {
-		it = _assetMap.emplace(logicPath, std::make_shared<Asset>(this, logicPath)).first;
+		it = _assetMap.emplace(logicPath, makeIntrusive<Asset>(this, logicPath)).first;
 	}
 	return it->second;
 }
@@ -148,6 +170,26 @@ AspectSP AssetManager::getOrSetAspect(AssetSP asset, AspectSP aspect) {
 void AssetManager::releaseAll() {
 	_aspects.clear();
 	_assetMap.clear();
+}
+
+
+void AssetManager::_destroy(Asset* asset) {
+	asset->~Asset();
+}
+
+
+void AssetManager::_delete(Asset* asset) {
+	free(asset);
+}
+
+
+void AssetManager::_destroy(Aspect* aspect) {
+	aspect->~Aspect();
+}
+
+
+void AssetManager::_delete(Aspect* aspect) {
+	free(aspect);
 }
 
 

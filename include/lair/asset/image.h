@@ -75,9 +75,9 @@ typedef std::shared_ptr<Image> ImageSP;
 typedef std::weak_ptr  <Image> ImageWP;
 
 
-typedef GenericAspect  <Image>       ImageAspect;
-typedef std::shared_ptr<ImageAspect> ImageAspectSP;
-typedef std::weak_ptr  <ImageAspect> ImageAspectWP;
+typedef GenericAspect       <Image>       ImageAspect;
+typedef IntrusivePointer    <ImageAspect> ImageAspectSP;
+typedef IntrusiveWeakPointer<ImageAspect> ImageAspectWP;
 
 
 }

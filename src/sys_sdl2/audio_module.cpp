@@ -239,7 +239,7 @@ SoundLoader::SoundLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void SoundLoader::commit() {
-	SoundAspectSP aspect = std::static_pointer_cast<SoundAspect>(_aspect);
+	SoundAspectSP aspect = static_pointer_cast<SoundAspect>(_aspect);
 	aspect->_get() = std::move(_sound);
 	Loader::commit();
 }
@@ -270,7 +270,7 @@ MusicLoader::MusicLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void MusicLoader::commit() {
-	MusicAspectSP aspect = std::static_pointer_cast<MusicAspect>(_aspect);
+	MusicAspectSP aspect = static_pointer_cast<MusicAspect>(_aspect);
 	aspect->_get() = std::move(_music);
 	Loader::commit();
 }

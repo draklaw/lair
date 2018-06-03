@@ -88,9 +88,9 @@ private:
 };
 
 
-typedef GenericAspect  <ProgramObject> ShaderAspect;
-typedef std::shared_ptr<ShaderAspect>  ShaderAspectSP;
-typedef std::weak_ptr  <ShaderAspect>  ShaderAspectWP;
+typedef GenericAspect       <ProgramObject> ShaderAspect;
+typedef IntrusivePointer    <ShaderAspect>  ShaderAspectSP;
+typedef IntrusiveWeakPointer<ShaderAspect>  ShaderAspectWP;
 
 
 class ShaderLoader : public Loader {

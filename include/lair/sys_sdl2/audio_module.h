@@ -116,13 +116,13 @@ private:
 };
 
 
-typedef GenericAspect<Sound>         SoundAspect;
-typedef std::shared_ptr<SoundAspect> SoundAspectSP;
-typedef std::weak_ptr  <SoundAspect> SoundAspectWP;
+typedef GenericAspect       <Sound>       SoundAspect;
+typedef IntrusivePointer    <SoundAspect> SoundAspectSP;
+typedef IntrusiveWeakPointer<SoundAspect> SoundAspectWP;
 
-typedef GenericAspect<Music>         MusicAspect;
-typedef std::shared_ptr<MusicAspect> MusicAspectSP;
-typedef std::weak_ptr  <MusicAspect> MusicAspectWP;
+typedef GenericAspect       <Music>       MusicAspect;
+typedef IntrusivePointer    <MusicAspect> MusicAspectSP;
+typedef IntrusiveWeakPointer<MusicAspect> MusicAspectWP;
 
 
 class SoundLoader : public Loader {

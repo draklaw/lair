@@ -87,9 +87,9 @@ protected:
 typedef std::shared_ptr<Texture> TextureSP;
 typedef std::weak_ptr  <Texture> TextureWP;
 
-typedef GenericAspect  <Texture>       TextureAspect;
-typedef std::shared_ptr<TextureAspect> TextureAspectSP;
-typedef std::weak_ptr  <TextureAspect> TextureAspectWP;
+typedef GenericAspect       <Texture>       TextureAspect;
+typedef IntrusivePointer    <TextureAspect> TextureAspectSP;
+typedef IntrusiveWeakPointer<TextureAspect> TextureAspectWP;
 
 
 }

@@ -152,9 +152,9 @@ private:
 };
 
 
-typedef GenericAspect  <GlslSource>       GlslSourceAspect;
-typedef std::shared_ptr<GlslSourceAspect> GlslSourceAspectSP;
-typedef std::weak_ptr  <GlslSourceAspect> GlslSourceAspectWP;
+typedef GenericAspect       <GlslSource>       GlslSourceAspect;
+typedef IntrusivePointer    <GlslSourceAspect> GlslSourceAspectSP;
+typedef IntrusiveWeakPointer<GlslSourceAspect> GlslSourceAspectWP;
 
 
 class GlslSourceLoader : public Loader {

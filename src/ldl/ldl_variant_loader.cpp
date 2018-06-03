@@ -37,7 +37,7 @@ LdlVariantLoader::LdlVariantLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void LdlVariantLoader::commit() {
-	VariantAspectSP aspect = std::static_pointer_cast<VariantAspect>(_aspect);
+	VariantAspectSP aspect = static_pointer_cast<VariantAspect>(_aspect);
 	aspect->_get() = std::move(_variant);
 	Loader::commit();
 }

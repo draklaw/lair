@@ -165,9 +165,9 @@ protected:
 typedef std::shared_ptr<TileMap> TileMapSP;
 
 
-typedef GenericAspect<TileMap>         TileMapAspect;
-typedef std::shared_ptr<TileMapAspect> TileMapAspectSP;
-typedef std::weak_ptr  <TileMapAspect> TileMapAspectWP;
+typedef GenericAspect       <TileMap>       TileMapAspect;
+typedef IntrusivePointer    <TileMapAspect> TileMapAspectSP;
+typedef IntrusiveWeakPointer<TileMapAspect> TileMapAspectWP;
 
 class TileMapLoader : public Loader {
 public:

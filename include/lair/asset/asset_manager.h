@@ -31,6 +31,7 @@
 
 #include <lair/core/lair.h>
 #include <lair/core/log.h>
+#include <lair/core/intrusive_pointer.h>
 #include <lair/core/path.h>
 
 
@@ -43,14 +44,15 @@ class Asset;
 class AssetManager;
 class Loader;
 
-typedef std::shared_ptr<Aspect> AspectSP;
-typedef std::weak_ptr  <Aspect> AspectWP;
-typedef std::shared_ptr<Asset>  AssetSP;
-typedef std::weak_ptr  <Asset>  AssetWP;
+using AspectSP = IntrusivePointer    <Aspect>;
+using AspectWP = IntrusiveWeakPointer<Aspect>;
+using AssetSP  = IntrusivePointer    <Asset>;
+using AssetWP  = IntrusiveWeakPointer<Asset>;
+
 typedef std::shared_ptr<Loader> LoaderSP;
 
 
-class Aspect {
+class Aspect : public IntrusiveBlock<Aspect> {
 public:
 	enum {
 		WARNED_INVALID = 0x01,
@@ -88,6 +90,9 @@ public:
 	inline LoaderSP _getLoader() { return _loader; }
 	inline void _setLoader(LoaderSP loader) { _loader = loader; }
 
+	void _destroy();
+	void _delete();
+
 protected:
 	AssetSP    _asset;      // Asset must not be destroyed before its aspects.
 	unsigned   _flags;
@@ -103,7 +108,7 @@ public:
 
 public:
 	GenericAspect(AssetSP asset)
-		: Aspect(asset),
+	    : Aspect(asset),
 	      _data() {
 	}
 
@@ -131,7 +136,7 @@ private:
 };
 
 
-class Asset : public std::enable_shared_from_this<Asset> {
+class Asset : public IntrusiveBlock<Asset> {
 public:
 	Asset(AssetManager* manager, const Path& logicPath);
 	Asset(const Asset&)  = delete;
@@ -149,13 +154,13 @@ public:
 //	Size gpuMemory() const;
 
 	template<typename _Aspect>
-	std::shared_ptr<_Aspect> aspect();
+	IntrusivePointer<_Aspect> aspect();
 
 	template<typename _Aspect, typename... Args>
-	std::shared_ptr<_Aspect> createAspect(Args&&... args);
+	IntrusivePointer<_Aspect> createAspect(Args&&... args);
 
 	template<typename _Aspect, typename... Args>
-	std::shared_ptr<_Aspect> getOrCreateAspect(Args&&... args);
+	IntrusivePointer<_Aspect> getOrCreateAspect(Args&&... args);
 
 	inline AssetManager* manager() {
 		return _manager;
@@ -171,6 +176,9 @@ public:
 //	inline void _setFirstAspect(const AspectWP& aspect) {
 //		_firstAspect = aspect;
 //	}
+
+	void _destroy();
+	void _delete();
 
 private:
 	AssetManager* _manager;
@@ -198,15 +206,21 @@ public:
 	AspectSP getOrSetAspect(AssetSP asset, AspectSP aspect);
 
 	template<typename _Aspect>
-	std::shared_ptr<_Aspect> getAspect(AssetSP asset);
+	IntrusivePointer<_Aspect> getAspect(AssetSP asset);
 
 	template<typename _Aspect, typename... Args>
-	std::shared_ptr<_Aspect> createAspect(AssetSP asset, Args&&... args);
+	IntrusivePointer<_Aspect> createAspect(AssetSP asset, Args&&... args);
 
 	template<typename _Aspect, typename... Args>
-	std::shared_ptr<_Aspect> getOrCreateAspect(AssetSP asset, Args&&... args);
+	IntrusivePointer<_Aspect> getOrCreateAspect(AssetSP asset, Args&&... args);
 
 	void releaseAll();
+
+	void _destroy(Asset* asset);
+	void _delete(Asset* asset);
+
+	void _destroy(Aspect* aspect);
+	void _delete(Aspect* aspect);
 
 private:
 	typedef std::unordered_map<Path,            AssetSP, Hash<Path>>
@@ -224,45 +238,42 @@ private:
 
 
 template<typename _Aspect>
-inline std::shared_ptr<_Aspect> Asset::aspect() {
-	AssetSP asset = shared_from_this();
-	return _manager->getAspect<_Aspect>(asset);
+inline IntrusivePointer<_Aspect> Asset::aspect() {
+	return _manager->getAspect<_Aspect>(pointer());
 }
 
 
 template<typename _Aspect, typename... Args>
-std::shared_ptr<_Aspect> Asset::createAspect(Args&&... args) {
-	AssetSP asset = shared_from_this();
-	return _manager->createAspect<_Aspect>(asset, std::forward<Args>(args)...);
+IntrusivePointer<_Aspect> Asset::createAspect(Args&&... args) {
+	return _manager->createAspect<_Aspect>(pointer(), std::forward<Args>(args)...);
 }
 
 
 template<typename _Aspect, typename... Args>
-std::shared_ptr<_Aspect> Asset::getOrCreateAspect(Args&&... args) {
-	AssetSP asset = shared_from_this();
-	return _manager->getOrCreateAspect<_Aspect>(asset, std::forward<Args>(args)...);
+IntrusivePointer<_Aspect> Asset::getOrCreateAspect(Args&&... args) {
+	return _manager->getOrCreateAspect<_Aspect>(pointer(), std::forward<Args>(args)...);
 }
 
 
 
 template<typename _Aspect>
-inline std::shared_ptr<_Aspect> AssetManager::getAspect(AssetSP asset) {
-	return std::static_pointer_cast<_Aspect>(getAspect(typeid(_Aspect), asset));
+inline IntrusivePointer<_Aspect> AssetManager::getAspect(AssetSP asset) {
+	return static_pointer_cast<_Aspect>(getAspect(typeid(_Aspect), asset));
 }
 
 
 template<typename _Aspect, typename... Args>
-inline std::shared_ptr<_Aspect> AssetManager::createAspect(AssetSP asset, Args&&... args) {
-	auto aspect = std::make_shared<_Aspect>(asset, std::forward<Args>(args)...);
+inline IntrusivePointer<_Aspect> AssetManager::createAspect(AssetSP asset, Args&&... args) {
+	auto aspect = makeIntrusive<_Aspect>(asset, std::forward<Args>(args)...);
 	setAspect(asset, aspect);
 	return aspect;
 }
 
 
 template<typename _Aspect, typename... Args>
-inline std::shared_ptr<_Aspect> AssetManager::getOrCreateAspect(AssetSP asset, Args&&... args) {
-	auto aspect = std::make_shared<_Aspect>(asset, std::forward<Args>(args)...);
-	return std::static_pointer_cast<_Aspect>(getOrSetAspect(asset, aspect));
+inline IntrusivePointer<_Aspect> AssetManager::getOrCreateAspect(AssetSP asset, Args&&... args) {
+	auto aspect = makeIntrusive<_Aspect>(asset, std::forward<Args>(args)...);
+	return static_pointer_cast<_Aspect>(getOrSetAspect(asset, aspect));
 }
 
 

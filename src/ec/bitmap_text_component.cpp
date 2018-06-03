@@ -88,7 +88,7 @@ BitmapFontLoader::~BitmapFontLoader() {
 
 
 void BitmapFontLoader::commit() {
-	BitmapFontAspectSP aspect = std::static_pointer_cast<BitmapFontAspect>(_aspect);
+	BitmapFontAspectSP aspect = static_pointer_cast<BitmapFontAspect>(_aspect);
 	aspect->_get() = std::move(_font);
 	Loader::commit();
 }
@@ -105,7 +105,7 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 
 	_load<ImageLoader>(imgPath, [this](AspectSP imgAspect, Logger& log) {
 		if(imgAspect->isValid()) {
-			auto aspect = std::dynamic_pointer_cast<ImageAspect>(imgAspect);
+			auto aspect = dynamic_pointer_cast<ImageAspect>(imgAspect);
 			lairAssert(bool(aspect));
 
 			_font.setFontSize(_fontDesc.get("size", 0).asInt());

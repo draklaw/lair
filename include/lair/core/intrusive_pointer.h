@@ -51,7 +51,7 @@ public:
 	using ConstWeakPointer = IntrusiveWeakPointer<const T>;
 
 public:
-	IntrusiveBlock(Pointer& ptr);
+	IntrusiveBlock();
 	IntrusiveBlock(const IntrusiveBlock& ) = delete;
 	IntrusiveBlock(      IntrusiveBlock&&) = delete;
 
@@ -63,7 +63,7 @@ public:
 	ConstPointer pointer() const;
 	ConstPointer constPointer() const;
 
-private:
+public:
 	friend class IntrusivePointer<T>;
 	friend class IntrusiveWeakPointer<T>;
 
@@ -89,8 +89,8 @@ public:
 	typedef T element_type;
 	typedef IntrusiveWeakPointer<T> weak_type;
 
-	static_assert(std::is_base_of<IntrusiveBlock<T>, T>::value,
-	              "IntrusivePointer only works with descendent of IntrusiveBlock");
+//	static_assert(std::is_base_of<IntrusiveBlock<T>, T>::value,
+//	              "IntrusivePointer only works with descendent of IntrusiveBlock");
 
 public:
 	constexpr IntrusivePointer() noexcept;
@@ -104,6 +104,9 @@ private:
 	explicit IntrusivePointer(U* ptr, _dont_inc_ref) noexcept;
 
 public:
+	template<typename U>
+	IntrusivePointer(const IntrusivePointer<U>& ptr);
+
 	template<typename U>
 	explicit IntrusivePointer(const IntrusiveWeakPointer<U>& ptr);
 
@@ -134,6 +137,8 @@ public:
 	long use_count() const noexcept;
 
 	explicit operator bool() const noexcept;
+
+	static IntrusivePointer _create(T* ptr) noexcept;
 
 private:
 	T* _ptr;
@@ -197,6 +202,33 @@ std::size_t hash(const IntrusivePointer<T>& ptr) {
 	return std::hash<T*>()(ptr.get());
 }
 
+template<typename T, typename U>
+IntrusivePointer<T> static_pointer_cast(const IntrusivePointer<U>& ptr) {
+	return IntrusivePointer<T>::_create(static_cast<T*>(ptr.get()));
+}
+
+template<typename T, typename U>
+IntrusivePointer<T> dynamic_pointer_cast(const IntrusivePointer<U>& ptr) {
+	return IntrusivePointer<T>::_create(dynamic_cast<T*>(ptr.get()));
+}
+
+template<typename T, typename U>
+IntrusivePointer<T> const_pointer_cast(const IntrusivePointer<U>& ptr) {
+	return IntrusivePointer<T>::_create(const_cast<T*>(ptr.get()));
+}
+
+template<typename T, typename... Args>
+IntrusivePointer<T> makeIntrusive(Args... args) {
+	T* ptr = static_cast<T*>(malloc(sizeof(T)));
+	return makeIntrusiveAt(ptr, std::forward<Args>(args)...);
+}
+
+template<typename T, typename... Args>
+IntrusivePointer<T> makeIntrusiveAt(T* dst, Args... args) {
+	T* ptr = new(dst) T(std::forward<Args>(args)...);
+	return static_pointer_cast<T>(ptr->pointer());
+}
+
 
 template<typename T>
 class IntrusiveWeakPointer {
@@ -204,8 +236,8 @@ public:
 	typedef T element_type;
 	typedef IntrusivePointer<T> shared_type;
 
-	static_assert(std::is_base_of<IntrusiveBlock<T>, T>::value,
-	              "IntrusivePointer only works with descendent of IntrusiveBlock");
+//	static_assert(std::is_base_of<IntrusiveBlock<T>, T>::value,
+//	              "IntrusivePointer only works with descendent of IntrusiveBlock");
 
 public:
 	constexpr IntrusiveWeakPointer() noexcept;
@@ -238,12 +270,11 @@ private:
 
 
 template<typename T>
-IntrusiveBlock<T>::IntrusiveBlock(Pointer& ptr)
-    : _refCount(1)
-    , _weakRefCount(1)
+IntrusiveBlock<T>::IntrusiveBlock()
+    : _refCount(0)
+    , _weakRefCount(0)
 {
 //	std::cerr << "IB(" << _refCount << ", " << _weakRefCount << ")\n";
-	ptr._reset(static_cast<T*>(this));
 }
 
 
@@ -272,13 +303,8 @@ template<typename T>
 void IntrusiveBlock<T>::_incRef() {
 //	std::cerr << "IB::_incRef(" << _refCount << ", " << _weakRefCount << ")\n";
 
-	unsigned count;
-
-	count = _refCount    .fetch_add(1, std::memory_order_relaxed);
-	lairAssert(count != 0);
-
-	count = _weakRefCount.fetch_add(1, std::memory_order_relaxed);
-	lairAssert(count != 0);
+	_refCount    .fetch_add(1, std::memory_order_relaxed);
+	_weakRefCount.fetch_add(1, std::memory_order_relaxed);
 
 //	std::cerr << "           (" << _refCount << ", " << _weakRefCount << ")\n";
 }
@@ -380,6 +406,18 @@ IntrusivePointer<T>::IntrusivePointer(U* ptr, _dont_inc_ref) noexcept
 {
 	static_assert(std::is_convertible<U*, T*>::value,
 	              "Incompatible pointer types");
+}
+
+
+template<typename T>
+template<typename U>
+IntrusivePointer<T>::IntrusivePointer(const IntrusivePointer<U>& ptr)
+    : _ptr(ptr.get()) {
+	static_assert(std::is_convertible<U*, T*>::value,
+	              "Incompatible pointer types");
+
+	if(_ptr)
+		_ptr->_incRef();
 }
 
 
@@ -512,6 +550,12 @@ long IntrusivePointer<T>::use_count() const noexcept {
 template<typename T>
 IntrusivePointer<T>::operator bool() const noexcept {
 	return _ptr;
+}
+
+
+template<typename T>
+IntrusivePointer<T> IntrusivePointer<T>::_create(T* ptr) noexcept {
+	return IntrusivePointer<T>(ptr);
 }
 
 

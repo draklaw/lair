@@ -31,9 +31,8 @@ class FooManager;
 
 class Foo : public IntrusiveBlock<Foo> {
 public:
-	Foo(FooManager* manager, Pointer& ptr)
-	    : IntrusiveBlock<Foo>(ptr)
-	    , _manager(manager)
+	Foo(FooManager* manager)
+	    : _manager(manager)
 	{
 //		std::cerr << "construct Foo (" << constructCount - destroyCount + 1 << ")\n";
 		constructCount += 1;
@@ -66,11 +65,9 @@ public:
 	FooPtr createFoo() {
 //		std::cerr << "allocate Foo (" << allocCount - deleteCount + 1 << ")\n";
 		allocCount += 1;
-		void* fooPtr = malloc(sizeof(Foo));
+		Foo* fooPtr = static_cast<Foo*>(malloc(sizeof(Foo)));
 
-		FooPtr ptr;
-		new(fooPtr) Foo(this, ptr);
-		return ptr;
+		return makeIntrusiveAt<Foo>(fooPtr, this);
 	}
 
 	void _destroyFoo(Foo* foo) {

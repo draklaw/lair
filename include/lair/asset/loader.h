@@ -178,7 +178,7 @@ public:
 
 	/// Load an aspect, even if already loaded.
 	template < typename L, typename... Args >
-	LoaderSP load(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
+	LoaderSP load(IntrusivePointer<typename L::Aspect> aspect, Args&&... args) {
 		LoaderSP loader;
 
 		if(aspect->_getLoader()) {
@@ -235,7 +235,7 @@ public:
 	}
 
 	template < typename L, typename... Args >
-	void loadSync(std::shared_ptr<typename L::Aspect> aspect, Args&&... args) {
+	void loadSync(IntrusivePointer<typename L::Aspect> aspect, Args&&... args) {
 		log().log("Loading \"", aspect->asset()->logicPath(), "\" from thread ",
 		          std::this_thread::get_id(), " (sync)...");
 		L loader(this, aspect, std::forward<Args>(args)...);

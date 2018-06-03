@@ -131,9 +131,9 @@ typedef std::shared_ptr<BitmapFont> BitmapFontSP;
 typedef std::weak_ptr  <BitmapFont> BitmapFontWP;
 
 
-typedef GenericAspect  <BitmapFont>       BitmapFontAspect;
-typedef std::shared_ptr<BitmapFontAspect> BitmapFontAspectSP;
-typedef std::weak_ptr  <BitmapFontAspect> BitmapFontAspectWP;
+typedef GenericAspect       <BitmapFont>       BitmapFontAspect;
+typedef IntrusivePointer    <BitmapFontAspect> BitmapFontAspectSP;
+typedef IntrusiveWeakPointer<BitmapFontAspect> BitmapFontAspectWP;
 
 
 }

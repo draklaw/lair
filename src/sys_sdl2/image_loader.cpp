@@ -40,7 +40,7 @@ ImageLoader::ImageLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void ImageLoader::commit() {
-	ImageAspectSP aspect = std::static_pointer_cast<ImageAspect>(_aspect);
+	ImageAspectSP aspect = static_pointer_cast<ImageAspect>(_aspect);
 	aspect->_get() = std::move(_image);
 	Loader::commit();
 }

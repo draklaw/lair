@@ -404,7 +404,7 @@ TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void TileMapLoader::commit() {
-	TileMapAspectSP aspect = std::static_pointer_cast<TileMapAspect>(_aspect);
+	TileMapAspectSP aspect = static_pointer_cast<TileMapAspect>(_aspect);
 	aspect->_get() = std::move(_tileMap);
 	Loader::commit();
 }
@@ -440,7 +440,7 @@ void TileMapLoader::parseMap(std::istream& in, Logger& log) {
 
 	if(_tileMap.setFromLdl(parser)) {
 		_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
-			ImageAspectSP tileSetImg = std::static_pointer_cast<ImageAspect>(tileSetAspect);
+			ImageAspectSP tileSetImg = static_pointer_cast<ImageAspect>(tileSetAspect);
 			if(!tileSetImg) {
 				log.error("Error while loading TileMap \"", asset()->logicPath(),
 				          "\": Failed to load tile set \"", _tileMap.tileSetPath(), "\".");

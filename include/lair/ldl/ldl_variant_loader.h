@@ -34,9 +34,9 @@ namespace lair
 {
 
 
-typedef GenericAspect  <Variant>       VariantAspect;
-typedef std::shared_ptr<VariantAspect> VariantAspectSP;
-typedef std::weak_ptr  <VariantAspect> VariantAspectWP;
+typedef GenericAspect       <Variant>       VariantAspect;
+typedef IntrusivePointer    <VariantAspect> VariantAspectSP;
+typedef IntrusiveWeakPointer<VariantAspect> VariantAspectWP;
 
 
 class LdlVariantLoader : public Loader {

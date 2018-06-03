@@ -217,7 +217,7 @@ void GlslSourceLoader::commit() {
 			break;
 	}
 
-	GlslSourceAspectSP aspect = std::static_pointer_cast<GlslSourceAspect>(_aspect);
+	GlslSourceAspectSP aspect = static_pointer_cast<GlslSourceAspect>(_aspect);
 	aspect->_get() = std::move(source);
 	Loader::commit();
 }
@@ -314,7 +314,7 @@ void GlslSourceLoader::loadSyncImpl(Logger& log) {
 			_chunks.back().end = lineStart;
 			auto loader = _load<GlslSourceLoader>(Path(String(begin, end)),
 			                                      [](AspectSP, Logger&){});
-			auto aspect = std::static_pointer_cast<GlslSourceAspect>(loader->aspect());
+			auto aspect = static_pointer_cast<GlslSourceAspect>(loader->aspect());
 			_chunks.push_back(Chunk{INCLUDE, begin, end, line, aspect});
 			_chunks.push_back(Chunk{CODE, p, p, line, GlslSourceAspectSP()});
 		}
