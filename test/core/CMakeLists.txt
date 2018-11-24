@@ -22,11 +22,15 @@ add_executable(test_core
 	test_path.cpp
 	test_text.cpp
 	test_signal.cpp
+	intrusive_pointer/test_base.cpp
+	intrusive_pointer/test_foo.cpp
+	intrusive_pointer/test_bar.cpp
+	intrusive_pointer/test_manager.cpp
 	test_intrusive_pointer.cpp
 )
 
 target_link_libraries(test_core
 	gtest_main
-	lair
+	lair_core
 )
 add_dependencies(buildtests test_core)

@@ -149,9 +149,9 @@ void Renderer::uploadPendingTextures() {
 		if(image && image->isValid() && !texture->isValid()) {
 			log().info("Upload texture \"", texture->asset()->logicPath(), "\"...");
 
-			Texture& tex = texture->_get();
-			tex = std::move(Texture(this));
-			tex._upload(image->get());
+			std::unique_ptr<Texture> tex(new Texture(this));
+			tex->_upload(image->get());
+			texture->_set(std::move(tex));
 		}
 	}
 
@@ -246,7 +246,9 @@ void Renderer::_createDefaultTexture() {
 			}
 		}
 
-		imgAspect->_get() = Image(width, height, Image::Format::FormatRGB8, img.data());
+		std::unique_ptr<Image> image(
+		            new Image(width, height, Image::Format::FormatRGB8, img.data()));
+		imgAspect->_set(std::move(image));
 	}
 
 	_defaultTexture = createTexture(texAsset);

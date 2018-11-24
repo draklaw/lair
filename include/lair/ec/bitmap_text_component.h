@@ -78,7 +78,7 @@ protected:
 
 protected:
 	Json::Value _fontDesc;
-	BitmapFont  _font;
+	std::unique_ptr<BitmapFont> _font;
 };
 
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018 Simon Boyé
+ *  Copyright (C) 2019 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,34 +19,36 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
+#ifndef TEST_CORE_INTRUSIVE_POINTER_TEST_FOO_H
+#define TEST_CORE_INTRUSIVE_POINTER_TEST_FOO_H
 
-#include <lair/ldl/read.h>
-
-#include "lair/ldl/ldl_variant_loader.h"
+#include "test_base.h"
 
 
-namespace lair
-{
+namespace testIp {
 
 
-LdlVariantLoader::LdlVariantLoader(LoaderManager* manager, AspectSP aspect)
-    : Loader(manager, aspect) {
+class TestFoo : public TestBase {
+public:
+	TestFoo(TestManager* manager, int value);
+	~TestFoo();
+
+	int value() const override;
+
+public:
+	static unsigned _constructCount;
+	static unsigned _destroyCount;
+
+public:
+	void _partialDestroy() override;
+	void _destroy() override;
+	void _delete() override;
+
+private:
+	int _value;
+};
+
+
 }
 
-
-void LdlVariantLoader::commit() {
-	VariantAspectSP aspect = static_pointer_cast<VariantAspect>(_aspect);
-	aspect->_set(std::move(_variant));
-	Loader::commit();
-}
-
-
-void LdlVariantLoader::loadSyncImpl(Logger& log) {
-	_variant.reset(new Variant);
-	parseLdl(*_variant, file(), asset()->logicPath(), log);
-}
-
-
-}
+#endif

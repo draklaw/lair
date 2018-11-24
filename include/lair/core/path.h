@@ -120,6 +120,9 @@ public:
 		_path.assign(utf8Begin, utf8End);
 	}
 
+	void clear();
+	void swap(Path& other);
+
 	Path& operator/=(const Path& path);
 
 	void makePreferred();
@@ -137,6 +140,11 @@ public:
 private:
 	std::string _path;
 };
+
+
+inline void swap(Path& path0, Path& path1) {
+	path0.swap(path1);
+}
 
 
 // Used by boost using Argument Dependant Lookup.

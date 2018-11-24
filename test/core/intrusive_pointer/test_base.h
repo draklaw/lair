@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018 Simon Boyé
+ *  Copyright (C) 2019 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,34 +19,39 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
+#ifndef TEST_CORE_INTRUSIVE_POINTER_TEST_BASE_H
+#define TEST_CORE_INTRUSIVE_POINTER_TEST_BASE_H
 
-#include <lair/ldl/read.h>
-
-#include "lair/ldl/ldl_variant_loader.h"
+#include <lair/core/intrusive_pointer.h>
 
 
-namespace lair
-{
+namespace testIp {
 
 
-LdlVariantLoader::LdlVariantLoader(LoaderManager* manager, AspectSP aspect)
-    : Loader(manager, aspect) {
+class TestManager;
+class TestFoo;
+
+using TestFooPtr = lair::IntrusivePointer<TestFoo>;
+
+
+class TestBase : public lair::IntrusiveBlock<TestBase> {
+public:
+	TestBase(TestManager* manager);
+	~TestBase();
+
+	virtual int value() const;
+	virtual TestFooPtr foo() const;
+
+public:
+	virtual void _partialDestroy() = 0;
+	virtual void _destroy() = 0;
+	virtual void _delete() = 0;
+
+protected:
+	TestManager* _manager;
+};
+
+
 }
 
-
-void LdlVariantLoader::commit() {
-	VariantAspectSP aspect = static_pointer_cast<VariantAspect>(_aspect);
-	aspect->_set(std::move(_variant));
-	Loader::commit();
-}
-
-
-void LdlVariantLoader::loadSyncImpl(Logger& log) {
-	_variant.reset(new Variant);
-	parseLdl(*_variant, file(), asset()->logicPath(), log);
-}
-
-
-}
+#endif

@@ -141,6 +141,16 @@ void Path::set(const String& utf8Path) {
 }
 
 
+void Path::clear() {
+	_path.clear();
+}
+
+
+void Path::swap(Path& other) {
+	_path.swap(other._path);
+}
+
+
 Path& Path::operator/=(const Path& path) {
 	if(!path.empty()) {
 		bool needSep = (!empty() && !isDirectorySeparator(_path.back()));

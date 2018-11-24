@@ -56,6 +56,7 @@ set(lair_INCLUDE_DIRS
 )
 
 set(lair_LIBRARIES
+	PUBLIC lair_core
 	PUBLIC ${SDL2IMAGE_LIBRARY}
 	PUBLIC ${SDL2MIXER_LIBRARY}
 	PUBLIC ${SDL2_LIBRARY}
@@ -76,16 +77,10 @@ add_lair_resource(lair_resource.cpp lair
 	shader render_gl3/shader
 )
 
+add_subdirectory(core)
 
 set(lair_SOURCES
 	jsoncpp.cpp
-
-	core/lair.cpp
-	core/log.cpp
-	core/path.cpp
-	core/text.cpp
-	core/parse.cpp
-	core/signal.cpp
 
 	meta/metatype.cpp
 	meta/variant.cpp

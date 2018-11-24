@@ -240,7 +240,7 @@ SoundLoader::SoundLoader(LoaderManager* manager, AspectSP aspect)
 
 void SoundLoader::commit() {
 	SoundAspectSP aspect = static_pointer_cast<SoundAspect>(_aspect);
-	aspect->_get() = std::move(_sound);
+	aspect->_set(std::move(_sound));
 	Loader::commit();
 }
 
@@ -254,7 +254,7 @@ void SoundLoader::loadSyncImpl(Logger& log) {
 
 	Mix_Chunk* chunk = Mix_LoadWAV_RW(rw, true);
 	if(chunk) {
-		_sound.set(chunk);
+		_sound.reset(new Sound(chunk));
 	}
 	else {
 		log.error("Failed to load sound \"", asset()->logicPath(), "\": ", Mix_GetError());
@@ -271,7 +271,7 @@ MusicLoader::MusicLoader(LoaderManager* manager, AspectSP aspect)
 
 void MusicLoader::commit() {
 	MusicAspectSP aspect = static_pointer_cast<MusicAspect>(_aspect);
-	aspect->_get() = std::move(_music);
+	aspect->_set(std::move(_music));
 	Loader::commit();
 }
 
@@ -284,7 +284,7 @@ void MusicLoader::loadSyncImpl(Logger& log) {
 	}
 	Mix_Music* track = Mix_LoadMUS_RW(rw, true);
 	if(track) {
-		_music.set(track);
+		_music.reset(new Music(track));
 	}
 	else {
 		log.error("Failed to load music \"", asset()->logicPath(), "\": ", Mix_GetError());

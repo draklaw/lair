@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Simon Boyé
+ *  Copyright (C) 2018 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -23,230 +23,419 @@
 
 #include <lair/core/intrusive_pointer.h>
 
+#include "intrusive_pointer/test_base.h"
+#include "intrusive_pointer/test_foo.h"
+#include "intrusive_pointer/test_bar.h"
+#include "intrusive_pointer/test_manager.h"
+
 
 using namespace lair;
 
+namespace testIp {
 
-class FooManager;
+#define DECL_PTRS(_type) \
+	class _type; \
+	using _type##Ptr = lair::IntrusivePointer<_type>; \
+	using Const##_type##Ptr = lair::IntrusivePointer<const _type>; \
+	using _type##WPtr = lair::IntrusiveWeakPointer<_type>; \
+	using Const##_type##WPtr = lair::IntrusiveWeakPointer<const _type>;
 
-class Foo : public IntrusiveBlock<Foo> {
-public:
-	Foo(FooManager* manager)
-	    : _manager(manager)
-	{
-//		std::cerr << "construct Foo (" << constructCount - destroyCount + 1 << ")\n";
-		constructCount += 1;
-	}
+DECL_PTRS(TestBase)
+DECL_PTRS(TestFoo)
+DECL_PTRS(TestBar)
 
-	~Foo() {
-		destroyCount += 1;
-//		std::cerr << "destroy Foo (" << constructCount - destroyCount << ")\n";
-	}
-
-public:
-	static unsigned constructCount;
-	static unsigned destroyCount;
-
-public:
-	void _destroy();
-	void _delete();
-
-protected:
-	FooManager* _manager;
-};
-
-using FooPtr       = Foo::Pointer;
-using ConstFooPtr  = Foo::ConstPointer;
-using FooWPtr      = Foo::WeakPointer;
-using ConstFooWPtr = Foo::ConstWeakPointer;
-
-class FooManager {
-public:
-	FooPtr createFoo() {
-//		std::cerr << "allocate Foo (" << allocCount - deleteCount + 1 << ")\n";
-		allocCount += 1;
-		Foo* fooPtr = static_cast<Foo*>(malloc(sizeof(Foo)));
-
-		return makeIntrusiveAt<Foo>(fooPtr, this);
-	}
-
-	void _destroyFoo(Foo* foo) {
-		foo->~Foo();
-	}
-
-	void _deleteFoo(Foo* foo) {
-		free(foo);
-		deleteCount += 1;
-//		std::cerr << "delete Foo (" << allocCount - deleteCount << ")\n";
-	}
-
-public:
-	static unsigned allocCount;
-	static unsigned deleteCount;
-};
-
-unsigned Foo::constructCount     = 0;
-unsigned Foo::destroyCount       = 0;
-unsigned FooManager::allocCount  = 0;
-unsigned FooManager::deleteCount = 0;
-
-void Foo::_destroy() {
-	_manager->_destroyFoo(this);
 }
-
-void Foo::_delete() {
-	_manager->_deleteFoo(this);
-}
-
 
 
 TEST(IntrusivePointer, DefaultConstruct) {
-	FooManager::allocCount  = 0;
-	Foo::constructCount     = 0;
-	Foo::destroyCount       = 0;
-	FooManager::deleteCount = 0;
+	testIp::TestManager::resetCounts();
 
 	{
-		FooPtr ptr;
+		testIp::TestFooPtr ptr;
 
 		ASSERT_FALSE(ptr);
 		ASSERT_EQ(nullptr, ptr.get());
 	}
 
-	ASSERT_EQ(0, FooManager::allocCount);
-	ASSERT_EQ(0, Foo::constructCount);
-	ASSERT_EQ(0, Foo::destroyCount);
-	ASSERT_EQ(0, FooManager::deleteCount);
+	ASSERT_EQ(0, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
 }
 
-
 TEST(IntrusivePointer, SimpleAlloc) {
-	FooManager::allocCount  = 0;
-	Foo::constructCount     = 0;
-	Foo::destroyCount       = 0;
-	FooManager::deleteCount = 0;
+	testIp::TestManager::resetCounts();
 
-	FooManager fm;
+	testIp::TestManager manager;
 
 	{
-		FooPtr ptr = fm.createFoo();
+		testIp::TestFooPtr ptr = manager.createFoo(123);
 
 		ASSERT_TRUE(ptr);
 		ASSERT_NE(nullptr, ptr.get());
 		ASSERT_EQ(1, ptr.use_count());
+		ASSERT_EQ(123, ptr->value());
 	}
 
-	ASSERT_EQ(1, FooManager::allocCount);
-	ASSERT_EQ(1, Foo::constructCount);
-	ASSERT_EQ(1, Foo::destroyCount);
-	ASSERT_EQ(1, FooManager::deleteCount);
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
 }
 
+TEST(IntrusivePointer, CopyConstructor) {
+	testIp::TestManager::resetCounts();
 
-TEST(IntrusivePointer, Manip) {
-	FooManager::allocCount  = 0;
-	Foo::constructCount     = 0;
-	Foo::destroyCount       = 0;
-	FooManager::deleteCount = 0;
-
-	FooManager fm;
-
-	FooPtr ptr0 = nullptr;
-	{
-		FooPtr ptr1 = fm.createFoo();
-		ptr0 = ptr1;
-		ASSERT_EQ(ptr1, ptr0);
-	}
-
-	ASSERT_EQ(1, FooManager::allocCount);
-	ASSERT_EQ(1, Foo::constructCount);
-	ASSERT_EQ(0, Foo::destroyCount);
-	ASSERT_EQ(0, FooManager::deleteCount);
-
-	ASSERT_EQ(ptr0->pointer(), ptr0);
-
-	ptr0.reset();
-
-	ASSERT_EQ(1, FooManager::allocCount);
-	ASSERT_EQ(1, Foo::constructCount);
-	ASSERT_EQ(1, Foo::destroyCount);
-	ASSERT_EQ(1, FooManager::deleteCount);
-}
-
-
-TEST(IntrusivePointer, WeakSimpleAlloc) {
-	FooManager::allocCount  = 0;
-	Foo::constructCount     = 0;
-	Foo::destroyCount       = 0;
-	FooManager::deleteCount = 0;
-
-	FooManager fm;
+	testIp::TestManager manager;
 
 	{
-		FooWPtr wptr;
-		{
-			FooPtr ptr = fm.createFoo();
-			wptr = ptr;
+		testIp::TestFooPtr ptr1 = manager.createFoo(123);
 
-			ASSERT_TRUE(ptr);
-			ASSERT_NE(nullptr, ptr.get());
-			ASSERT_EQ(1, ptr.use_count());
+		ASSERT_TRUE(ptr1);
+		ASSERT_NE(nullptr, ptr1.get());
+		ASSERT_EQ(1, ptr1.use_count());
+		ASSERT_EQ(123, ptr1->value());
 
-			ASSERT_EQ(1, FooManager::allocCount);
-			ASSERT_EQ(1, Foo::constructCount);
-			ASSERT_EQ(0, Foo::destroyCount);
-			ASSERT_EQ(0, FooManager::deleteCount);
-		}
+		testIp::TestFooPtr ptr2(ptr1);
 
-		ASSERT_EQ(1, FooManager::allocCount);
-		ASSERT_EQ(1, Foo::constructCount);
-		ASSERT_EQ(1, Foo::destroyCount);
-		ASSERT_EQ(0, FooManager::deleteCount);
+		ASSERT_TRUE(ptr2);
+		ASSERT_NE(nullptr, ptr2.get());
+		ASSERT_EQ(2, ptr2.use_count());
+		ASSERT_EQ(123, ptr2->value());
+
+		ptr1 = nullptr;
+
+		ASSERT_FALSE(ptr1);
+		ASSERT_EQ(nullptr, ptr1.get());
+
+		ASSERT_TRUE(ptr2);
+		ASSERT_NE(nullptr, ptr2.get());
+		ASSERT_EQ(1, ptr2.use_count());
+		ASSERT_EQ(123, ptr2->value());
 	}
 
-	ASSERT_EQ(1, FooManager::allocCount);
-	ASSERT_EQ(1, Foo::constructCount);
-	ASSERT_EQ(1, Foo::destroyCount);
-	ASSERT_EQ(1, FooManager::deleteCount);
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
 }
 
+TEST(IntrusivePointer, CopyOperator) {
+	testIp::TestManager::resetCounts();
 
-TEST(IntrusivePointer, WeakManip) {
-	FooManager::allocCount  = 0;
-	Foo::constructCount     = 0;
-	Foo::destroyCount       = 0;
-	FooManager::deleteCount = 0;
+	testIp::TestManager manager;
 
-	FooManager fm;
-
-	FooWPtr wptr;
 	{
-		FooPtr ptr = fm.createFoo();
-		wptr = ptr;
+		testIp::TestFooPtr ptr2(nullptr);
+		testIp::TestFooPtr ptr1 = manager.createFoo(123);
 
-		ASSERT_EQ(1, FooManager::allocCount);
-		ASSERT_EQ(1, Foo::constructCount);
-		ASSERT_EQ(0, Foo::destroyCount);
-		ASSERT_EQ(0, FooManager::deleteCount);
+		ASSERT_TRUE(ptr1);
+		ASSERT_NE(nullptr, ptr1.get());
+		ASSERT_EQ(1, ptr1.use_count());
+		ASSERT_EQ(123, ptr1->value());
 
-		FooPtr ptr2 = wptr.lock();
+		ptr2 = ptr1;
 
-		ASSERT_EQ(ptr, ptr2);
+		ASSERT_TRUE(ptr2);
+		ASSERT_NE(nullptr, ptr2.get());
+		ASSERT_EQ(2, ptr2.use_count());
+		ASSERT_EQ(123, ptr2->value());
+
+		ptr1 = nullptr;
+
+		ASSERT_FALSE(ptr1);
+		ASSERT_EQ(nullptr, ptr1.get());
+
+		ASSERT_TRUE(ptr2);
+		ASSERT_NE(nullptr, ptr2.get());
+		ASSERT_EQ(1, ptr2.use_count());
+		ASSERT_EQ(123, ptr2->value());
 	}
 
-	ASSERT_EQ(1, FooManager::allocCount);
-	ASSERT_EQ(1, Foo::constructCount);
-	ASSERT_EQ(1, Foo::destroyCount);
-	ASSERT_EQ(0, FooManager::deleteCount);
-
-	FooPtr ptr2 = wptr.lock();
-
-	ASSERT_EQ(nullptr, ptr2);
-
-	wptr.reset();
-
-	ASSERT_EQ(1, FooManager::allocCount);
-	ASSERT_EQ(1, Foo::constructCount);
-	ASSERT_EQ(1, Foo::destroyCount);
-	ASSERT_EQ(1, FooManager::deleteCount);
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
 }
+
+TEST(IntrusivePointer, MoveConstructor) {
+	testIp::TestManager::resetCounts();
+
+	testIp::TestManager manager;
+
+	{
+		testIp::TestFooPtr ptr1 = manager.createFoo(123);
+
+		ASSERT_TRUE(ptr1);
+		ASSERT_NE(nullptr, ptr1.get());
+		ASSERT_EQ(1, ptr1.use_count());
+		ASSERT_EQ(123, ptr1->value());
+
+		testIp::TestFooPtr ptr2(std::move(ptr1));
+
+		ASSERT_FALSE(ptr1);
+		ASSERT_EQ(nullptr, ptr1.get());
+		ASSERT_TRUE(ptr2);
+		ASSERT_NE(nullptr, ptr2.get());
+		ASSERT_EQ(1, ptr2.use_count());
+		ASSERT_EQ(123, ptr2->value());
+	}
+
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+}
+
+TEST(IntrusivePointer, MoveOperator) {
+	testIp::TestManager::resetCounts();
+
+	testIp::TestManager manager;
+
+	{
+		testIp::TestFooPtr ptr2 = nullptr;
+		testIp::TestFooPtr ptr1 = manager.createFoo(123);
+
+		ASSERT_TRUE(ptr1);
+		ASSERT_NE(nullptr, ptr1.get());
+		ASSERT_EQ(1, ptr1.use_count());
+		ASSERT_EQ(123, ptr1->value());
+
+		ptr2 = std::move(ptr1);
+
+		ASSERT_FALSE(ptr1);
+		ASSERT_EQ(nullptr, ptr1.get());
+		ASSERT_TRUE(ptr2);
+		ASSERT_NE(nullptr, ptr2.get());
+		ASSERT_EQ(1, ptr2.use_count());
+		ASSERT_EQ(123, ptr2->value());
+	}
+
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+}
+
+TEST(IntrusivePointer, ConstructorCast) {
+	testIp::TestManager::resetCounts();
+
+	testIp::TestManager manager;
+
+	{
+		testIp::TestFooPtr fooPtr = manager.createFoo(123);
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(1, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+
+		testIp::TestBasePtr basePtr(fooPtr);
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(2, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+
+		ASSERT_TRUE(basePtr);
+		ASSERT_NE(nullptr, basePtr.get());
+		ASSERT_EQ(2, basePtr.use_count());
+		ASSERT_EQ(123, basePtr->value());
+
+		// Should not compile
+		// testIp::TestFooPtr fooPtr2(basePtr);
+
+		testIp::TestFooPtr fooPtr2 = lair::dynamic_pointer_cast<testIp::TestFoo>(basePtr);
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(3, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+	}
+
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+}
+
+TEST(IntrusivePointer, OperatorCast) {
+	testIp::TestManager::resetCounts();
+
+	testIp::TestManager manager;
+
+	{
+		testIp::TestFooPtr fooPtr = manager.createFoo(123);
+		testIp::TestBasePtr basePtr;
+		testIp::TestFooPtr fooPtr2;
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(1, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+
+		basePtr = fooPtr;
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(2, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+
+		ASSERT_TRUE(basePtr);
+		ASSERT_NE(nullptr, basePtr.get());
+		ASSERT_EQ(2, basePtr.use_count());
+		ASSERT_EQ(123, basePtr->value());
+
+		// Should not compile
+		// fooPtr2 = basePtr;
+
+		fooPtr2 = lair::dynamic_pointer_cast<testIp::TestFoo>(basePtr);
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(3, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+	}
+
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+}
+
+TEST(IntrusivePointer, MemberPointer) {
+	testIp::TestManager::resetCounts();
+
+	testIp::TestManager manager;
+
+	{
+		testIp::TestFooPtr fooPtr = manager.createFoo(123);
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(1, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+
+		testIp::TestBarPtr barPtr = manager.createBar(fooPtr);
+
+		ASSERT_TRUE(barPtr);
+		ASSERT_NE(nullptr, barPtr.get());
+		ASSERT_EQ(1, barPtr.use_count());
+		ASSERT_EQ(fooPtr, barPtr->foo());
+
+		ASSERT_EQ(2, fooPtr.use_count());
+
+		ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+		ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDestroyCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDeleteCount());
+		ASSERT_EQ(1, testIp::TestManager::barAllocCount());
+		ASSERT_EQ(1, testIp::TestManager::barConstructCount());
+		ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+		ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+
+		fooPtr = nullptr;
+
+		ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+		ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDestroyCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDeleteCount());
+		ASSERT_EQ(1, testIp::TestManager::barAllocCount());
+		ASSERT_EQ(1, testIp::TestManager::barConstructCount());
+		ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+		ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+	}
+
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(1, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::barDeleteCount());
+}
+
+TEST(IntrusivePointer, WeakPointer) {
+	testIp::TestManager::resetCounts();
+
+	testIp::TestManager manager;
+
+	{
+		testIp::TestFooPtr fooPtr = manager.createFoo(123);
+		testIp::TestFooWPtr fooWPtr = fooPtr;
+
+		ASSERT_TRUE(fooPtr);
+		ASSERT_NE(nullptr, fooPtr.get());
+		ASSERT_EQ(1, fooPtr.use_count());
+		ASSERT_EQ(123, fooPtr->value());
+
+		ASSERT_EQ(1, fooWPtr.use_count());
+
+		testIp::TestFooPtr fooPtr2 = fooWPtr.lock();
+		ASSERT_TRUE(fooPtr2);
+		ASSERT_EQ(fooPtr, fooPtr2);
+		ASSERT_EQ(2, fooPtr2.use_count());
+
+		ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+		ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDestroyCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDeleteCount());
+
+		fooPtr = nullptr;
+		fooPtr2 = nullptr;
+
+		ASSERT_FALSE(fooPtr);
+		ASSERT_EQ(nullptr, fooPtr.get());
+
+		ASSERT_EQ(0, fooWPtr.use_count());
+		ASSERT_EQ(nullptr, fooWPtr.lock());
+
+		ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+		ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+		ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+		ASSERT_EQ(0, testIp::TestManager::fooDeleteCount());
+	}
+
+	ASSERT_EQ(1, testIp::TestManager::fooAllocCount());
+	ASSERT_EQ(1, testIp::TestManager::fooConstructCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDestroyCount());
+	ASSERT_EQ(1, testIp::TestManager::fooDeleteCount());
+	ASSERT_EQ(0, testIp::TestManager::barAllocCount());
+	ASSERT_EQ(0, testIp::TestManager::barConstructCount());
+	ASSERT_EQ(0, testIp::TestManager::barDestroyCount());
+	ASSERT_EQ(0, testIp::TestManager::barDeleteCount());
+}
+

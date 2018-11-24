@@ -54,7 +54,7 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 protected:
-	Image _image;
+	std::unique_ptr<Image> _image;
 };
 
 

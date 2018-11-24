@@ -41,7 +41,7 @@ ImageLoader::ImageLoader(LoaderManager* manager, AspectSP aspect)
 
 void ImageLoader::commit() {
 	ImageAspectSP aspect = static_pointer_cast<ImageAspect>(_aspect);
-	aspect->_get() = std::move(_image);
+	aspect->_set(std::move(_image));
 	Loader::commit();
 }
 
@@ -69,7 +69,7 @@ void ImageLoader::loadSyncImpl(Logger& log) {
 			break;
 		}
 
-		_image = std::move(Image(surf->w, surf->h, format, surf->pixels));
+		_image.reset(new Image(surf->w, surf->h, format, surf->pixels));
 	} else {
 		log.error("Failed to load image \"", asset()->logicPath(), "\": ", IMG_GetError());
 	}

@@ -187,12 +187,12 @@ GlslSourceLoader::GlslSourceLoader(LoaderManager* manager, AspectSP aspect)
 
 
 void GlslSourceLoader::commit() {
-	GlslSource source;
+	std::unique_ptr<GlslSource> source(new GlslSource());
 	for(const Chunk& chunk: _chunks) {
 		bool fail = false;
 		switch(chunk.type) {
 		case CODE:
-			source.addBlock(String(chunk.begin, chunk.end),
+			source->addBlock(String(chunk.begin, chunk.end),
 			                asset()->logicPath(), chunk.line);
 			break;
 		case INCLUDE: {
@@ -200,14 +200,14 @@ void GlslSourceLoader::commit() {
 				_manager->log().error(asset()->logicPath(), ": ", chunk.line,
 				                      ": Failed to load include \"",
 				                      chunk.include->asset()->logicPath(), "\"");
-				source.clear();
+				source->clear();
 				fail = true;
 				break;
 			}
 			const GlslSource& include = chunk.include->get();
 			// Start at 1 to skip the header block
 			for(unsigned i = 1; i < unsigned(include.count()); ++i) {
-				source.addBlock(include.string(i), include.filename(i), include.line(i));
+				source->addBlock(include.string(i), include.filename(i), include.line(i));
 			}
 			break;
 		}
@@ -218,7 +218,7 @@ void GlslSourceLoader::commit() {
 	}
 
 	GlslSourceAspectSP aspect = static_pointer_cast<GlslSourceAspect>(_aspect);
-	aspect->_get() = std::move(source);
+	aspect->_set(std::move(source));
 	Loader::commit();
 }
 

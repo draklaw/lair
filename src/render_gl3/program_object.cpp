@@ -258,10 +258,11 @@ void ShaderLoader::commit() {
 	ShaderAspectSP aspect = static_pointer_cast<ShaderAspect>(_aspect);
 
 	if(_vertexShader.isValid() && _fragmentShader.isValid()) {
-		ProgramObject shader = _renderer->compileProgram(
-		                           asset()->logicPath().utf8CStr(),
-		                           _attribs, &_vertexShader, &_fragmentShader);
-		aspect->_get() = std::move(shader);
+		std::unique_ptr<ProgramObject> shader(new ProgramObject(
+		        _renderer->compileProgram(
+		            asset()->logicPath().utf8CStr(),
+		            _attribs, &_vertexShader, &_fragmentShader)));
+		aspect->_set(std::move(shader));
 	}
 
 	Loader::commit();

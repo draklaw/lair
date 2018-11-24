@@ -14,7 +14,7 @@
  *  General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with lair.  If not, see <http://www.gnu.org/licenses/>.
+ *  auint with lair.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -67,6 +67,8 @@ public:
 	friend class IntrusivePointer<T>;
 	friend class IntrusiveWeakPointer<T>;
 
+	uint _use_count() const;
+
 	void _incRef();
 	bool _incRefLock();
 	void _decRef();
@@ -74,12 +76,9 @@ public:
 	void _incWeakRef();
 	void _decWeakRef();
 
-//	void _destroy();
-//	void _delete();
-
 private:
-	std::atomic_uint _refCount;
-	std::atomic_uint _weakRefCount;
+	mutable std::atomic_uint _refCount;
+	mutable std::atomic_uint _weakRefCount;
 };
 
 
@@ -89,14 +88,11 @@ public:
 	typedef T element_type;
 	typedef IntrusiveWeakPointer<T> weak_type;
 
-//	static_assert(std::is_base_of<IntrusiveBlock<T>, T>::value,
-//	              "IntrusivePointer only works with descendent of IntrusiveBlock");
-
 public:
 	constexpr IntrusivePointer() noexcept;
 	constexpr IntrusivePointer(std::nullptr_t) noexcept;
 
-private:
+public:
 	template<typename U>
 	explicit IntrusivePointer(U* ptr) noexcept;
 
@@ -114,19 +110,12 @@ public:
 	IntrusivePointer(      IntrusivePointer&& other) noexcept;
 	~IntrusivePointer();
 
-//	template<typename U>
-//	IntrusivePointer& operator=(U* ptr) noexcept;
-
+	// TODO: convertion copy operators ?
 	IntrusivePointer& operator=(const IntrusivePointer&  other) noexcept;
 	IntrusivePointer& operator=(      IntrusivePointer&& other) noexcept;
 
 	void reset() noexcept;
 
-private:
-	template<typename U>
-	void _reset(U* ptr) noexcept;
-
-public:
 	void swap(IntrusivePointer& other) noexcept;
 
 	element_type* get() const noexcept;
@@ -134,11 +123,19 @@ public:
 	T& operator*() const noexcept;
 	T* operator->() const noexcept;
 
-	long use_count() const noexcept;
+	uint use_count() const noexcept;
 
 	explicit operator bool() const noexcept;
 
 	static IntrusivePointer _create(T* ptr) noexcept;
+
+private:
+	using MutableType = typename std::remove_const<T>::type;
+
+private:
+	void _incRef() noexcept;
+	void _decRef() noexcept;
+	bool _incRefLock() noexcept;
 
 private:
 	T* _ptr;
@@ -199,7 +196,8 @@ bool swap(const IntrusivePointer<T>& ptr0, const IntrusivePointer<T>& ptr1) {
 
 template<typename T>
 std::size_t hash(const IntrusivePointer<T>& ptr) {
-	return std::hash<T*>()(ptr.get());
+	using std::hash;
+	return hash<T*>()(ptr.get());
 }
 
 template<typename T, typename U>
@@ -236,14 +234,11 @@ public:
 	typedef T element_type;
 	typedef IntrusivePointer<T> shared_type;
 
-//	static_assert(std::is_base_of<IntrusiveBlock<T>, T>::value,
-//	              "IntrusivePointer only works with descendent of IntrusiveBlock");
-
 public:
 	constexpr IntrusiveWeakPointer() noexcept;
 
 	template<typename U>
-	explicit IntrusiveWeakPointer(const IntrusivePointer<U>& ptr);
+	IntrusiveWeakPointer(const IntrusivePointer<U>& ptr);
 
 	IntrusiveWeakPointer(const IntrusiveWeakPointer&  other) noexcept;
 	IntrusiveWeakPointer(      IntrusiveWeakPointer&& other) noexcept;
@@ -257,9 +252,16 @@ public:
 
 	void swap(IntrusiveWeakPointer& other) noexcept;
 
-	long use_count() const noexcept;
+	uint use_count() const noexcept;
 
 	shared_type lock() const noexcept;
+
+private:
+	using MutableType = typename std::remove_const<T>::type;
+
+private:
+	void _incWeakRef() noexcept;
+	void _decWeakRef() noexcept;
 
 private:
 	T* _ptr;
@@ -288,14 +290,20 @@ IntrusiveBlock<T>::pointer() {
 template<typename T>
 typename IntrusiveBlock<T>::ConstPointer
 IntrusiveBlock<T>::pointer() const {
-	return ConstPointer(static_cast<T*>(this));
+	return ConstPointer(static_cast<const T*>(this));
 }
 
 
 template<typename T>
 typename IntrusiveBlock<T>::ConstPointer
 IntrusiveBlock<T>::constPointer() const {
-	return ConstPointer(static_cast<T*>(this));
+	return ConstPointer(static_cast<const T*>(this));
+}
+
+
+template<typename T>
+uint IntrusiveBlock<T>::_use_count() const {
+	return _refCount.load(std::memory_order_relaxed);
 }
 
 
@@ -389,13 +397,9 @@ constexpr IntrusivePointer<T>::IntrusivePointer(std::nullptr_t) noexcept
 template<typename T>
 template<typename U>
 IntrusivePointer<T>::IntrusivePointer(U* ptr) noexcept
-    : _ptr(ptr)
+    : IntrusivePointer(ptr, _dont_inc_ref{})
 {
-	static_assert(std::is_convertible<U*, T*>::value,
-	              "Incompatible pointer types");
-
-	if(_ptr)
-		_ptr->_incRef();
+	_incRef();
 }
 
 
@@ -416,8 +420,7 @@ IntrusivePointer<T>::IntrusivePointer(const IntrusivePointer<U>& ptr)
 	static_assert(std::is_convertible<U*, T*>::value,
 	              "Incompatible pointer types");
 
-	if(_ptr)
-		_ptr->_incRef();
+	_incRef();
 }
 
 
@@ -429,7 +432,7 @@ IntrusivePointer<T>::IntrusivePointer(const IntrusiveWeakPointer<U>& ptr)
 	static_assert(std::is_convertible<U*, T*>::value,
 	              "Incompatible pointer types");
 
-	if(!_ptr || !_ptr->incRefLock())
+	if(!_ptr || !_incRefLock())
 		throw std::bad_weak_ptr();
 }
 
@@ -438,8 +441,7 @@ template<typename T>
 IntrusivePointer<T>::IntrusivePointer(const IntrusivePointer& other) noexcept
     : _ptr(other._ptr)
 {
-	if(_ptr)
-		_ptr->_incRef();
+	_incRef();
 }
 
 
@@ -453,24 +455,16 @@ IntrusivePointer<T>::IntrusivePointer(IntrusivePointer&& other) noexcept
 
 template<typename T>
 IntrusivePointer<T>::~IntrusivePointer() {
-	if(_ptr)
-		_ptr->_decRef();
+	_decRef();
 }
-
-
-//template<typename T>
-//template<typename U>
-//IntrusivePointer& IntrusivePointer<T>::operator=(U* ptr) noexcept;
 
 
 template<typename T>
 IntrusivePointer<T>& IntrusivePointer<T>::operator=(const IntrusivePointer& other) noexcept {
 	if(this != &other) {
-		if(_ptr)
-			_ptr->_decRef();
+		_decRef();
 		_ptr = other._ptr;
-		if(_ptr)
-			_ptr->_incRef();
+		_incRef();
 	}
 	return *this;
 }
@@ -479,8 +473,7 @@ IntrusivePointer<T>& IntrusivePointer<T>::operator=(const IntrusivePointer& othe
 template<typename T>
 IntrusivePointer<T>& IntrusivePointer<T>::operator=(IntrusivePointer&& other) noexcept {
 	if(this != &other) {
-		if(_ptr)
-			_ptr->_decRef();
+		_decRef();
 		_ptr = other._ptr;
 		other._ptr = nullptr;
 	}
@@ -490,27 +483,8 @@ IntrusivePointer<T>& IntrusivePointer<T>::operator=(IntrusivePointer&& other) no
 
 template<typename T>
 void IntrusivePointer<T>::reset() noexcept {
-	if(_ptr) {
-		_ptr->_decRef();
-		_ptr = nullptr;
-	}
-}
-
-
-template<typename T>
-template<typename U>
-void IntrusivePointer<T>::_reset(U* ptr) noexcept {
-	static_assert(std::is_convertible<U*, T*>::value,
-	              "Incompatible pointer types");
-
-	if(_ptr)
-		_ptr->_decRef();
-	_ptr = ptr;
-
-	// Called from IntrusiveBlock constructor: don't inc ref because it is
-	// already done !
-//	if(_ptr)
-//		_ptr->_incRef();
+	_decRef();
+	_ptr = nullptr;
 }
 
 
@@ -540,22 +514,35 @@ T* IntrusivePointer<T>::operator->() const noexcept {
 
 
 template<typename T>
-long IntrusivePointer<T>::use_count() const noexcept {
-	if(_ptr)
-		return _ptr->_refCount.load(std::memory_order_relaxed);
-	return 0;
+uint IntrusivePointer<T>::use_count() const noexcept {
+	return _ptr? _ptr->_use_count(): 0;
 }
 
 
 template<typename T>
 IntrusivePointer<T>::operator bool() const noexcept {
-	return _ptr;
+	return _ptr != nullptr;
 }
 
 
 template<typename T>
 IntrusivePointer<T> IntrusivePointer<T>::_create(T* ptr) noexcept {
 	return IntrusivePointer<T>(ptr);
+}
+
+
+template<typename T>
+void IntrusivePointer<T>::_incRef() noexcept {
+	if(_ptr) {
+		const_cast<MutableType*>(_ptr)->_incRef();
+	}
+}
+
+template<typename T>
+void IntrusivePointer<T>::_decRef() noexcept {
+	if(_ptr) {
+		const_cast<MutableType*>(_ptr)->_decRef();
+	}
 }
 
 
@@ -572,13 +559,12 @@ constexpr IntrusiveWeakPointer<T>::IntrusiveWeakPointer() noexcept
 template<typename T>
 template<typename U>
 IntrusiveWeakPointer<T>::IntrusiveWeakPointer(const IntrusivePointer<U>& ptr)
-    : _ptr(ptr)
+    : _ptr(ptr._ptr)
 {
 	static_assert(std::is_convertible<U*, T*>::value,
 	              "Incompatible pointer types");
 
-	if(_ptr)
-		_ptr->_incWeakRef();
+	_incWeakRef();
 }
 
 
@@ -586,8 +572,7 @@ template<typename T>
 IntrusiveWeakPointer<T>::IntrusiveWeakPointer(const IntrusiveWeakPointer& other) noexcept
     : _ptr(other._ptr)
 {
-	if(_ptr)
-		_ptr->_incWeakRef();
+	_incWeakRef();
 }
 
 
@@ -601,19 +586,16 @@ IntrusiveWeakPointer<T>::IntrusiveWeakPointer(IntrusiveWeakPointer&& other) noex
 
 template<typename T>
 IntrusiveWeakPointer<T>::~IntrusiveWeakPointer() {
-	if(_ptr)
-		_ptr->_decWeakRef();
+	_decWeakRef();
 }
 
 
 template<typename T>
 IntrusiveWeakPointer<T>& IntrusiveWeakPointer<T>::operator=(const IntrusiveWeakPointer& other) noexcept {
 	if(this != &other) {
-		if(_ptr)
-			_ptr->_decWeakRef();
-		_ptr = other->_ptr;
-		if(_ptr)
-			_ptr->_incWeakRef();
+		_decWeakRef();
+		_ptr = other._ptr;
+		_incWeakRef();
 	}
 	return *this;
 }
@@ -622,8 +604,7 @@ IntrusiveWeakPointer<T>& IntrusiveWeakPointer<T>::operator=(const IntrusiveWeakP
 template<typename T>
 IntrusiveWeakPointer<T>& IntrusiveWeakPointer<T>::operator=(IntrusiveWeakPointer&& other) noexcept {
 	if(this != &other) {
-		if(_ptr)
-			_ptr->_decWeakRef();
+		_decWeakRef();
 		_ptr = other._ptr;
 		other._ptr = nullptr;
 	}
@@ -633,21 +614,17 @@ IntrusiveWeakPointer<T>& IntrusiveWeakPointer<T>::operator=(IntrusiveWeakPointer
 
 template<typename T>
 IntrusiveWeakPointer<T>& IntrusiveWeakPointer<T>::operator=(const IntrusivePointer<T>& other) noexcept {
-	if(_ptr)
-		_ptr->_decWeakRef();
-	_ptr = other.get();
-	if(_ptr)
-		_ptr->_incWeakRef();
+	_decWeakRef();
+	_ptr = other._ptr;
+	_incWeakRef();
 	return *this;
 }
 
 
 template<typename T>
 void IntrusiveWeakPointer<T>::reset() noexcept {
-	if(_ptr) {
-		_ptr->_decRef();
-		_ptr = nullptr;
-	}
+	_decWeakRef();
+	_ptr = nullptr;
 }
 
 
@@ -658,23 +635,39 @@ void IntrusiveWeakPointer<T>::swap(IntrusiveWeakPointer& other) noexcept {
 
 
 template<typename T>
-long IntrusiveWeakPointer<T>::use_count() const noexcept {
-	if(_ptr)
-		return _ptr->_refCount.load(std::memory_order_relaxed);
-	return 0;
+uint IntrusiveWeakPointer<T>::use_count() const noexcept {
+	return _ptr? _ptr->_use_count(): 0;
 }
 
 
 template<typename T>
 typename IntrusiveWeakPointer<T>::shared_type
 IntrusiveWeakPointer<T>::lock() const noexcept {
-	if(_ptr && _ptr->_incRefLock())
+	if(_ptr && const_cast<MutableType*>(_ptr)->_incRefLock())
 		return IntrusivePointer<T>(_ptr, _dont_inc_ref());
 
 	// Release the pointer so memory can be released asap.
-	// reset(); // Don't do it because this method is const...
+	// Note: Doing this is dangerous. If the pointer is used as a key in a map,
+	// it can cause undefined behavior.
+	// const_cast<IntrusiveWeakPointer<T>*>(this)->reset();
 
 	return IntrusivePointer<T>();
+}
+
+
+template<typename T>
+void IntrusiveWeakPointer<T>::_incWeakRef() noexcept {
+	if(_ptr) {
+		const_cast<MutableType*>(_ptr)->_incWeakRef();
+	}
+}
+
+
+template<typename T>
+void IntrusiveWeakPointer<T>::_decWeakRef() noexcept {
+	if(_ptr) {
+		const_cast<MutableType*>(_ptr)->_decWeakRef();
+	}
 }
 
 

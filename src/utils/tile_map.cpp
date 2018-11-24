@@ -405,7 +405,7 @@ TileMapLoader::TileMapLoader(LoaderManager* manager, AspectSP aspect)
 
 void TileMapLoader::commit() {
 	TileMapAspectSP aspect = static_pointer_cast<TileMapAspect>(_aspect);
-	aspect->_get() = std::move(_tileMap);
+	aspect->_set(std::move(_tileMap));
 	Loader::commit();
 }
 
@@ -438,15 +438,16 @@ void TileMapLoader::parseMap(std::istream& in, Logger& log) {
 	ErrorList errors;
 	LdlParser parser(&in, asset()->logicPath().utf8String(), &errors, LdlParser::CTX_MAP);
 
-	if(_tileMap.setFromLdl(parser)) {
-		_load<ImageLoader>(_tileMap.tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
+	_tileMap.reset(new TileMap());
+	if(_tileMap->setFromLdl(parser)) {
+		_load<ImageLoader>(_tileMap->tileSetPath(), [this](AspectSP tileSetAspect, Logger& log) {
 			ImageAspectSP tileSetImg = static_pointer_cast<ImageAspect>(tileSetAspect);
 			if(!tileSetImg) {
 				log.error("Error while loading TileMap \"", asset()->logicPath(),
-				          "\": Failed to load tile set \"", _tileMap.tileSetPath(), "\".");
+				          "\": Failed to load tile set \"", _tileMap->tileSetPath(), "\".");
 				return;
 			}
-			_tileMap._setTileSet(tileSetImg);
+			_tileMap->_setTileSet(tileSetImg);
 		});
 	}
 

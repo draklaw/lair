@@ -90,7 +90,7 @@ public:
 	inline LoaderSP _getLoader() { return _loader; }
 	inline void _setLoader(LoaderSP loader) { _loader = loader; }
 
-	void _destroy();
+	virtual void _destroy();
 	void _delete();
 
 protected:
@@ -104,7 +104,8 @@ protected:
 template<typename T>
 class GenericAspect : public Aspect {
 public:
-	typedef T Data;
+	using Data = T;
+	using DataPtr = std::unique_ptr<Data>;
 
 public:
 	GenericAspect(AssetSP asset)
@@ -120,19 +121,28 @@ public:
 	GenericAspect& operator=(      GenericAspect&&) = delete;
 
 	virtual bool isValid() const {
-		return _data.isValid();
+		return _data && _data->isValid();
 	}
 
 	const Data& get() const {
-		return _data;
+		return *_data;
 	}
 
 	Data& _get() {
-		return _data;
+		return *_data;
+	}
+
+	void _set(DataPtr&& data) {
+		_data = std::move(data);
+	}
+
+	void _destroy() override {
+		_data.reset();
+		Aspect::_destroy();
 	}
 
 private:
-	Data _data;
+	DataPtr _data;
 };
 
 
@@ -216,10 +226,7 @@ public:
 
 	void releaseAll();
 
-	void _destroy(Asset* asset);
 	void _delete(Asset* asset);
-
-	void _destroy(Aspect* aspect);
 	void _delete(Aspect* aspect);
 
 private:

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018 Simon Boyé
+ *  Copyright (C) 2019 Simon Boyé
  *
  *  This file is part of lair.
  *
@@ -19,33 +19,41 @@
  */
 
 
-#include <lair/core/lair.h>
-#include <lair/core/log.h>
-
-#include <lair/ldl/read.h>
-
-#include "lair/ldl/ldl_variant_loader.h"
+#include "test_manager.h"
+#include "test_foo.h"
+#include "test_bar.h"
 
 
-namespace lair
+namespace testIp {
+
+
+TestBar::TestBar(TestManager* manager, TestFooPtr foo)
+    : TestBase(manager)
+    , _foo(foo)
 {
-
-
-LdlVariantLoader::LdlVariantLoader(LoaderManager* manager, AspectSP aspect)
-    : Loader(manager, aspect) {
+	_constructCount += 1;
 }
 
-
-void LdlVariantLoader::commit() {
-	VariantAspectSP aspect = static_pointer_cast<VariantAspect>(_aspect);
-	aspect->_set(std::move(_variant));
-	Loader::commit();
+TestBar::~TestBar() {
 }
 
+TestFooPtr TestBar::foo() const {
+	return _foo;
+}
 
-void LdlVariantLoader::loadSyncImpl(Logger& log) {
-	_variant.reset(new Variant);
-	parseLdl(*_variant, file(), asset()->logicPath(), log);
+unsigned TestBar::_constructCount = 0;
+unsigned TestBar::_destroyCount   = 0;
+
+void TestBar::_partialDestroy() {
+	_destroyCount += 1;
+}
+
+void TestBar::_destroy() {
+	_manager->_destroyTestBar(this);
+}
+
+void TestBar::_delete() {
+	_manager->_deleteTestBar(this);
 }
 
 

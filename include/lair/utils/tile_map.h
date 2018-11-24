@@ -190,7 +190,7 @@ protected:
 	void parseMap(std::istream& in, Logger& log);
 
 protected:
-	TileMap       _tileMap;
+	std::unique_ptr<TileMap> _tileMap;
 };
 
 

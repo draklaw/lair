@@ -48,7 +48,9 @@ void Aspect::warnIfInvalid(Logger& log) {
 
 
 void Aspect::_destroy() {
-	_asset->manager()->_destroy(this);
+	// _asset is require in _delete().
+	_flags = 0;
+	_loader = nullptr;
 }
 
 
@@ -65,7 +67,9 @@ Asset::Asset(AssetManager* manager, const Path& logicPath)
 
 
 void Asset::_destroy() {
-	_manager->_destroy(this);
+	// _manager is required in _delete().
+	Path empty;
+	_logicPath.swap(empty);
 }
 
 
@@ -173,22 +177,14 @@ void AssetManager::releaseAll() {
 }
 
 
-void AssetManager::_destroy(Asset* asset) {
-	asset->~Asset();
-}
-
-
 void AssetManager::_delete(Asset* asset) {
+	asset->~Asset();
 	free(asset);
 }
 
 
-void AssetManager::_destroy(Aspect* aspect) {
-	aspect->~Aspect();
-}
-
-
 void AssetManager::_delete(Aspect* aspect) {
+	aspect->~Aspect();
 	free(aspect);
 }
 

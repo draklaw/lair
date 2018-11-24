@@ -89,7 +89,7 @@ BitmapFontLoader::~BitmapFontLoader() {
 
 void BitmapFontLoader::commit() {
 	BitmapFontAspectSP aspect = static_pointer_cast<BitmapFontAspect>(_aspect);
-	aspect->_get() = std::move(_font);
+	aspect->_set(std::move(_font));
 	Loader::commit();
 }
 
@@ -108,10 +108,11 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 			auto aspect = dynamic_pointer_cast<ImageAspect>(imgAspect);
 			lairAssert(bool(aspect));
 
-			_font.setFontSize(_fontDesc.get("size", 0).asInt());
-			_font.setHeight(_fontDesc.get("height", 0).asInt());
-			_font.setBaselineToTop(_fontDesc.get("base", _font.height() / 2).asInt());
-			_font.setImage(aspect->asset());
+			_font.reset(new BitmapFont());
+			_font->setFontSize(_fontDesc.get("size", 0).asInt());
+			_font->setHeight(_fontDesc.get("height", 0).asInt());
+			_font->setBaselineToTop(_fontDesc.get("base", _font->height() / 2).asInt());
+			_font->setImage(aspect->asset());
 
 			Vector2 texSize(aspect->get().width(), aspect->get().height());
 			for(const Json::Value& c: _fontDesc.get("chars", Json::nullValue)) {
@@ -124,13 +125,13 @@ void BitmapFontLoader::loadSyncImpl(Logger& log) {
 				                            / texSize.array()).matrix());
 				g.offset = Vector2(c[5].asInt(), c[6].asInt());
 				g.advance = c[7].asInt();
-				_font.setGlyph(cp, g);
+				_font->setGlyph(cp, g);
 			}
 			for(const Json::Value& k: _fontDesc.get("kern", Json::nullValue)) {
 				unsigned cp0  = k[0].asInt();
 				unsigned cp1  = k[1].asInt();
 				unsigned kern = k[2].asInt();
-				_font.setKerning(cp0, cp1, kern);
+				_font->setKerning(cp0, cp1, kern);
 			}
 		}
 		else {

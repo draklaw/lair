@@ -139,7 +139,7 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 protected:
-	Sound _sound;
+	std::unique_ptr<Sound> _sound;
 };
 
 class MusicLoader : public Loader {
@@ -156,7 +156,7 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 protected:
-	Music _music;
+	std::unique_ptr<Music> _music;
 };
 
 

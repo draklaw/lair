@@ -58,7 +58,7 @@ protected:
 	virtual void loadSyncImpl(Logger& log);
 
 protected:
-	Variant _variant;
+	std::unique_ptr<Variant> _variant;
 };
 
 
