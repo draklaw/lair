@@ -71,9 +71,6 @@ private:
 	Data _data;
 };
 
-typedef std::shared_ptr<Image> ImageSP;
-typedef std::weak_ptr  <Image> ImageWP;
-
 
 typedef GenericAspect       <Image>       ImageAspect;
 typedef IntrusivePointer    <ImageAspect> ImageAspectSP;

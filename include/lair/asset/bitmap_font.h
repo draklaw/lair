@@ -127,9 +127,6 @@ protected:
 	KerningMap _kerning;
 };
 
-typedef std::shared_ptr<BitmapFont> BitmapFontSP;
-typedef std::weak_ptr  <BitmapFont> BitmapFontWP;
-
 
 typedef GenericAspect       <BitmapFont>       BitmapFontAspect;
 typedef IntrusivePointer    <BitmapFontAspect> BitmapFontAspectSP;
